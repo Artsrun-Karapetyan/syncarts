@@ -98,16 +98,22 @@ export function Workspace() {
       {/* Main Content — Request + Response */}
       <div style={{ flex: 1, display: 'flex', gap: 12, padding: '0 16px 16px', minHeight: 0 }}>
         {/* Request panel with tabs */}
-        <div
-          className="glass-panel"
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}
-        >
-          <RequestTabs />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Request</div>
+          <div
+            className="glass-panel"
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}
+          >
+            <RequestTabs />
+          </div>
         </div>
 
         {/* Response panel */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <ResponseViewer />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Response</div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <ResponseViewer />
+          </div>
         </div>
       </div>
     </div>

@@ -15,12 +15,24 @@ export interface HttpResponse {
   time_ms: number;
 }
 
+export type BodyType = 'none' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
+
+export interface FormDataItem {
+  id: string;
+  key: string;
+  value: string;
+  enabled: boolean;
+  type?: 'text' | 'file';
+}
+
 export interface TabData {
   id: string;
   name: string;
   method: string;
   url: string;
   headers: HeaderItem[];
+  bodyType?: BodyType;
+  formData?: FormDataItem[];
   body: string;
   response: HttpResponse | null;
   savedRequestId?: string;
@@ -33,6 +45,8 @@ export interface SavedRequest {
   method: string;
   url: string;
   headers: HeaderItem[];
+  bodyType?: BodyType;
+  formData?: FormDataItem[];
   body: string;
 }
 
@@ -157,6 +171,8 @@ const DEFAULT_COLLECTIONS: Collection[] = [
             method: 'GET',
             url: 'https://jsonplaceholder.typicode.com/posts',
             headers: [],
+            bodyType: 'none',
+            formData: [],
             body: ''
           },
           {
@@ -166,6 +182,8 @@ const DEFAULT_COLLECTIONS: Collection[] = [
             method: 'POST',
             url: 'https://jsonplaceholder.typicode.com/posts',
             headers: [{ key: 'Content-type', value: 'application/json; charset=UTF-8' }],
+            bodyType: 'raw',
+            formData: [],
             body: '{\n  "title": "foo",\n  "body": "bar",\n  "userId": 1\n}'
           }
         ]
@@ -177,6 +195,8 @@ const DEFAULT_COLLECTIONS: Collection[] = [
         method: 'GET',
         url: 'https://jsonplaceholder.typicode.com/users',
         headers: [],
+        bodyType: 'none',
+        formData: [],
         body: ''
       }
     ]
@@ -217,6 +237,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           method: 'GET',
           url: '',
           headers: [{ key: '', value: '' }],
+          bodyType: 'raw',
+          formData: [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }],
           body: '',
           response: null
         }
@@ -287,6 +309,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         method: 'GET',
         url: '',
         headers: [{ key: '', value: '' }],
+        bodyType: 'raw',
+        formData: [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }],
         body: '',
         response: null
       }]
@@ -372,16 +396,33 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         }
       });
 
-      let bodyStr = activeTab.body.trim() === '' ? null : activeTab.body;
-      if (bodyStr) {
-        bodyStr = interpolate(bodyStr);
+      let reqBodyPayload: any = { type: 'None' };
+      const currentBodyType = activeTab.bodyType || 'raw';
+      
+      if (currentBodyType === 'raw') {
+        let bodyStr = activeTab.body.trim() === '' ? null : activeTab.body;
+        if (bodyStr) bodyStr = interpolate(bodyStr);
+        if (bodyStr) reqBodyPayload = { type: 'Raw', content: bodyStr };
+      } else if (currentBodyType === 'form-data' || currentBodyType === 'x-www-form-urlencoded') {
+        const formData = activeTab.formData || [];
+        const items = formData.filter(item => item.enabled && item.key).map(item => ({
+          key: interpolate(item.key),
+          value: interpolate(item.value)
+        }));
+        
+        if (items.length > 0) {
+          reqBodyPayload = { 
+            type: currentBodyType === 'form-data' ? 'FormData' : 'FormUrlEncoded',
+            items
+          };
+        }
       }
 
       const reqPayload = {
         url: interpolate(activeTab.url),
         method: activeTab.method,
         headers: headerMap,
-        body: bodyStr,
+        body: reqBodyPayload,
       };
 
       const res: HttpResponse = await invoke('make_request', { request: reqPayload });
@@ -418,6 +459,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       method: 'GET',
       url: '',
       headers: [{ key: '', value: '' }],
+      bodyType: 'raw',
+      formData: [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }],
       body: '',
       response: null,
       ...data

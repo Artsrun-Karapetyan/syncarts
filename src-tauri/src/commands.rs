@@ -1,4 +1,4 @@
-use crate::models::{HttpRequest, HttpResponse};
+use crate::models::{BodyPayload, HttpRequest, HttpResponse};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use std::time::Instant;
 
@@ -23,9 +23,26 @@ pub async fn make_request(request: HttpRequest) -> Result<HttpResponse, String> 
 
     let mut req_builder = client.request(method, &request.url).headers(headers);
 
-    if let Some(body) = request.body {
-        if !body.trim().is_empty() {
-            req_builder = req_builder.body(body);
+    match request.body {
+        BodyPayload::None => {},
+        BodyPayload::Raw { content } => {
+            if !content.trim().is_empty() {
+                req_builder = req_builder.body(content);
+            }
+        },
+        BodyPayload::FormData { items } => {
+            let mut form = reqwest::multipart::Form::new();
+            for item in items {
+                form = form.text(item.key, item.value);
+            }
+            req_builder = req_builder.multipart(form);
+        },
+        BodyPayload::FormUrlEncoded { items } => {
+            let mut map = std::collections::HashMap::new();
+            for item in items {
+                map.insert(item.key, item.value);
+            }
+            req_builder = req_builder.form(&map);
         }
     }
 
