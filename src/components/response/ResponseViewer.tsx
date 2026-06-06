@@ -200,6 +200,7 @@ export function ResponseViewer() {
                     } as React.CSSProperties}
                     displayDataTypes={false} 
                     displayObjectSize={false}
+                    enableClipboard={false}
                     collapsed={1}
                   />
                 </div>
