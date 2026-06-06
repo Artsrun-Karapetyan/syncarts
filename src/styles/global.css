@@ -1,0 +1,81 @@
+@import './variables.css';
+
+/* Tailwind-like Utility Classes for Layout */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.h-screen { height: 100vh; }
+.w-screen { width: 100vw; }
+
+/* Spacing Utils */
+.p-2 { padding: 0.5rem; }
+.p-4 { padding: 1rem; }
+.m-2 { margin: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+
+/* Text Utils */
+.text-sm { font-size: 0.875rem; }
+.text-lg { font-size: 1.125rem; }
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+
+/* Component Base Styles */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.btn {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn:hover {
+  background: var(--border-color-hover);
+  border-color: var(--text-secondary);
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+  border-color: var(--accent-primary);
+}
