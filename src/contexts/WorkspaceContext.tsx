@@ -49,10 +49,24 @@ export interface Collection {
   items: (Folder | SavedRequest)[];
 }
 
+export interface EnvironmentVariable {
+  id: string;
+  key: string;
+  value: string;
+  enabled: boolean;
+}
+
+export interface Environment {
+  id: string;
+  name: string;
+  variables: EnvironmentVariable[];
+}
+
 export interface Workspace {
   id: string;
   name: string;
   collections: Collection[];
+  environments?: Environment[];
 }
 
 interface WorkspaceContextState {
@@ -62,6 +76,17 @@ interface WorkspaceContextState {
   // Workspace Actions
   createWorkspace: (name: string) => void;
   switchWorkspace: (id: string) => void;
+
+  // Environment State
+  environments: Environment[];
+  activeEnvironmentId: string | null;
+  activeEnvironment: Environment | undefined;
+  
+  // Environment Actions
+  setActiveEnvironmentId: (id: string | null) => void;
+  createEnvironment: (name: string) => void;
+  updateEnvironment: (id: string, data: Partial<Environment>) => void;
+  deleteEnvironment: (id: string) => void;
 
   tabs: TabData[];
   activeTabId: string | null;
@@ -217,6 +242,20 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   // Current workspace projections
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId) || workspaces[0];
   const collections = activeWorkspace?.collections || [];
+  const environments = activeWorkspace?.environments || [];
+
+  const defaultActiveEnvByWorkspace = (() => {
+    try {
+      const item = window.localStorage.getItem('syncarts-active-env-by-workspace-v3');
+      if (item) return JSON.parse(item);
+    } catch (e) {}
+    return { 'default': null };
+  })();
+
+  const [activeEnvIdByWorkspace, setActiveEnvIdByWorkspace] = useLocalStorage<Record<string, string | null>>('syncarts-active-env-by-workspace-v3', defaultActiveEnvByWorkspace);
+  
+  const activeEnvironmentId = activeEnvIdByWorkspace[activeWorkspaceId] || null;
+  const activeEnvironment = environments.find(e => e.id === activeEnvironmentId);
   
   // Tabs projection
   const currentTabs = tabsByWorkspace[activeWorkspaceId] || [];
@@ -236,7 +275,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const createWorkspace = (name: string) => {
     const newWsId = crypto.randomUUID();
-    setWorkspaces(prev => [...prev, { id: newWsId, name, collections: [] }]);
+    setWorkspaces(prev => [...prev, { id: newWsId, name, collections: [], environments: [] }]);
     
     // Initialize tabs for new workspace
     const newTabId = crypto.randomUUID();
@@ -253,11 +292,72 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }]
     }));
     setActiveTabIdByWorkspace(prev => ({ ...prev, [newWsId]: newTabId }));
+    setActiveEnvIdByWorkspace(prev => ({ ...prev, [newWsId]: null }));
     setActiveWorkspaceId(newWsId);
+  };
+
+  const setActiveEnvironmentId = (id: string | null) => {
+    setActiveEnvIdByWorkspace(prev => ({ ...prev, [activeWorkspaceId]: id }));
+  };
+
+  const createEnvironment = (name: string) => {
+    const newEnv: Environment = {
+      id: crypto.randomUUID(),
+      name,
+      variables: []
+    };
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id === activeWorkspaceId) {
+        return { ...w, environments: [...(w.environments || []), newEnv] };
+      }
+      return w;
+    }));
+    setActiveEnvironmentId(newEnv.id);
+  };
+
+  const updateEnvironment = (id: string, data: Partial<Environment>) => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id === activeWorkspaceId) {
+        return {
+          ...w,
+          environments: (w.environments || []).map(e => e.id === id ? { ...e, ...data } : e)
+        };
+      }
+      return w;
+    }));
+  };
+
+  const deleteEnvironment = (id: string) => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id === activeWorkspaceId) {
+        return {
+          ...w,
+          environments: (w.environments || []).filter(e => e.id !== id)
+        };
+      }
+      return w;
+    }));
+    if (activeEnvironmentId === id) {
+      setActiveEnvironmentId(null);
+    }
   };
 
   const switchWorkspace = (id: string) => {
     setActiveWorkspaceId(id);
+  };
+
+  const interpolate = (text: string): string => {
+    if (!text) return text;
+    if (!activeEnvironment) return text;
+    
+    let result = text;
+    const activeVars = activeEnvironment.variables.filter(v => v.enabled && v.key);
+    
+    for (const v of activeVars) {
+      const regex = new RegExp(`{{${v.key}}}`, 'g');
+      result = result.replace(regex, v.value);
+    }
+    return result;
   };
 
   const { trigger, isMutating, error } = useSWRMutation(
@@ -267,14 +367,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       
       const headerMap: Record<string, string> = {};
       activeTab.headers.forEach((h) => {
-        if (h.key && h.value) headerMap[h.key] = h.value;
+        if (h.key && h.value) {
+          headerMap[interpolate(h.key)] = interpolate(h.value);
+        }
       });
 
+      let bodyStr = activeTab.body.trim() === '' ? null : activeTab.body;
+      if (bodyStr) {
+        bodyStr = interpolate(bodyStr);
+      }
+
       const reqPayload = {
-        url: activeTab.url,
+        url: interpolate(activeTab.url),
         method: activeTab.method,
         headers: headerMap,
-        body: activeTab.body.trim() === '' ? null : activeTab.body,
+        body: bodyStr,
       };
 
       const res: HttpResponse = await invoke('make_request', { request: reqPayload });
@@ -499,6 +606,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         tabs: currentTabs,
         activeTabId,
         activeTab,
+        environments,
+        activeEnvironmentId,
+        activeEnvironment,
+        setActiveEnvironmentId,
+        createEnvironment,
+        updateEnvironment,
+        deleteEnvironment,
+        
         collections,
         
         setActiveTabId,

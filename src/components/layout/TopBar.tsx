@@ -1,16 +1,35 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Settings2 } from 'lucide-react';
+import { Settings2, Eye, LayoutGrid } from 'lucide-react';
 
 import { useStoredUser } from '../../lib/session';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Select } from '../ui/Select';
+import { EnvironmentManager } from '../environment/EnvironmentManager';
 
 export function TopBar() {
-  const { workspaces, activeWorkspaceId, switchWorkspace, createWorkspace } = useWorkspace();
+  const { workspaces, activeWorkspaceId, switchWorkspace, createWorkspace, environments, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment } = useWorkspace();
   const user = useStoredUser();
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [isEnvManagerOpen, setIsEnvManagerOpen] = useState(false);
+  const [isEnvQuickLookOpen, setIsEnvQuickLookOpen] = useState(false);
+  const envQuickLookRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (envQuickLookRef.current && !envQuickLookRef.current.contains(event.target as Node)) {
+        setIsEnvQuickLookOpen(false);
+      }
+    };
+
+    if (isEnvQuickLookOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isEnvQuickLookOpen]);
 
   return (
     <div
@@ -114,8 +133,81 @@ export function TopBar() {
         </div>
       </div>
 
-      {/* Profile */}
-      <Link
+      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+        {/* Environment Selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ position: 'relative' }} ref={envQuickLookRef}>
+            <button
+              className="tooltip-trigger"
+              data-tooltip="Environment Quick Look"
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: 4, display: 'flex' }}
+              onClick={() => setIsEnvQuickLookOpen(!isEnvQuickLookOpen)}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+            >
+              <Eye size={18} />
+            </button>
+            {isEnvQuickLookOpen && (
+              <div
+                className="glass-panel animate-fade-in"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  width: 300,
+                  padding: 16,
+                  zIndex: 100,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  boxShadow: 'var(--shadow-lg)',
+                }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{activeEnvironment ? activeEnvironment.name : 'No Environment'}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {activeEnvironment?.variables.filter(v => v.enabled && v.key).map(v => (
+                    <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                      <span style={{ color: 'var(--accent-primary)' }}>{v.key}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>{v.value || '-'}</span>
+                    </div>
+                  ))}
+                  {(!activeEnvironment || activeEnvironment.variables.filter(v => v.enabled && v.key).length === 0) && (
+                    <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No active variables</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div style={{ width: 180 }}>
+            <Select
+              variant="pill"
+              value={activeEnvironmentId || 'none'}
+              onChange={(val) => {
+                if (val === 'none') setActiveEnvironmentId(null);
+                else setActiveEnvironmentId(val);
+              }}
+              options={[
+                { label: 'No Environment', value: 'none' },
+                ...environments.map(e => ({ label: e.name, value: e.id }))
+              ]}
+            />
+          </div>
+
+          <button
+            className="tooltip-trigger"
+            data-tooltip="Manage Environments"
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: 4, display: 'flex' }}
+            onClick={() => setIsEnvManagerOpen(true)}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+          >
+            <LayoutGrid size={18} />
+          </button>
+        </div>
+
+        {/* Profile */}
+        <Link
         to="/profile"
         style={{
           borderRadius: 9999,
@@ -159,6 +251,9 @@ export function TopBar() {
         </div>
         <Settings2 size={13} style={{ color: 'var(--text-tertiary)', marginLeft: 4 }} />
       </Link>
+      </div>
+      
+      <EnvironmentManager isOpen={isEnvManagerOpen} onClose={() => setIsEnvManagerOpen(false)} />
     </div>
   );
 }

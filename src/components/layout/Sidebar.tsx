@@ -301,7 +301,6 @@ export function Sidebar() {
         display: 'flex',
         flexDirection: 'column',
         gap: 20,
-        overflow: 'hidden',
         position: 'relative',
       }}
     >
