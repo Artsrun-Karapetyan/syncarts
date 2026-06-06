@@ -12,10 +12,11 @@ interface CtxMenuState {
   x: number;
   y: number;
   collectionId: string;
-  folderId: string | null;
+  itemId: string | null;
+  itemType: 'collection' | 'folder' | 'request';
 }
 
-function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: IFolder | SavedRequest, collectionId: string, onContextMenu: (e: React.MouseEvent, folderId: string | null) => void, level?: number }) {
+function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: IFolder | SavedRequest, collectionId: string, onContextMenu: (e: React.MouseEvent, itemId: string, type: 'folder' | 'request') => void, level?: number }) {
   const [isOpen, setIsOpen] = useState(false);
   const { addTab } = useWorkspace();
 
@@ -37,6 +38,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           transition: 'all var(--transition-fast)',
         }}
         onClick={() => addTab({ ...item, id: crypto.randomUUID(), response: null })}
+        onContextMenu={(e) => onContextMenu(e, item.id, 'request')}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--bg-tertiary)';
           e.currentTarget.style.color = 'var(--text-primary)';
@@ -64,6 +66,28 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
           {item.name}
         </span>
+        <div
+          style={{
+            opacity: 0,
+            width: 22,
+            height: 22,
+            borderRadius: 5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-tertiary)',
+            transition: 'all var(--transition-fast)',
+            flexShrink: 0,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onContextMenu(e, item.id, 'request');
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
+        >
+          <MoreHorizontal size={13} />
+        </div>
       </div>
     );
   }
@@ -84,7 +108,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           transition: 'all var(--transition-fast)',
         }}
         onClick={() => setIsOpen(!isOpen)}
-        onContextMenu={(e) => onContextMenu(e, item.id)}
+        onContextMenu={(e) => onContextMenu(e, item.id, 'folder')}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--bg-tertiary)';
           e.currentTarget.style.color = 'var(--text-primary)';
@@ -112,7 +136,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           }}
           onClick={(e) => {
             e.stopPropagation();
-            onContextMenu(e, item.id);
+            onContextMenu(e, item.id, 'folder');
           }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
@@ -134,7 +158,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
 export function Sidebar() {
   const { 
     workspaces, activeWorkspaceId, switchWorkspace, createWorkspace,
-    collections, addCollection, deleteCollection, addFolder, createBlankRequestInFolder 
+    collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder 
   } = useWorkspace();
   const user = useStoredUser();
   const [isAdding, setIsAdding] = useState(false);
@@ -145,7 +169,7 @@ export function Sidebar() {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'collection' | 'item', collectionId?: string } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -186,10 +210,10 @@ export function Sidebar() {
     }
   };
 
-  const handleContextMenu = (e: React.MouseEvent, collectionId: string, folderId: string | null) => {
+  const handleContextMenu = (e: React.MouseEvent, collectionId: string, itemId: string | null, itemType: 'collection' | 'folder' | 'request') => {
     e.preventDefault();
     e.stopPropagation();
-    setCtxMenu({ x: e.clientX, y: e.clientY, collectionId, folderId });
+    setCtxMenu({ x: e.clientX, y: e.clientY, collectionId, itemId, itemType });
   };
 
   const handleCreateFolder = () => {
@@ -199,7 +223,8 @@ export function Sidebar() {
 
   const handleFolderSubmit = () => {
     if (!ctxMenu || !newFolderName.trim()) return;
-    addFolder(ctxMenu.collectionId, ctxMenu.folderId, newFolderName.trim());
+    const folderId = ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null;
+    addFolder(ctxMenu.collectionId, folderId, newFolderName.trim());
     setNewFolderName('');
     setIsCreatingFolder(false);
     setCtxMenu(null);
@@ -207,7 +232,8 @@ export function Sidebar() {
 
   const handleCreateRequest = () => {
     if (!ctxMenu) return;
-    createBlankRequestInFolder(ctxMenu.collectionId, ctxMenu.folderId);
+    const folderId = ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null;
+    createBlankRequestInFolder(ctxMenu.collectionId, folderId);
     setCtxMenu(null);
   };
 
@@ -410,7 +436,7 @@ export function Sidebar() {
                 transition: 'all var(--transition-fast)',
               }}
               onClick={() => toggleCollection(col.id)}
-              onContextMenu={(e) => handleContextMenu(e, col.id, null)}
+              onContextMenu={(e) => handleContextMenu(e, col.id, null, 'collection')}
             >
               <button
                 type="button"
@@ -468,7 +494,7 @@ export function Sidebar() {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setDeleteTarget({ id: col.id });
+                  setDeleteTarget({ id: col.id, type: 'collection' });
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--status-delete-bg)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
@@ -491,7 +517,7 @@ export function Sidebar() {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleContextMenu(e, col.id, null);
+                  handleContextMenu(e, col.id, null, 'collection');
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
@@ -506,7 +532,7 @@ export function Sidebar() {
                     key={item.id}
                     item={item}
                     collectionId={col.id}
-                    onContextMenu={(e, folderId) => handleContextMenu(e, col.id, folderId)}
+                    onContextMenu={(e, itemId, type) => handleContextMenu(e, col.id, itemId, type)}
                   />
                 ))}
               </div>
@@ -547,11 +573,13 @@ export function Sidebar() {
               padding: 4,
             }}
           >
-            <button
-              type="button"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
+            {ctxMenu.itemType !== 'request' && (
+              <>
+                <button
+                  type="button"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
                 gap: 10,
                 padding: '10px 12px',
                 fontSize: 13,
@@ -653,55 +681,57 @@ export function Sidebar() {
               </span>
               <span style={{ fontWeight: 500 }}>New request</span>
             </button>
-
-            {!ctxMenu.folderId && (
-              <>
-                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
-                <button
-                  type="button"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '10px 12px',
-                    fontSize: 13,
-                    color: 'var(--status-delete)',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    transition: 'background var(--transition-fast)',
-                    textAlign: 'left',
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setDeleteTarget({ id: ctxMenu.collectionId });
-                    setCtxMenu(null);
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--status-delete-bg)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <span
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 7,
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--status-delete)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Trash2 size={13} />
-                  </span>
-                  <span style={{ fontWeight: 500 }}>Delete collection</span>
-                </button>
-              </>
+            </>
             )}
+
+            <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+            <button
+              type="button"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 12px',
+                fontSize: 13,
+                color: 'var(--status-delete)',
+                background: 'transparent',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                transition: 'background var(--transition-fast)',
+                textAlign: 'left',
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (ctxMenu.itemType === 'collection') {
+                  setDeleteTarget({ id: ctxMenu.collectionId, type: 'collection' });
+                } else if (ctxMenu.itemId) {
+                  setDeleteTarget({ id: ctxMenu.itemId, type: 'item', collectionId: ctxMenu.collectionId });
+                }
+                setCtxMenu(null);
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--status-delete-bg)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+            >
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 7,
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--status-delete)',
+                  flexShrink: 0,
+                }}
+              >
+                <Trash2 size={13} />
+              </span>
+              <span style={{ fontWeight: 500 }}>Delete {ctxMenu.itemType}</span>
+            </button>
           </div>,
           document.body
         )
@@ -709,14 +739,18 @@ export function Sidebar() {
 
       <ConfirmModal
         isOpen={deleteTarget !== null}
-        title="Delete Collection"
-        message="Are you sure you want to delete this collection? All folders and requests inside it will be permanently lost. This action cannot be undone."
+        title={deleteTarget?.type === 'collection' ? "Delete Collection" : "Delete Item"}
+        message={`Are you sure you want to delete this ${deleteTarget?.type}? ${deleteTarget?.type === 'collection' || deleteTarget?.type === 'item' ? 'All contents inside it will be permanently lost.' : ''} This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         isDestructive={true}
         onConfirm={() => {
           if (deleteTarget) {
-            deleteCollection(deleteTarget.id);
+            if (deleteTarget.type === 'collection') {
+              deleteCollection(deleteTarget.id);
+            } else if (deleteTarget.type === 'item' && deleteTarget.collectionId) {
+              deleteItem(deleteTarget.collectionId, deleteTarget.id);
+            }
           }
           setDeleteTarget(null);
         }}

@@ -77,6 +77,7 @@ interface WorkspaceContextState {
   // Collection Actions
   addCollection: (name: string) => void;
   deleteCollection: (id: string) => void;
+  deleteItem: (collectionId: string, itemId: string) => void;
   addFolder: (collectionId: string, parentFolderId: string | null, name: string) => void;
   saveRequest: (collectionId: string, folderId: string | null, request: SavedRequest) => void;
   createBlankRequestInFolder: (collectionId: string, folderId: string | null) => void;
@@ -434,6 +435,28 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const deleteItem = (collectionId: string, itemId: string) => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id !== activeWorkspaceId) return w;
+      
+      const recursivelyFilter = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
+        return items
+          .filter(item => item.id !== itemId)
+          .map(item => {
+            if (item.type === 'folder') return { ...item, items: recursivelyFilter(item.items) };
+            return item;
+          });
+      };
+      
+      return {
+        ...w,
+        collections: w.collections.map(col => 
+          col.id === collectionId ? { ...col, items: recursivelyFilter(col.items) } : col
+        )
+      };
+    }));
+  };
+
   const createBlankRequestInFolder = (collectionId: string, folderId: string | null) => {
     const newReqId = crypto.randomUUID();
     const newReq: SavedRequest = {
@@ -469,6 +492,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         
         addCollection,
         deleteCollection,
+        deleteItem,
         addFolder,
         saveRequest,
         createBlankRequestInFolder,
