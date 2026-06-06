@@ -81,6 +81,7 @@ interface WorkspaceContextState {
   addFolder: (collectionId: string, parentFolderId: string | null, name: string) => void;
   saveRequest: (collectionId: string, folderId: string | null, request: SavedRequest) => void;
   createBlankRequestInFolder: (collectionId: string, folderId: string | null) => void;
+  importCollection: (collectionData: Omit<Collection, 'id'>) => void;
   
   // Request Actions
   sendRequest: () => Promise<void>;
@@ -352,8 +353,23 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   };
 
   const addCollection = (name: string) => {
-    const newCollection: Collection = { id: crypto.randomUUID(), name, items: [] };
-    updateWorkspaces(prev => prev.map(w => w.id === activeWorkspaceId ? { ...w, collections: [...w.collections, newCollection] } : w));
+    updateWorkspaces(prev => prev.map(ws => {
+      if (ws.id !== activeWorkspaceId) return ws;
+      return {
+        ...ws,
+        collections: [...ws.collections, { id: crypto.randomUUID(), name, items: [] }]
+      };
+    }));
+  };
+
+  const importCollection = (collectionData: Omit<Collection, 'id'>) => {
+    updateWorkspaces(prev => prev.map(ws => {
+      if (ws.id !== activeWorkspaceId) return ws;
+      return {
+        ...ws,
+        collections: [...ws.collections, { ...collectionData, id: crypto.randomUUID() }]
+      };
+    }));
   };
 
   const deleteCollection = (id: string) => {
@@ -496,6 +512,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         addFolder,
         saveRequest,
         createBlankRequestInFolder,
+        importCollection,
         
         sendRequest,
         isMutating,

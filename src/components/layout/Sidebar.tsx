@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Settings2, Trash2, Briefcase } from 'lucide-react';
+import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Settings2, Trash2, Briefcase, Upload, Download } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 
 import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/WorkspaceContext';
 import { useStoredUser } from '../../lib/session';
 import { Select } from '../ui/Select';
 import { ConfirmModal } from '../ui/ConfirmModal';
+import { importPostmanCollection, exportToPostmanCollection } from '../../utils/postmanParser';
 
 interface CtxMenuState {
   x: number;
@@ -158,7 +159,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
 export function Sidebar() {
   const { 
     workspaces, activeWorkspaceId, switchWorkspace, createWorkspace,
-    collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder 
+    collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder, importCollection
   } = useWorkspace();
   const user = useStoredUser();
   const [isAdding, setIsAdding] = useState(false);
@@ -171,6 +172,7 @@ export function Sidebar() {
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'collection' | 'item', collectionId?: string } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -207,6 +209,49 @@ export function Sidebar() {
       addCollection(newColName.trim());
       setNewColName('');
       setIsAdding(false);
+    }
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = event.target?.result as string;
+        const parsedCollection = importPostmanCollection(json);
+        importCollection(parsedCollection);
+      } catch (err) {
+        console.error('Failed to import collection:', err);
+        alert('Failed to import collection. Make sure it is a valid Postman Collection v2.1 format.');
+      }
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleExportCollection = (collectionId: string) => {
+    const collection = collections.find(c => c.id === collectionId);
+    if (!collection) return;
+
+    try {
+      const jsonStr = exportToPostmanCollection(collection);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${collection.name || 'collection'}.postman_collection.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export collection:', err);
+      alert('Failed to export collection.');
     }
   };
 
@@ -372,30 +417,64 @@ export function Sidebar() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, overflow: 'auto', minHeight: 0, paddingRight: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Collections</div>
-          <div
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: 6,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--text-tertiary)',
-              cursor: 'pointer',
-              transition: 'all var(--transition-fast)',
-            }}
-            onClick={() => setIsAdding(!isAdding)}
-            title="New Collection"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--bg-tertiary)';
-              e.currentTarget.style.color = 'var(--text-primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = 'var(--text-tertiary)';
-            }}
-          >
-            <Plus size={15} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input 
+              type="file" 
+              accept=".json" 
+              style={{ display: 'none' }} 
+              ref={fileInputRef} 
+              onChange={handleImportFile} 
+            />
+            <div
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-tertiary)',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+              onClick={() => fileInputRef.current?.click()}
+              title="Import Postman Collection"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-tertiary)';
+              }}
+            >
+              <Upload size={14} />
+            </div>
+            <div
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-tertiary)',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+              onClick={() => setIsAdding(!isAdding)}
+              title="New Collection"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-tertiary)';
+              }}
+            >
+              <Plus size={15} />
+            </div>
           </div>
         </div>
 
@@ -682,6 +761,55 @@ export function Sidebar() {
               <span style={{ fontWeight: 500 }}>New request</span>
             </button>
             </>
+            )}
+
+            {ctxMenu.itemType === 'collection' && (
+              <>
+                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+                <button
+                  type="button"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 12px',
+                    fontSize: 13,
+                    color: 'var(--text-primary)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    transition: 'background var(--transition-fast)',
+                    textAlign: 'left',
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleExportCollection(ctxMenu.collectionId);
+                    setCtxMenu(null);
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Download size={13} />
+                  </span>
+                  <span style={{ fontWeight: 500 }}>Export collection</span>
+                </button>
+              </>
             )}
 
             <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
