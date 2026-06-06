@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Clock, Zap } from 'lucide-react';
+import JsonView from '@uiw/react-json-view';
+import { darkTheme } from '@uiw/react-json-view/dark';
 
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { ResponseEmptyState } from './ResponseEmptyState';
@@ -14,6 +16,16 @@ export function ResponseViewer() {
   const { activeTab, error, isMutating } = useWorkspace();
   const response = activeTab?.response;
   const [viewTab, setViewTab] = useState<ResponseTab>('body');
+  const [bodyFormat, setBodyFormat] = useState<'pretty' | 'raw'>('pretty');
+
+  const parsedBody = useMemo(() => {
+    if (!response?.body) return null;
+    try {
+      return JSON.parse(response.body);
+    } catch {
+      return null;
+    }
+  }, [response?.body]);
 
   const getStatusClass = (status: number) => {
     if (status >= 200 && status < 300) return 'success';
@@ -121,12 +133,68 @@ export function ResponseViewer() {
         )}
 
         {!isMutating && !error && response && viewTab === 'body' && (
-          <pre
-            className="font-mono"
-            style={{ fontSize: 13, padding: 20, whiteSpace: 'pre-wrap', lineHeight: 1.7, color: 'var(--text-primary)', flex: 1 }}
-          >
-            {response.body}
-          </pre>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            {parsedBody && (
+              <div style={{ 
+                padding: '8px 16px', 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                borderBottom: '1px solid var(--border-color)',
+                background: 'rgba(0, 0, 0, 0.2)'
+              }}>
+                <div style={{ display: 'flex', gap: 4, background: 'var(--bg-tertiary)', padding: 4, borderRadius: 'var(--radius-sm)' }}>
+                  <button 
+                    onClick={() => setBodyFormat('pretty')} 
+                    style={{ 
+                      padding: '4px 12px', 
+                      borderRadius: '4px', 
+                      background: bodyFormat === 'pretty' ? 'var(--bg-primary)' : 'transparent', 
+                      color: bodyFormat === 'pretty' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                      fontSize: 12, 
+                      fontWeight: 600,
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    Pretty
+                  </button>
+                  <button 
+                    onClick={() => setBodyFormat('raw')} 
+                    style={{ 
+                      padding: '4px 12px', 
+                      borderRadius: '4px', 
+                      background: bodyFormat === 'raw' ? 'var(--bg-primary)' : 'transparent', 
+                      color: bodyFormat === 'raw' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                      fontSize: 12, 
+                      fontWeight: 600,
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    Raw
+                  </button>
+                </div>
+              </div>
+            )}
+            <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+              {parsedBody && bodyFormat === 'pretty' ? (
+                <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>
+                  <JsonView 
+                    value={parsedBody} 
+                    style={darkTheme} 
+                    displayDataTypes={false} 
+                    displayObjectSize={false}
+                    collapsed={1}
+                  />
+                </div>
+              ) : (
+                <pre
+                  className="font-mono"
+                  style={{ fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.7, color: 'var(--text-primary)' }}
+                >
+                  {response.body}
+                </pre>
+              )}
+            </div>
+          </div>
         )}
 
         {!isMutating && !error && response && viewTab === 'headers' && (

@@ -3,7 +3,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import './UrlBar.css';
 
 export function UrlBar() {
-  const { activeTab, updateActiveTab } = useWorkspace();
+  const { activeTab, updateActiveTab, sendRequest } = useWorkspace();
 
   return (
     <input 
@@ -11,6 +11,11 @@ export function UrlBar() {
       placeholder="https://api.example.com/v1/users" 
       value={activeTab?.url || ''}
       onChange={(e) => updateActiveTab({ url: e.target.value })}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && activeTab?.url) {
+          sendRequest();
+        }
+      }}
       disabled={!activeTab}
       spellCheck={false}
     />
