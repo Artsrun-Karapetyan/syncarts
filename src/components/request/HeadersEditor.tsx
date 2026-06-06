@@ -15,10 +15,10 @@ export function HeadersEditor() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-sm font-semibold text-secondary border-b border-color pb-2">Headers</div>
+      <div className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-1">Headers</div>
       
       {headers.map((header, index) => (
-        <div key={index} className="flex gap-2 items-center">
+        <div key={index} className="flex gap-3 items-center">
           <input 
             className="input flex-1 font-mono text-sm" 
             placeholder="Key (e.g. Authorization)"
@@ -27,12 +27,12 @@ export function HeadersEditor() {
           />
           <input 
             className="input flex-1 font-mono text-sm" 
-            placeholder="Value (e.g. Bearer token...)" 
+            placeholder="Value" 
             value={header.value}
             onChange={(e) => updateHeader(index, header.key, e.target.value)}
           />
           <button 
-            className="btn p-2 text-status-delete hover:bg-status-delete hover:text-white border-transparent"
+            className="btn p-2 text-status-delete hover:bg-status-delete hover:text-white border-transparent bg-transparent shadow-none"
             onClick={() => removeHeader(index)}
           >
             <Trash2 size={16} />
@@ -40,7 +40,7 @@ export function HeadersEditor() {
         </div>
       ))}
 
-      <button className="btn self-start text-xs mt-2" onClick={addHeader}>
+      <button className="btn self-start text-xs mt-2 rounded-full border-dashed" onClick={addHeader}>
         <Plus size={14} /> Add Header
       </button>
     </div>
