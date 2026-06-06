@@ -72,7 +72,7 @@ export function UrlBar() {
   };
 
   const renderHighlighted = () => {
-    const parts = url.split(/(\{\{[^}]+\}\})/g);
+    const parts = url.split(/(\{\{[^}]*\}\})/g);
     return parts.map((part, i) => {
       if (part.startsWith('{{') && part.endsWith('}}')) {
         const varName = part.substring(2, part.length - 2);
@@ -88,7 +88,6 @@ export function UrlBar() {
             data-value={value || ''}
             style={{ 
               color: exists ? 'var(--accent-primary)' : 'var(--status-delete)', 
-              fontWeight: 600,
             }}
           >
             {part}
@@ -111,11 +110,10 @@ export function UrlBar() {
           pointerEvents: 'none', 
           color: url ? 'var(--text-primary)' : 'var(--text-tertiary)',
           opacity: url ? 1 : 0.6,
-          display: 'flex',
-          alignItems: 'center',
           overflow: 'hidden',
           whiteSpace: 'pre',
           zIndex: 1,
+          lineHeight: '38px',
         }}
         aria-hidden="true"
       >
@@ -133,6 +131,7 @@ export function UrlBar() {
           caretColor: 'var(--text-primary)',
           background: 'transparent',
           zIndex: 2,
+          lineHeight: '38px',
         }}
         value={url}
         onChange={(e) => updateActiveTab({ url: e.target.value })}
