@@ -33,6 +33,7 @@ export function TopBar() {
 
   return (
     <div
+      data-tauri-drag-region
       style={{
         height: 60,
         width: '100%',
@@ -42,6 +43,8 @@ export function TopBar() {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 24px',
+        paddingLeft: 80,
+
         flexShrink: 0,
       }}
     >
