@@ -1,7 +1,7 @@
-import { useRequest } from '../../contexts/RequestContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function BodyEditor() {
-  const { body, setBody } = useRequest();
+  const { activeTab, updateActiveTab } = useWorkspace();
 
   return (
     <div className="flex flex-col gap-3 mt-8 flex-1">
@@ -9,8 +9,9 @@ export function BodyEditor() {
       <textarea 
         className="input w-full flex-1 font-mono text-sm resize-none p-4 leading-relaxed bg-primary rounded-md shadow-inner"
         placeholder="{\n  &quot;key&quot;: &quot;value&quot;\n}"
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
+        value={activeTab?.body || ''}
+        onChange={(e) => updateActiveTab({ body: e.target.value })}
+        disabled={!activeTab}
         spellCheck={false}
       />
     </div>
