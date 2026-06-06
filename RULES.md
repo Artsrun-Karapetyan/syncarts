@@ -8,6 +8,12 @@
 6. **Terminal Commands:** The AI assistant must NOT execute terminal commands (like installations) automatically. Instead, provide the command code to the user so they can run it manually.
 7. **Communication:** The AI assistant must ALWAYS answer briefly and strictly to the point. Do not give long explanations unless explicitly requested by the user. Do not explore unnecessary files when answering a simple question.
 8. **Latest Versions:** All technologies (Rust, Tauri, React, TanStack, Vite) must strictly use their absolute latest versions. Always verify the latest API and syntax before writing code to avoid deprecated methods.
+9. **Git Workflow:** Work must be done in chunks. For each chunk, the AI suggests a branch name, the user creates the branch, and only then the AI writes the code.
+10. **Developer Guide:** A `DEVELOPER_GUIDE.md` must be maintained and updated with every new feature or architectural decision to document how the project works.
+11. **React Imports:** Do NOT use `import React from 'react';` since we are using Vite.
+12. **Router Structure:** Use folder-based structure for TanStack Router (e.g., `folder/route.tsx` instead of `$id.tsx`).
+13. **Route Files:** Route files should NOT contain complex logic or UI. They should only import and render components defined elsewhere in `src/components/`.
+14. **Aesthetics:** Everything must be written beautifully, cleanly, and logically separated.
 
 ## Tech Stack
 - **Frontend:** React + Vite
