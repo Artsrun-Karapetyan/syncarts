@@ -12,7 +12,48 @@ interface SaveDialogProps {
 export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
   const { activeTab, collections, saveRequest, updateActiveTab } = useWorkspace();
   const [requestName, setRequestName] = useState(activeTab?.name === 'Untitled Request' ? '' : activeTab?.name || '');
-  const [selectedCollectionId, setSelectedCollectionId] = useState(collections[0]?.id || '');
+  
+  // Build flattened options for collections and folders
+  const destinationOptions: { value: string; label: string }[] = [];
+  collections.forEach(col => {
+    destinationOptions.push({ value: `col:${col.id}`, label: `📁 ${col.name}` });
+    
+    const addFolders = (items: any[], depth: number) => {
+      items.forEach(item => {
+        if (item.type === 'folder') {
+          const prefix = '↳ '.padStart(depth * 3 + 2, '\u00A0');
+          destinationOptions.push({ value: `fol:${col.id}:${item.id}`, label: `${prefix}📂 ${item.name}` });
+          addFolders(item.items, depth + 1);
+        }
+      });
+    };
+    addFolders(col.items, 1);
+  });
+
+  // Find existing location
+  let defaultDest = destinationOptions.length > 0 ? destinationOptions[0].value : '';
+  if (activeTab?.savedRequestId) {
+    let found = false;
+    for (const col of collections) {
+      const search = (items: any[], parentFolderId: string | null) => {
+        for (const item of items) {
+          if (item.type === 'request' && item.id === activeTab.savedRequestId) {
+            defaultDest = parentFolderId ? `fol:${col.id}:${parentFolderId}` : `col:${col.id}`;
+            found = true;
+            return;
+          }
+          if (item.type === 'folder') {
+            search(item.items, item.id);
+            if (found) return;
+          }
+        }
+      };
+      search(col.items, null);
+      if (found) break;
+    }
+  }
+
+  const [selectedDestination, setSelectedDestination] = useState(defaultDest);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [pos, setPos] = useState({ top: 0, right: 0 });
 
@@ -38,7 +79,12 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
   if (!activeTab) return null;
 
   const handleSave = () => {
-    if (!selectedCollectionId) return;
+    if (!selectedDestination) return;
+
+    const destParts = selectedDestination.split(':');
+    const destType = destParts[0];
+    const collectionId = destParts[1];
+    const folderId = destType === 'fol' ? destParts[2] : null;
 
     const finalName = requestName.trim() || 'Untitled Request';
 
@@ -54,7 +100,7 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
       body: activeTab.body,
     };
 
-    saveRequest(selectedCollectionId, null, req);
+    saveRequest(collectionId, folderId, req);
     updateActiveTab({ name: finalName, savedRequestId: reqId });
     onClose();
   };
@@ -100,16 +146,16 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
 
         <div>
           <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>
-            Save to collection
+            Save to location
           </label>
-          {collections.length === 0 ? (
+          {destinationOptions.length === 0 ? (
             <div style={{ fontSize: 13, color: 'var(--status-delete)' }}>Please create a collection in the sidebar first.</div>
           ) : (
             <Select
               style={{ width: '100%' }}
-              value={selectedCollectionId}
-              onChange={setSelectedCollectionId}
-              options={collections.map(col => ({ value: col.id, label: col.name }))}
+              value={selectedDestination}
+              onChange={setSelectedDestination}
+              options={destinationOptions}
             />
           )}
         </div>
@@ -127,7 +173,7 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
           className="btn btn-primary"
           style={{ padding: '0.6rem 1.5rem' }}
           onClick={handleSave}
-          disabled={!selectedCollectionId}
+          disabled={!selectedDestination}
         >
           Save
         </button>

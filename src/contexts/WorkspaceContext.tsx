@@ -49,7 +49,20 @@ export interface Collection {
   items: (Folder | SavedRequest)[];
 }
 
+export interface Workspace {
+  id: string;
+  name: string;
+  collections: Collection[];
+}
+
 interface WorkspaceContextState {
+  workspaces: Workspace[];
+  activeWorkspaceId: string;
+  
+  // Workspace Actions
+  createWorkspace: (name: string) => void;
+  switchWorkspace: (id: string) => void;
+
   tabs: TabData[];
   activeTabId: string | null;
   activeTab: TabData | undefined;
@@ -63,6 +76,7 @@ interface WorkspaceContextState {
   
   // Collection Actions
   addCollection: (name: string) => void;
+  deleteCollection: (id: string) => void;
   addFolder: (collectionId: string, parentFolderId: string | null, name: string) => void;
   saveRequest: (collectionId: string, folderId: string | null, request: SavedRequest) => void;
   createBlankRequestInFolder: (collectionId: string, folderId: string | null) => void;
@@ -87,9 +101,11 @@ function useLocalStorage<T>(key: string, initialValue: T) {
 
   const setValue = (value: T | ((val: T) => T)) => {
     try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      setStoredValue(prev => {
+        const valueToStore = value instanceof Function ? value(prev) : value;
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        return valueToStore;
+      });
     } catch (error) {
       console.error(error);
     }
@@ -141,21 +157,106 @@ const DEFAULT_COLLECTIONS: Collection[] = [
 ];
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const [tabs, setTabs] = useLocalStorage<TabData[]>('syncarts-tabs-v2', [
-    {
-      id: crypto.randomUUID(),
-      name: 'Get All Posts',
-      method: 'GET',
-      url: 'https://jsonplaceholder.typicode.com/posts',
-      headers: [{ key: '', value: '' }],
-      body: '',
-      response: null
-    }
-  ]);
-  const [activeTabId, setActiveTabId] = useLocalStorage<string | null>('syncarts-active-tab-v2', tabs[0]?.id || null);
-  const [collections, setCollections] = useLocalStorage<Collection[]>('syncarts-collections-v2', DEFAULT_COLLECTIONS);
+  // Initialize workspaces, migrating from v2 collections if necessary
+  const defaultWorkspaces = (() => {
+    try {
+      const oldCollectionsItem = window.localStorage.getItem('syncarts-collections-v2');
+      if (oldCollectionsItem) {
+        const oldCollections = JSON.parse(oldCollectionsItem);
+        return [{ id: 'default', name: 'My Workspace', collections: oldCollections }];
+      }
+    } catch (e) {}
+    return [{ id: 'default', name: 'My Workspace', collections: DEFAULT_COLLECTIONS }];
+  })();
 
-  const activeTab = tabs.find(t => t.id === activeTabId);
+  const [workspaces, setWorkspaces] = useLocalStorage<Workspace[]>('syncarts-workspaces-v3', defaultWorkspaces);
+
+  const [activeWorkspaceId, setActiveWorkspaceId] = useLocalStorage<string>('syncarts-active-workspace-v3', workspaces[0]?.id || 'default');
+
+  // We store a mapping of workspaceId -> tabs
+  const defaultTabsByWorkspace = (() => {
+    try {
+      const oldTabsItem = window.localStorage.getItem('syncarts-tabs-v2');
+      if (oldTabsItem) {
+        const oldTabs = JSON.parse(oldTabsItem);
+        return { 'default': oldTabs };
+      }
+    } catch (e) {}
+    return {
+      'default': [
+        {
+          id: crypto.randomUUID(),
+          name: 'Untitled Request',
+          method: 'GET',
+          url: '',
+          headers: [{ key: '', value: '' }],
+          body: '',
+          response: null
+        }
+      ]
+    };
+  })();
+
+  const [tabsByWorkspace, setTabsByWorkspace] = useLocalStorage<Record<string, TabData[]>>('syncarts-tabs-by-workspace-v3', defaultTabsByWorkspace);
+
+  const defaultActiveTabIdByWorkspace = (() => {
+    try {
+      const oldActiveTabItem = window.localStorage.getItem('syncarts-active-tab-v2');
+      if (oldActiveTabItem) {
+        const oldActiveTab = JSON.parse(oldActiveTabItem);
+        return { 'default': oldActiveTab };
+      }
+    } catch(e) {}
+    return { 'default': null };
+  })();
+
+  const [activeTabIdByWorkspace, setActiveTabIdByWorkspace] = useLocalStorage<Record<string, string | null>>('syncarts-active-tab-by-workspace-v3', defaultActiveTabIdByWorkspace);
+
+  // Current workspace projections
+  const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId) || workspaces[0];
+  const collections = activeWorkspace?.collections || [];
+  
+  // Tabs projection
+  const currentTabs = tabsByWorkspace[activeWorkspaceId] || [];
+  const activeTabId = activeTabIdByWorkspace[activeWorkspaceId] || (currentTabs.length > 0 ? currentTabs[0].id : null);
+  const activeTab = currentTabs.find(t => t.id === activeTabId) || currentTabs[0];
+
+  const updateWorkspaces = (updater: (prev: Workspace[]) => Workspace[]) => {
+    setWorkspaces(updater);
+  };
+
+  const updateCurrentTabs = (updater: (prev: TabData[]) => TabData[]) => {
+    setTabsByWorkspace(prev => ({
+      ...prev,
+      [activeWorkspaceId]: updater(prev[activeWorkspaceId] || [])
+    }));
+  };
+
+  const createWorkspace = (name: string) => {
+    const newWsId = crypto.randomUUID();
+    setWorkspaces(prev => [...prev, { id: newWsId, name, collections: [] }]);
+    
+    // Initialize tabs for new workspace
+    const newTabId = crypto.randomUUID();
+    setTabsByWorkspace(prev => ({
+      ...prev,
+      [newWsId]: [{
+        id: newTabId,
+        name: 'Untitled Request',
+        method: 'GET',
+        url: '',
+        headers: [{ key: '', value: '' }],
+        body: '',
+        response: null
+      }]
+    }));
+    setActiveTabIdByWorkspace(prev => ({ ...prev, [newWsId]: newTabId }));
+    setActiveWorkspaceId(newWsId);
+  };
+
+  const switchWorkspace = (id: string) => {
+    setActiveWorkspaceId(id);
+  };
 
   const { trigger, isMutating, error } = useSWRMutation(
     'api-request',
@@ -182,7 +283,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const sendRequest = async () => {
     if (!activeTab) return;
     try {
-      // Clear previous response before sending
       updateActiveTab({ response: null });
       const result = await trigger();
       if (result) {
@@ -195,7 +295,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const updateActiveTab = (data: Partial<TabData>) => {
     if (!activeTabId) return;
-    setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, ...data } : t));
+    updateCurrentTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, ...data } : t));
+  };
+
+  const setActiveTabId = (id: string) => {
+    setActiveTabIdByWorkspace(prev => ({ ...prev, [activeWorkspaceId]: id }));
   };
 
   const addTab = (data?: Partial<TabData> & { savedRequestId?: string }) => {
@@ -212,18 +316,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (!newTab.savedRequestId && data?.id && data.id !== newTab.id) {
        newTab.savedRequestId = data.id;
     }
-    setTabs(prev => [...prev, newTab]);
+    updateCurrentTabs(prev => [...prev, newTab]);
     setActiveTabId(newTab.id);
   };
 
   const closeTab = (id: string) => {
-    setTabs(prev => {
+    let closedIdWasActive = false;
+    let newTabsToSet: TabData[] = [];
+    
+    updateCurrentTabs(prev => {
       const newTabs = prev.filter(t => t.id !== id);
-      if (activeTabId === id) {
-        setActiveTabId(newTabs[newTabs.length - 1]?.id || null);
-      }
+      closedIdWasActive = activeTabId === id;
+      
       if (newTabs.length === 0) {
-        // Create an empty tab if all are closed
         const emptyTab: TabData = {
           id: crypto.randomUUID(),
           name: 'Untitled Request',
@@ -233,34 +338,42 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           body: '',
           response: null
         };
-        setActiveTabId(emptyTab.id);
+        newTabsToSet = [emptyTab];
         return [emptyTab];
       }
+      newTabsToSet = newTabs;
       return newTabs;
     });
+
+    if (closedIdWasActive && newTabsToSet.length > 0) {
+      setActiveTabId(newTabsToSet[newTabsToSet.length - 1].id);
+    }
   };
 
   const addCollection = (name: string) => {
-    const newCollection: Collection = {
-      id: crypto.randomUUID(),
-      name,
-      items: []
-    };
-    setCollections(prev => [...prev, newCollection]);
+    const newCollection: Collection = { id: crypto.randomUUID(), name, items: [] };
+    updateWorkspaces(prev => prev.map(w => w.id === activeWorkspaceId ? { ...w, collections: [...w.collections, newCollection] } : w));
+  };
+
+  const deleteCollection = (id: string) => {
+    updateWorkspaces(prev => prev.map(w => 
+      w.id === activeWorkspaceId ? { ...w, collections: w.collections.filter(c => c.id !== id) } : w
+    ));
   };
 
   const addFolder = (collectionId: string, parentFolderId: string | null, name: string) => {
     const newFolder: Folder = { type: 'folder', id: crypto.randomUUID(), name, items: [] };
     
-    setCollections(prev => {
-      return prev.map(col => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id !== activeWorkspaceId) return w;
+      
+      const updatedCollections = w.collections.map(col => {
         if (col.id !== collectionId) return col;
         
         if (!parentFolderId) {
           return { ...col, items: [...col.items, newFolder] };
         }
         
-        // Deep nested folder logic (we'll keep it simple for now and just append to root collection or implement a recursive finder)
         const recursivelyAddFolder = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
           return items.map(item => {
             if (item.type === 'folder') {
@@ -275,12 +388,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         
         return { ...col, items: recursivelyAddFolder(col.items) };
       });
-    });
+      return { ...w, collections: updatedCollections };
+    }));
   };
 
   const saveRequest = (collectionId: string, folderId: string | null, request: SavedRequest) => {
-    setCollections(prev => {
-      // Step 1: Remove the request if it already exists anywhere in the tree
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id !== activeWorkspaceId) return w;
+      
       const removeRequest = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
         return items.filter(item => {
           if (item.type === 'request' && item.id === request.id) return false;
@@ -291,10 +406,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         });
       };
       
-      let newCollections = prev.map(col => ({ ...col, items: removeRequest(col.items) }));
+      let newCollections = w.collections.map(col => ({ ...col, items: removeRequest(col.items) }));
 
-      // Step 2: Add the request to the target collection/folder
-      return newCollections.map(col => {
+      newCollections = newCollections.map(col => {
         if (col.id !== collectionId) return col;
         
         if (!folderId) {
@@ -315,7 +429,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         
         return { ...col, items: recursivelyAddRequest(col.items) };
       });
-    });
+
+      return { ...w, collections: newCollections };
+    }));
   };
 
   const createBlankRequestInFolder = (collectionId: string, folderId: string | null) => {
@@ -336,18 +452,27 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   return (
     <WorkspaceContext.Provider
       value={{
-        tabs,
+        workspaces,
+        activeWorkspaceId,
+        createWorkspace,
+        switchWorkspace,
+        
+        tabs: currentTabs,
         activeTabId,
         activeTab,
         collections,
+        
         setActiveTabId,
         addTab,
         closeTab,
         updateActiveTab,
+        
         addCollection,
+        deleteCollection,
         addFolder,
         saveRequest,
         createBlankRequestInFolder,
+        
         sendRequest,
         isMutating,
         error,

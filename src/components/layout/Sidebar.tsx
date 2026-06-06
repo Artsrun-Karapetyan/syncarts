@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Settings2 } from 'lucide-react';
+import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Settings2, Trash2, Briefcase } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 
 import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/WorkspaceContext';
 import { useStoredUser } from '../../lib/session';
+import { Select } from '../ui/Select';
+import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface CtxMenuState {
   x: number;
@@ -130,7 +132,10 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
 }
 
 export function Sidebar() {
-  const { collections, addCollection, addFolder, createBlankRequestInFolder } = useWorkspace();
+  const { 
+    workspaces, activeWorkspaceId, switchWorkspace, createWorkspace,
+    collections, addCollection, deleteCollection, addFolder, createBlankRequestInFolder 
+  } = useWorkspace();
   const user = useStoredUser();
   const [isAdding, setIsAdding] = useState(false);
   const [newColName, setNewColName] = useState('');
@@ -138,6 +143,9 @@ export function Sidebar() {
   const [expandedCollections, setExpandedCollections] = useState<Record<string, boolean>>({});
   const [newFolderName, setNewFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -282,6 +290,58 @@ export function Sidebar() {
         <Settings2 size={13} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
       </Link>
 
+      {/* Workspace Selector */}
+      <div style={{ position: 'relative', marginTop: 4, marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Workspace</div>
+        
+        {isCreatingWorkspace ? (
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              autoFocus
+              className="input"
+              style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+              placeholder="Workspace Name"
+              value={newWorkspaceName}
+              onChange={(e) => setNewWorkspaceName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
+                  setIsCreatingWorkspace(false);
+                  setNewWorkspaceName('');
+                }
+                if (e.key === 'Escape') {
+                  setIsCreatingWorkspace(false);
+                  setNewWorkspaceName('');
+                }
+              }}
+              onBlur={() => {
+                setTimeout(() => {
+                  if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
+                  setIsCreatingWorkspace(false);
+                  setNewWorkspaceName('');
+                }, 100);
+              }}
+            />
+          </div>
+        ) : (
+          <Select
+            value={activeWorkspaceId}
+            onChange={(val) => {
+              if (val === 'new') {
+                setIsCreatingWorkspace(true);
+                setNewWorkspaceName('');
+              } else {
+                switchWorkspace(val);
+              }
+            }}
+            options={[
+              ...workspaces.map(w => ({ label: w.name, value: w.id })),
+              { label: '+ Create Workspace', value: 'new' }
+            ]}
+          />
+        )}
+      </div>
+
       {/* Collections */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, overflow: 'auto', minHeight: 0, paddingRight: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -392,6 +452,30 @@ export function Sidebar() {
               >
                 {countItems(col.items)}
               </span>
+              <div
+                style={{
+                  opacity: 0,
+                  width: 22,
+                  height: 22,
+                  borderRadius: 5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--status-delete)',
+                  transition: 'all var(--transition-fast)',
+                  flexShrink: 0,
+                  marginRight: 4,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteTarget({ id: col.id });
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--status-delete-bg)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
+                title="Delete Collection"
+              >
+                <Trash2 size={13} />
+              </div>
               <div
                 style={{
                   opacity: 0,
@@ -569,10 +653,75 @@ export function Sidebar() {
               </span>
               <span style={{ fontWeight: 500 }}>New request</span>
             </button>
+
+            {!ctxMenu.folderId && (
+              <>
+                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+                <button
+                  type="button"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 12px',
+                    fontSize: 13,
+                    color: 'var(--status-delete)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    transition: 'background var(--transition-fast)',
+                    textAlign: 'left',
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDeleteTarget({ id: ctxMenu.collectionId });
+                    setCtxMenu(null);
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--status-delete-bg)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--status-delete)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Trash2 size={13} />
+                  </span>
+                  <span style={{ fontWeight: 500 }}>Delete collection</span>
+                </button>
+              </>
+            )}
           </div>,
           document.body
         )
       )}
+
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        title="Delete Collection"
+        message="Are you sure you want to delete this collection? All folders and requests inside it will be permanently lost. This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteCollection(deleteTarget.id);
+          }
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
