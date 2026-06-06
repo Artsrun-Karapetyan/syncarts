@@ -179,7 +179,25 @@ export function ResponseViewer() {
                 <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>
                   <JsonView 
                     value={parsedBody} 
-                    style={darkTheme} 
+                    style={{
+                      ...darkTheme,
+                      '--w-rjv-background-color': 'transparent',
+                      '--w-rjv-color': 'var(--text-primary)',
+                      '--w-rjv-key-string': 'var(--accent-primary)',
+                      '--w-rjv-key-number': 'var(--accent-primary)',
+                      '--w-rjv-colon-color': 'var(--text-tertiary)',
+                      '--w-rjv-type-string-color': 'var(--status-get)',
+                      '--w-rjv-type-int-color': 'var(--status-put)',
+                      '--w-rjv-type-float-color': 'var(--status-put)',
+                      '--w-rjv-type-boolean-color': 'var(--status-delete)',
+                      '--w-rjv-type-null-color': 'var(--text-tertiary)',
+                      '--w-rjv-line-color': 'var(--border-color)',
+                      '--w-rjv-arrow-color': 'var(--text-tertiary)',
+                      '--w-rjv-info-color': 'var(--text-tertiary)',
+                      '--w-rjv-edit-color': 'var(--accent-primary)',
+                      '--w-rjv-update-color': 'var(--accent-primary)',
+                      '--w-rjv-copied-color': 'var(--accent-primary)',
+                    } as React.CSSProperties}
                     displayDataTypes={false} 
                     displayObjectSize={false}
                     collapsed={1}

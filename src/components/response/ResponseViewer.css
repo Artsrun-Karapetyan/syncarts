@@ -49,3 +49,9 @@
 .token.punctuation { color: #64748B; }
 .token.operator    { color: #CBD5E1; }
 .token.keyword     { color: #C4B5FD; }
+
+/* Enlarge arrows in JSON View */
+.w-rjv svg {
+  transform: scale(1.4);
+  transform-origin: center;
+}
