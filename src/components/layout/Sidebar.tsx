@@ -64,7 +64,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
         >
           {item.method}
         </span>
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+        <span style={{ whiteSpace: 'nowrap', flex: 1 }}>
           {item.name}
         </span>
         <div
@@ -121,7 +121,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
       >
         {isOpen ? <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6 }} /> : <ChevronRight size={14} style={{ flexShrink: 0, opacity: 0.6 }} />}
         <Folder size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{item.name}</span>
+        <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{item.name}</span>
         <div
           style={{
             opacity: 0,
@@ -299,7 +299,7 @@ export function Sidebar() {
   return (
     <div
       style={{
-        width: 280,
+        width: 340,
         borderRight: '1px solid var(--border-color)',
         height: '100%',
         background: 'var(--bg-secondary)',
@@ -478,27 +478,28 @@ export function Sidebar() {
           </div>
         </div>
 
-        {isAdding && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-            <input
-              autoFocus
-              className="input"
-              style={{ fontSize: 13, flex: 1, padding: '6px 10px' }}
-              placeholder="Collection name"
-              value={newColName}
-              onChange={(e) => setNewColName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddCollection()}
-              onBlur={() => {
-                setTimeout(() => {
-                  if (newColName.trim()) handleAddCollection();
-                  else setIsAdding(false);
-                }, 100);
-              }}
-            />
-          </div>
-        )}
+        <div style={{ minWidth: 'max-content', paddingRight: 8, paddingBottom: 8 }}>
+          {isAdding && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+              <input
+                autoFocus
+                className="input"
+                style={{ fontSize: 13, flex: 1, padding: '6px 10px' }}
+                placeholder="Collection name"
+                value={newColName}
+                onChange={(e) => setNewColName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddCollection()}
+                onBlur={() => {
+                  setTimeout(() => {
+                    if (newColName.trim()) handleAddCollection();
+                    else setIsAdding(false);
+                  }, 100);
+                }}
+              />
+            </div>
+          )}
 
-        {collections.map(col => (
+          {collections.map(col => (
           <div key={col.id} style={{ display: 'flex', flexDirection: 'column', marginBottom: 8 }}>
             <div
               style={{
@@ -542,7 +543,7 @@ export function Sidebar() {
                 {expandedCollections[col.id] ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
               </button>
               <Folder size={13} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{col.name}</span>
+              <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{col.name}</span>
               {/* Item count badge */}
               <span
                 style={{
@@ -627,6 +628,7 @@ export function Sidebar() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Context Menu */}
