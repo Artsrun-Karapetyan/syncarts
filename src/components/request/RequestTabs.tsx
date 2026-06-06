@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { HeadersEditor } from './HeadersEditor';
 import { BodyEditor } from './BodyEditor';
 import { ParamsEditor } from './ParamsEditor';
+import { AuthEditor } from './AuthEditor';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 import './RequestTabs.css';
@@ -35,6 +36,9 @@ export function RequestTabs() {
   };
   const paramsCount = getParamsCount();
 
+  // Calculate auth state
+  const hasAuth = activeRequest?.headers.some(h => h.key.toLowerCase() === 'authorization' && h.value.startsWith('Bearer ')) ?? false;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {/* Tab Bar */}
@@ -64,6 +68,9 @@ export function RequestTabs() {
             {tab.id === 'params' && paramsCount > 0 && (
               <span className="tab-badge">{paramsCount}</span>
             )}
+            {tab.id === 'auth' && hasAuth && (
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-primary)', marginLeft: 6 }} />
+            )}
           </button>
         ))}
       </div>
@@ -73,11 +80,7 @@ export function RequestTabs() {
         {activeTab === 'headers' && <HeadersEditor />}
         {activeTab === 'body' && <BodyEditor />}
         {activeTab === 'params' && <ParamsEditor />}
-        {activeTab === 'auth' && (
-          <div style={{ color: 'var(--text-tertiary)', fontSize: 13, marginTop: 24, textAlign: 'center' }}>
-            Authentication — coming soon
-          </div>
-        )}
+        {activeTab === 'auth' && <AuthEditor />}
       </div>
     </div>
   );

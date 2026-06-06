@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useWorkspace, SavedRequest } from '../../contexts/WorkspaceContext';
+import { Select } from '../ui/Select';
 
 interface SaveDialogProps {
   onClose: () => void;
@@ -104,16 +105,12 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
           {collections.length === 0 ? (
             <div style={{ fontSize: 13, color: 'var(--status-delete)' }}>Please create a collection in the sidebar first.</div>
           ) : (
-            <select
-              className="input"
+            <Select
               style={{ width: '100%' }}
               value={selectedCollectionId}
-              onChange={(e) => setSelectedCollectionId(e.target.value)}
-            >
-              {collections.map((col) => (
-                <option key={col.id} value={col.id}>{col.name}</option>
-              ))}
-            </select>
+              onChange={setSelectedCollectionId}
+              options={collections.map(col => ({ value: col.id, label: col.name }))}
+            />
           )}
         </div>
       </div>
