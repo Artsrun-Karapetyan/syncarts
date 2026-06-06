@@ -17,6 +17,11 @@ This guide documents the architecture, commands, and decisions made during the d
 - **Routing Structure:** Uses TanStack router configured with `src/routes/index.tsx` acting as the main entry, rendering base Layout components.
 - **Layout Components (`src/components/layout/`):**
   - **`Sidebar.tsx`:** Left-side navigation handling request history and saved collections.
-  - **`Workspace.tsx`:** Main functional area divided into request configuration (top) and response viewing (bottom).
+  - **`Workspace.tsx`:** Main functional area containing the request/response layout.
+- **Request Components (`src/components/request/`):**
+  - **`UrlBar.tsx`**: URL input field.
+  - **`MethodSelector.tsx`**: Dropdown for HTTP methods (GET, POST, PUT, DELETE, PATCH).
+  - **`HeadersEditor.tsx`**: Dynamic key-value pair editor for HTTP headers.
+  - **`BodyEditor.tsx`**: Textarea for raw JSON body payload.
 
 *(This guide will be updated as new components and features are built).*
