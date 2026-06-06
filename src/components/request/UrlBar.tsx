@@ -1,14 +1,15 @@
-import { useRequest } from '../../contexts/RequestContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function UrlBar() {
-  const { url, setUrl } = useRequest();
+  const { activeTab, updateActiveTab } = useWorkspace();
 
   return (
     <input 
       className="input w-full font-mono bg-transparent border-transparent text-sm h-10 focus:border-transparent focus:shadow-none px-4" 
       placeholder="https://api.example.com/v1/users" 
-      value={url}
-      onChange={(e) => setUrl(e.target.value)}
+      value={activeTab?.url || ''}
+      onChange={(e) => updateActiveTab({ url: e.target.value })}
+      disabled={!activeTab}
     />
   );
 }

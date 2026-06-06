@@ -6,15 +6,15 @@ export const Route = createFileRoute('/')({
   component: Index,
 });
 
-import { RequestProvider } from '../contexts/RequestContext';
+import { WorkspaceProvider } from '../contexts/WorkspaceContext';
 
 function Index() {
   return (
-    <RequestProvider>
-      <div className="flex h-screen w-screen bg-primary">
+    <WorkspaceProvider>
+      <div className="flex h-screen w-screen bg-primary overflow-hidden">
         <Sidebar />
         <Workspace />
       </div>
-    </RequestProvider>
+    </WorkspaceProvider>
   );
 }

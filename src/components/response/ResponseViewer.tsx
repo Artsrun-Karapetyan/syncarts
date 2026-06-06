@@ -1,18 +1,34 @@
-import { useRequest } from '../../contexts/RequestContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function ResponseViewer() {
-  const { response, error, isMutating } = useRequest();
+  const { activeTab, error, isMutating } = useWorkspace();
+  const response = activeTab?.response;
+
+  const getStatusColor = (status: number) => {
+    if (status >= 200 && status < 300) return 'text-status-get';
+    if (status >= 300 && status < 400) return 'text-status-put';
+    if (status >= 400) return 'text-status-delete';
+    return 'text-primary';
+  };
+
+  const formatStatusText = (status: number, text: string) => {
+    const statusStr = status.toString();
+    if (text.startsWith(statusStr)) {
+      return text.substring(statusStr.length).trim();
+    }
+    return text;
+  };
 
   return (
-    <div className="glass-panel flex-1 p-6 flex flex-col overflow-auto rounded-lg">
-      <div className="flex items-center justify-between mb-4 shrink-0">
-        <span className="text-sm font-semibold text-secondary uppercase tracking-wider">Response</span>
+    <div className="glass-panel flex-1 p-4 flex flex-col overflow-auto rounded-lg">
+      <div className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-3 shrink-0 flex justify-between">
+        <span>Response</span>
         <div className="flex gap-4">
-          <span className="text-xs font-mono text-tertiary">
-            <span className="text-secondary">Status:</span> <span className={response?.status === 200 ? 'text-status-get' : 'text-status-delete'}>{response?.status || '---'}</span>
+          <span className="text-secondary">
+            Status: {response ? <span className={`font-bold ${getStatusColor(response.status)}`}>{response.status} {formatStatusText(response.status, response.status_text)}</span> : '---'}
           </span>
-          <span className="text-xs font-mono text-tertiary">
-            <span className="text-secondary">Time:</span> {response?.time_ms || '---'} ms
+          <span className="text-secondary">
+            Time: {response ? <span className="text-accent">{response.time_ms} ms</span> : '--- ms'}
           </span>
         </div>
       </div>
@@ -20,13 +36,13 @@ export function ResponseViewer() {
         {isMutating && <pre className="text-sm font-mono text-accent">Sending request...</pre>}
         {error && <pre className="text-sm font-mono text-status-delete">{String(error)}</pre>}
         {!isMutating && !error && response && (
-          <pre className="text-sm font-mono text-primary leading-relaxed">
+          <pre className="text-sm font-mono whitespace-pre-wrap text-primary leading-relaxed">
             {response.body}
           </pre>
-        )} 
+        )}
         {!isMutating && !error && !response && (
-          <div className="h-full flex items-center justify-center">
-            <span className="text-sm font-mono text-tertiary opacity-50">Awaiting request...</span>
+          <div className="h-full flex items-center justify-center text-sm font-mono text-tertiary">
+            Awaiting request...
           </div>
         )}
       </div>
