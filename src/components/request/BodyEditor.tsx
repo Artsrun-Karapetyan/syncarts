@@ -4,11 +4,21 @@ export function BodyEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
 
   return (
-    <div className="flex flex-col gap-3 mt-8 flex-1">
-      <div className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-1">Body (JSON)</div>
-      <textarea 
-        className="input w-full flex-1 font-mono text-sm resize-none p-4 leading-relaxed bg-primary rounded-md shadow-inner"
-        placeholder="{\n  &quot;key&quot;: &quot;value&quot;\n}"
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <textarea
+        className="input font-mono"
+        style={{
+          flex: 1,
+          minHeight: 200,
+          resize: 'none',
+          padding: 16,
+          fontSize: 13,
+          lineHeight: 1.7,
+          background: 'var(--bg-primary)',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--border-color)',
+        }}
+        placeholder={'{\n  "key": "value"\n}'}
         value={activeTab?.body || ''}
         onChange={(e) => updateActiveTab({ body: e.target.value })}
         disabled={!activeTab}

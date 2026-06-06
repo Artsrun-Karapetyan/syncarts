@@ -1,0 +1,35 @@
+/* ResponseLoadingState styles */
+
+.loading-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px;
+}
+
+.loading-state-spinner {
+  color: var(--accent-primary);
+}
+
+.loading-state-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.loading-state-skeleton {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.loading-state-skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+}

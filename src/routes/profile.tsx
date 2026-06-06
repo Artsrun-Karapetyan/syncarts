@@ -2,14 +2,14 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
 
 import { AppShell } from '../components/layout/AppShell';
-import { Workspace } from '../components/layout/Workspace';
+import { ProfileScreen } from '../components/profile/ProfileScreen';
 import { getAuthToken } from '../lib/auth';
 
-export const Route = createFileRoute('/')({
-  component: Index,
+export const Route = createFileRoute('/profile')({
+  component: ProfilePage,
 });
 
-function Index() {
+function ProfilePage() {
   const navigate = useNavigate();
   const token = getAuthToken();
 
@@ -25,7 +25,7 @@ function Index() {
 
   return (
     <AppShell>
-      <Workspace />
+      <ProfileScreen />
     </AppShell>
   );
 }

@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { createContext, ReactNode, useContext, useState, useEffect } from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
 import useSWRMutation from 'swr/mutation';
 
 export interface HeaderItem {

@@ -1,0 +1,51 @@
+/* ResponseViewer styles */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.status-pill.success  { background: var(--status-get-bg);    color: var(--status-get); }
+.status-pill.redirect { background: var(--status-put-bg);    color: var(--status-put); }
+.status-pill.error    { background: var(--status-delete-bg); color: var(--status-delete); }
+
+.response-header-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  transition: background 0.1s;
+}
+
+.response-header-row:hover {
+  background: var(--bg-glass);
+}
+
+.response-header-key {
+  font-weight: 600;
+  color: var(--accent-primary);
+  min-width: 180px;
+  flex-shrink: 0;
+}
+
+.response-header-value {
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+/* Prism.js Token Colors */
+.token.property    { color: #93C5FD; }
+.token.string      { color: #86EFAC; }
+.token.number      { color: #FCA5A5; }
+.token.boolean     { color: #C4B5FD; }
+.token.null        { color: #94A3B8; }
+.token.punctuation { color: #64748B; }
+.token.operator    { color: #CBD5E1; }
+.token.keyword     { color: #C4B5FD; }
