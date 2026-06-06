@@ -20,8 +20,13 @@ This guide documents the architecture, commands, and decisions made during the d
   - **`Workspace.tsx`:** Main functional area containing the request/response layout.
 - **Request Components (`src/components/request/`):**
   - **`UrlBar.tsx`**: URL input field.
-  - **`MethodSelector.tsx`**: Dropdown for HTTP methods (GET, POST, PUT, DELETE, PATCH).
+  - **`MethodSelector.tsx`**: Dropdown for HTTP methods.
   - **`HeadersEditor.tsx`**: Dynamic key-value pair editor for HTTP headers.
   - **`BodyEditor.tsx`**: Textarea for raw JSON body payload.
+
+## 4. State Management
+- **Global Request State (`src/contexts/RequestContext.tsx`):**
+  - Uses standard React Context (`createContext`, `useState`) to manage URL, Method, Headers, and Body.
+  - Uses `useSWRMutation` (from `swr`) to handle the execution of requests to the Rust backend (`invoke('make_request')`), providing automatic loading (`isMutating`) and error states to the UI.
 
 *(This guide will be updated as new components and features are built).*
