@@ -31,6 +31,8 @@ export function TopBar() {
     };
   }, [isEnvQuickLookOpen]);
 
+  const isMac = navigator.userAgent.includes('Mac');
+
   return (
     <div
       data-tauri-drag-region
@@ -43,7 +45,8 @@ export function TopBar() {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 24px',
-        paddingLeft: 80,
+        paddingLeft: isMac ? 80 : 24,
+
 
         flexShrink: 0,
       }}
