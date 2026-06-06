@@ -1,0 +1,22 @@
+.url-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  height: 38px;
+  padding: 0 16px;
+  outline: none;
+  transition: color var(--transition-fast);
+}
+
+.url-input:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.url-input::placeholder {
+  color: var(--text-tertiary);
+  opacity: 0.6;
+}

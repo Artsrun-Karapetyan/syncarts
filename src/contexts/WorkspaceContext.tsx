@@ -23,6 +23,7 @@ export interface TabData {
   headers: HeaderItem[];
   body: string;
   response: HttpResponse | null;
+  savedRequestId?: string;
 }
 
 export interface SavedRequest {
@@ -197,7 +198,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, ...data } : t));
   };
 
-  const addTab = (data?: Partial<TabData>) => {
+  const addTab = (data?: Partial<TabData> & { savedRequestId?: string }) => {
     const newTab: TabData = {
       id: crypto.randomUUID(),
       name: 'Untitled Request',
@@ -208,6 +209,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       response: null,
       ...data
     };
+    if (!newTab.savedRequestId && data?.id && data.id !== newTab.id) {
+       newTab.savedRequestId = data.id;
+    }
     setTabs(prev => [...prev, newTab]);
     setActiveTabId(newTab.id);
   };
@@ -276,7 +280,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const saveRequest = (collectionId: string, folderId: string | null, request: SavedRequest) => {
     setCollections(prev => {
-      return prev.map(col => {
+      // Step 1: Remove the request if it already exists anywhere in the tree
+      const removeRequest = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
+        return items.filter(item => {
+          if (item.type === 'request' && item.id === request.id) return false;
+          return true;
+        }).map(item => {
+          if (item.type === 'folder') return { ...item, items: removeRequest(item.items) };
+          return item;
+        });
+      };
+      
+      let newCollections = prev.map(col => ({ ...col, items: removeRequest(col.items) }));
+
+      // Step 2: Add the request to the target collection/folder
+      return newCollections.map(col => {
         if (col.id !== collectionId) return col;
         
         if (!folderId) {
@@ -301,9 +319,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   };
 
   const createBlankRequestInFolder = (collectionId: string, folderId: string | null) => {
+    const newReqId = crypto.randomUUID();
     const newReq: SavedRequest = {
       type: 'request',
-      id: crypto.randomUUID(),
+      id: newReqId,
       name: 'New Request',
       method: 'GET',
       url: '',
@@ -311,7 +330,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       body: ''
     };
     saveRequest(collectionId, folderId, newReq);
-    addTab({ ...newReq, id: crypto.randomUUID(), response: null });
+    addTab({ ...newReq, id: crypto.randomUUID(), savedRequestId: newReqId, response: null });
   };
 
   return (

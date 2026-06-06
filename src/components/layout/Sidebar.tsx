@@ -95,6 +95,28 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
         {isOpen ? <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6 }} /> : <ChevronRight size={14} style={{ flexShrink: 0, opacity: 0.6 }} />}
         <Folder size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{item.name}</span>
+        <div
+          style={{
+            opacity: 0,
+            width: 22,
+            height: 22,
+            borderRadius: 5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-tertiary)',
+            transition: 'all var(--transition-fast)',
+            flexShrink: 0,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onContextMenu(e, item.id);
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
+        >
+          <MoreHorizontal size={13} />
+        </div>
       </div>
       {isOpen && (
         <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 20, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>

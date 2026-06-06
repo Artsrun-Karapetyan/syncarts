@@ -10,9 +10,9 @@ type AppShellProps = {
 export function AppShell({ children }: AppShellProps) {
   return (
     <WorkspaceProvider>
-      <div className="flex h-screen w-screen bg-primary overflow-hidden">
+      <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--bg-primary)', overflow: 'hidden' }}>
         <Sidebar />
-        <div className="flex-1 min-w-0 h-full overflow-hidden">
+        <div style={{ flex: 1, minWidth: 0, height: '100%', overflow: 'hidden' }}>
           {children}
         </div>
       </div>

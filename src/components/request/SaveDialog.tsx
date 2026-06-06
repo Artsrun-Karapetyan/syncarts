@@ -41,9 +41,11 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
 
     const finalName = requestName.trim() || 'Untitled Request';
 
+    const reqId = activeTab.savedRequestId || crypto.randomUUID();
+
     const req: SavedRequest = {
       type: 'request',
-      id: crypto.randomUUID(),
+      id: reqId,
       name: finalName,
       method: activeTab.method,
       url: activeTab.url,
@@ -52,7 +54,7 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
     };
 
     saveRequest(selectedCollectionId, null, req);
-    updateActiveTab({ name: finalName });
+    updateActiveTab({ name: finalName, savedRequestId: reqId });
     onClose();
   };
 
