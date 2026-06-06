@@ -5,17 +5,17 @@ import { BodyEditor } from '../request/BodyEditor';
 import { ResponseViewer } from '../response/ResponseViewer';
 import { RequestProvider, useRequest } from '../../contexts/RequestContext';
 
-function WorkspaceContent() {
+export function Workspace() {
   const { sendRequest, isMutating } = useRequest();
 
   return (
-    <div className="flex-1 p-4 flex flex-col gap-4 h-full overflow-hidden">
+    <div className="flex-1 p-6 flex flex-col gap-6 h-full overflow-hidden">
       {/* Top Request Bar */}
-      <div className="glass-panel p-4 flex gap-2 shrink-0">
+      <div className="glass-panel p-2 flex gap-2 shrink-0 items-center rounded-full relative z-10">
         <MethodSelector />
         <UrlBar />
         <button 
-          className="btn btn-primary px-6"
+          className="btn btn-primary px-6 rounded-full h-10 text-sm font-bold uppercase tracking-wider"
           onClick={sendRequest}
           disabled={isMutating}
         >
@@ -23,24 +23,18 @@ function WorkspaceContent() {
         </button>
       </div>
       
-      <div className="flex-1 flex gap-4 min-h-0">
+      <div className="flex-1 flex gap-6 min-h-0">
         {/* Configuration Area */}
-        <div className="glass-panel p-4 flex-1 flex flex-col overflow-auto">
+        <div className="glass-panel p-6 flex-1 flex flex-col overflow-auto rounded-lg">
           <HeadersEditor />
           <BodyEditor />
         </div>
         
         {/* Response Area */}
-        <ResponseViewer />
+        <div className="flex-1 flex flex-col">
+           <ResponseViewer />
+        </div>
       </div>
     </div>
-  );
-}
-
-export function Workspace() {
-  return (
-    <RequestProvider>
-      <WorkspaceContent />
-    </RequestProvider>
   );
 }
