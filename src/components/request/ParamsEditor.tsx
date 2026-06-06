@@ -1,35 +1,44 @@
+import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function ParamsEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
+  const [params, setParams] = useState<{key: string, value: string}[]>([{ key: '', value: '' }]);
 
-  // Parse current URL to get params
-  const getParams = () => {
-    if (!activeTab?.url) return [{ key: '', value: '' }];
-    try {
-      const [, queryString] = activeTab.url.split('?');
-      if (!queryString) return [{ key: '', value: '' }];
-      
-      const pairs = queryString.split('&');
-      const params = pairs.map(pair => {
-        const [k, v] = pair.split('=');
-        return { 
-          key: decodeURIComponent(k || ''), 
-          value: decodeURIComponent(v || '') 
-        };
+  // Sync from URL to local state
+  useEffect(() => {
+    if (!activeTab) return;
+    
+    const [, queryString] = (activeTab.url || '').split('?');
+    if (!queryString) {
+      setParams(prev => {
+        // Only wipe if there are valid params that shouldn't exist anymore
+        if (prev.some(p => p.key || p.value)) return [{ key: '', value: '' }];
+        return prev.length ? prev : [{ key: '', value: '' }];
       });
-      
-      if (params.length === 0) return [{ key: '', value: '' }];
-      return params;
-    } catch {
-      return [{ key: '', value: '' }];
+      return;
     }
-  };
 
-  const params = getParams();
+    const parsed = queryString.split('&').map(pair => {
+      const [k, v] = pair.split('=');
+      return { key: decodeURIComponent(k || ''), value: decodeURIComponent(v || '') };
+    });
 
+    setParams(prev => {
+      // Keep any trailing empty rows the user added
+      const trailingEmptyCount = prev.slice().reverse().findIndex(p => p.key || p.value);
+      const emptyCount = trailingEmptyCount === -1 ? prev.length : trailingEmptyCount;
+      const emptyRows = Array(emptyCount).fill({ key: '', value: '' });
+      
+      const newParams = [...parsed, ...emptyRows];
+      return newParams.length ? newParams : [{ key: '', value: '' }];
+    });
+  }, [activeTab?.url]);
+
+  // Sync from local state to URL
   const syncUrl = (newParams: { key: string; value: string }[]) => {
+    setParams(newParams); // Optimistic UI update
     if (!activeTab) return;
     
     const baseUrl = activeTab.url.split('?')[0] || '';
@@ -54,11 +63,12 @@ export function ParamsEditor() {
   };
 
   const addParam = () => {
-    syncUrl([...params, { key: '', value: '' }]);
+    setParams(prev => [...prev, { key: '', value: '' }]);
   };
 
   const removeParam = (index: number) => {
     const newParams = params.filter((_, i) => i !== index);
+    if (newParams.length === 0) newParams.push({ key: '', value: '' });
     syncUrl(newParams);
   };
 
