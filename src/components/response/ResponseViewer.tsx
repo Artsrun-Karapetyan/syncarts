@@ -124,11 +124,11 @@ export function ResponseViewer() {
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
         {isMutating && <ResponseLoadingState />}
 
-        {!isMutating && error && (
+        {!isMutating && !!error && (
           <div style={{ padding: 24 }}>
-            <pre className="font-mono" style={{ fontSize: 13, color: 'var(--status-delete)', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+            <div style={{ color: 'var(--status-delete)', background: 'rgba(239, 68, 68, 0.1)', padding: 16, borderRadius: 8, fontSize: 13, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
               {String(error)}
-            </pre>
+            </div>
           </div>
         )}
 

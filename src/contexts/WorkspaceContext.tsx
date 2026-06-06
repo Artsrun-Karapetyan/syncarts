@@ -381,7 +381,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const activeVars = activeEnvironment.variables.filter(v => v.enabled && v.key);
     
     for (const v of activeVars) {
-      result = result.replaceAll(`{{${v.key}}}`, v.value);
+      result = result.split(`{{${v.key}}}`).join(v.value);
     }
     return result;
   };

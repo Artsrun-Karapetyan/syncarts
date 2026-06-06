@@ -199,7 +199,7 @@ export function UrlBar() {
               <button 
                 className="btn" 
                 style={{ width: '100%', justifyContent: 'center' }}
-                onClick={(e) => {
+                onClick={() => {
                   const input = document.getElementById('new-env-var-input') as HTMLInputElement;
                   handleAddVar(hoveredVar.name, input?.value || '');
                 }}

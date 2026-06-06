@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Trash2, CheckSquare, Square } from 'lucide-react';
-import { useWorkspace, Environment, EnvironmentVariable } from '../../contexts/WorkspaceContext';
+import { useWorkspace, EnvironmentVariable } from '../../contexts/WorkspaceContext';
 
 interface Props {
   isOpen: boolean;
