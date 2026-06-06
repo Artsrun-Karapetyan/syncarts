@@ -1,16 +1,28 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useWorkspace, SavedRequest } from '../../contexts/WorkspaceContext';
 
 interface SaveDialogProps {
   onClose: () => void;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-export function SaveDialog({ onClose }: SaveDialogProps) {
+export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
   const { activeTab, collections, saveRequest, updateActiveTab } = useWorkspace();
   const [requestName, setRequestName] = useState(activeTab?.name === 'Untitled Request' ? '' : activeTab?.name || '');
   const [selectedCollectionId, setSelectedCollectionId] = useState(collections[0]?.id || '');
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+
+  useLayoutEffect(() => {
+    if (!anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    setPos({
+      top: rect.bottom + 10,
+      right: window.innerWidth - rect.right,
+    });
+  }, [anchorRef]);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -44,43 +56,55 @@ export function SaveDialog({ onClose }: SaveDialogProps) {
     onClose();
   };
 
-  return (
+  return createPortal(
     <div
       ref={panelRef}
-      className="glass-panel absolute z-40"
+      className="glass-panel animate-fade-in"
       style={{
-        top: 'calc(100% + 14px)',
-        right: 122,
+        position: 'fixed',
+        zIndex: 100,
+        top: pos.top,
+        right: pos.right,
         width: 420,
-        padding: '22px',
+        padding: 22,
         background: 'rgba(12, 12, 12, 0.98)',
+        backdropFilter: 'blur(20px)',
         boxShadow: '0 24px 60px rgba(0, 0, 0, 0.55)',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--border-highlight)',
       }}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      <h2 className="text-xl font-bold text-primary tracking-tight" style={{ marginBottom: 18 }}>
+      <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 18, letterSpacing: '-0.02em' }}>
         Save Request
       </h2>
 
-      <div className="flex flex-col gap-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label className="text-xs font-semibold text-tertiary uppercase tracking-wider block mb-2">Request name</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>
+            Request name
+          </label>
           <input
             autoFocus
-            className="input w-full"
+            className="input"
+            style={{ width: '100%' }}
             placeholder="e.g. Get All Users"
             value={requestName}
             onChange={(e) => setRequestName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
           />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-tertiary uppercase tracking-wider block mb-2">Save to collection</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>
+            Save to collection
+          </label>
           {collections.length === 0 ? (
-            <div className="text-sm text-status-delete">Please create a collection in the sidebar first.</div>
+            <div style={{ fontSize: 13, color: 'var(--status-delete)' }}>Please create a collection in the sidebar first.</div>
           ) : (
             <select
-              className="input w-full"
+              className="input"
+              style={{ width: '100%' }}
               value={selectedCollectionId}
               onChange={(e) => setSelectedCollectionId(e.target.value)}
             >
@@ -92,16 +116,24 @@ export function SaveDialog({ onClose }: SaveDialogProps) {
         </div>
       </div>
 
-      <div className="flex gap-3 justify-end" style={{ marginTop: 22 }}>
-        <button className="btn bg-transparent border-transparent" onClick={onClose}>Cancel</button>
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
         <button
-          className="btn btn-primary px-6"
+          className="btn"
+          style={{ background: 'transparent', border: 'none' }}
+          onClick={onClose}
+        >
+          Cancel
+        </button>
+        <button
+          className="btn btn-primary"
+          style={{ padding: '0.6rem 1.5rem' }}
           onClick={handleSave}
           disabled={!selectedCollectionId}
         >
           Save
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

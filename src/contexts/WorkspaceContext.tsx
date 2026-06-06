@@ -307,10 +307,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       name: 'New Request',
       method: 'GET',
       url: '',
-      headers: [],
+      headers: [{ key: '', value: '' }],
       body: ''
     };
     saveRequest(collectionId, folderId, newReq);
+    addTab({ ...newReq, id: crypto.randomUUID(), response: null });
   };
 
   return (

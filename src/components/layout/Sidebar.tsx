@@ -114,6 +114,8 @@ export function Sidebar() {
   const [newColName, setNewColName] = useState('');
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
   const [expandedCollections, setExpandedCollections] = useState<Record<string, boolean>>({});
+  const [newFolderName, setNewFolderName] = useState('');
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -161,12 +163,16 @@ export function Sidebar() {
   };
 
   const handleCreateFolder = () => {
-    if (!ctxMenu) return;
-    const name = window.prompt('Enter folder name:');
-    if (name?.trim()) {
-      addFolder(ctxMenu.collectionId, ctxMenu.folderId, name);
-      setCtxMenu(null);
-    }
+    setIsCreatingFolder(true);
+    setNewFolderName('');
+  };
+
+  const handleFolderSubmit = () => {
+    if (!ctxMenu || !newFolderName.trim()) return;
+    addFolder(ctxMenu.collectionId, ctxMenu.folderId, newFolderName.trim());
+    setNewFolderName('');
+    setIsCreatingFolder(false);
+    setCtxMenu(null);
   };
 
   const handleCreateRequest = () => {
@@ -451,7 +457,7 @@ export function Sidebar() {
                 transition: 'background var(--transition-fast)',
                 textAlign: 'left',
               }}
-              onPointerDown={(e) => {
+              onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 handleCreateFolder();
@@ -477,6 +483,28 @@ export function Sidebar() {
               </span>
               <span style={{ fontWeight: 500 }}>New folder</span>
             </button>
+            {isCreatingFolder && (
+              <div style={{ padding: '6px 12px' }}>
+                <input
+                  autoFocus
+                  className="input"
+                  style={{ width: '100%', fontSize: 13, padding: '6px 10px' }}
+                  placeholder="Folder name"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleFolderSubmit();
+                    if (e.key === 'Escape') { setIsCreatingFolder(false); setCtxMenu(null); }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => {
+                      if (newFolderName.trim()) handleFolderSubmit();
+                      else { setIsCreatingFolder(false); setCtxMenu(null); }
+                    }, 100);
+                  }}
+                />
+              </div>
+            )}
             <button
               type="button"
               style={{
@@ -493,7 +521,7 @@ export function Sidebar() {
                 transition: 'background var(--transition-fast)',
                 textAlign: 'left',
               }}
-              onPointerDown={(e) => {
+              onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 handleCreateRequest();

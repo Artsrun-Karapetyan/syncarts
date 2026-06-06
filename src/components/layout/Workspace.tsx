@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 
 import { MethodSelector } from '../request/MethodSelector';
@@ -12,6 +12,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 export function Workspace() {
   const { sendRequest, isMutating } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const saveBtnRef = useRef<HTMLButtonElement>(null);
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -33,6 +34,7 @@ export function Workspace() {
           <MethodSelector />
           <UrlBar />
           <button
+            ref={saveBtnRef}
             className="btn"
             style={{
               fontSize: 13,
@@ -90,7 +92,7 @@ export function Workspace() {
           </button>
         </div>
 
-        {showSaveDialog && <SaveDialog onClose={() => setShowSaveDialog(false)} />}
+        {showSaveDialog && <SaveDialog onClose={() => setShowSaveDialog(false)} anchorRef={saveBtnRef} />}
       </div>
 
       {/* Main Content — Request + Response */}
