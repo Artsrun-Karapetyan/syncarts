@@ -13,9 +13,10 @@ interface SelectProps {
   disabled?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  variant?: 'default' | 'ghost' | 'pill';
 }
 
-export function Select({ value, options, onChange, disabled, className = '', style }: SelectProps) {
+export function Select({ value, options, onChange, disabled, className = '', style, variant = 'default' }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +40,7 @@ export function Select({ value, options, onChange, disabled, className = '', sty
     >
       <button
         type="button"
-        className="input"
+        className={variant === 'default' ? 'input' : ''}
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         style={{
@@ -49,12 +50,29 @@ export function Select({ value, options, onChange, disabled, className = '', sty
           justifyContent: 'space-between',
           cursor: disabled ? 'not-allowed' : 'pointer',
           textAlign: 'left',
-          background: isOpen ? 'rgba(0, 0, 0, 0.6)' : undefined,
-          borderColor: isOpen ? 'var(--border-highlight)' : undefined,
+          background: variant === 'ghost' ? (isOpen ? 'var(--bg-tertiary)' : 'transparent') : variant === 'pill' ? 'var(--bg-primary)' : (isOpen ? 'rgba(0, 0, 0, 0.6)' : undefined),
+          border: variant === 'ghost' ? 'none' : variant === 'pill' ? `1px solid ${isOpen ? 'var(--border-highlight)' : 'var(--border-color)'}` : undefined,
+          borderColor: variant === 'ghost' ? 'transparent' : variant === 'pill' ? (isOpen ? 'var(--border-highlight)' : 'var(--border-color)') : (isOpen ? 'var(--border-highlight)' : undefined),
+          padding: variant === 'ghost' ? '6px 12px' : variant === 'pill' ? '0 16px' : undefined,
+          height: variant === 'pill' ? 46 : undefined,
+          borderRadius: variant === 'ghost' ? '8px' : variant === 'pill' ? '9999px' : undefined,
+          fontSize: variant === 'ghost' ? '14px' : variant === 'pill' ? '13px' : undefined,
+          fontWeight: variant === 'ghost' ? 600 : variant === 'pill' ? 600 : undefined,
+          color: 'var(--text-primary)',
+          outline: 'none',
+          transition: 'all var(--transition-fast)',
+        }}
+        onMouseEnter={(e) => {
+          if (variant === 'ghost' && !isOpen) e.currentTarget.style.background = 'var(--bg-tertiary)';
+          if (variant === 'pill') e.currentTarget.style.borderColor = 'var(--border-highlight)';
+        }}
+        onMouseLeave={(e) => {
+          if (variant === 'ghost' && !isOpen) e.currentTarget.style.background = 'transparent';
+          if (variant === 'pill' && !isOpen) e.currentTarget.style.borderColor = 'var(--border-color)';
         }}
       >
         <span>{selectedOption?.label}</span>
-        <ChevronDown size={14} style={{ opacity: 0.6, transition: 'transform var(--transition-fast)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+        <ChevronDown size={variant === 'pill' ? 14 : 16} style={{ opacity: 0.6, transition: 'transform var(--transition-fast)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
       </button>
 
       {isOpen && (

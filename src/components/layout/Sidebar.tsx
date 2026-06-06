@@ -324,6 +324,8 @@ export function Sidebar() {
               onChange={handleImportFile} 
             />
             <div
+              className="tooltip-trigger"
+              data-tooltip="Import Postman Collection"
               style={{
                 width: 26,
                 height: 26,
@@ -336,7 +338,6 @@ export function Sidebar() {
                 transition: 'all var(--transition-fast)',
               }}
               onClick={() => fileInputRef.current?.click()}
-              title="Import Postman Collection"
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'var(--bg-tertiary)';
                 e.currentTarget.style.color = 'var(--text-primary)';
@@ -349,6 +350,8 @@ export function Sidebar() {
               <Upload size={14} />
             </div>
             <div
+              className="tooltip-trigger"
+              data-tooltip="New Collection"
               style={{
                 width: 26,
                 height: 26,
@@ -360,8 +363,10 @@ export function Sidebar() {
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
               }}
-              onClick={() => setIsAdding(!isAdding)}
-              title="New Collection"
+              onClick={() => {
+                setNewColName('');
+                setIsAdding(true);
+              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'var(--bg-tertiary)';
                 e.currentTarget.style.color = 'var(--text-primary)';

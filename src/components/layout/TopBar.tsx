@@ -32,35 +32,9 @@ export function TopBar() {
           Workspace
         </div>
         <div style={{ width: 260 }}>
-          {isCreatingWorkspace ? (
-            <input
-              autoFocus
-              className="input"
-              style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
-              placeholder="Workspace Name"
-              value={newWorkspaceName}
-              onChange={(e) => setNewWorkspaceName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
-                  setIsCreatingWorkspace(false);
-                  setNewWorkspaceName('');
-                }
-                if (e.key === 'Escape') {
-                  setIsCreatingWorkspace(false);
-                  setNewWorkspaceName('');
-                }
-              }}
-              onBlur={() => {
-                setTimeout(() => {
-                  if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
-                  setIsCreatingWorkspace(false);
-                  setNewWorkspaceName('');
-                }, 100);
-              }}
-            />
-          ) : (
+          <div style={{ position: 'relative' }}>
             <Select
+              variant="pill"
               value={activeWorkspaceId}
               onChange={(val) => {
                 if (val === 'new') {
@@ -75,7 +49,68 @@ export function TopBar() {
                 { label: '+ Create Workspace', value: 'new' },
               ]}
             />
-          )}
+            {isCreatingWorkspace && (
+              <div
+                className="glass-panel"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: 0,
+                  width: 320,
+                  padding: 16,
+                  zIndex: 100,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  boxShadow: 'var(--shadow-lg)',
+                }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Create New Workspace</div>
+                <input
+                  autoFocus
+                  className="input"
+                  style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+                  placeholder="Workspace Name"
+                  value={newWorkspaceName}
+                  onChange={(e) => setNewWorkspaceName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
+                      setIsCreatingWorkspace(false);
+                      setNewWorkspaceName('');
+                    }
+                    if (e.key === 'Escape') {
+                      setIsCreatingWorkspace(false);
+                      setNewWorkspaceName('');
+                    }
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                  <button
+                    className="btn"
+                    style={{ padding: '6px 12px', fontSize: 12 }}
+                    onClick={() => {
+                      setIsCreatingWorkspace(false);
+                      setNewWorkspaceName('');
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    style={{ padding: '6px 12px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
+                    onClick={() => {
+                      if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
+                      setIsCreatingWorkspace(false);
+                      setNewWorkspaceName('');
+                    }}
+                  >
+                    Create
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

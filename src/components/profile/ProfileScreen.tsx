@@ -66,7 +66,7 @@ export function ProfileScreen() {
   const initial = (user?.name?.trim()?.[0] ?? user?.email?.[0] ?? 'A').toUpperCase();
 
   return (
-    <div className="flex-1 min-w-0 overflow-auto" style={{ padding: '24px 24px 32px' }}>
+    <div style={{ flex: 1, minWidth: 0, overflow: 'auto', padding: '24px 24px 32px' }}>
       <div style={{ maxWidth: 1040, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div
           className="glass-panel"
@@ -79,8 +79,8 @@ export function ProfileScreen() {
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div className="text-xs uppercase tracking-wider text-tertiary">Settings</div>
-            <h1 className="text-xl font-bold text-primary">Account</h1>
+            <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)', fontWeight: 600 }}>Settings</div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>Account</h1>
           </div>
           <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
             <button className="btn" type="button" onClick={() => void navigate({ to: '/' })}>
@@ -113,49 +113,61 @@ export function ProfileScreen() {
             padding: '28px 28px 30px',
           }}
         >
-          <div className="flex items-center gap-4" style={{ paddingBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, paddingBottom: 4 }}>
             <div
-              className="flex items-center justify-center rounded-full text-lg font-bold text-primary shrink-0"
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                fontSize: 20,
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                flexShrink: 0,
                 width: 58,
                 height: 58,
                 background: 'linear-gradient(180deg, rgba(99, 102, 241, 0.28), rgba(99, 102, 241, 0.12))',
+                border: '2px solid rgba(99, 102, 241, 0.2)',
               }}
             >
               {initial}
             </div>
-            <div className="min-w-0">
-              <div className="text-base font-semibold text-primary truncate">
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {user?.name?.trim() || 'Unnamed user'}
               </div>
-              <div className="text-sm text-secondary truncate">{user?.email ?? '-'}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 4 }}>
+                {user?.email ?? '-'}
+              </div>
             </div>
           </div>
 
-          <form className="flex flex-col" onSubmit={handleSubmit} style={{ gap: 18 }}>
-            <label className="flex flex-col" style={{ gap: 8 }}>
-              <span className="text-xs uppercase tracking-wider text-tertiary">Display name</span>
+          <form style={{ display: 'flex', flexDirection: 'column', gap: 20 }} onSubmit={handleSubmit}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)', fontWeight: 600 }}>Display name</span>
               <input
-                className="input text-sm"
+                className="input"
+                style={{ fontSize: 14 }}
                 placeholder="Your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </label>
 
-            <label className="flex flex-col" style={{ gap: 8 }}>
-              <span className="text-xs uppercase tracking-wider text-tertiary">Email</span>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)', fontWeight: 600 }}>Email</span>
               <input
-                className="input text-sm"
+                className="input"
+                style={{ fontSize: 14, opacity: 0.7, cursor: 'not-allowed' }}
                 value={user?.email ?? ''}
                 disabled
               />
             </label>
 
-            {error ? <div className="text-sm text-status-delete">{error}</div> : null}
+            {error ? <div style={{ fontSize: 14, color: 'var(--status-delete)' }}>{error}</div> : null}
 
-            <div className="flex gap-3" style={{ paddingTop: 4 }}>
-              <button className="btn btn-primary h-12" type="submit" disabled={busy}>
+            <div style={{ display: 'flex', gap: 12, paddingTop: 8 }}>
+              <button className="btn btn-primary" style={{ height: 44, padding: '0 24px', borderRadius: 8 }} type="submit" disabled={busy}>
                 {busy ? 'Saving...' : 'Save changes'}
               </button>
             </div>

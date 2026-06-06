@@ -54,15 +54,20 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
   return (
     <main
-      className="flex items-center justify-center w-screen h-screen overflow-hidden"
       style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
         background:
           'radial-gradient(circle at top left, rgba(99, 102, 241, 0.2), transparent 32%), radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.14), transparent 30%), var(--bg-primary)',
       }}
     >
       <div
-        className="absolute"
         style={{
+          position: 'absolute',
           inset: 'auto auto 10% 8%',
           width: 260,
           height: 260,
@@ -72,8 +77,8 @@ export function AuthScreen({ mode }: AuthScreenProps) {
         }}
       />
       <div
-        className="absolute"
         style={{
+          position: 'absolute',
           inset: '8% 10% auto auto',
           width: 220,
           height: 220,
@@ -84,25 +89,27 @@ export function AuthScreen({ mode }: AuthScreenProps) {
       />
 
       <section
-        className="glass-panel p-6"
+        className="glass-panel"
         style={{
+          padding: 32,
           width: 'min(440px, calc(100vw - 32px))',
           position: 'relative',
           zIndex: 1,
         }}
       >
-        <div className="mb-4">
-          <div className="text-xs uppercase tracking-wider text-tertiary">Syncarts</div>
-          <h1 className="text-xl font-bold text-primary mt-2">{title}</h1>
-          <p className="text-sm text-secondary mt-2">{subtitle}</p>
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)', fontWeight: 600 }}>Syncarts</div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 8 }}>{title}</h1>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8 }}>{subtitle}</p>
         </div>
 
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <form style={{ display: 'flex', flexDirection: 'column', gap: 20 }} onSubmit={handleSubmit}>
           {mode === 'register' && (
-            <label className="flex flex-col gap-2">
-              <span className="text-xs uppercase tracking-wider text-tertiary">Name</span>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)', fontWeight: 600 }}>Name</span>
               <input
-                className="input text-sm"
+                className="input"
+                style={{ fontSize: 14 }}
                 placeholder="Artsrunk"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -111,10 +118,11 @@ export function AuthScreen({ mode }: AuthScreenProps) {
             </label>
           )}
 
-          <label className="flex flex-col gap-2">
-            <span className="text-xs uppercase tracking-wider text-tertiary">Email</span>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)', fontWeight: 600 }}>Email</span>
             <input
-              className="input text-sm"
+              className="input"
+              style={{ fontSize: 14 }}
               placeholder="user@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -122,10 +130,11 @@ export function AuthScreen({ mode }: AuthScreenProps) {
             />
           </label>
 
-          <label className="flex flex-col gap-2">
-            <span className="text-xs uppercase tracking-wider text-tertiary">Password</span>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)', fontWeight: 600 }}>Password</span>
             <input
-              className="input text-sm"
+              className="input"
+              style={{ fontSize: 14 }}
               placeholder="••••••••"
               type="password"
               value={password}
@@ -134,21 +143,21 @@ export function AuthScreen({ mode }: AuthScreenProps) {
             />
           </label>
 
-          {error ? <div className="text-sm text-status-delete">{error}</div> : null}
+          {error ? <div style={{ fontSize: 14, color: 'var(--status-delete)' }}>{error}</div> : null}
 
-          <button className="btn btn-primary h-12" type="submit" disabled={busy}>
+          <button className="btn btn-primary" style={{ height: 48, marginTop: 4 }} type="submit" disabled={busy}>
             {busy ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
 
-        <div className="mt-6 text-sm text-secondary">
+        <div style={{ marginTop: 24, fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center' }}>
           {mode === 'login' ? (
             <span>
-              No account? <Link to="/register" className="text-accent">Sign Up</Link>
+              No account? <Link to="/register" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600 }}>Sign Up</Link>
             </span>
           ) : (
             <span>
-              Already have an account? <Link to="/login" className="text-accent">Sign In</Link>
+              Already have an account? <Link to="/login" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600 }}>Sign In</Link>
             </span>
           )}
         </div>
