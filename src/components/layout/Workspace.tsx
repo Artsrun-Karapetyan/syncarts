@@ -20,7 +20,7 @@ export function Workspace() {
       <TabsBar />
 
       {/* URL Bar */}
-      <div style={{ padding: 16, flexShrink: 0, position: 'relative' }}>
+      <div style={{ padding: 16, flexShrink: 0, position: 'relative', zIndex: 50 }}>
         <div
           className="glass-panel"
           style={{

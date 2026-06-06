@@ -15,13 +15,21 @@ pub async fn make_request(request: HttpRequest) -> Result<HttpResponse, String> 
     };
 
     let mut headers = HeaderMap::new();
+    let is_auto_content_type = matches!(request.body, BodyPayload::FormData { .. } | BodyPayload::FormUrlEncoded { .. });
+
     for (k, v) in request.headers {
         if let (Ok(name), Ok(value)) = (HeaderName::from_bytes(k.as_bytes()), HeaderValue::from_str(&v)) {
+            if is_auto_content_type && name == reqwest::header::CONTENT_TYPE {
+                continue;
+            }
             headers.insert(name, value);
         }
     }
 
     let mut req_builder = client.request(method, &request.url).headers(headers);
+
+    println!("Executing request to: {}", request.url);
+    println!("Payload type: {:?}", request.body);
 
     match request.body {
         BodyPayload::None => {},

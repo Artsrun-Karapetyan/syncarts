@@ -31,6 +31,7 @@ export interface TabData {
   method: string;
   url: string;
   headers: HeaderItem[];
+  authType?: 'inherit' | 'none' | 'bearer';
   bodyType?: BodyType;
   formData?: FormDataItem[];
   body: string;
@@ -45,6 +46,7 @@ export interface SavedRequest {
   method: string;
   url: string;
   headers: HeaderItem[];
+  authType?: 'inherit' | 'none' | 'bearer';
   bodyType?: BodyType;
   formData?: FormDataItem[];
   body: string;
@@ -237,6 +239,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           method: 'GET',
           url: '',
           headers: [{ key: '', value: '' }],
+          authType: 'inherit',
           bodyType: 'raw',
           formData: [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }],
           body: '',
@@ -378,8 +381,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const activeVars = activeEnvironment.variables.filter(v => v.enabled && v.key);
     
     for (const v of activeVars) {
-      const regex = new RegExp(`{{${v.key}}}`, 'g');
-      result = result.replace(regex, v.value);
+      result = result.replaceAll(`{{${v.key}}}`, v.value);
     }
     return result;
   };

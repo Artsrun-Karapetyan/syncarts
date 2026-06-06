@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Select } from '../ui/Select';
 
-type AuthType = 'none' | 'bearer';
+type AuthType = 'inherit' | 'none' | 'bearer';
 
 export function AuthEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
@@ -11,8 +11,8 @@ export function AuthEditor() {
   const authHeaderIndex = activeTab?.headers.findIndex(h => h.key.toLowerCase() === 'authorization') ?? -1;
   const authHeader = authHeaderIndex !== -1 && activeTab ? activeTab.headers[authHeaderIndex] : null;
 
-  // Determine current auth state based on headers
-  let currentType: AuthType = 'none';
+  // Determine current auth state based on headers and authType
+  let currentType: AuthType = activeTab?.authType || 'inherit';
   let currentToken = '';
 
   if (authHeader) {
@@ -28,14 +28,14 @@ export function AuthEditor() {
     
     let newHeaders = [...activeTab.headers];
     
-    if (type === 'none') {
-      // Remove the Authorization header if we switch to none
+    if (type === 'none' || type === 'inherit') {
+      // Remove the Authorization header if we switch to none/inherit
       if (authHeaderIndex !== -1) {
         newHeaders.splice(authHeaderIndex, 1);
         // Ensure at least one empty row remains
         if (newHeaders.length === 0) newHeaders.push({ key: '', value: '' });
-        updateActiveTab({ headers: newHeaders });
       }
+      updateActiveTab({ headers: newHeaders, authType: type });
     } else if (type === 'bearer') {
       // Switch to bearer, insert or update header
       const bearerValue = `Bearer ${currentToken}`;
@@ -50,7 +50,7 @@ export function AuthEditor() {
           newHeaders.push({ key: 'Authorization', value: bearerValue });
         }
       }
-      updateActiveTab({ headers: newHeaders });
+      updateActiveTab({ headers: newHeaders, authType: type });
     }
   };
 
@@ -85,6 +85,7 @@ export function AuthEditor() {
           onChange={(val) => handleTypeChange(val as AuthType)}
           disabled={!activeTab}
           options={[
+            { value: 'inherit', label: 'Inherit auth from parent' },
             { value: 'none', label: 'No Auth' },
             { value: 'bearer', label: 'Bearer Token' }
           ]}
@@ -92,6 +93,12 @@ export function AuthEditor() {
       </div>
 
       <div style={{ height: '1px', background: 'var(--border-color)', opacity: 0.5 }} />
+
+      {currentType === 'inherit' && (
+        <div style={{ color: 'var(--text-tertiary)', fontSize: 13, textAlign: 'center', marginTop: 20 }}>
+          This request will inherit authentication from its parent folder or collection.
+        </div>
+      )}
 
       {currentType === 'none' && (
         <div style={{ color: 'var(--text-tertiary)', fontSize: 13, textAlign: 'center', marginTop: 20 }}>
