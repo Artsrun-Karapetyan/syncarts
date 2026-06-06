@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { HeadersEditor } from './HeadersEditor';
 import { BodyEditor } from './BodyEditor';
+import { ParamsEditor } from './ParamsEditor';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 import './RequestTabs.css';
@@ -11,8 +12,8 @@ type Tab = 'headers' | 'body' | 'auth' | 'params';
 const TABS: { id: Tab; label: string; disabled?: boolean }[] = [
   { id: 'headers', label: 'Headers' },
   { id: 'body', label: 'Body' },
-  { id: 'params', label: 'Params', disabled: true },
-  { id: 'auth', label: 'Auth', disabled: true },
+  { id: 'params', label: 'Params' },
+  { id: 'auth', label: 'Auth' },
 ];
 
 export function RequestTabs() {
@@ -20,6 +21,19 @@ export function RequestTabs() {
   const { activeTab: activeRequest } = useWorkspace();
 
   const filledHeadersCount = activeRequest?.headers.filter(h => h.key.trim()).length ?? 0;
+
+  // Calculate params count
+  const getParamsCount = () => {
+    if (!activeRequest?.url) return 0;
+    try {
+      const [, query] = activeRequest.url.split('?');
+      if (!query) return 0;
+      return query.split('&').filter(p => p.trim() && p !== '=').length;
+    } catch {
+      return 0;
+    }
+  };
+  const paramsCount = getParamsCount();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
@@ -47,6 +61,9 @@ export function RequestTabs() {
             {tab.id === 'headers' && filledHeadersCount > 0 && (
               <span className="tab-badge">{filledHeadersCount}</span>
             )}
+            {tab.id === 'params' && paramsCount > 0 && (
+              <span className="tab-badge">{paramsCount}</span>
+            )}
           </button>
         ))}
       </div>
@@ -55,11 +72,7 @@ export function RequestTabs() {
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 16 }}>
         {activeTab === 'headers' && <HeadersEditor />}
         {activeTab === 'body' && <BodyEditor />}
-        {activeTab === 'params' && (
-          <div style={{ color: 'var(--text-tertiary)', fontSize: 13, marginTop: 24, textAlign: 'center' }}>
-            Query params — coming soon
-          </div>
-        )}
+        {activeTab === 'params' && <ParamsEditor />}
         {activeTab === 'auth' && (
           <div style={{ color: 'var(--text-tertiary)', fontSize: 13, marginTop: 24, textAlign: 'center' }}>
             Authentication — coming soon
