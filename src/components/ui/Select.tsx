@@ -90,7 +90,7 @@ export function Select({ value, options, onChange, disabled, className = '', sty
                 setIsOpen(false);
               }}
               onMouseEnter={(e) => {
-                if (option.value !== value) e.currentTarget.style.background = 'var(--bg-secondary)';
+                if (option.value !== value) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
               }}
               onMouseLeave={(e) => {
                 if (option.value !== value) e.currentTarget.style.background = 'transparent';

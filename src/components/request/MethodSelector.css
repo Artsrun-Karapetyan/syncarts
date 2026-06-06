@@ -3,28 +3,32 @@
 .method-pill {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 12px;
   font-weight: 700;
-  font-size: 12px;
-  padding: 6px 14px;
-  border-radius: 6px;
-  letter-spacing: 0.03em;
+  font-size: 13px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
   cursor: pointer;
   transition: all var(--transition-fast);
-  border: none;
-  min-width: 80px;
+  border: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.4);
+  min-width: 100px;
 }
-
-.method-pill.get    { background: var(--status-get-bg);    color: var(--status-get); }
-.method-pill.post   { background: var(--status-post-bg);   color: var(--status-post); }
-.method-pill.put    { background: var(--status-put-bg);    color: var(--status-put); }
-.method-pill.delete { background: var(--status-delete-bg); color: var(--status-delete); }
-.method-pill.patch  { background: var(--status-patch-bg);  color: var(--status-patch); }
 
 .method-pill:hover {
-  filter: brightness(1.3);
+  background: rgba(0, 0, 0, 0.6);
+  border-color: var(--border-highlight);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
+
+.method-pill.get    { color: var(--status-get); }
+.method-pill.post   { color: var(--status-post); }
+.method-pill.put    { color: var(--status-put); }
+.method-pill.delete { color: var(--status-delete); }
+.method-pill.patch  { color: var(--status-patch); }
 
 .method-dropdown {
   min-width: 140px;
