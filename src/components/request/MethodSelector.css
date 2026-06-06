@@ -9,7 +9,7 @@
   font-size: 13px;
   height: 38px;
   padding: 0 16px;
-  border-radius: var(--radius-sm);
+  border-radius: 9999px;
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all var(--transition-fast);
