@@ -40,6 +40,7 @@ export interface TabData {
   headers: HeaderItem[];
   authType?: 'inherit' | 'none' | 'bearer';
   bodyType?: BodyType;
+  description?: string;
   testScript?: string;
   formData?: FormDataItem[];
   body: string;
@@ -60,6 +61,7 @@ export interface SavedRequest {
   headers: HeaderItem[];
   authType?: 'inherit' | 'none' | 'bearer';
   bodyType?: BodyType;
+  description?: string;
   formData?: FormDataItem[];
   body: string;
   testScript?: string;
@@ -612,6 +614,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       bodyType: isReq ? 'raw' : undefined,
       formData: isReq ? [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }] : undefined,
       body: isReq ? '' : '',
+      description: '',
       testScript: '',
       response: null,
       ...data
