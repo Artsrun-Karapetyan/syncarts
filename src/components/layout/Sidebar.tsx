@@ -106,7 +106,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           transition: 'all var(--transition-fast)',
         }}
         onClick={() => {
-          setIsOpen(!isOpen);
+          if (!isOpen) setIsOpen(true);
           openFolderTab(collectionId, item.id);
         }}
         onContextMenu={(e) => onContextMenu(e, item.id, 'folder')}
@@ -119,7 +119,16 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           e.currentTarget.style.color = 'var(--text-secondary)';
         }}
       >
-        {isOpen ? <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6 }} /> : <ChevronRight size={14} style={{ flexShrink: 0, opacity: 0.6 }} />}
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
+          style={{ display: 'flex', alignItems: 'center', padding: 2, margin: -2, borderRadius: 4 }}
+          className="hover-bg-secondary"
+        >
+          {isOpen ? <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6 }} /> : <ChevronRight size={14} style={{ flexShrink: 0, opacity: 0.6 }} />}
+        </div>
         <Folder size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
         <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{item.name}</span>
         <div
@@ -279,10 +288,7 @@ export function Sidebar() {
     setCtxMenu(null);
   };
 
-  const toggleCollection = (id: string) => {
-    setExpandedCollections(prev => ({ ...prev, [id]: !prev[id] }));
-    openCollectionTab(id);
-  };
+
 
   const countItems = (items: (IFolder | SavedRequest)[]): number => {
     return items.reduce((acc, item) => {
@@ -432,7 +438,12 @@ export function Sidebar() {
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
               }}
-              onClick={() => toggleCollection(col.id)}
+              onClick={() => {
+                if (!expandedCollections[col.id]) {
+                  setExpandedCollections(prev => ({ ...prev, [col.id]: true }));
+                }
+                openCollectionTab(col.id);
+              }}
               onContextMenu={(e) => handleContextMenu(e, col.id, null, 'collection')}
             >
               <button
@@ -453,7 +464,7 @@ export function Sidebar() {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleCollection(col.id);
+                  setExpandedCollections(prev => ({ ...prev, [col.id]: !prev[col.id] }));
                 }}
                 aria-label={expandedCollections[col.id] ? 'Collapse collection' : 'Expand collection'}
               >
