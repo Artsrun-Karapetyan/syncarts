@@ -46,9 +46,9 @@ export function TopBar() {
         justifyContent: 'space-between',
         padding: '0 24px',
         paddingLeft: isMac ? 80 : 24,
-
-
         flexShrink: 0,
+        position: 'relative',
+        zIndex: 100,
       }}
     >
       {/* Workspace Selector */}
