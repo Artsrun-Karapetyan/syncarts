@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plus, Trash2, CheckSquare, Square, Globe } from 'lucide-react';
+import { X, Plus, Trash2, CheckSquare, Square, Globe, Upload } from 'lucide-react';
 import { useWorkspace, EnvironmentVariable } from '../../contexts/WorkspaceContext';
+import { importPostmanEnvironment } from '../../utils/postmanParser';
 
 interface Props {
   isOpen: boolean;
@@ -13,6 +14,7 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
   const [selectedEnvId, setSelectedEnvId] = useState<string | null>('globals');
   const [isCreatingEnv, setIsCreatingEnv] = useState(false);
   const [newEnvName, setNewEnvName] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen && !selectedEnvId) {
@@ -67,6 +69,25 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
     setNewEnvName('');
   };
 
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = event.target?.result as string;
+        const parsedEnv = importPostmanEnvironment(json);
+        createEnvironment(parsedEnv.name, parsedEnv.variables);
+      } catch (err) {
+        console.error('Failed to import environment:', err);
+        alert('Failed to import environment. Make sure it is a valid Postman Environment format.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   return createPortal(
     <div
       style={{
@@ -99,15 +120,33 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
         <div style={{ width: 240, borderRight: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)' }}>
           <div style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Environments</div>
-            <button 
-              className="tooltip-trigger" data-tooltip="New Environment"
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onClick={handleCreateEnv}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
-            >
-              <Plus size={16} />
-            </button>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                style={{ display: 'none' }} 
+                accept=".json" 
+                onChange={handleImportFile} 
+              />
+              <button 
+                className="tooltip-trigger" data-tooltip="Import Postman Environment"
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClick={() => fileInputRef.current?.click()}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+              >
+                <Upload size={14} />
+              </button>
+              <button 
+                className="tooltip-trigger" data-tooltip="New Environment"
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClick={handleCreateEnv}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+              >
+                <Plus size={16} />
+              </button>
+            </div>
           </div>
           
           {isCreatingEnv && (

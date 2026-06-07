@@ -1,19 +1,58 @@
-import { Collection, Folder, HeaderItem, SavedRequest } from '../contexts/WorkspaceContext';
+import { Collection, Environment, EnvironmentVariable, Folder, HeaderItem, SavedRequest } from '../contexts/WorkspaceContext';
 
 export function importPostmanCollection(jsonString: string): Omit<Collection, 'id'> {
   const data = JSON.parse(jsonString);
   if (!data.info || !data.info.name) {
     throw new Error('Invalid Postman Collection format');
   }
+  const parseEvents = (events?: any[]) => {
+    let preRequestScript = '';
+    let testScript = '';
+    if (Array.isArray(events)) {
+      events.forEach(e => {
+        if (e.listen === 'prerequest' && e.script && Array.isArray(e.script.exec)) {
+          preRequestScript = e.script.exec.join('\n');
+        } else if (e.listen === 'test' && e.script && Array.isArray(e.script.exec)) {
+          testScript = e.script.exec.join('\n');
+        }
+      });
+    }
+    return { preRequestScript, testScript };
+  };
+
+  const parseAuth = (auth?: any): { authType: 'inherit' | 'none' | 'bearer', bearerToken: string } => {
+    let authType: 'inherit' | 'none' | 'bearer' = 'inherit';
+    let bearerToken = '';
+    if (auth) {
+      if (auth.type === 'noauth') authType = 'none';
+      if (auth.type === 'bearer') {
+        authType = 'bearer';
+        if (Array.isArray(auth.bearer)) {
+          const tokenObj = auth.bearer.find((b: any) => b.key === 'token');
+          if (tokenObj) bearerToken = tokenObj.value;
+        }
+      }
+    }
+    return { authType, bearerToken };
+  };
 
   const parseItem = (item: any): Folder | SavedRequest => {
+    const { preRequestScript, testScript } = parseEvents(item.event);
+    const { authType, bearerToken } = parseAuth(item.auth);
+    const description = typeof item.description === 'string' ? item.description : (item.request?.description || '');
+
     if (item.item) {
       // It's a folder
       return {
         type: 'folder',
         id: crypto.randomUUID(),
         name: item.name || 'Untitled Folder',
-        items: item.item.map(parseItem)
+        items: item.item.map(parseItem),
+        preRequestScript,
+        testScript,
+        authType,
+        bearerToken,
+        description
       };
     } else {
       // It's a request
@@ -27,7 +66,12 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
           method: 'GET',
           url: req,
           headers: [{ key: '', value: '' }],
-          body: ''
+          body: '',
+          preRequestScript,
+          testScript,
+          authType,
+          bearerToken,
+          description
         };
       }
       
@@ -62,25 +106,70 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
         method,
         url,
         headers,
-        body
+        body,
+        preRequestScript,
+        testScript,
+        authType,
+        bearerToken,
+        description
       };
     }
   };
 
   const parsedItems = Array.isArray(data.item) ? data.item.map(parseItem) : [];
+  
+  const { preRequestScript, testScript } = parseEvents(data.event);
+  const { authType, bearerToken } = parseAuth(data.auth);
+  const description = typeof data.info.description === 'string' ? data.info.description : '';
+  
+  const variables: EnvironmentVariable[] = [];
+  if (Array.isArray(data.variable)) {
+    data.variable.forEach((v: any) => {
+      if (v.key) {
+        variables.push({
+          id: crypto.randomUUID(),
+          key: v.key,
+          value: v.value || '',
+          enabled: v.disabled !== true
+        });
+      }
+    });
+  }
 
   return {
     name: data.info.name,
-    items: parsedItems
+    items: parsedItems,
+    preRequestScript,
+    testScript,
+    authType,
+    bearerToken,
+    description,
+    variables
   };
 }
 
 export function exportToPostmanCollection(collection: Collection): string {
   const exportItem = (item: Folder | SavedRequest): any => {
+    const buildEvents = (pre: string | undefined, test: string | undefined) => {
+      const events = [];
+      if (pre) events.push({ listen: 'prerequest', script: { type: 'text/javascript', exec: pre.split('\n') } });
+      if (test) events.push({ listen: 'test', script: { type: 'text/javascript', exec: test.split('\n') } });
+      return events.length > 0 ? events : undefined;
+    };
+
+    const buildAuth = (type: 'inherit' | 'none' | 'bearer' | undefined, token: string | undefined) => {
+      if (type === 'none') return { type: 'noauth' };
+      if (type === 'bearer' && token) return { type: 'bearer', bearer: [{ key: 'token', value: token, type: 'string' }] };
+      return undefined; // inherit
+    };
+
     if (item.type === 'folder') {
       return {
         name: item.name,
-        item: item.items.map(exportItem)
+        description: item.description,
+        item: item.items.map(exportItem),
+        event: buildEvents(item.preRequestScript, item.testScript),
+        auth: buildAuth(item.authType, item.bearerToken)
       };
     } else {
       const cleanHeaders = item.headers.filter(h => h.key.trim() !== '');
@@ -98,8 +187,11 @@ export function exportToPostmanCollection(collection: Collection): string {
       
       return {
         name: item.name,
+        event: buildEvents(item.preRequestScript, item.testScript),
         request: {
           method: item.method,
+          description: item.description,
+          auth: buildAuth(item.authType, item.bearerToken),
           header: cleanHeaders.map(h => ({
             key: h.key,
             value: h.value,
@@ -120,13 +212,50 @@ export function exportToPostmanCollection(collection: Collection): string {
     }
   };
 
-  const postmanFormat = {
+  const postmanFormat: any = {
     info: {
       name: collection.name,
+      description: collection.description,
       schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
     },
     item: collection.items.map(exportItem)
   };
 
+  const colEvents = [];
+  if (collection.preRequestScript) colEvents.push({ listen: 'prerequest', script: { type: 'text/javascript', exec: collection.preRequestScript.split('\n') } });
+  if (collection.testScript) colEvents.push({ listen: 'test', script: { type: 'text/javascript', exec: collection.testScript.split('\n') } });
+  if (colEvents.length > 0) postmanFormat.event = colEvents;
+
+  if (collection.authType === 'none') postmanFormat.auth = { type: 'noauth' };
+  else if (collection.authType === 'bearer' && collection.bearerToken) postmanFormat.auth = { type: 'bearer', bearer: [{ key: 'token', value: collection.bearerToken, type: 'string' }] };
+
+  if (collection.variables && collection.variables.length > 0) {
+    postmanFormat.variable = collection.variables.map(v => ({
+      key: v.key,
+      value: v.value,
+      type: 'string',
+      disabled: !v.enabled
+    }));
+  }
+
   return JSON.stringify(postmanFormat, null, 2);
+}
+
+export function importPostmanEnvironment(jsonString: string): Omit<Environment, 'id'> {
+  const data = JSON.parse(jsonString);
+  if (!data.name || !Array.isArray(data.values)) {
+    throw new Error('Invalid Postman Environment format');
+  }
+
+  const variables: EnvironmentVariable[] = data.values.map((v: any) => ({
+    id: crypto.randomUUID(),
+    key: v.key || '',
+    value: v.value || '',
+    enabled: v.enabled !== false // Postman uses 'enabled', defaulting to true
+  })).filter((v: EnvironmentVariable) => v.key);
+
+  return {
+    name: data.name,
+    variables
+  };
 }

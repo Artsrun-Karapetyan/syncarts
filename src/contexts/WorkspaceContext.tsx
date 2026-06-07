@@ -133,7 +133,7 @@ interface WorkspaceContextState {
   
   // Environment Actions
   setActiveEnvironmentId: (id: string | null) => void;
-  createEnvironment: (name: string) => void;
+  createEnvironment: (name: string, variables?: EnvironmentVariable[]) => void;
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   deleteEnvironment: (id: string) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
@@ -367,11 +367,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setActiveEnvIdByWorkspace(prev => ({ ...prev, [activeWorkspaceId]: id }));
   };
 
-  const createEnvironment = (name: string) => {
+  const createEnvironment = (name: string, variables: EnvironmentVariable[] = []) => {
     const newEnv: Environment = {
       id: crypto.randomUUID(),
       name,
-      variables: []
+      variables
     };
     updateWorkspaces(prev => prev.map(w => {
       if (w.id === activeWorkspaceId) {
@@ -1054,12 +1054,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         environments,
         activeEnvironmentId,
         activeEnvironment,
+        globalVariables,
+        
         setActiveEnvironmentId,
         createEnvironment,
         updateEnvironment,
         deleteEnvironment,
         updateGlobalVariables,
-        globalVariables,
         
         openCollectionTab,
         openFolderTab,
