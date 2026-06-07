@@ -50,15 +50,24 @@ export function ScriptsEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
   const [showSnippets, setShowSnippets] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSubTab, setActiveSubTab] = useState<'pre' | 'post'>('pre');
 
   if (!activeTab) return null;
 
   const handleSnippetClick = (code: string) => {
-    const currentCode = activeTab.testScript || '';
-    const newCode = currentCode.length > 0 && !currentCode.endsWith('\n') 
-      ? `${currentCode}\n${code}` 
-      : `${currentCode}${code}`;
-    updateActiveTab({ testScript: newCode });
+    if (activeSubTab === 'pre') {
+      const currentCode = activeTab.preRequestScript || '';
+      const newCode = currentCode.length > 0 && !currentCode.endsWith('\n') 
+        ? `${currentCode}\n${code}` 
+        : `${currentCode}${code}`;
+      updateActiveTab({ preRequestScript: newCode });
+    } else {
+      const currentCode = activeTab.testScript || '';
+      const newCode = currentCode.length > 0 && !currentCode.endsWith('\n') 
+        ? `${currentCode}\n${code}` 
+        : `${currentCode}${code}`;
+      updateActiveTab({ testScript: newCode });
+    }
   };
 
   const filteredGroups = SNIPPET_GROUPS.map(group => ({
@@ -71,10 +80,21 @@ export function ScriptsEditor() {
       {/* Editor Section */}
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', fontSize: 13, color: 'var(--text-secondary)' }}>
-          <div>
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Post-response Scripts</div>
-            Scripts written here will be executed after a response is received. 
-            You can use the <code>sy</code> object to interact with the environment.
+          <div style={{ display: 'flex', gap: 16 }}>
+            <button
+              className={`btn`}
+              style={{ padding: '4px 8px', fontWeight: activeSubTab === 'pre' ? 700 : 500, color: activeSubTab === 'pre' ? 'var(--text-primary)' : 'var(--text-secondary)', background: 'transparent' }}
+              onClick={() => setActiveSubTab('pre')}
+            >
+              Pre-request
+            </button>
+            <button
+              className={`btn`}
+              style={{ padding: '4px 8px', fontWeight: activeSubTab === 'post' ? 700 : 500, color: activeSubTab === 'post' ? 'var(--text-primary)' : 'var(--text-secondary)', background: 'transparent' }}
+              onClick={() => setActiveSubTab('post')}
+            >
+              Post-response
+            </button>
           </div>
           <button 
             className="btn" 
@@ -83,6 +103,12 @@ export function ScriptsEditor() {
           >
             <BookTemplate size={14} style={{ marginRight: 6 }} /> Snippets
           </button>
+        </div>
+        <div style={{ padding: '8px 16px', background: 'var(--bg-secondary)', fontSize: 12, color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
+          {activeSubTab === 'pre' 
+            ? 'Scripts written here will be executed before a request is sent.'
+            : 'Scripts written here will be executed after a response is received.'}
+          {' '}You can use the <code>sy</code> object to interact with the environment.
         </div>
         <div 
           data-color-mode="dark"
@@ -103,10 +129,16 @@ export function ScriptsEditor() {
           }}
         >
           <CodeEditor
-            value={activeTab.testScript || ''}
+            value={activeSubTab === 'pre' ? (activeTab.preRequestScript || '') : (activeTab.testScript || '')}
             language="js"
             placeholder="Write your scripts here... Example: sy.environment.set('token', sy.response.json().access_token);"
-            onChange={(evn) => updateActiveTab({ testScript: evn.target.value })}
+            onChange={(evn) => {
+              if (activeSubTab === 'pre') {
+                updateActiveTab({ preRequestScript: evn.target.value });
+              } else {
+                updateActiveTab({ testScript: evn.target.value });
+              }
+            }}
             padding={24}
             style={{
               flex: 1,

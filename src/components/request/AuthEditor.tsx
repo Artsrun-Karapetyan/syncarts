@@ -13,70 +13,18 @@ export function AuthEditor() {
   const hideTimeout = useRef<any>(null);
   const [hoveredVar, setHoveredVar] = useState<{ name: string, x: number, y: number, exists: boolean, value?: string } | null>(null);
   
-  // Find existing authorization header
-  const authHeaderIndex = activeTab?.headers.findIndex(h => h.key.toLowerCase() === 'authorization') ?? -1;
-  const authHeader = authHeaderIndex !== -1 && activeTab ? activeTab.headers[authHeaderIndex] : null;
-
-  // Determine current auth state based on headers and authType
-  let currentType: AuthType = activeTab?.authType || 'inherit';
-  let currentToken = '';
-
-  if (authHeader) {
-    if (authHeader.value.startsWith('Bearer ')) {
-      currentType = 'bearer';
-      currentToken = authHeader.value.substring(7);
-    }
-    // We could add Basic auth detection here later
-  }
+  // Determine current auth state based on activeTab
+  const currentType: AuthType = activeTab?.authType || 'inherit';
+  const currentToken = activeTab?.bearerToken || '';
 
   const handleTypeChange = (type: AuthType) => {
     if (!activeTab) return;
-    
-    let newHeaders = [...activeTab.headers];
-    
-    if (type === 'none' || type === 'inherit') {
-      // Remove the Authorization header if we switch to none/inherit
-      if (authHeaderIndex !== -1) {
-        newHeaders.splice(authHeaderIndex, 1);
-        // Ensure at least one empty row remains
-        if (newHeaders.length === 0) newHeaders.push({ key: '', value: '' });
-      }
-      updateActiveTab({ headers: newHeaders, authType: type });
-    } else if (type === 'bearer') {
-      // Switch to bearer, insert or update header
-      const bearerValue = `Bearer ${currentToken}`;
-      if (authHeaderIndex !== -1) {
-        newHeaders[authHeaderIndex] = { key: 'Authorization', value: bearerValue };
-      } else {
-        // Find the first empty row to replace, or push
-        const emptyIndex = newHeaders.findIndex(h => !h.key && !h.value);
-        if (emptyIndex !== -1) {
-          newHeaders[emptyIndex] = { key: 'Authorization', value: bearerValue };
-        } else {
-          newHeaders.push({ key: 'Authorization', value: bearerValue });
-        }
-      }
-      updateActiveTab({ headers: newHeaders, authType: type });
-    }
+    updateActiveTab({ authType: type });
   };
 
   const handleTokenChange = (token: string) => {
-    if (!activeTab || currentType !== 'bearer') return;
-    
-    let newHeaders = [...activeTab.headers];
-    const bearerValue = `Bearer ${token}`;
-    
-    if (authHeaderIndex !== -1) {
-      newHeaders[authHeaderIndex] = { key: 'Authorization', value: bearerValue };
-    } else {
-      const emptyIndex = newHeaders.findIndex(h => !h.key && !h.value);
-      if (emptyIndex !== -1) {
-        newHeaders[emptyIndex] = { key: 'Authorization', value: bearerValue };
-      } else {
-        newHeaders.push({ key: 'Authorization', value: bearerValue });
-      }
-    }
-    updateActiveTab({ headers: newHeaders });
+    if (!activeTab) return;
+    updateActiveTab({ bearerToken: token });
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLInputElement>) => {
@@ -153,9 +101,9 @@ export function AuthEditor() {
           onChange={(val) => handleTypeChange(val as AuthType)}
           disabled={!activeTab}
           options={[
-            { value: 'inherit', label: 'Inherit auth from parent' },
-            { value: 'none', label: 'No Auth' },
-            { value: 'bearer', label: 'Bearer Token' }
+            { label: 'Inherit auth from parent', value: 'inherit' },
+            { label: 'No Auth', value: 'none' },
+            { label: 'Bearer Token', value: 'bearer' }
           ]}
         />
       </div>
@@ -222,8 +170,18 @@ export function AuthEditor() {
             />
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
-            The token will be automatically added to the Headers tab as <strong>Authorization: Bearer &lt;token&gt;</strong>.
+            The authorization header will be automatically generated when you send the request.
           </div>
+          {activeTab?.type !== 'collection' && activeTab?.type !== 'folder' && (
+            <div style={{ marginTop: 12, padding: '12px 16px', background: 'var(--bg-tertiary)', borderRadius: 8, fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: 12, border: '1px solid var(--border-color)' }}>
+              <div style={{ padding: 4, background: 'var(--bg-secondary)', borderRadius: 6, color: 'var(--text-secondary)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              </div>
+              <div>
+                <strong>Tip:</strong> If you manually added an Authorization header in the Headers tab, you should remove it so it doesn't conflict with this setting.
+              </div>
+            </div>
+          )}
         </div>
       )}
       {/* Popover */}

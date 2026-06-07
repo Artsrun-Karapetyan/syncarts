@@ -10,7 +10,7 @@ export function DocsEditor() {
   if (!activeTab) return null;
 
   return (
-    <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', height: '100%', gap: 12 }}>
+    <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', height: '100%', gap: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button
           className="btn"

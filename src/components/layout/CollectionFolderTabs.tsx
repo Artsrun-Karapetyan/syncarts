@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { DocsEditor } from '../request/DocsEditor';
+import { AuthEditor } from '../request/AuthEditor';
+import { ScriptsEditor } from '../request/ScriptsEditor';
+import { CollectionVariablesEditor } from '../request/CollectionVariablesEditor';
 
 type Tab = 'overview' | 'authorization' | 'scripts' | 'variables' | 'runs';
 
@@ -58,28 +62,25 @@ export function CollectionFolderTabs() {
       </div>
 
       {/* Tab Content */}
-      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 32 }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: activeView === 'authorization' || activeView === 'runs' ? 32 : 0 }}>
         {activeView === 'overview' && (
-          <div style={{ color: 'var(--text-secondary)' }}>
-            No description added yet.
+          <div style={{ height: '100%' }}>
+            <DocsEditor />
           </div>
         )}
         {activeView === 'authorization' && (
-          <div style={{ color: 'var(--text-secondary)' }}>
-            <p>Authorization settings will go here.</p>
-            <p>Coming soon...</p>
+          <div style={{ height: '100%' }}>
+            <AuthEditor />
           </div>
         )}
         {activeView === 'scripts' && (
-          <div style={{ color: 'var(--text-secondary)' }}>
-            <p>Scripts editor will go here.</p>
-            <p>Coming soon...</p>
+          <div style={{ height: '100%' }}>
+            <ScriptsEditor />
           </div>
         )}
         {activeView === 'variables' && (
-          <div style={{ color: 'var(--text-secondary)' }}>
-            <p>Variables editor will go here.</p>
-            <p>Coming soon...</p>
+          <div style={{ height: '100%' }}>
+            <CollectionVariablesEditor />
           </div>
         )}
         {activeView === 'runs' && (

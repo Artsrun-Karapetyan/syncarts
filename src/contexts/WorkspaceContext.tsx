@@ -39,9 +39,12 @@ export interface TabData {
   url: string;
   headers: HeaderItem[];
   authType?: 'inherit' | 'none' | 'bearer';
+  bearerToken?: string;
   bodyType?: BodyType;
   description?: string;
+  preRequestScript?: string;
   testScript?: string;
+  variables?: EnvironmentVariable[];
   formData?: FormDataItem[];
   body: string;
   response: HttpResponse | null;
@@ -60,10 +63,12 @@ export interface SavedRequest {
   url: string;
   headers: HeaderItem[];
   authType?: 'inherit' | 'none' | 'bearer';
+  bearerToken?: string;
   bodyType?: BodyType;
   description?: string;
   formData?: FormDataItem[];
   body: string;
+  preRequestScript?: string;
   testScript?: string;
 }
 
@@ -73,6 +78,9 @@ export interface Folder {
   name: string;
   items: (Folder | SavedRequest)[];
   authType?: 'inherit' | 'none' | 'bearer';
+  bearerToken?: string;
+  description?: string;
+  preRequestScript?: string;
   testScript?: string;
 }
 
@@ -81,6 +89,9 @@ export interface Collection {
   name: string;
   items: (Folder | SavedRequest)[];
   authType?: 'inherit' | 'none' | 'bearer';
+  bearerToken?: string;
+  description?: string;
+  preRequestScript?: string;
   testScript?: string;
   variables?: EnvironmentVariable[];
 }
@@ -142,9 +153,11 @@ interface WorkspaceContextState {
   
   // Collection Actions
   addCollection: (name: string) => void;
+  updateCollection: (id: string, data: Partial<Collection>) => void;
   deleteCollection: (id: string) => void;
   deleteItem: (collectionId: string, itemId: string) => void;
   addFolder: (collectionId: string, parentFolderId: string | null, name: string) => void;
+  updateFolder: (collectionId: string, folderId: string, data: Partial<Folder>) => void;
   saveRequest: (collectionId: string, folderId: string | null, request: SavedRequest) => void;
   createBlankRequestInFolder: (collectionId: string, folderId: string | null) => void;
   importCollection: (collectionData: Omit<Collection, 'id'>) => void;
@@ -406,20 +419,61 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setActiveWorkspaceId(id);
   };
 
+  const getRequestAncestors = (): (Collection | Folder)[] => {
+    if (!activeTab || !activeTab.collectionId) return [];
+    const col = collections.find(c => c.id === activeTab.collectionId);
+    if (!col) return [];
+    
+    const ancestors: (Collection | Folder)[] = [col];
+    
+    if (activeTab.folderId) {
+      const getFolderPath = (items: (Folder | SavedRequest)[], targetId: string): Folder[] | null => {
+        for (const item of items) {
+          if (item.type === 'folder') {
+            if (item.id === targetId) return [item];
+            const subPath = getFolderPath(item.items, targetId);
+            if (subPath) return [item, ...subPath];
+          }
+        }
+        return null;
+      };
+      
+      const folderPath = getFolderPath(col.items, activeTab.folderId);
+      if (folderPath) {
+        ancestors.push(...folderPath);
+      }
+    }
+    return ancestors;
+  };
+
   const interpolate = (text: string): string => {
     if (!text) return text;
     
     let result = text;
     const activeVars = activeEnvironment ? activeEnvironment.variables.filter(v => v.enabled && v.key) : [];
     
+    // Environment Variables
     for (const v of activeVars) {
       result = result.split(`{{${v.key}}}`).join(v.value);
     }
 
+    // Collection Variables
+    const col = activeTab?.collectionId ? collections.find(c => c.id === activeTab.collectionId) : null;
+    const colVars = col?.variables?.filter(v => v.enabled && v.key) || [];
+    
     const matches = result.match(/\{\{([^}]+)\}\}/g);
     if (matches) {
       for (const match of matches) {
         const key = match.slice(2, -2);
+        
+        // Try collection variables first
+        const colVar = colVars.find(v => v.key === key);
+        if (colVar) {
+          result = result.split(match).join(colVar.value);
+          continue;
+        }
+
+        // Try global variables
         const globalVar = globalVariables.find(v => v.key === key && v.enabled);
         if (globalVar) {
           result = result.split(match).join(globalVar.value);
@@ -437,10 +491,30 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       
       const headerMap: Record<string, string> = {};
       activeTab.headers.forEach((h) => {
-        if (h.key && h.value) {
+        if (h.key && h.value && h.key.toLowerCase() !== 'authorization') {
           headerMap[interpolate(h.key)] = interpolate(h.value);
         }
       });
+
+      // Handle Auth Inheritance
+      let finalAuthType = activeTab.authType || 'inherit';
+      let finalBearerToken = activeTab.bearerToken || '';
+      
+      if (finalAuthType === 'inherit') {
+        const ancestors = getRequestAncestors();
+        for (let i = ancestors.length - 1; i >= 0; i--) {
+          const ancestor = ancestors[i];
+          if (ancestor.authType && ancestor.authType !== 'inherit') {
+            finalAuthType = ancestor.authType;
+            finalBearerToken = ancestor.bearerToken || '';
+            break;
+          }
+        }
+      }
+      
+      if (finalAuthType === 'bearer' && finalBearerToken) {
+        headerMap['Authorization'] = `Bearer ${interpolate(finalBearerToken)}`;
+      }
 
       let reqBodyPayload: any = { type: 'None' };
       const currentBodyType = activeTab.bodyType || 'raw';
@@ -480,109 +554,159 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (!activeTab) return;
     try {
       updateActiveTab({ response: null });
-      const result = await trigger();
-      if (result) {
-        let testResults: TestResult[] = [];
-        let consoleLogs: string[] = [];
-        
-        if (activeTab.testScript?.trim()) {
-          try {
-            const customConsole = {
-              log: (...args: any[]) => {
-                consoleLogs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
-                console.log(...args);
-              },
-              error: (...args: any[]) => {
-                consoleLogs.push("[ERROR] " + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
-                console.error(...args);
-              },
-              warn: (...args: any[]) => {
-                consoleLogs.push("[WARN] " + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
-                console.warn(...args);
+      
+      let testResults: TestResult[] = [];
+      let consoleLogs: string[] = [];
+      
+      // Setup scripting environment
+      const customConsole = {
+        log: (...args: any[]) => {
+          consoleLogs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+          console.log(...args);
+        },
+        error: (...args: any[]) => {
+          consoleLogs.push("[ERROR] " + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+          console.error(...args);
+        },
+        warn: (...args: any[]) => {
+          consoleLogs.push("[WARN] " + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+          console.warn(...args);
+        }
+      };
+      
+      const col = activeTab?.collectionId ? collections.find(c => c.id === activeTab.collectionId) : null;
+      
+      const sy = {
+        environment: {
+          set: (key: string, value: string) => {
+            if (!activeEnvironmentId || activeEnvironmentId === 'none') return;
+            const env = environments.find(e => e.id === activeEnvironmentId);
+            if (env) {
+              const existingVarIndex = env.variables.findIndex(v => v.key === key);
+              const newVars = [...env.variables];
+              if (existingVarIndex >= 0) {
+                newVars[existingVarIndex] = { ...newVars[existingVarIndex], value, enabled: true };
+              } else {
+                newVars.push({ id: crypto.randomUUID(), key, value, enabled: true });
               }
-            };
-            
-            const sy = {
-              environment: {
-                set: (key: string, value: string) => {
-                  if (!activeEnvironmentId || activeEnvironmentId === 'none') {
-                    console.warn("No active environment to set variable:", key);
-                    return;
-                  }
-                  const env = environments.find(e => e.id === activeEnvironmentId);
-                  if (env) {
-                    const existingVarIndex = env.variables.findIndex(v => v.key === key);
-                    const newVars = [...env.variables];
-                    if (existingVarIndex >= 0) {
-                      newVars[existingVarIndex] = { ...newVars[existingVarIndex], value, enabled: true };
-                    } else {
-                      newVars.push({ id: crypto.randomUUID(), key: key, value, enabled: true });
-                    }
-                    updateEnvironment(env.id, { variables: newVars });
-                  }
-                },
-                get: (key: string) => {
-                  if (!activeEnvironmentId || activeEnvironmentId === 'none') return undefined;
-                  const env = environments.find(e => e.id === activeEnvironmentId);
-                  return env?.variables.find(v => v.key === key)?.value;
-                },
-                unset: (key: string) => {
-                  if (!activeEnvironmentId || activeEnvironmentId === 'none') return;
-                  const env = environments.find(e => e.id === activeEnvironmentId);
-                  if (env) {
-                    updateEnvironment(env.id, { variables: env.variables.filter(v => v.key !== key) });
-                  }
-                }
+              updateEnvironment(env.id, { variables: newVars });
+            }
+          },
+          get: (key: string) => {
+            if (!activeEnvironmentId || activeEnvironmentId === 'none') return undefined;
+            const env = environments.find(e => e.id === activeEnvironmentId);
+            return env?.variables.find(v => v.key === key)?.value;
+          },
+          unset: (key: string) => {
+            if (!activeEnvironmentId || activeEnvironmentId === 'none') return;
+            const env = environments.find(e => e.id === activeEnvironmentId);
+            if (env) {
+              updateEnvironment(env.id, { variables: env.variables.filter(v => v.key !== key) });
+            }
+          }
+        },
+        collectionVariables: {
+          set: (key: string, value: string) => {
+            if (!col) return;
+            const existingIndex = (col.variables || []).findIndex(v => v.key === key);
+            const newVars = [...(col.variables || [])];
+            if (existingIndex >= 0) {
+              newVars[existingIndex] = { ...newVars[existingIndex], value, enabled: true };
+            } else {
+              newVars.push({ id: crypto.randomUUID(), key, value, enabled: true });
+            }
+            updateCollection(col.id, { variables: newVars });
+          },
+          get: (key: string) => {
+            return col?.variables?.find(v => v.key === key)?.value;
+          },
+          unset: (key: string) => {
+            if (!col) return;
+            updateCollection(col.id, { variables: (col.variables || []).filter(v => v.key !== key) });
+          }
+        },
+        globals: {
+          set: (key: string, value: string) => {
+            const existingIndex = globalVariables.findIndex(v => v.key === key);
+            const newVars = [...globalVariables];
+            if (existingIndex >= 0) {
+              newVars[existingIndex] = { ...newVars[existingIndex], value, enabled: true };
+            } else {
+              newVars.push({ id: crypto.randomUUID(), key, value, enabled: true });
+            }
+            updateGlobalVariables(newVars);
+          },
+          get: (key: string) => globalVariables.find(v => v.key === key)?.value,
+          unset: (key: string) => {
+            updateGlobalVariables(globalVariables.filter(v => v.key !== key));
+          }
+        },
+        response: null as any,
+        test: (name: string, fn: () => void) => {
+          try {
+            fn();
+            testResults.push({ name, passed: true });
+          } catch (e: any) {
+            testResults.push({ name, passed: false, error: e.message || String(e) });
+          }
+        },
+        expect: (val: any) => ({
+          to: {
+            eql: (expected: any) => { if (val !== expected) throw new Error(`Expected ${val} to equal ${expected}`) },
+            be: {
+              below: (expected: number) => { if (val >= expected) throw new Error(`Expected ${val} to be below ${expected}`) },
+              oneOf: (expectedList: any[]) => { if (!expectedList.includes(val)) throw new Error(`Expected ${val} to be one of ${expectedList}`) }
+            },
+            include: (expected: any) => { if (typeof val === 'string' && !val.includes(expected)) throw new Error(`Expected ${val} to include ${expected}`) }
+          }
+        })
+      };
+
+      const ancestors = getRequestAncestors();
+      const allPreScripts = [...ancestors.map(a => a.preRequestScript), activeTab.preRequestScript].filter(s => s && s.trim());
+      const allTestScripts = [...ancestors.map(a => a.testScript), activeTab.testScript].filter(s => s && s.trim());
+
+      // Execute Pre-request Scripts
+      for (const script of allPreScripts) {
+        try {
+          const fn = new Function('sy', 'console', script!);
+          fn(sy, customConsole);
+        } catch (e: any) {
+          consoleLogs.push("[PRE-SCRIPT ERROR] " + (e.message || String(e)));
+          console.error("Pre-request script failed:", e);
+        }
+      }
+
+      // Make the actual HTTP request
+      const result = await trigger();
+      
+      if (result) {
+        sy.response = {
+          json: () => JSON.parse(result.body),
+          text: () => result.body,
+          responseTime: result.time_ms,
+          code: result.status,
+          to: {
+            have: {
+              status: (code: number | string) => { 
+                if (typeof code === 'number' && result.status !== code) throw new Error(`Expected status ${code} but got ${result.status}`);
+                // Basic string matching like "Created" isn't fully implemented in our response struct, but this avoids crashes
+                if (typeof code === 'string' && result.status !== 200 && result.status !== 201) throw new Error(`Expected status to match ${code}`);
               },
-              globals: {
-                get: (key: string) => globalVariables.find(v => v.key === key)?.value,
-                set: (key: string, value: string) => {
-                  const existingIndex = globalVariables.findIndex(v => v.key === key);
-                  const newVars = [...globalVariables];
-                  if (existingIndex >= 0) {
-                    newVars[existingIndex] = { ...newVars[existingIndex], value, enabled: true };
-                  } else {
-                    newVars.push({ id: crypto.randomUUID(), key, value, enabled: true });
-                  }
-                  updateGlobalVariables(newVars);
-                },
-                unset: (key: string) => {
-                  updateGlobalVariables(globalVariables.filter(v => v.key !== key));
-                }
-              },
-              response: {
-                json: () => JSON.parse(result.body),
-                text: () => result.body,
-                responseTime: result.time_ms,
-                to: {
-                  have: {
-                    status: (code: number) => { if (result.status !== code) throw new Error(`Expected status ${code} but got ${result.status}`) },
-                    body: (text: string) => { if (result.body !== text) throw new Error(`Expected body to be ${text}`) }
-                  }
-                }
-              },
-              test: (name: string, fn: () => void) => {
-                try {
-                  fn();
-                  testResults.push({ name, passed: true });
-                } catch (e: any) {
-                  testResults.push({ name, passed: false, error: e.message || String(e) });
-                }
-              },
-              expect: (val: any) => ({
-                to: {
-                  eql: (expected: any) => { if (val !== expected) throw new Error(`Expected ${val} to equal ${expected}`) },
-                  be: {
-                    below: (expected: number) => { if (val >= expected) throw new Error(`Expected ${val} to be below ${expected}`) }
-                  }
-                }
-              })
-            };
-            const fn = new Function('sy', 'console', activeTab.testScript);
+              body: (text: string) => { if (result.body !== text) throw new Error(`Expected body to be ${text}`) },
+              header: (key: string) => { if (!Object.keys(result.headers || {}).some(h => h.toLowerCase() === key.toLowerCase())) throw new Error(`Header ${key} not found`) }
+            }
+          }
+        };
+
+        // Execute Post-response Scripts
+        for (const script of allTestScripts) {
+          try {
+            const fn = new Function('sy', 'console', script!);
             fn(sy, customConsole);
           } catch (e: any) {
-            consoleLogs.push("[SCRIPT ERROR] " + (e.message || String(e)));
-            console.error("Script execution failed:", e);
+            consoleLogs.push("[POST-SCRIPT ERROR] " + (e.message || String(e)));
+            console.error("Post-response script failed:", e);
           }
         }
         
@@ -595,7 +719,23 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const updateActiveTab = (data: Partial<TabData>) => {
     if (!activeTabId) return;
-    updateCurrentTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, ...data } : t));
+    let currentTab: TabData | undefined;
+    updateCurrentTabs(prev => {
+      return prev.map(t => {
+        if (t.id === activeTabId) {
+          const updated = { ...t, ...data };
+          currentTab = updated;
+          return updated;
+        }
+        return t;
+      });
+    });
+
+    if (currentTab && currentTab.type === 'collection' && currentTab.collectionId) {
+      updateCollection(currentTab.collectionId, data as Partial<Collection>);
+    } else if (currentTab && currentTab.type === 'folder' && currentTab.collectionId && currentTab.folderId) {
+      updateFolder(currentTab.collectionId, currentTab.folderId, data as Partial<Folder>);
+    }
   };
 
   const setActiveTabId = (id: string) => {
@@ -615,6 +755,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       formData: isReq ? [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }] : undefined,
       body: isReq ? '' : '',
       description: '',
+      preRequestScript: '',
       testScript: '',
       response: null,
       ...data
@@ -715,6 +856,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const updateCollection = (id: string, data: Partial<Collection>) => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id === activeWorkspaceId) {
+        return {
+          ...w,
+          collections: w.collections.map(c => c.id === id ? { ...c, ...data } : c)
+        };
+      }
+      return w;
+    }));
+  };
+
   const importCollection = (collectionData: Omit<Collection, 'id'>) => {
     updateWorkspaces(prev => prev.map(ws => {
       if (ws.id !== activeWorkspaceId) return ws;
@@ -759,6 +912,34 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         return { ...col, items: recursivelyAddFolder(col.items) };
       });
       return { ...w, collections: updatedCollections };
+    }));
+  };
+
+  const updateFolder = (collectionId: string, folderId: string, data: Partial<Folder>) => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id === activeWorkspaceId) {
+        return {
+          ...w,
+          collections: w.collections.map(c => {
+            if (c.id === collectionId) {
+              const updateItem = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
+                return items.map(item => {
+                  if (item.type === 'folder' && item.id === folderId) {
+                    return { ...item, ...data } as Folder;
+                  }
+                  if (item.type === 'folder') {
+                    return { ...item, items: updateItem(item.items) };
+                  }
+                  return item;
+                });
+              };
+              return { ...c, items: updateItem(c.items) };
+            }
+            return c;
+          })
+        };
+      }
+      return w;
     }));
   };
 
@@ -891,9 +1072,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         updateActiveTab,
         
         addCollection,
+        updateCollection,
         deleteCollection,
         deleteItem,
         addFolder,
+        updateFolder,
         saveRequest,
         createBlankRequestInFolder,
         importCollection,

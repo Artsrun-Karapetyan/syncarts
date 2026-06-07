@@ -80,7 +80,7 @@ export function RequestTabs() {
       </div>
 
       {/* Tab Content */}
-      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 16 }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: (activeTab === 'scripts' || activeTab === 'docs') ? 0 : 16 }}>
         {activeTab === 'headers' && <HeadersEditor />}
         {activeTab === 'body' && <BodyEditor />}
         {activeTab === 'params' && <ParamsEditor />}
