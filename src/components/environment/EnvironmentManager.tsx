@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plus, Trash2, CheckSquare, Square } from 'lucide-react';
+import { X, Plus, Trash2, CheckSquare, Square, Globe } from 'lucide-react';
 import { useWorkspace, EnvironmentVariable } from '../../contexts/WorkspaceContext';
 
 interface Props {
@@ -9,46 +9,57 @@ interface Props {
 }
 
 export function EnvironmentManager({ isOpen, onClose }: Props) {
-  const { environments, createEnvironment, updateEnvironment, deleteEnvironment } = useWorkspace();
-  const [selectedEnvId, setSelectedEnvId] = useState<string | null>(null);
+  const { environments, globalVariables, createEnvironment, updateEnvironment, deleteEnvironment, updateGlobalVariables } = useWorkspace();
+  const [selectedEnvId, setSelectedEnvId] = useState<string | null>('globals');
   const [isCreatingEnv, setIsCreatingEnv] = useState(false);
   const [newEnvName, setNewEnvName] = useState('');
 
   useEffect(() => {
-    if (isOpen && environments.length > 0 && !selectedEnvId) {
-      setSelectedEnvId(environments[0].id);
+    if (isOpen && !selectedEnvId) {
+      setSelectedEnvId('globals');
     }
-  }, [isOpen, environments, selectedEnvId]);
+  }, [isOpen, selectedEnvId]);
 
   if (!isOpen) return null;
 
-  const selectedEnv = environments.find(e => e.id === selectedEnvId);
+  const isGlobals = selectedEnvId === 'globals';
+  const selectedEnv = isGlobals ? undefined : environments.find(e => e.id === selectedEnvId);
+  const currentVariables = isGlobals ? globalVariables : (selectedEnv?.variables || []);
 
   const handleAddVariable = () => {
-    if (!selectedEnv) return;
     const newVar: EnvironmentVariable = {
       id: crypto.randomUUID(),
       key: '',
       value: '',
       enabled: true
     };
-    updateEnvironment(selectedEnv.id, {
-      variables: [...selectedEnv.variables, newVar]
-    });
+    if (isGlobals) {
+      updateGlobalVariables([...globalVariables, newVar]);
+    } else if (selectedEnv) {
+      updateEnvironment(selectedEnv.id, {
+        variables: [...selectedEnv.variables, newVar]
+      });
+    }
   };
 
   const handleUpdateVariable = (varId: string, updates: Partial<EnvironmentVariable>) => {
-    if (!selectedEnv) return;
-    updateEnvironment(selectedEnv.id, {
-      variables: selectedEnv.variables.map(v => v.id === varId ? { ...v, ...updates } : v)
-    });
+    if (isGlobals) {
+      updateGlobalVariables(globalVariables.map(v => v.id === varId ? { ...v, ...updates } : v));
+    } else if (selectedEnv) {
+      updateEnvironment(selectedEnv.id, {
+        variables: selectedEnv.variables.map(v => v.id === varId ? { ...v, ...updates } : v)
+      });
+    }
   };
 
   const handleDeleteVariable = (varId: string) => {
-    if (!selectedEnv) return;
-    updateEnvironment(selectedEnv.id, {
-      variables: selectedEnv.variables.filter(v => v.id !== varId)
-    });
+    if (isGlobals) {
+      updateGlobalVariables(globalVariables.filter(v => v.id !== varId));
+    } else if (selectedEnv) {
+      updateEnvironment(selectedEnv.id, {
+        variables: selectedEnv.variables.filter(v => v.id !== varId)
+      });
+    }
   };
 
   const handleCreateEnv = () => {
@@ -136,6 +147,26 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
           )}
 
           <div style={{ flex: 1, overflowY: 'auto', padding: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 12px',
+                borderRadius: 6,
+                cursor: 'pointer',
+                background: selectedEnvId === 'globals' ? 'var(--bg-tertiary)' : 'transparent',
+                color: selectedEnvId === 'globals' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                fontWeight: selectedEnvId === 'globals' ? 600 : 500,
+                fontSize: 13,
+                marginBottom: 8,
+              }}
+              onClick={() => setSelectedEnvId('globals')}
+            >
+              <Globe size={14} style={{ color: 'var(--accent-primary)' }} />
+              Globals
+            </div>
+
             {environments.map(env => (
               <div
                 key={env.id}
@@ -178,8 +209,9 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
         {/* Main Content */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
           <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              {selectedEnv ? selectedEnv.name : 'Select an environment'}
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {isGlobals && <Globe size={18} style={{ color: 'var(--accent-primary)' }} />}
+              {isGlobals ? 'Globals' : selectedEnv ? selectedEnv.name : 'Select an environment'}
             </h2>
             <button
               style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4 }}
@@ -192,7 +224,7 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
           </div>
 
           <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
-            {selectedEnv ? (
+            {(isGlobals || selectedEnv) ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', fontWeight: 600, fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', paddingBottom: 8, borderBottom: '1px solid var(--border-color)' }}>
                   <div style={{ width: 40, textAlign: 'center' }}></div>
@@ -201,7 +233,7 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
                   <div style={{ width: 40 }}></div>
                 </div>
 
-                {selectedEnv.variables.map(v => (
+                {currentVariables.map(v => (
                   <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
                       <button
@@ -253,7 +285,7 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
               </div>
             ) : (
               <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 14 }}>
-                Create or select an environment to manage variables.
+                Select an environment or Globals to manage variables.
               </div>
             )}
           </div>

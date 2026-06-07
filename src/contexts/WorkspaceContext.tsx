@@ -25,6 +25,12 @@ export interface FormDataItem {
   type?: 'text' | 'file';
 }
 
+export interface TestResult {
+  name: string;
+  passed: boolean;
+  error?: string;
+}
+
 export interface TabData {
   id: string;
   name: string;
@@ -33,10 +39,13 @@ export interface TabData {
   headers: HeaderItem[];
   authType?: 'inherit' | 'none' | 'bearer';
   bodyType?: BodyType;
+  testScript?: string;
   formData?: FormDataItem[];
   body: string;
   response: HttpResponse | null;
   savedRequestId?: string;
+  testResults?: TestResult[];
+  consoleLogs?: string[];
 }
 
 export interface SavedRequest {
@@ -50,6 +59,7 @@ export interface SavedRequest {
   bodyType?: BodyType;
   formData?: FormDataItem[];
   body: string;
+  testScript?: string;
 }
 
 export interface Folder {
@@ -83,6 +93,7 @@ export interface Workspace {
   name: string;
   collections: Collection[];
   environments?: Environment[];
+  globalVariables?: EnvironmentVariable[];
 }
 
 interface WorkspaceContextState {
@@ -95,6 +106,7 @@ interface WorkspaceContextState {
 
   // Environment State
   environments: Environment[];
+  globalVariables: EnvironmentVariable[];
   activeEnvironmentId: string | null;
   activeEnvironment: Environment | undefined;
   
@@ -103,6 +115,7 @@ interface WorkspaceContextState {
   createEnvironment: (name: string) => void;
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   deleteEnvironment: (id: string) => void;
+  updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
 
   tabs: TabData[];
   activeTabId: string | null;
@@ -281,6 +294,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   
   const activeEnvironmentId = activeEnvIdByWorkspace[activeWorkspaceId] || null;
   const activeEnvironment = environments.find(e => e.id === activeEnvironmentId);
+  const currentWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
+  const globalVariables: EnvironmentVariable[] = currentWorkspace?.globalVariables || [];
   
   // Tabs projection
   const currentTabs = tabsByWorkspace[activeWorkspaceId] || [];
@@ -357,10 +372,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const deleteEnvironment = (id: string) => {
     updateWorkspaces(prev => prev.map(w => {
       if (w.id === activeWorkspaceId) {
-        return {
-          ...w,
-          environments: (w.environments || []).filter(e => e.id !== id)
-        };
+        return { ...w, environments: (w.environments || []).filter(e => e.id !== id) };
       }
       return w;
     }));
@@ -369,20 +381,40 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateGlobalVariables = (variables: EnvironmentVariable[]) => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id === activeWorkspaceId) {
+        return { ...w, globalVariables: variables };
+      }
+      return w;
+    }));
+  };
+
   const switchWorkspace = (id: string) => {
     setActiveWorkspaceId(id);
   };
 
   const interpolate = (text: string): string => {
     if (!text) return text;
-    if (!activeEnvironment) return text;
     
     let result = text;
-    const activeVars = activeEnvironment.variables.filter(v => v.enabled && v.key);
+    const activeVars = activeEnvironment ? activeEnvironment.variables.filter(v => v.enabled && v.key) : [];
     
     for (const v of activeVars) {
       result = result.split(`{{${v.key}}}`).join(v.value);
     }
+
+    const matches = result.match(/\{\{([^}]+)\}\}/g);
+    if (matches) {
+      for (const match of matches) {
+        const key = match.slice(2, -2);
+        const globalVar = globalVariables.find(v => v.key === key && v.enabled);
+        if (globalVar) {
+          result = result.split(match).join(globalVar.value);
+        }
+      }
+    }
+    
     return result;
   };
 
@@ -438,7 +470,111 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       updateActiveTab({ response: null });
       const result = await trigger();
       if (result) {
-        updateActiveTab({ response: result });
+        let testResults: TestResult[] = [];
+        let consoleLogs: string[] = [];
+        
+        if (activeTab.testScript?.trim()) {
+          try {
+            const customConsole = {
+              log: (...args: any[]) => {
+                consoleLogs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+                console.log(...args);
+              },
+              error: (...args: any[]) => {
+                consoleLogs.push("[ERROR] " + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+                console.error(...args);
+              },
+              warn: (...args: any[]) => {
+                consoleLogs.push("[WARN] " + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+                console.warn(...args);
+              }
+            };
+            
+            const sy = {
+              environment: {
+                set: (key: string, value: string) => {
+                  if (!activeEnvironmentId || activeEnvironmentId === 'none') {
+                    console.warn("No active environment to set variable:", key);
+                    return;
+                  }
+                  const env = environments.find(e => e.id === activeEnvironmentId);
+                  if (env) {
+                    const existingVarIndex = env.variables.findIndex(v => v.key === key);
+                    const newVars = [...env.variables];
+                    if (existingVarIndex >= 0) {
+                      newVars[existingVarIndex] = { ...newVars[existingVarIndex], value, enabled: true };
+                    } else {
+                      newVars.push({ id: crypto.randomUUID(), key: key, value, enabled: true });
+                    }
+                    updateEnvironment(env.id, { variables: newVars });
+                  }
+                },
+                get: (key: string) => {
+                  if (!activeEnvironmentId || activeEnvironmentId === 'none') return undefined;
+                  const env = environments.find(e => e.id === activeEnvironmentId);
+                  return env?.variables.find(v => v.key === key)?.value;
+                },
+                unset: (key: string) => {
+                  if (!activeEnvironmentId || activeEnvironmentId === 'none') return;
+                  const env = environments.find(e => e.id === activeEnvironmentId);
+                  if (env) {
+                    updateEnvironment(env.id, { variables: env.variables.filter(v => v.key !== key) });
+                  }
+                }
+              },
+              globals: {
+                get: (key: string) => globalVariables.find(v => v.key === key)?.value,
+                set: (key: string, value: string) => {
+                  const existingIndex = globalVariables.findIndex(v => v.key === key);
+                  const newVars = [...globalVariables];
+                  if (existingIndex >= 0) {
+                    newVars[existingIndex] = { ...newVars[existingIndex], value, enabled: true };
+                  } else {
+                    newVars.push({ id: crypto.randomUUID(), key, value, enabled: true });
+                  }
+                  updateGlobalVariables(newVars);
+                },
+                unset: (key: string) => {
+                  updateGlobalVariables(globalVariables.filter(v => v.key !== key));
+                }
+              },
+              response: {
+                json: () => JSON.parse(result.body),
+                text: () => result.body,
+                responseTime: result.time_ms,
+                to: {
+                  have: {
+                    status: (code: number) => { if (result.status !== code) throw new Error(`Expected status ${code} but got ${result.status}`) },
+                    body: (text: string) => { if (result.body !== text) throw new Error(`Expected body to be ${text}`) }
+                  }
+                }
+              },
+              test: (name: string, fn: () => void) => {
+                try {
+                  fn();
+                  testResults.push({ name, passed: true });
+                } catch (e: any) {
+                  testResults.push({ name, passed: false, error: e.message || String(e) });
+                }
+              },
+              expect: (val: any) => ({
+                to: {
+                  eql: (expected: any) => { if (val !== expected) throw new Error(`Expected ${val} to equal ${expected}`) },
+                  be: {
+                    below: (expected: number) => { if (val >= expected) throw new Error(`Expected ${val} to be below ${expected}`) }
+                  }
+                }
+              })
+            };
+            const fn = new Function('sy', 'console', activeTab.testScript);
+            fn(sy, customConsole);
+          } catch (e: any) {
+            consoleLogs.push("[SCRIPT ERROR] " + (e.message || String(e)));
+            console.error("Script execution failed:", e);
+          }
+        }
+        
+        updateActiveTab({ response: result, testResults, consoleLogs });
       }
     } catch (err) {
       console.error(err);
@@ -464,6 +600,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       bodyType: 'raw',
       formData: [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }],
       body: '',
+      testScript: '',
       response: null,
       ...data
     };
@@ -676,6 +813,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         createEnvironment,
         updateEnvironment,
         deleteEnvironment,
+        updateGlobalVariables,
+        globalVariables,
         
         collections,
         

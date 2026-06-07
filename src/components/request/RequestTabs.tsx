@@ -4,17 +4,19 @@ import { HeadersEditor } from './HeadersEditor';
 import { BodyEditor } from './BodyEditor';
 import { ParamsEditor } from './ParamsEditor';
 import { AuthEditor } from './AuthEditor';
+import { ScriptsEditor } from './ScriptsEditor';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 import './RequestTabs.css';
 
-type Tab = 'headers' | 'body' | 'auth' | 'params';
+type Tab = 'headers' | 'body' | 'auth' | 'params' | 'scripts';
 
 const TABS: { id: Tab; label: string; disabled?: boolean }[] = [
   { id: 'headers', label: 'Headers' },
   { id: 'body', label: 'Body' },
   { id: 'params', label: 'Params' },
   { id: 'auth', label: 'Auth' },
+  { id: 'scripts', label: 'Scripts' },
 ];
 
 export function RequestTabs() {
@@ -81,6 +83,7 @@ export function RequestTabs() {
         {activeTab === 'body' && <BodyEditor />}
         {activeTab === 'params' && <ParamsEditor />}
         {activeTab === 'auth' && <AuthEditor />}
+        {activeTab === 'scripts' && <ScriptsEditor />}
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ import { ResponseLoadingState } from './ResponseLoadingState';
 import './ResponseViewer.css';
 import '../request/RequestTabs.css';
 
-type ResponseTab = 'body' | 'headers';
+type ResponseTab = 'body' | 'headers' | 'test-results';
 
 export function ResponseViewer() {
   const { activeTab, error, isMutating } = useWorkspace();
@@ -85,6 +85,29 @@ export function ResponseViewer() {
                 }}
               >
                 {responseHeaderEntries.length}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            className={`tab-button ${viewTab === 'test-results' ? 'active' : ''}`}
+            onClick={() => setViewTab('test-results')}
+            style={{ padding: '6px 14px', fontSize: 12 }}
+          >
+            Test Results
+            {activeTab?.testResults && activeTab.testResults.length > 0 && (
+              <span
+                style={{
+                  marginLeft: 5,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: 'var(--text-tertiary)',
+                  background: 'var(--bg-tertiary)',
+                  borderRadius: 8,
+                  padding: '1px 6px',
+                }}
+              >
+                {activeTab.testResults.filter(t => t.passed).length}/{activeTab.testResults.length}
               </span>
             )}
           </button>
@@ -224,6 +247,80 @@ export function ResponseViewer() {
                 <span className="font-mono response-header-value">{value}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {viewTab === 'test-results' && (
+          <div style={{ padding: 16 }}>
+            {(!activeTab?.testResults?.length && !activeTab?.consoleLogs?.length) && (
+              <div style={{ color: 'var(--text-tertiary)', fontSize: 13, textAlign: 'center', marginTop: 40 }}>
+                No test results or console logs.
+              </div>
+            )}
+            
+            {activeTab?.testResults && activeTab.testResults.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 12 }}>Test Results</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {activeTab.testResults.map((test, idx) => (
+                    <div key={idx} style={{ 
+                      display: 'flex', 
+                      alignItems: 'flex-start',
+                      gap: 8,
+                      padding: '10px 12px',
+                      background: 'var(--bg-primary)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 6,
+                      fontSize: 13
+                    }}>
+                      <div style={{ color: test.passed ? 'var(--status-success)' : 'var(--status-error)', marginTop: 2 }}>
+                        {test.passed ? '✓' : '✗'}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{test.name}</div>
+                        {!test.passed && test.error && (
+                          <div style={{ color: 'var(--status-error)', fontSize: 12, fontFamily: 'monospace' }}>
+                            {test.error}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab?.consoleLogs && activeTab.consoleLogs.length > 0 && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 12 }}>Console Output</div>
+                <div style={{ 
+                  background: 'var(--bg-primary)', 
+                  border: '1px solid var(--border-color)', 
+                  borderRadius: 6, 
+                  padding: 12,
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                  color: 'var(--text-secondary)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 4
+                }}>
+                  {activeTab.consoleLogs.map((log, idx) => {
+                    const isError = log.includes('[ERROR]') || log.includes('[SCRIPT ERROR]');
+                    const isWarn = log.includes('[WARN]');
+                    return (
+                      <div key={idx} style={{ 
+                        color: isError ? 'var(--status-error)' : isWarn ? 'var(--status-warning)' : 'inherit',
+                        padding: '2px 0',
+                        borderBottom: idx < activeTab.consoleLogs!.length - 1 ? '1px solid var(--border-color)' : 'none'
+                      }}>
+                        {log}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
