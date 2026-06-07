@@ -33,6 +33,7 @@ export interface TestResult {
 
 export interface TabData {
   id: string;
+  type?: 'request' | 'collection' | 'folder';
   name: string;
   method: string;
   url: string;
@@ -46,6 +47,8 @@ export interface TabData {
   savedRequestId?: string;
   testResults?: TestResult[];
   consoleLogs?: string[];
+  collectionId?: string;
+  folderId?: string;
 }
 
 export interface SavedRequest {
@@ -67,12 +70,17 @@ export interface Folder {
   id: string;
   name: string;
   items: (Folder | SavedRequest)[];
+  authType?: 'inherit' | 'none' | 'bearer';
+  testScript?: string;
 }
 
 export interface Collection {
   id: string;
   name: string;
   items: (Folder | SavedRequest)[];
+  authType?: 'inherit' | 'none' | 'bearer';
+  testScript?: string;
+  variables?: EnvironmentVariable[];
 }
 
 export interface EnvironmentVariable {
@@ -124,8 +132,10 @@ interface WorkspaceContextState {
   
   // Tab Actions
   setActiveTabId: (id: string) => void;
-  addTab: (data?: Partial<TabData>) => void;
+  addTab: (data?: Partial<TabData> & { savedRequestId?: string }) => void;
   closeTab: (id: string) => void;
+  openCollectionTab: (collectionId: string) => void;
+  openFolderTab: (collectionId: string, folderId: string) => void;
   updateActiveTab: (data: Partial<TabData>) => void;
   
   // Collection Actions
@@ -591,15 +601,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   };
 
   const addTab = (data?: Partial<TabData> & { savedRequestId?: string }) => {
+    const isReq = !data?.type || data.type === 'request';
     const newTab: TabData = {
       id: crypto.randomUUID(),
-      name: 'Untitled Request',
-      method: 'GET',
-      url: '',
-      headers: [{ key: '', value: '' }],
-      bodyType: 'raw',
-      formData: [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }],
-      body: '',
+      type: data?.type || 'request',
+      name: data?.name || 'Untitled Request',
+      method: isReq ? 'GET' : '',
+      url: isReq ? '' : '',
+      headers: isReq ? [{ key: '', value: '' }] : [],
+      bodyType: isReq ? 'raw' : undefined,
+      formData: isReq ? [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }] : undefined,
+      body: isReq ? '' : '',
       testScript: '',
       response: null,
       ...data
@@ -639,6 +651,55 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (closedIdWasActive && newTabsToSet.length > 0) {
       setActiveTabId(newTabsToSet[newTabsToSet.length - 1].id);
     }
+  };
+
+  const openCollectionTab = (collectionId: string) => {
+    const col = currentWorkspace?.collections.find(c => c.id === collectionId);
+    if (!col) return;
+    
+    const existing = currentTabs.find(t => t.type === 'collection' && t.collectionId === collectionId);
+    if (existing) {
+      setActiveTabId(existing.id);
+      return;
+    }
+
+    addTab({
+      type: 'collection',
+      name: col.name,
+      collectionId,
+    });
+  };
+
+  const openFolderTab = (collectionId: string, folderId: string) => {
+    const col = currentWorkspace?.collections.find(c => c.id === collectionId);
+    if (!col) return;
+
+    const findFolder = (items: any[]): Folder | null => {
+      for (const item of items) {
+        if (item.type === 'folder') {
+          if (item.id === folderId) return item;
+          const found = findFolder(item.items);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    const folder = findFolder(col.items);
+    if (!folder) return;
+
+    const existing = currentTabs.find(t => t.type === 'folder' && t.folderId === folderId);
+    if (existing) {
+      setActiveTabId(existing.id);
+      return;
+    }
+
+    addTab({
+      type: 'folder',
+      name: folder.name,
+      collectionId,
+      folderId,
+    });
   };
 
   const addCollection = (name: string) => {
@@ -815,6 +876,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         deleteEnvironment,
         updateGlobalVariables,
         globalVariables,
+        
+        openCollectionTab,
+        openFolderTab,
         
         collections,
         

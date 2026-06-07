@@ -16,7 +16,7 @@ interface CtxMenuState {
 
 function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: IFolder | SavedRequest, collectionId: string, onContextMenu: (e: React.MouseEvent, itemId: string, type: 'folder' | 'request') => void, level?: number }) {
   const [isOpen, setIsOpen] = useState(false);
-  const { addTab } = useWorkspace();
+  const { addTab, openFolderTab } = useWorkspace();
 
   const paddingLeft = `${level * 12 + 8}px`;
 
@@ -105,7 +105,10 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           cursor: 'pointer',
           transition: 'all var(--transition-fast)',
         }}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          openFolderTab(collectionId, item.id);
+        }}
         onContextMenu={(e) => onContextMenu(e, item.id, 'folder')}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--bg-tertiary)';
@@ -155,7 +158,8 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
 
 export function Sidebar() {
   const { 
-    collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder, importCollection
+    collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder, importCollection,
+    openCollectionTab
   } = useWorkspace();
   const [isAdding, setIsAdding] = useState(false);
   const [newColName, setNewColName] = useState('');
@@ -275,11 +279,9 @@ export function Sidebar() {
     setCtxMenu(null);
   };
 
-  const toggleCollection = (collectionId: string) => {
-    setExpandedCollections((current) => ({
-      ...current,
-      [collectionId]: !current[collectionId],
-    }));
+  const toggleCollection = (id: string) => {
+    setExpandedCollections(prev => ({ ...prev, [id]: !prev[id] }));
+    openCollectionTab(id);
   };
 
   const countItems = (items: (IFolder | SavedRequest)[]): number => {

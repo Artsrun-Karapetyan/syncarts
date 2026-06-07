@@ -7,10 +7,11 @@ import { RequestTabs } from '../request/RequestTabs';
 import { ResponseViewer } from '../response/ResponseViewer';
 import { TabsBar } from './TabsBar';
 import { SaveDialog } from '../request/SaveDialog';
+import { CollectionFolderTabs } from './CollectionFolderTabs';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function Workspace() {
-  const { sendRequest, isMutating } = useWorkspace();
+  const { sendRequest, isMutating, activeTab } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const saveBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -19,8 +20,10 @@ export function Workspace() {
       {/* Tabs */}
       <TabsBar />
 
-      {/* URL Bar */}
-      <div style={{ padding: 16, flexShrink: 0, position: 'relative', zIndex: 50 }}>
+      {(!activeTab || activeTab.type === 'request' || !activeTab.type) ? (
+        <>
+          {/* URL Bar */}
+          <div style={{ padding: 16, flexShrink: 0, position: 'relative', zIndex: 50 }}>
         <div
           className="glass-panel"
           style={{
@@ -116,6 +119,10 @@ export function Workspace() {
           </div>
         </div>
       </div>
+      </>
+      ) : (
+        <CollectionFolderTabs />
+      )}
     </div>
   );
 }
