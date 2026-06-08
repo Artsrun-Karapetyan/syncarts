@@ -47,14 +47,33 @@ pub async fn make_request(request: HttpRequest) -> Result<HttpResponse, String> 
         BodyPayload::FormData { items } => {
             let mut form = reqwest::multipart::Form::new();
             for item in items {
-                form = form.text(item.key, item.value);
+                let is_file = item.item_type.as_deref() == Some("file");
+                if is_file {
+                    if let Some(files) = item.files {
+                        for path_str in files {
+                            if let Ok(file_bytes) = std::fs::read(&path_str) {
+                                let file_name = std::path::Path::new(&path_str)
+                                    .file_name()
+                                    .and_then(|n| n.to_str())
+                                    .unwrap_or("file")
+                                    .to_string();
+                                let part = reqwest::multipart::Part::bytes(file_bytes).file_name(file_name);
+                                form = form.part(item.key.clone(), part);
+                            }
+                        }
+                    }
+                } else if let Some(val) = item.value {
+                    form = form.text(item.key, val);
+                } else {
+                    form = form.text(item.key, "");
+                }
             }
             req_builder = req_builder.multipart(form);
         }
         BodyPayload::FormUrlEncoded { items } => {
             let mut map = std::collections::HashMap::new();
             for item in items {
-                map.insert(item.key, item.value);
+                map.insert(item.key, item.value.unwrap_or_default());
             }
             req_builder = req_builder.form(&map);
         }

@@ -24,6 +24,7 @@ export interface FormDataItem {
   value: string;
   enabled: boolean;
   type?: 'text' | 'file';
+  files?: string[];
 }
 
 export interface TestResult {
@@ -751,7 +752,9 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
         const formData = activeTab.formData || [];
         const items = formData.filter(item => item.enabled && item.key).map(item => ({
           key: interpolate(item.key),
-          value: interpolate(item.value)
+          value: item.type === 'file' ? '' : interpolate(item.value),
+          type: item.type,
+          files: item.files,
         }));
         
         if (items.length > 0) {
