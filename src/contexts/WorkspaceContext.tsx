@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
 import { api } from '../lib/api';
 import useSWRMutation from 'swr/mutation';
 
@@ -1225,12 +1225,26 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
     saveRequest(collectionId, folderId, newReq);
     addTab({ ...newReq, id: crypto.randomUUID(), savedRequestId: newReqId, response: null });
   };
+  const activeTabIdRef = useRef(activeTabId);
+  const closeTabRef = useRef(closeTab);
+
+  useEffect(() => {
+    activeTabIdRef.current = activeTabId;
+    closeTabRef.current = closeTab;
+  }, [activeTabId, closeTab]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'w') {
         e.preventDefault();
-        if (activeTabId) {
-          closeTab(activeTabId);
+        if (activeTabIdRef.current) {
+          closeTabRef.current(activeTabIdRef.current);
+          // Restore focus to body to prevent Tauri webview from losing keyboard focus on Mac
+          // when the focused element inside the tab is unmounted.
+          setTimeout(() => {
+            window.focus();
+            document.body.focus();
+          }, 0);
         }
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'r') {
@@ -1241,7 +1255,7 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTabId]); // Do not include closeTab as it's not wrapped in useCallback
+  }, []);
 
   // --- BACKGROUND SYNC LOGIC ---
 
