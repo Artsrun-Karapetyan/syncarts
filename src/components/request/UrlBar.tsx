@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
@@ -7,7 +7,7 @@ import { parseCurlCommand } from '../../utils/curlParser';
 import './UrlBar.css';
 
 export function UrlBar() {
-  const { activeTab, updateActiveTab, sendRequest, activeEnvironment, updateEnvironment } = useWorkspace();
+  const { activeTab, updateActiveTab, sendRequest, activeEnvironmentId, activeEnvironment, updateEnvironment, collections, globalVariables, updateGlobalVariables } = useWorkspace();
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const text = e.clipboardData.getData('text');
@@ -22,10 +22,45 @@ export function UrlBar() {
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<any>(null);
   const url = activeTab?.url || '';
   
-  const [hoveredVar, setHoveredVar] = useState<{ name: string, x: number, y: number, exists: boolean, value?: string } | null>(null);
+  const [hoveredVar, setHoveredVar] = useState<{ name: string, x: number, y: number, exists: boolean, value?: string, source?: string } | null>(null);
+  const activeCollection = activeTab?.collectionId ? collections.find((collection) => collection.id === activeTab.collectionId) : undefined;
+  const resolveVariable = (varName: string) => {
+    const envVar = activeEnvironment?.variables.find((variable) => variable.key === varName && variable.enabled);
+    if (envVar) return { exists: true, value: envVar.value, source: activeEnvironment?.name || 'Environment' };
+
+    const collectionVar = activeCollection?.variables?.find((variable) => variable.key === varName && variable.enabled);
+    if (collectionVar) return { exists: true, value: collectionVar.value, source: `${activeCollection?.name || 'Collection'} collection` };
+
+    const globalVar = globalVariables.find((variable) => variable.key === varName && variable.enabled);
+    if (globalVar) return { exists: true, value: globalVar.value, source: 'Globals' };
+
+    return { exists: false, value: '', source: 'Not found' };
+  };
+
+  useEffect(() => {
+    if (!hoveredVar) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (popoverRef.current?.contains(target) || inputRef.current?.contains(target)) return;
+      setHoveredVar(null);
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setHoveredVar(null);
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [hoveredVar]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLInputElement>) => {
     if (!overlayRef.current) return;
@@ -43,30 +78,35 @@ export function UrlBar() {
         const varName = span.getAttribute('data-varname') || '';
         const exists = span.getAttribute('data-exists') === 'true';
         const value = span.getAttribute('data-value') || '';
+        const source = span.getAttribute('data-source') || '';
         
         if (hoveredVar?.name !== varName) {
           clearTimeout(hideTimeout.current);
-          setHoveredVar({ name: varName, x: rect.left, y: rect.bottom + 4, exists, value });
+          setHoveredVar({ name: varName, x: rect.left, y: rect.bottom + 4, exists, value, source });
         }
         break;
       }
     }
     
-    if (!found && hoveredVar) {
-      hideTimeout.current = setTimeout(() => setHoveredVar(null), 150);
-    }
+    if (!found) clearTimeout(hideTimeout.current);
   };
 
   const handleMouseLeave = () => {
-    hideTimeout.current = setTimeout(() => setHoveredVar(null), 150);
+    clearTimeout(hideTimeout.current);
   };
 
   const handleAddVar = (varName: string, value: string) => {
-    if (!activeEnvironment) {
-      alert("Please create or select an Environment first (top right corner).");
+    if (activeEnvironmentId === 'globals') {
+      updateGlobalVariables([...globalVariables, { id: crypto.randomUUID(), key: varName, value, enabled: true }]);
+      setHoveredVar(null);
       return;
     }
-    const newVars = [...activeEnvironment.variables, { id: crypto.randomUUID(), key: varName, value, enabled: true, type: 'text' as const }];
+
+    if (!activeEnvironment) {
+      alert("Please select an Environment or Globals first (top right corner).");
+      return;
+    }
+    const newVars = [...activeEnvironment.variables, { id: crypto.randomUUID(), key: varName, value, enabled: true }];
     updateEnvironment(activeEnvironment.id, { variables: newVars });
     setHoveredVar(null);
   };
@@ -76,18 +116,17 @@ export function UrlBar() {
     return parts.map((part, i) => {
       if (part.startsWith('{{') && part.endsWith('}}')) {
         const varName = part.substring(2, part.length - 2);
-        const exists = activeEnvironment?.variables.some(v => v.key === varName && v.enabled);
-        
-        const value = activeEnvironment?.variables.find(v => v.key === varName)?.value;
+        const resolved = resolveVariable(varName);
         return (
           <span 
             key={i} 
             className="env-var-span"
             data-varname={varName}
-            data-exists={exists}
-            data-value={value || ''}
+            data-exists={resolved.exists}
+            data-value={resolved.value || ''}
+            data-source={resolved.source}
             style={{ 
-              color: exists ? 'var(--accent-primary)' : 'var(--status-delete)', 
+              color: resolved.exists ? 'var(--accent-primary)' : 'var(--status-delete)', 
             }}
           >
             {part}
@@ -146,6 +185,9 @@ export function UrlBar() {
           if (e.key === 'Enter' && url) {
             sendRequest();
           }
+          if (e.key === 'Escape') {
+            setHoveredVar(null);
+          }
         }}
         onPaste={handlePaste}
         disabled={!activeTab}
@@ -155,6 +197,7 @@ export function UrlBar() {
       {/* Popover */}
       {hoveredVar && createPortal(
         <div 
+          ref={popoverRef}
           style={{
             position: 'fixed',
             left: hoveredVar.x,
@@ -173,7 +216,7 @@ export function UrlBar() {
           onMouseLeave={handleMouseLeave}
         >
           <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 11, textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>
-            Environment Variable
+            Variable
           </div>
           <div style={{ fontFamily: 'var(--font-mono)', marginBottom: hoveredVar.exists ? 0 : 12, fontWeight: 600, color: hoveredVar.exists ? 'var(--accent-primary)' : 'var(--status-delete)' }}>
             {hoveredVar.name}
@@ -181,6 +224,10 @@ export function UrlBar() {
           
           {hoveredVar.exists ? (
             <div style={{ marginTop: 4, color: 'var(--text-secondary)' }}>
+              <div style={{ marginBottom: 4 }}>
+                <span style={{ color: 'var(--text-tertiary)', fontSize: 11, marginRight: 4 }}>Source:</span>
+                {hoveredVar.source}
+              </div>
               <span style={{ color: 'var(--text-tertiary)', fontSize: 11, marginRight: 4 }}>Value:</span>
               {hoveredVar.value || <span style={{ opacity: 0.5, fontStyle: 'italic' }}>empty</span>}
             </div>

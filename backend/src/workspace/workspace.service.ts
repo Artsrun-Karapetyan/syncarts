@@ -60,7 +60,8 @@ export class WorkspaceService {
 
     const workspaceData = {
       collections: data?.collections ?? [],
-      environments: data?.environments ?? []
+      environments: data?.environments ?? [],
+      globalVariables: data?.globalVariables ?? []
     };
 
     const existing = await this.prisma.workspace.findFirst({
@@ -130,5 +131,28 @@ export class WorkspaceService {
     });
 
     return { status: 'left', workspaceId };
+  }
+
+  async removeMember(workspaceId: string, memberUserId: string, userId: string) {
+    const workspace = await this.prisma.workspace.findUnique({
+      where: { id: workspaceId }
+    });
+
+    if (!workspace || workspace.ownerId !== userId) {
+      throw new ForbiddenException('Only the workspace owner can remove members');
+    }
+
+    if (memberUserId === workspace.ownerId) {
+      throw new ForbiddenException('The workspace owner cannot be removed');
+    }
+
+    await this.prisma.workspaceMember.deleteMany({
+      where: {
+        userId: memberUserId,
+        workspaceId
+      }
+    });
+
+    return { status: 'removed', workspaceId, userId: memberUserId };
   }
 }

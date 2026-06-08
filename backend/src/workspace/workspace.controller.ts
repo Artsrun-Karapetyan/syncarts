@@ -38,6 +38,11 @@ export class WorkspaceController {
     return this.workspaceService.deleteWorkspace(id, req.authUser.id);
   }
 
+  @Delete(':id/members/:memberUserId')
+  async removeMember(@Request() req: any, @Param('id') id: string, @Param('memberUserId') memberUserId: string) {
+    return this.workspaceService.removeMember(id, memberUserId, req.authUser.id);
+  }
+
   @Put(':id/sync')
   async syncData(@Request() req: any, @Param('id') id: string, @Body() body: any) {
     try {

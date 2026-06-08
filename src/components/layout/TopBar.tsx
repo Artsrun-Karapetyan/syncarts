@@ -12,7 +12,7 @@ import { InviteModal } from '../workspace/InviteModal';
 import { JoinWorkspaceModal } from '../workspace/JoinWorkspaceModal';
 
 export function TopBar() {
-  const { workspaces, activeWorkspaceId, switchWorkspace, createWorkspace, removeWorkspace, environments, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment } = useWorkspace();
+  const { workspaces, activeWorkspaceId, switchWorkspace, createWorkspace, removeWorkspace, environments, globalVariables, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment } = useWorkspace();
   const user = useStoredUser();
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -23,7 +23,14 @@ export function TopBar() {
   const [isDeleteWorkspaceOpen, setIsDeleteWorkspaceOpen] = useState(false);
   const envQuickLookRef = useRef<HTMLDivElement>(null);
   const activeWorkspace = workspaces.find((workspace) => workspace.id === activeWorkspaceId);
-  const isSharedWorkspace = !!activeWorkspace?.ownerId && !!user?.id && activeWorkspace.ownerId !== user.id;
+  const isMemberWorkspace = !!activeWorkspace?.ownerId && !!user?.id && activeWorkspace.ownerId !== user.id;
+  const showingGlobals = activeEnvironmentId === 'globals';
+  const quickLookName = showingGlobals ? 'Globals' : activeEnvironment ? activeEnvironment.name : 'No Environment';
+  const quickLookVariables = showingGlobals ? globalVariables : activeEnvironment?.variables || [];
+  const hasSharedMembers = (workspace: typeof workspaces[number]) => {
+    const members = workspace.members || [];
+    return members.some((member) => member.userId !== workspace.ownerId);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -92,7 +99,7 @@ export function TopBar() {
                 ...workspaces.map((w) => ({
                   label: w.name,
                   value: w.id,
-                  badge: w.ownerId && user?.id && w.ownerId !== user.id ? 'Shared' : undefined,
+                  badge: (w.ownerId && user?.id && w.ownerId !== user.id) || hasSharedMembers(w) ? 'Shared' : undefined,
                 })),
                 { label: '+ Create Workspace', value: 'new' },
               ]}
@@ -162,7 +169,7 @@ export function TopBar() {
           {activeWorkspace && workspaces.length > 1 && (
             <button
               className="tooltip-trigger"
-              data-tooltip={isSharedWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
+              data-tooltip={isMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
               style={{
                 width: 34,
                 height: 34,
@@ -243,15 +250,15 @@ export function TopBar() {
                   boxShadow: 'var(--shadow-lg)',
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{activeEnvironment ? activeEnvironment.name : 'No Environment'}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{quickLookName}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {activeEnvironment?.variables.filter(v => v.enabled && v.key).map(v => (
+                  {quickLookVariables.filter(v => v.enabled && v.key).map(v => (
                     <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                       <span style={{ color: 'var(--accent-primary)' }}>{v.key}</span>
                       <span style={{ color: 'var(--text-secondary)' }}>{v.value || '-'}</span>
                     </div>
                   ))}
-                  {(!activeEnvironment || activeEnvironment.variables.filter(v => v.enabled && v.key).length === 0) && (
+                  {quickLookVariables.filter(v => v.enabled && v.key).length === 0 && (
                     <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No active variables</div>
                   )}
                 </div>
@@ -265,10 +272,12 @@ export function TopBar() {
               value={activeEnvironmentId || 'none'}
               onChange={(val) => {
                 if (val === 'none') setActiveEnvironmentId(null);
+                else if (val === 'globals') setActiveEnvironmentId('globals');
                 else setActiveEnvironmentId(val);
               }}
               options={[
                 { label: 'No Environment', value: 'none' },
+                { label: 'Globals', value: 'globals' },
                 ...environments.map(e => ({ label: e.name, value: e.id }))
               ]}
             />
@@ -351,13 +360,13 @@ export function TopBar() {
 
       <ConfirmModal
         isOpen={isDeleteWorkspaceOpen}
-        title={isSharedWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
+        title={isMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
         message={
-          isSharedWorkspace
+          isMemberWorkspace
             ? `Leave "${activeWorkspace?.name}"? You will lose access until someone invites you again.`
             : `Delete "${activeWorkspace?.name}"? This removes the workspace and its collections for every member.`
         }
-        confirmText={isSharedWorkspace ? 'Leave' : 'Delete'}
+        confirmText={isMemberWorkspace ? 'Leave' : 'Delete'}
         cancelText="Cancel"
         isDestructive
         onCancel={() => setIsDeleteWorkspaceOpen(false)}

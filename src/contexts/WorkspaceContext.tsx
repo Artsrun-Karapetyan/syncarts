@@ -114,9 +114,21 @@ export interface Workspace {
   id: string;
   name: string;
   ownerId?: string;
+  members?: WorkspaceMember[];
   collections: Collection[];
   environments?: Environment[];
   globalVariables?: EnvironmentVariable[];
+}
+
+export interface WorkspaceMember {
+  userId: string;
+  workspaceId: string;
+  role: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 interface WorkspaceContextState {
@@ -373,6 +385,20 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
     });
   };
 
+  const mapRemoteWorkspace = (remote: any, local?: Workspace): Workspace => {
+    const remoteData = remote.data || { collections: [], environments: [] };
+    return {
+      ...local,
+      id: remote.id,
+      name: remote.name,
+      ownerId: remote.ownerId,
+      members: remote.members || [],
+      collections: remoteData.collections || [],
+      environments: remoteData.environments || [],
+      globalVariables: remoteData.globalVariables || local?.globalVariables || []
+    };
+  };
+
   useEffect(() => {
     setWorkspaces((prev) => {
       const normalized = normalizeLegacyWorkspaces(prev);
@@ -461,22 +487,14 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
 
           if (localIndex === -1) {
             nextLocals.push({
-              id: remote.id,
-              name: remote.name,
-              ownerId: remote.ownerId,
+              ...mapRemoteWorkspace(remote),
               collections: remoteData.collections || [],
               environments: remoteData.environments || []
             });
             continue;
           }
 
-            nextLocals[localIndex] = {
-              ...nextLocals[localIndex],
-              name: remote.name,
-              ownerId: remote.ownerId,
-              collections: remoteData.collections || [],
-              environments: remoteData.environments || []
-            };
+          nextLocals[localIndex] = mapRemoteWorkspace(remote, nextLocals[localIndex]);
         }
 
         return normalizeLegacyWorkspaces(nextLocals);
@@ -1235,7 +1253,7 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
       const remoteIds = new Set<string>(remoteWorkspaces.map((remote: any) => remote.id));
       const workspacesToPush: Array<{
         workspaceId: string;
-        data: { name: string; ownerId?: string; collections: Collection[]; environments: Environment[] };
+        data: { name: string; ownerId?: string; collections: Collection[]; environments: Environment[]; globalVariables: EnvironmentVariable[] };
       }> = [];
       
       setWorkspaces((prevLocals) => {
@@ -1255,22 +1273,14 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
           
           if (localIndex === -1) {
             nextLocals.push({
-              id: remote.id,
-              name: remote.name,
-              ownerId: remote.ownerId,
+              ...mapRemoteWorkspace(remote),
               collections: remoteData.collections || [],
               environments: remoteData.environments || []
             });
             hasChanges = true;
           } else {
             const local = nextLocals[localIndex];
-            const remoteWorkspace = {
-              ...local,
-              name: remote.name,
-              ownerId: remote.ownerId,
-              collections: remoteData.collections || [],
-              environments: remoteData.environments || []
-            };
+            const remoteWorkspace = mapRemoteWorkspace(remote, local);
 
             if (remote.ownerId && remote.ownerId !== userId) {
               if (JSON.stringify(local) !== JSON.stringify(remoteWorkspace)) {
@@ -1282,25 +1292,33 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
 
             const localData = {
               name: local.name,
-              ownerId: local.ownerId,
               collections: local.collections,
-              environments: local.environments || []
+              environments: local.environments || [],
+              globalVariables: local.globalVariables || []
+            };
+            const localSyncData = {
+              ...localData,
+              ownerId: local.ownerId
             };
             const remoteName = remote.name || '';
             const remoteCollections = remoteData.collections || [];
             const remoteEnvironments = remoteData.environments || [];
-            const localHasData = localData.collections.length > 0 || localData.environments.length > 0;
-            const remoteHasData = remoteCollections.length > 0 || remoteEnvironments.length > 0;
+            const remoteGlobalVariables = remoteData.globalVariables || [];
+            const localHasData = localData.collections.length > 0 || localData.environments.length > 0 || localData.globalVariables.length > 0;
+            const remoteHasData = remoteCollections.length > 0 || remoteEnvironments.length > 0 || remoteGlobalVariables.length > 0;
             const nameChanged = localData.name !== remoteName;
 
             // Keep local edits on reload, but hydrate empty local workspaces from the backend.
             if (!localHasData && remoteHasData) {
-               nextLocals[localIndex] = { ...local, name: remote.name, ownerId: remote.ownerId, collections: remoteCollections, environments: remoteEnvironments };
+               nextLocals[localIndex] = mapRemoteWorkspace(remote, local);
                hasChanges = true;
             } else if (localHasData && (!remoteHasData || nameChanged)) {
-               workspacesToPush.push({ workspaceId: remote.id, data: localData });
+               workspacesToPush.push({ workspaceId: remote.id, data: localSyncData });
             } else if (localHasData && remoteHasData && (nameChanged || JSON.stringify(localData) !== JSON.stringify(remoteData))) {
-               workspacesToPush.push({ workspaceId: remote.id, data: localData });
+               workspacesToPush.push({ workspaceId: remote.id, data: localSyncData });
+            } else if (JSON.stringify(local.members || []) !== JSON.stringify(remote.members || [])) {
+               nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
+               hasChanges = true;
             }
           }
         }
@@ -1330,7 +1348,8 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
           name: workspace.name,
           ownerId: workspace.ownerId,
           collections: workspace.collections,
-          environments: workspace.environments || []
+          environments: workspace.environments || [],
+          globalVariables: workspace.globalVariables || []
         };
 
         if (workspace.ownerId && workspace.ownerId !== userId) {
@@ -1360,17 +1379,9 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
           }
 
           for (const remote of remoteWorkspaces) {
-            if (!remote.ownerId || remote.ownerId === userId) continue;
-
-            const remoteData = remote.data || { collections: [], environments: [] };
-            const remoteWorkspace: Workspace = {
-              id: remote.id,
-              name: remote.name,
-              ownerId: remote.ownerId,
-              collections: remoteData.collections || [],
-              environments: remoteData.environments || []
-            };
             const localIndex = nextLocals.findIndex((workspace) => workspace.id === remote.id);
+            const isOwnedWorkspace = remote.ownerId === userId;
+            const remoteWorkspace = mapRemoteWorkspace(remote);
 
             if (localIndex === -1) {
               nextLocals.push(remoteWorkspace);
@@ -1378,8 +1389,17 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
               continue;
             }
 
+            if (isOwnedWorkspace) {
+              const local = nextLocals[localIndex];
+              if (JSON.stringify(local.members || []) !== JSON.stringify(remote.members || [])) {
+                nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
+                hasChanges = true;
+              }
+              continue;
+            }
+
             if (JSON.stringify(nextLocals[localIndex]) !== JSON.stringify(remoteWorkspace)) {
-              nextLocals[localIndex] = remoteWorkspace;
+              nextLocals[localIndex] = mapRemoteWorkspace(remote, nextLocals[localIndex]);
               hasChanges = true;
             }
           }

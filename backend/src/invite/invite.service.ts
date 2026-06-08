@@ -6,7 +6,7 @@ export class InviteService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   private async syncWorkspaceSnapshots(
-    workspaces: Array<{ id: string; name: string; collections?: any; environments?: any }>,
+    workspaces: Array<{ id: string; name: string; collections?: any; environments?: any; globalVariables?: any }>,
     userId: string,
   ) {
     for (const workspace of workspaces) {
@@ -16,7 +16,8 @@ export class InviteService {
 
       const workspaceData = {
         collections: workspace.collections ?? [],
-        environments: workspace.environments ?? []
+        environments: workspace.environments ?? [],
+        globalVariables: workspace.globalVariables ?? []
       };
 
       if (existing) {
@@ -81,7 +82,7 @@ export class InviteService {
   }
 
   async generateInviteLink(
-    input: { workspaceIds?: string[]; workspaces?: Array<{ id: string; name: string; collections?: any; environments?: any }> },
+    input: { workspaceIds?: string[]; workspaces?: Array<{ id: string; name: string; collections?: any; environments?: any; globalVariables?: any }> },
     userId: string,
     expiresInDays: number = 7,
   ) {
@@ -112,7 +113,7 @@ export class InviteService {
   }
 
   async addMemberByEmail(
-    input: { workspaceIds?: string[]; workspaces?: Array<{ id: string; name: string; collections?: any; environments?: any }> },
+    input: { workspaceIds?: string[]; workspaces?: Array<{ id: string; name: string; collections?: any; environments?: any; globalVariables?: any }> },
     email: string,
     ownerId: string,
   ) {

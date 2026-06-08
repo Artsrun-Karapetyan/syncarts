@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Copy, Check, Mail, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { X, Copy, Check, Mail, Link as LinkIcon, Loader2, UserMinus, Users } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useStoredUser } from '../../lib/session';
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
-  const { workspaces, activeWorkspaceId } = useWorkspace();
+  const { workspaces, activeWorkspaceId, reloadWorkspaces } = useWorkspace();
   const user = useStoredUser();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,6 +22,14 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
   const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<string[]>([]);
   const isSharedWorkspace = (workspace: { ownerId?: string }) => !!workspace.ownerId && !!user?.id && workspace.ownerId !== user.id;
   const visibleWorkspaces = workspaces.filter((workspace) => !isSharedWorkspace(workspace));
+  const activeWorkspace = workspaces.find((workspace) => workspace.id === workspaceId)
+    || workspaces.find((workspace) => workspace.id === activeWorkspaceId);
+  const selectedWorkspaces = visibleWorkspaces.filter((workspace) => selectedWorkspaceIds.includes(workspace.id));
+  const memberWorkspaces = selectedWorkspaces.length > 0
+    ? selectedWorkspaces
+    : activeWorkspace
+      ? [activeWorkspace]
+      : [];
 
   useEffect(() => {
     if (!isOpen) return;
@@ -41,7 +49,6 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
 
   if (!isOpen) return null;
 
-  const selectedWorkspaces = visibleWorkspaces.filter((workspace) => selectedWorkspaceIds.includes(workspace.id));
   const getWorkspaceMeta = (workspace: { id: string; name: string; ownerId?: string }) => {
     if (workspace.id === activeWorkspaceId) return 'Current workspace';
     return 'Available workspace';
@@ -95,10 +102,27 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
         })),
         email
       });
+      await reloadWorkspaces();
       setStatusMsg('Member added successfully');
       setEmail('');
     } catch (err: any) {
       setStatusMsg(err.message || 'Error adding member');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveMember = async (targetWorkspaceId: string, memberUserId: string) => {
+    const targetWorkspace = workspaces.find((workspace) => workspace.id === targetWorkspaceId);
+    if (!targetWorkspace || memberUserId === targetWorkspace.ownerId) return;
+
+    try {
+      setLoading(true);
+      await api.delete(`/workspaces/${targetWorkspace.id}/members/${memberUserId}`);
+      await reloadWorkspaces();
+      setStatusMsg('Member removed');
+    } catch (err: any) {
+      setStatusMsg(err.message || 'Error removing member');
     } finally {
       setLoading(false);
     }
@@ -230,6 +254,88 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
               The selected user will be added to every checked workspace.
             </p>
           </div>
+
+          {memberWorkspaces.length > 0 && (
+            <div>
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Users size={15} />
+                Workspace Members
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 220, overflowY: 'auto' }}>
+                {memberWorkspaces.map((memberWorkspace) => {
+                  const members = memberWorkspace.members || [];
+                  const canManageMembers = !!memberWorkspace.ownerId && memberWorkspace.ownerId === user?.id;
+
+                  return (
+                    <div key={memberWorkspace.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {memberWorkspace.name}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                            {members.length || 1} member{(members.length || 1) === 1 ? '' : 's'}
+                          </div>
+                        </div>
+                        {memberWorkspace.id === activeWorkspaceId && (
+                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
+                            Current
+                          </span>
+                        )}
+                      </div>
+
+                      {members.length > 0 ? members.map((member) => {
+                        const isOwner = member.userId === memberWorkspace.ownerId;
+                        return (
+                          <div
+                            key={`${memberWorkspace.id}-${member.userId}`}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 10,
+                              padding: '9px 10px',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: 10,
+                              background: 'var(--bg-secondary)',
+                            }}
+                          >
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {member.user?.name || member.user?.email || member.userId}
+                              </div>
+                              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {member.user?.email || member.role}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                                {isOwner ? 'Owner' : member.role}
+                              </span>
+                              {canManageMembers && !isOwner && (
+                                <button
+                                  className="btn"
+                                  disabled={loading}
+                                  onClick={() => handleRemoveMember(memberWorkspace.id, member.userId)}
+                                  style={{ height: 26, width: 30, padding: 0, justifyContent: 'center', color: 'var(--status-delete)' }}
+                                >
+                                  <UserMinus size={14} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }) : (
+                        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '9px 10px', border: '1px dashed var(--border-color)', borderRadius: 10 }}>
+                          Only you are in this workspace.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
