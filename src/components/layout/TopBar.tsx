@@ -1,20 +1,29 @@
 import { useState, useRef, useEffect } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Link } from '@tanstack/react-router';
-import { Settings2, Eye, LayoutGrid } from 'lucide-react';
+import { Settings2, Eye, LayoutGrid, UserPlus, LogIn, Trash2 } from 'lucide-react';
 
 import { useStoredUser } from '../../lib/session';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Select } from '../ui/Select';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { EnvironmentManager } from '../environment/EnvironmentManager';
+import { InviteModal } from '../workspace/InviteModal';
+import { JoinWorkspaceModal } from '../workspace/JoinWorkspaceModal';
 
 export function TopBar() {
-  const { workspaces, activeWorkspaceId, switchWorkspace, createWorkspace, environments, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment } = useWorkspace();
+  const { workspaces, activeWorkspaceId, switchWorkspace, createWorkspace, removeWorkspace, environments, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment } = useWorkspace();
   const user = useStoredUser();
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isEnvManagerOpen, setIsEnvManagerOpen] = useState(false);
   const [isEnvQuickLookOpen, setIsEnvQuickLookOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [isDeleteWorkspaceOpen, setIsDeleteWorkspaceOpen] = useState(false);
   const envQuickLookRef = useRef<HTMLDivElement>(null);
+  const activeWorkspace = workspaces.find((workspace) => workspace.id === activeWorkspaceId);
+  const isSharedWorkspace = !!activeWorkspace?.ownerId && !!user?.id && activeWorkspace.ownerId !== user.id;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -32,10 +41,20 @@ export function TopBar() {
   }, [isEnvQuickLookOpen]);
 
   const isMac = navigator.userAgent.includes('Mac');
+  const handleWindowDrag = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    const isInteractive = target.closest('button, input, textarea, select, a, [role="button"]');
+    if (event.button !== 0 || isInteractive) return;
+
+    getCurrentWindow().startDragging().catch((err) => {
+      console.error('Failed to start window drag', err);
+    });
+  };
 
   return (
     <div
       data-tauri-drag-region
+      onMouseDown={handleWindowDrag}
       style={{
         height: 60,
         width: '100%',
@@ -43,7 +62,7 @@ export function TopBar() {
         borderBottom: '1px solid var(--border-color)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        gap: 18,
         padding: '0 24px',
         paddingLeft: isMac ? 80 : 24,
         flexShrink: 0,
@@ -56,8 +75,8 @@ export function TopBar() {
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Workspace
         </div>
-        <div style={{ width: 260 }}>
-          <div style={{ position: 'relative' }}>
+        <div style={{ width: 288, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
             <Select
               variant="pill"
               value={activeWorkspaceId}
@@ -70,7 +89,11 @@ export function TopBar() {
                 }
               }}
               options={[
-                ...workspaces.map((w) => ({ label: w.name, value: w.id })),
+                ...workspaces.map((w) => ({
+                  label: w.name,
+                  value: w.id,
+                  badge: w.ownerId && user?.id && w.ownerId !== user.id ? 'Shared' : undefined,
+                })),
                 { label: '+ Create Workspace', value: 'new' },
               ]}
             />
@@ -136,10 +159,61 @@ export function TopBar() {
               </div>
             )}
           </div>
+          {activeWorkspace && workspaces.length > 1 && (
+            <button
+              className="tooltip-trigger"
+              data-tooltip={isSharedWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
+              style={{
+                width: 34,
+                height: 34,
+                flexShrink: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 10,
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-tertiary)',
+                background: 'var(--bg-primary)',
+              }}
+              onClick={() => setIsDeleteWorkspaceOpen(true)}
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
         </div>
       </div>
 
+      <div
+        data-tauri-drag-region
+        onMouseDown={handleWindowDrag}
+        style={{
+          flex: 1,
+          alignSelf: 'stretch',
+          minWidth: 64,
+          cursor: 'grab',
+        }}
+      />
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            className="btn"
+            style={{ height: 28, padding: '0 12px', fontSize: 13 }}
+            onClick={() => setIsJoinOpen(true)}
+          >
+            <LogIn size={14} style={{ marginRight: 6 }} />
+            Join
+          </button>
+          <button
+            className="btn"
+            style={{ height: 28, padding: '0 12px', fontSize: 13 }}
+            onClick={() => setIsInviteOpen(true)}
+          >
+            <UserPlus size={14} style={{ marginRight: 6 }} />
+            Invite
+          </button>
+        </div>
+
         {/* Environment Selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ position: 'relative' }} ref={envQuickLookRef}>
@@ -259,7 +333,39 @@ export function TopBar() {
       </Link>
       </div>
       
-      <EnvironmentManager isOpen={isEnvManagerOpen} onClose={() => setIsEnvManagerOpen(false)} />
+      <EnvironmentManager 
+        isOpen={isEnvManagerOpen} 
+        onClose={() => setIsEnvManagerOpen(false)} 
+      />
+
+      <InviteModal
+        isOpen={isInviteOpen}
+        onClose={() => setIsInviteOpen(false)}
+        workspaceId={activeWorkspaceId}
+      />
+
+      <JoinWorkspaceModal
+        isOpen={isJoinOpen}
+        onClose={() => setIsJoinOpen(false)}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteWorkspaceOpen}
+        title={isSharedWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
+        message={
+          isSharedWorkspace
+            ? `Leave "${activeWorkspace?.name}"? You will lose access until someone invites you again.`
+            : `Delete "${activeWorkspace?.name}"? This removes the workspace and its collections for every member.`
+        }
+        confirmText={isSharedWorkspace ? 'Leave' : 'Delete'}
+        cancelText="Cancel"
+        isDestructive
+        onCancel={() => setIsDeleteWorkspaceOpen(false)}
+        onConfirm={() => {
+          if (!activeWorkspace) return;
+          void removeWorkspace(activeWorkspace.id).finally(() => setIsDeleteWorkspaceOpen(false));
+        }}
+      />
     </div>
   );
 }

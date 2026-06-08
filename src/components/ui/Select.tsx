@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react';
 interface SelectOption {
   value: string;
   label: string;
+  badge?: string;
 }
 
 interface SelectProps {
@@ -71,7 +72,26 @@ export function Select({ value, options, onChange, disabled, className = '', sty
           if (variant === 'pill' && !isOpen) e.currentTarget.style.borderColor = 'var(--border-color)';
         }}
       >
-        <span>{selectedOption?.label}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOption?.label}</span>
+          {selectedOption?.badge && (
+            <span
+              style={{
+                flexShrink: 0,
+                border: '1px solid rgba(99, 102, 241, 0.34)',
+                borderRadius: 999,
+                padding: '2px 7px',
+                background: 'rgba(99, 102, 241, 0.12)',
+                color: 'var(--text-secondary)',
+                fontSize: 10,
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              {selectedOption.badge}
+            </span>
+          )}
+        </span>
         <ChevronDown size={variant === 'pill' ? 14 : 16} style={{ opacity: 0.6, transition: 'transform var(--transition-fast)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
       </button>
 
@@ -114,7 +134,26 @@ export function Select({ value, options, onChange, disabled, className = '', sty
                 if (option.value !== value) e.currentTarget.style.background = 'transparent';
               }}
             >
-              {option.label}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option.label}</span>
+                {option.badge && (
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      border: '1px solid rgba(99, 102, 241, 0.34)',
+                      borderRadius: 999,
+                      padding: '2px 7px',
+                      background: 'rgba(99, 102, 241, 0.12)',
+                      color: 'var(--text-secondary)',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {option.badge}
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>

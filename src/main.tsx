@@ -21,3 +21,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <RouterProvider router={router} />
   </React.StrictMode>,
 );
+
+window.requestAnimationFrame(() => {
+  const bootScreen = document.getElementById('boot-screen');
+  bootScreen?.classList.add('boot-hidden');
+  window.setTimeout(() => bootScreen?.remove(), 220);
+});

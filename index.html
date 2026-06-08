@@ -4,10 +4,149 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a0a0a" />
     <title>Syncarts</title>
+    <style>
+      html,
+      body,
+      #root {
+        margin: 0;
+        width: 100%;
+        min-height: 100%;
+        background: #0a0a0a;
+      }
+
+      #boot-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(10, 10, 10, 0.72), rgba(10, 10, 10, 0.96)),
+          radial-gradient(circle at 22% 18%, rgba(34, 197, 94, 0.12), transparent 30%),
+          radial-gradient(circle at 78% 16%, rgba(99, 102, 241, 0.16), transparent 34%),
+          #0a0a0a;
+        color: #f8fafc;
+        font-family: "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+      }
+
+      #boot-screen.boot-hidden {
+        opacity: 0;
+        transform: scale(1.01);
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .boot-shell {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: 272px 1fr;
+        filter: blur(7px);
+        opacity: 0.46;
+        transform: scale(1.02);
+      }
+
+      .boot-sidebar {
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(18, 18, 18, 0.76);
+      }
+
+      .boot-main {
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        background-size: 48px 48px;
+      }
+
+      .boot-panel {
+        width: min(360px, calc(100vw - 48px));
+        padding: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 20px;
+        background: rgba(18, 18, 18, 0.68);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
+        backdrop-filter: blur(22px);
+        -webkit-backdrop-filter: blur(22px);
+      }
+
+      .boot-brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .boot-logo {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        box-shadow: 0 0 28px rgba(99, 102, 241, 0.34);
+      }
+
+      .boot-title {
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .boot-subtitle {
+        margin-top: 6px;
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .boot-track {
+        height: 4px;
+        margin-top: 24px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .boot-progress {
+        width: 42%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #6366f1, #22c55e);
+        animation: boot-progress 880ms ease-in-out infinite alternate;
+      }
+
+      @keyframes boot-progress {
+        from {
+          transform: translateX(-28%);
+        }
+        to {
+          transform: translateX(168%);
+        }
+      }
+    </style>
   </head>
 
-  <body>
+  <body style="background: #0a0a0a;">
+    <div id="boot-screen">
+      <div class="boot-shell" aria-hidden="true">
+        <div class="boot-sidebar"></div>
+        <div class="boot-main"></div>
+      </div>
+      <div class="boot-panel" role="status" aria-live="polite">
+        <div class="boot-brand">
+          <img class="boot-logo" src="/logo.png" alt="" />
+          <div>
+            <div class="boot-title">Syncarts</div>
+            <div class="boot-subtitle">API Client</div>
+          </div>
+        </div>
+        <div class="boot-track">
+          <div class="boot-progress"></div>
+        </div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

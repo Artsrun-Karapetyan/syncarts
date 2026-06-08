@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
-import { createContext, ReactNode, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { api } from '../lib/api';
 import useSWRMutation from 'swr/mutation';
 
 export interface HeaderItem {
@@ -112,6 +113,7 @@ export interface Environment {
 export interface Workspace {
   id: string;
   name: string;
+  ownerId?: string;
   collections: Collection[];
   environments?: Environment[];
   globalVariables?: EnvironmentVariable[];
@@ -124,6 +126,7 @@ interface WorkspaceContextState {
   // Workspace Actions
   createWorkspace: (name: string) => void;
   switchWorkspace: (id: string) => void;
+  removeWorkspace: (id: string) => Promise<void>;
 
   // Environment State
   environments: Environment[];
@@ -137,6 +140,7 @@ interface WorkspaceContextState {
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   deleteEnvironment: (id: string) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
+  reloadWorkspaces: () => Promise<void>;
 
   tabs: TabData[];
   activeTabId: string | null;
@@ -180,7 +184,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
     }
   });
 
-  const setValue = (value: T | ((val: T) => T)) => {
+  const setValue = useCallback((value: T | ((val: T) => T)) => {
     try {
       setStoredValue(prev => {
         const valueToStore = value instanceof Function ? value(prev) : value;
@@ -190,7 +194,8 @@ function useLocalStorage<T>(key: string, initialValue: T) {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [key]);
+
   return [storedValue, setValue] as const;
 }
 
@@ -243,34 +248,48 @@ const DEFAULT_COLLECTIONS: Collection[] = [
   }
 ];
 
-export function WorkspaceProvider({ children }: { children: ReactNode }) {
+export function WorkspaceProvider({ children, userId }: { children: ReactNode, userId: string }) {
+  const localDefaultWorkspaceId = `local-${userId}`;
+
   // Initialize workspaces, migrating from v2 collections if necessary
   const defaultWorkspaces = (() => {
     try {
+      const oldV3Item = window.localStorage.getItem('syncarts-workspaces-v3');
+      if (oldV3Item) {
+        window.localStorage.removeItem('syncarts-workspaces-v3');
+        return JSON.parse(oldV3Item);
+      }
       const oldCollectionsItem = window.localStorage.getItem('syncarts-collections-v2');
       if (oldCollectionsItem) {
+        window.localStorage.removeItem('syncarts-collections-v2');
         const oldCollections = JSON.parse(oldCollectionsItem);
-        return [{ id: 'default', name: 'My Workspace', collections: oldCollections }];
+        return [{ id: localDefaultWorkspaceId, name: 'My Workspace', collections: oldCollections }];
       }
     } catch (e) {}
-    return [{ id: 'default', name: 'My Workspace', collections: DEFAULT_COLLECTIONS }];
+    return [{ id: localDefaultWorkspaceId, name: 'My Workspace', collections: DEFAULT_COLLECTIONS }];
   })();
 
-  const [workspaces, setWorkspaces] = useLocalStorage<Workspace[]>('syncarts-workspaces-v3', defaultWorkspaces);
+  const [workspaces, setWorkspaces] = useLocalStorage<Workspace[]>(`syncarts-workspaces-v3-${userId}`, defaultWorkspaces);
 
-  const [activeWorkspaceId, setActiveWorkspaceId] = useLocalStorage<string>('syncarts-active-workspace-v3', workspaces[0]?.id || 'default');
+  const [activeWorkspaceId, setActiveWorkspaceId] = useLocalStorage<string>(`syncarts-active-workspace-v3-${userId}`, workspaces[0]?.id || localDefaultWorkspaceId);
 
   // We store a mapping of workspaceId -> tabs
   const defaultTabsByWorkspace = (() => {
     try {
+      const oldV3Item = window.localStorage.getItem('syncarts-tabs-by-workspace-v3');
+      if (oldV3Item) {
+        window.localStorage.removeItem('syncarts-tabs-by-workspace-v3');
+        return JSON.parse(oldV3Item);
+      }
       const oldTabsItem = window.localStorage.getItem('syncarts-tabs-v2');
       if (oldTabsItem) {
+        window.localStorage.removeItem('syncarts-tabs-v2');
         const oldTabs = JSON.parse(oldTabsItem);
-        return { 'default': oldTabs };
+        return { [localDefaultWorkspaceId]: oldTabs };
       }
     } catch (e) {}
     return {
-      'default': [
+      [localDefaultWorkspaceId]: [
         {
           id: crypto.randomUUID(),
           name: 'Untitled Request',
@@ -287,35 +306,120 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     };
   })();
 
-  const [tabsByWorkspace, setTabsByWorkspace] = useLocalStorage<Record<string, TabData[]>>('syncarts-tabs-by-workspace-v3', defaultTabsByWorkspace);
+  const [tabsByWorkspace, setTabsByWorkspace] = useLocalStorage<Record<string, TabData[]>>(`syncarts-tabs-by-workspace-v3-${userId}`, defaultTabsByWorkspace);
 
   const defaultActiveTabIdByWorkspace = (() => {
     try {
+      const oldV3Item = window.localStorage.getItem('syncarts-active-tab-by-workspace-v3');
+      if (oldV3Item) {
+        window.localStorage.removeItem('syncarts-active-tab-by-workspace-v3');
+        return JSON.parse(oldV3Item);
+      }
       const oldActiveTabItem = window.localStorage.getItem('syncarts-active-tab-v2');
       if (oldActiveTabItem) {
+        window.localStorage.removeItem('syncarts-active-tab-v2');
         const oldActiveTab = JSON.parse(oldActiveTabItem);
-        return { 'default': oldActiveTab };
+        return { [localDefaultWorkspaceId]: oldActiveTab };
       }
     } catch(e) {}
-    return { 'default': null };
+    return { [localDefaultWorkspaceId]: null };
   })();
 
-  const [activeTabIdByWorkspace, setActiveTabIdByWorkspace] = useLocalStorage<Record<string, string | null>>('syncarts-active-tab-by-workspace-v3', defaultActiveTabIdByWorkspace);
+  const [activeTabIdByWorkspace, setActiveTabIdByWorkspace] = useLocalStorage<Record<string, string | null>>(`syncarts-active-tab-by-workspace-v3-${userId}`, defaultActiveTabIdByWorkspace);
+
+  const defaultActiveEnvByWorkspace = (() => {
+    try {
+      const oldV3Item = window.localStorage.getItem('syncarts-active-env-by-workspace-v3');
+      if (oldV3Item) {
+        window.localStorage.removeItem('syncarts-active-env-by-workspace-v3');
+        return JSON.parse(oldV3Item);
+      }
+    } catch (e) {}
+    return { [localDefaultWorkspaceId]: null };
+  })();
+
+  const [activeEnvIdByWorkspace, setActiveEnvIdByWorkspace] = useLocalStorage<Record<string, string | null>>(`syncarts-active-env-by-workspace-v3-${userId}`, defaultActiveEnvByWorkspace);
+
+  const shouldSkipLegacyDefaultRemote = (remote: any, localWorkspaces: Workspace[]) => {
+    const remoteData = remote.data || {};
+    const localDefault = localWorkspaces.find((workspace) => workspace.id === localDefaultWorkspaceId);
+
+    return !!localDefault
+      && remote.id === 'default'
+      && remote.ownerId === userId
+      && localDefault.name === remote.name
+      && JSON.stringify(localDefault.collections || []) === JSON.stringify(remoteData.collections || []);
+  };
+
+  const normalizeLegacyWorkspaces = (items: Workspace[]) => {
+    const hasLocalDefault = items.some((workspace) => workspace.id === localDefaultWorkspaceId);
+    const seenIds = new Set<string>();
+
+    return items.filter((workspace) => {
+      if (seenIds.has(workspace.id)) return false;
+      seenIds.add(workspace.id);
+
+      if (!hasLocalDefault || workspace.id === localDefaultWorkspaceId) return true;
+
+      return !(workspace.name === 'My Workspace'
+        && (workspace.id === 'default' || !workspace.ownerId || workspace.ownerId === userId));
+    });
+  };
+
+  const removeUnavailableSharedWorkspaces = (items: Workspace[], remoteIds: Set<string>) => {
+    return items.filter((workspace) => {
+      const isSharedWorkspace = !!workspace.ownerId && workspace.ownerId !== userId;
+      return !isSharedWorkspace || remoteIds.has(workspace.id);
+    });
+  };
+
+  useEffect(() => {
+    setWorkspaces((prev) => {
+      const normalized = normalizeLegacyWorkspaces(prev);
+      if (normalized.length !== prev.length) return normalized;
+      if (!prev.some((workspace) => workspace.id === 'default')) return prev;
+      if (prev.some((workspace) => workspace.id === localDefaultWorkspaceId)) {
+        return prev.filter((workspace) => workspace.id !== 'default');
+      }
+
+      return prev.map((workspace) =>
+        workspace.id === 'default' ? { ...workspace, id: localDefaultWorkspaceId } : workspace
+      );
+    });
+
+    setTabsByWorkspace((prev) => {
+      if (!prev.default || prev[localDefaultWorkspaceId]) return prev;
+      const { default: defaultTabs, ...rest } = prev;
+      return { ...rest, [localDefaultWorkspaceId]: defaultTabs };
+    });
+
+    setActiveTabIdByWorkspace((prev) => {
+      if (!Object.prototype.hasOwnProperty.call(prev, 'default') || prev[localDefaultWorkspaceId] !== undefined) return prev;
+      const { default: defaultActiveTabId, ...rest } = prev;
+      return { ...rest, [localDefaultWorkspaceId]: defaultActiveTabId };
+    });
+
+    setActiveEnvIdByWorkspace((prev) => {
+      if (!Object.prototype.hasOwnProperty.call(prev, 'default') || prev[localDefaultWorkspaceId] !== undefined) return prev;
+      const { default: defaultActiveEnvId, ...rest } = prev;
+      return { ...rest, [localDefaultWorkspaceId]: defaultActiveEnvId };
+    });
+
+    if (activeWorkspaceId === 'default') {
+      setActiveWorkspaceId(localDefaultWorkspaceId);
+    }
+  }, [activeWorkspaceId, localDefaultWorkspaceId, setActiveWorkspaceId, setActiveEnvIdByWorkspace, setActiveTabIdByWorkspace, setTabsByWorkspace, setWorkspaces]);
+
+  useEffect(() => {
+    if (workspaces.length > 0 && !workspaces.some((workspace) => workspace.id === activeWorkspaceId)) {
+      setActiveWorkspaceId(workspaces[0].id);
+    }
+  }, [activeWorkspaceId, setActiveWorkspaceId, workspaces]);
 
   // Current workspace projections
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId) || workspaces[0];
   const collections = activeWorkspace?.collections || [];
   const environments = activeWorkspace?.environments || [];
-
-  const defaultActiveEnvByWorkspace = (() => {
-    try {
-      const item = window.localStorage.getItem('syncarts-active-env-by-workspace-v3');
-      if (item) return JSON.parse(item);
-    } catch (e) {}
-    return { 'default': null };
-  })();
-
-  const [activeEnvIdByWorkspace, setActiveEnvIdByWorkspace] = useLocalStorage<Record<string, string | null>>('syncarts-active-env-by-workspace-v3', defaultActiveEnvByWorkspace);
   
   const activeEnvironmentId = activeEnvIdByWorkspace[activeWorkspaceId] || null;
   const activeEnvironment = environments.find(e => e.id === activeEnvironmentId);
@@ -336,6 +440,50 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       ...prev,
       [activeWorkspaceId]: updater(prev[activeWorkspaceId] || [])
     }));
+  };
+
+  const reloadWorkspaces = async () => {
+    try {
+      const res: any = await api.get('/workspaces');
+      const remoteWorkspaces = res.data || [];
+      const remoteIds = new Set<string>(remoteWorkspaces.map((remote: any) => remote.id));
+
+      setWorkspaces((prevLocals) => {
+        const nextLocals = [...removeUnavailableSharedWorkspaces(prevLocals, remoteIds)];
+
+        for (const remote of remoteWorkspaces) {
+          if (shouldSkipLegacyDefaultRemote(remote, nextLocals)) {
+            continue;
+          }
+
+          const remoteData = remote.data || { collections: [], environments: [] };
+          const localIndex = nextLocals.findIndex((workspace) => workspace.id === remote.id);
+
+          if (localIndex === -1) {
+            nextLocals.push({
+              id: remote.id,
+              name: remote.name,
+              ownerId: remote.ownerId,
+              collections: remoteData.collections || [],
+              environments: remoteData.environments || []
+            });
+            continue;
+          }
+
+            nextLocals[localIndex] = {
+              ...nextLocals[localIndex],
+              name: remote.name,
+              ownerId: remote.ownerId,
+              collections: remoteData.collections || [],
+              environments: remoteData.environments || []
+            };
+        }
+
+        return normalizeLegacyWorkspaces(nextLocals);
+      });
+    } catch (err) {
+      console.error('Failed to reload workspaces', err);
+    }
   };
 
   const createWorkspace = (name: string) => {
@@ -417,6 +565,44 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const switchWorkspace = (id: string) => {
     setActiveWorkspaceId(id);
+  };
+
+  const removeWorkspace = async (id: string) => {
+    const workspaceToRemove = workspaces.find((workspace) => workspace.id === id);
+    const nextWorkspaceId = workspaces.find((workspace) => workspace.id !== id)?.id || localDefaultWorkspaceId;
+
+    if (workspaceToRemove?.ownerId || !id.startsWith('local-')) {
+      await api.delete(`/workspaces/${id}`);
+    }
+
+    setWorkspaces((prev) => {
+      const next = prev.filter((workspace) => workspace.id !== id);
+      if (next.length > 0) return next;
+
+      return [{
+        id: localDefaultWorkspaceId,
+        name: 'My Workspace',
+        collections: [],
+        environments: []
+      }];
+    });
+
+    setTabsByWorkspace((prev) => {
+      const { [id]: _removedTabs, ...rest } = prev;
+      return rest;
+    });
+    setActiveTabIdByWorkspace((prev) => {
+      const { [id]: _removedActiveTab, ...rest } = prev;
+      return rest;
+    });
+    setActiveEnvIdByWorkspace((prev) => {
+      const { [id]: _removedActiveEnv, ...rest } = prev;
+      return rest;
+    });
+
+    if (activeWorkspaceId === id) {
+      setActiveWorkspaceId(nextWorkspaceId);
+    }
   };
 
   const getRequestAncestors = (): (Collection | Folder)[] => {
@@ -1039,6 +1225,174 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTabId]); // Do not include closeTab as it's not wrapped in useCallback
 
+  // --- BACKGROUND SYNC LOGIC ---
+
+  useEffect(() => {
+    let isMounted = true;
+    api.get('/workspaces').then((res: any) => {
+      if (!isMounted) return;
+      const remoteWorkspaces = res.data || [];
+      const remoteIds = new Set<string>(remoteWorkspaces.map((remote: any) => remote.id));
+      const workspacesToPush: Array<{
+        workspaceId: string;
+        data: { name: string; ownerId?: string; collections: Collection[]; environments: Environment[] };
+      }> = [];
+      
+      setWorkspaces((prevLocals) => {
+        let hasChanges = false;
+        const nextLocals = [...removeUnavailableSharedWorkspaces(prevLocals, remoteIds)];
+        if (nextLocals.length !== prevLocals.length) {
+          hasChanges = true;
+        }
+
+        for (const remote of remoteWorkspaces) {
+          if (shouldSkipLegacyDefaultRemote(remote, nextLocals)) {
+            continue;
+          }
+
+          const localIndex = nextLocals.findIndex(w => w.id === remote.id);
+          const remoteData = remote.data || { collections: [], environments: [] };
+          
+          if (localIndex === -1) {
+            nextLocals.push({
+              id: remote.id,
+              name: remote.name,
+              ownerId: remote.ownerId,
+              collections: remoteData.collections || [],
+              environments: remoteData.environments || []
+            });
+            hasChanges = true;
+          } else {
+            const local = nextLocals[localIndex];
+            const remoteWorkspace = {
+              ...local,
+              name: remote.name,
+              ownerId: remote.ownerId,
+              collections: remoteData.collections || [],
+              environments: remoteData.environments || []
+            };
+
+            if (remote.ownerId && remote.ownerId !== userId) {
+              if (JSON.stringify(local) !== JSON.stringify(remoteWorkspace)) {
+                nextLocals[localIndex] = remoteWorkspace;
+                hasChanges = true;
+              }
+              continue;
+            }
+
+            const localData = {
+              name: local.name,
+              ownerId: local.ownerId,
+              collections: local.collections,
+              environments: local.environments || []
+            };
+            const remoteName = remote.name || '';
+            const remoteCollections = remoteData.collections || [];
+            const remoteEnvironments = remoteData.environments || [];
+            const localHasData = localData.collections.length > 0 || localData.environments.length > 0;
+            const remoteHasData = remoteCollections.length > 0 || remoteEnvironments.length > 0;
+            const nameChanged = localData.name !== remoteName;
+
+            // Keep local edits on reload, but hydrate empty local workspaces from the backend.
+            if (!localHasData && remoteHasData) {
+               nextLocals[localIndex] = { ...local, name: remote.name, ownerId: remote.ownerId, collections: remoteCollections, environments: remoteEnvironments };
+               hasChanges = true;
+            } else if (localHasData && (!remoteHasData || nameChanged)) {
+               workspacesToPush.push({ workspaceId: remote.id, data: localData });
+            } else if (localHasData && remoteHasData && (nameChanged || JSON.stringify(localData) !== JSON.stringify(remoteData))) {
+               workspacesToPush.push({ workspaceId: remote.id, data: localData });
+            }
+          }
+        }
+        if (hasChanges) return normalizeLegacyWorkspaces(nextLocals);
+        const normalizedLocals = normalizeLegacyWorkspaces(prevLocals);
+        return normalizedLocals.length !== prevLocals.length ? normalizedLocals : prevLocals;
+      });
+
+      for (const workspace of workspacesToPush) {
+        api.put(`/workspaces/${workspace.workspaceId}/sync`, workspace.data).catch((err: any) => {
+          console.error('Failed to sync workspace to backend', err);
+        });
+      }
+    }).catch((err: any) => {
+      console.error('Failed to fetch workspaces from backend', err);
+    });
+
+    return () => { isMounted = false; };
+  }, [setWorkspaces]);
+
+  useEffect(() => {
+    if (workspaces.length === 0) return;
+
+    const timeoutId = setTimeout(() => {
+      workspaces.forEach((workspace) => {
+        const dataPayload = {
+          name: workspace.name,
+          ownerId: workspace.ownerId,
+          collections: workspace.collections,
+          environments: workspace.environments || []
+        };
+
+        if (workspace.ownerId && workspace.ownerId !== userId) {
+          return;
+        }
+
+        api.put(`/workspaces/${workspace.id}/sync`, dataPayload).catch((err: any) => {
+          console.error('Failed to sync workspace to backend', workspace.id, err);
+        });
+      });
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+  }, [workspaces, activeWorkspaceId, userId]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      api.get('/workspaces').then((res: any) => {
+        const remoteWorkspaces = res.data || [];
+        const remoteIds = new Set<string>(remoteWorkspaces.map((remote: any) => remote.id));
+
+        setWorkspaces((prevLocals) => {
+          let hasChanges = false;
+          const nextLocals = [...removeUnavailableSharedWorkspaces(prevLocals, remoteIds)];
+          if (nextLocals.length !== prevLocals.length) {
+            hasChanges = true;
+          }
+
+          for (const remote of remoteWorkspaces) {
+            if (!remote.ownerId || remote.ownerId === userId) continue;
+
+            const remoteData = remote.data || { collections: [], environments: [] };
+            const remoteWorkspace: Workspace = {
+              id: remote.id,
+              name: remote.name,
+              ownerId: remote.ownerId,
+              collections: remoteData.collections || [],
+              environments: remoteData.environments || []
+            };
+            const localIndex = nextLocals.findIndex((workspace) => workspace.id === remote.id);
+
+            if (localIndex === -1) {
+              nextLocals.push(remoteWorkspace);
+              hasChanges = true;
+              continue;
+            }
+
+            if (JSON.stringify(nextLocals[localIndex]) !== JSON.stringify(remoteWorkspace)) {
+              nextLocals[localIndex] = remoteWorkspace;
+              hasChanges = true;
+            }
+          }
+
+          return hasChanges ? normalizeLegacyWorkspaces(nextLocals) : prevLocals;
+        });
+      }).catch((err: any) => {
+        console.error('Failed to refresh shared workspaces', err);
+      });
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [setWorkspaces, userId]);
 
   return (
     <WorkspaceContext.Provider
@@ -1047,6 +1401,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         activeWorkspaceId,
         createWorkspace,
         switchWorkspace,
+        removeWorkspace,
         
         tabs: currentTabs,
         activeTabId,
@@ -1061,6 +1416,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         updateEnvironment,
         deleteEnvironment,
         updateGlobalVariables,
+        reloadWorkspaces,
         
         openCollectionTab,
         openFolderTab,
