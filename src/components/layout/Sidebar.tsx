@@ -29,7 +29,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           gap: 8,
           fontSize: 13,
           color: 'var(--text-secondary)',
-          padding: '7px 12px',
+          padding: '4px 8px',
           paddingLeft,
           borderRadius: 8,
           cursor: 'pointer',
@@ -99,7 +99,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           gap: 8,
           fontSize: 13,
           color: 'var(--text-secondary)',
-          padding: '7px 12px',
+          padding: '4px 8px',
           paddingLeft,
           borderRadius: 8,
           cursor: 'pointer',
@@ -300,7 +300,9 @@ export function Sidebar() {
   return (
     <div
       style={{
-        width: 340,
+        width: '20vw',
+        minWidth: 240,
+        maxWidth: 300,
         borderRight: '1px solid var(--border-color)',
         height: '100%',
         background: 'var(--bg-secondary)',

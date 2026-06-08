@@ -33,7 +33,7 @@ export function TabsBar() {
             minWidth: 0,
             overflowX: 'auto',
             overflowY: 'hidden',
-            minHeight: 44,
+            minHeight: 36,
           }}
           onWheel={(event) => {
             if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
@@ -50,14 +50,14 @@ export function TabsBar() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 10,
+                    gap: 8,
                     cursor: 'pointer',
                     transition: 'all var(--transition-fast)',
                     whiteSpace: 'nowrap',
                     borderRight: '1px solid var(--border-color)',
-                    minWidth: 180,
-                    maxWidth: 280,
-                    padding: '0 16px',
+                    minWidth: 140,
+                    maxWidth: 240,
+                    padding: '0 12px',
                     fontSize: 13,
                     borderTop: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
                     background: isActive ? 'var(--bg-primary)' : 'transparent',

@@ -69,7 +69,7 @@ input, textarea, select {
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
-  padding: 0.6rem 1rem;
+  padding: 6px 12px;
   border-radius: var(--radius-sm);
   outline: none;
   transition: all var(--transition-fast);
@@ -99,7 +99,7 @@ select.input {
   background: var(--bg-secondary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  padding: 0.6rem 1.2rem;
+  padding: 6px 14px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 500;
@@ -157,8 +157,8 @@ select.input {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
