@@ -148,7 +148,7 @@ interface WorkspaceContextState {
   
   // Environment Actions
   setActiveEnvironmentId: (id: string | null) => void;
-  createEnvironment: (name: string, variables?: EnvironmentVariable[]) => void;
+  createEnvironment: (name: string, variables?: EnvironmentVariable[]) => string;
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   deleteEnvironment: (id: string) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
