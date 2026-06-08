@@ -43,6 +43,15 @@ export function RequestTabs() {
   // Calculate auth state
   const hasAuth = activeRequest?.headers.some(h => h.key.toLowerCase() === 'authorization' && h.value.startsWith('Bearer ')) ?? false;
 
+  // Calculate body state
+  let bodyBadge: React.ReactNode = null;
+  if (activeRequest?.bodyType === 'form-data' || activeRequest?.bodyType === 'x-www-form-urlencoded') {
+    const count = activeRequest.formData?.filter(f => f.key.trim() || f.value.trim()).length || 0;
+    if (count > 0) bodyBadge = <span className="tab-badge">{count}</span>;
+  } else if (activeRequest?.bodyType === 'raw' && activeRequest.body?.trim()) {
+    bodyBadge = <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--status-success)', marginLeft: 6 }} />;
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {/* Tab Bar */}
@@ -72,6 +81,7 @@ export function RequestTabs() {
             {tab.id === 'params' && paramsCount > 0 && (
               <span className="tab-badge">{paramsCount}</span>
             )}
+            {tab.id === 'body' && bodyBadge}
             {tab.id === 'auth' && hasAuth && (
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-primary)', marginLeft: 6 }} />
             )}

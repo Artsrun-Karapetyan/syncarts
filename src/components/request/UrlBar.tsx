@@ -62,6 +62,15 @@ export function UrlBar() {
     };
   }, [hoveredVar]);
 
+  useEffect(() => {
+    // Auto-focus URL bar when a new/empty request is opened
+    if (activeTab && activeTab.url === '') {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+    }
+  }, [activeTab?.id]);
+
   const handleMouseMove = (e: React.MouseEvent<HTMLInputElement>) => {
     if (!overlayRef.current) return;
     

@@ -20,7 +20,7 @@ export function Workspace() {
       {/* Tabs */}
       <TabsBar />
 
-      {(!activeTab || activeTab.type === 'request' || !activeTab.type) ? (
+      {(!activeTab || activeTab.type === 'request' || activeTab.type === 'example' || !activeTab.type) ? (
         <>
           {/* URL Bar */}
           <div style={{ padding: 16, flexShrink: 0, position: 'relative', zIndex: 50 }}>
@@ -36,22 +36,24 @@ export function Workspace() {
         >
           <MethodSelector />
           <UrlBar />
+          {activeTab?.type !== 'example' && (
+            <button
+              ref={saveBtnRef}
+              className="btn"
+              style={{
+                fontSize: 13,
+                padding: '0 20px',
+                borderRadius: 9999,
+                height: 38,
+                fontWeight: 600,
+              }}
+              onClick={() => setShowSaveDialog((current) => !current)}
+            >
+              Save
+            </button>
+          )}
           <button
-            ref={saveBtnRef}
-            className="btn"
-            style={{
-              fontSize: 13,
-              padding: '0 20px',
-              borderRadius: 9999,
-              height: 38,
-              fontWeight: 600,
-            }}
-            onClick={() => setShowSaveDialog((current) => !current)}
-          >
-            Save
-          </button>
-          <button
-            className="btn-success"
+            className={activeTab?.type === 'example' ? "btn" : "btn-success"}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -64,24 +66,22 @@ export function Workspace() {
               fontWeight: 700,
               letterSpacing: '0.03em',
               border: 'none',
-              cursor: isMutating ? 'not-allowed' : 'pointer',
-              opacity: isMutating ? 0.7 : 1,
+              cursor: isMutating && activeTab?.type !== 'example' ? 'not-allowed' : 'pointer',
+              opacity: isMutating && activeTab?.type !== 'example' ? 0.7 : 1,
               transition: 'all var(--transition-fast)',
             }}
-            onClick={sendRequest}
-            disabled={isMutating}
-            onMouseEnter={(e) => {
-              if (!isMutating) {
-                e.currentTarget.style.boxShadow = 'var(--shadow-success-glow)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
+            onClick={() => {
+              if (activeTab?.type === 'example') {
+                // Just visually save for now or trigger a toast
+              } else {
+                sendRequest();
               }
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = 'none';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
+            disabled={isMutating && activeTab?.type !== 'example'}
           >
-            {isMutating ? (
+            {activeTab?.type === 'example' ? (
+              'Save Example'
+            ) : isMutating ? (
               <>
                 <Loader2 size={14} className="animate-spin" />
                 Sending…
@@ -113,7 +113,9 @@ export function Workspace() {
 
         {/* Response panel */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Response</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>
+            {activeTab?.type === 'example' ? 'Example Response' : 'Response'}
+          </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <ResponseViewer />
           </div>

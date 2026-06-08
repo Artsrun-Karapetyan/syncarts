@@ -12,7 +12,7 @@ interface ImportModalProps {
 type ImportStatus = 'idle' | 'success' | 'error';
 
 export function ImportModal({ isOpen, onClose }: ImportModalProps) {
-  const { addTab, importCollection, createEnvironment } = useWorkspace();
+  const { addTab, importCollection, createEnvironment, collections, environments } = useWorkspace();
   const [inputText, setInputText] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [status, setStatus] = useState<ImportStatus>('idle');
@@ -20,12 +20,25 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
 
+  const [duplicateItem, setDuplicateItem] = useState<{
+    type: 'collection' | 'environment';
+    data: any;
+    originalName: string;
+    proposedName: string;
+  } | null>(null);
+
+  const [isProcessing, setIsProcessing] = useState(false);
+
   if (!isOpen) return null;
 
   const handleClose = () => {
     setInputText('');
     setStatus('idle');
     setMessage('');
+    setDuplicateItem(null);
+    dragCounter.current = 0;
+    setIsDragging(false);
+    setIsProcessing(false);
     onClose();
   };
 
@@ -42,7 +55,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             name: 'Imported cURL',
             bodyType: parsedCurl.body ? 'raw' : 'none',
           });
-          showSuccess('cURL imported successfully as a new request.');
+          handleClose();
           return;
         }
       }
@@ -54,16 +67,38 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         // Check if it's an Environment
         if (data._postman_variable_scope === 'environment' || (data.name && Array.isArray(data.values))) {
           const envData = importPostmanEnvironment(trimmed);
-          createEnvironment(envData.name || 'Imported Environment', envData.variables);
-          showSuccess(`Environment "${envData.name}" imported successfully.`);
+          const envName = envData.name || 'Imported Environment';
+          
+          if (environments.some(e => e.name === envName)) {
+            setDuplicateItem({
+              type: 'environment',
+              data: envData,
+              originalName: envName,
+              proposedName: `${envName} (Copy)`
+            });
+            return;
+          }
+
+          createEnvironment(envName, envData.variables);
+          handleClose();
           return;
         }
 
         // Check if it's a Collection
         if (data.info && data.info.name) {
           const collectionData = importPostmanCollection(trimmed);
+          if (collections.some(c => c.name === collectionData.name)) {
+            setDuplicateItem({
+              type: 'collection',
+              data: collectionData,
+              originalName: collectionData.name,
+              proposedName: `${collectionData.name} (Copy)`
+            });
+            return;
+          }
+
           importCollection(collectionData);
-          showSuccess(`Collection "${collectionData.name}" imported successfully.`);
+          handleClose();
           return;
         }
       }
@@ -73,20 +108,30 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       console.error('Import failed:', err);
       setStatus('error');
       setMessage(err.message || 'Failed to import data.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const showSuccess = (msg: string) => {
-    setStatus('success');
-    setMessage(msg);
-    setTimeout(() => {
-      handleClose();
-    }, 1500);
+  const handleConfirmDuplicate = () => {
+    if (!duplicateItem) return;
+    
+    if (duplicateItem.type === 'collection') {
+      const newData = { ...duplicateItem.data, name: duplicateItem.proposedName };
+      importCollection(newData);
+    } else {
+      createEnvironment(duplicateItem.proposedName, duplicateItem.data.variables);
+    }
+    
+    handleClose();
   };
 
   const handlePasteOrSubmit = () => {
     if (!inputText.trim()) return;
-    processContent(inputText);
+    setIsProcessing(true);
+    setTimeout(() => {
+      processContent(inputText);
+    }, 50);
   };
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -132,12 +177,18 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   };
 
   const readFile = (file: File) => {
+    setIsProcessing(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
-        processContent(event.target.result as string);
+        setTimeout(() => {
+          processContent(event.target.result as string);
+        }, 50);
+      } else {
+        setIsProcessing(false);
       }
     };
+    reader.onerror = () => setIsProcessing(false);
     reader.readAsText(file);
   };
 
@@ -199,98 +250,155 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
         <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
-              Paste cURL or Raw JSON
-            </label>
-            <textarea
-              className="input"
-              style={{
-                width: '100%',
-                height: 120,
-                padding: 12,
+          {duplicateItem ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.2s ease' }}>
+              <div style={{ 
+                padding: 16, 
+                borderRadius: 'var(--radius-md)', 
+                background: 'var(--status-put-bg)',
+                color: 'var(--status-put)',
                 fontSize: 13,
-                fontFamily: 'monospace',
-                resize: 'none',
-                borderRadius: 'var(--radius-md)',
-              }}
-              placeholder="Paste cURL command, Postman Collection, or Environment JSON..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                  handlePasteOrSubmit();
-                }
-              }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                className="btn btn-primary"
-                onClick={handlePasteOrSubmit}
-                disabled={!inputText.trim()}
-              >
-                Import Text
-              </button>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase' }}>OR</div>
-            <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
-          </div>
-
-          <div
-            onDragEnter={handleDragEnter}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleFileDrop}
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              border: `2px dashed ${isDragging ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-              borderRadius: 'var(--radius-md)',
-              padding: 48,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12,
-              background: isDragging ? 'var(--bg-tertiary)' : 'transparent',
-              cursor: 'pointer',
-              transition: 'all var(--transition-fast)',
-            }}
-          >
-            <UploadCloud size={32} style={{ color: isDragging ? 'var(--accent-primary)' : 'var(--text-tertiary)' }} />
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Drop files here or click to browse</div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>Supports Postman Collection (.json) and Environment (.json)</div>
-            </div>
-            <input
-              type="file"
-              accept=".json"
-              style={{ display: 'none' }}
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-            />
-          </div>
-
-          {status !== 'idle' && (
-            <div
-              style={{
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-md)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 10,
-                fontSize: 13,
-                fontWeight: 500,
-                background: status === 'success' ? 'var(--status-get-bg)' : 'var(--status-delete-bg)',
-                color: status === 'success' ? 'var(--status-get)' : 'var(--status-delete)',
-              }}
-            >
-              {status === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-              {message}
+                gap: 12
+              }}>
+                <AlertCircle size={20} />
+                <span>
+                  A {duplicateItem.type} named <strong>"{duplicateItem.originalName}"</strong> already exists. 
+                  Would you like to import it with a new name?
+                </span>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  Import as
+                </label>
+                <input
+                  type="text"
+                  className="input"
+                  value={duplicateItem.proposedName}
+                  onChange={(e) => setDuplicateItem({ ...duplicateItem, proposedName: e.target.value })}
+                  style={{ width: '100%' }}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleConfirmDuplicate();
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
+                <button className="btn btn-secondary" onClick={() => setDuplicateItem(null)}>
+                  Cancel
+                </button>
+                <button className="btn btn-primary" onClick={handleConfirmDuplicate}>
+                  Import Copy
+                </button>
+              </div>
             </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  Paste cURL or Raw JSON
+                </label>
+                <textarea
+                  className="input"
+                  style={{
+                    width: '100%',
+                    height: 120,
+                    padding: 12,
+                    fontSize: 13,
+                    fontFamily: 'monospace',
+                    resize: 'none',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                  placeholder="Paste cURL command, Postman Collection, or Environment JSON..."
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      handlePasteOrSubmit();
+                    }
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handlePasteOrSubmit}
+                    disabled={!inputText.trim() || isProcessing}
+                  >
+                    {isProcessing ? 'Importing...' : 'Import Json'}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase' }}>OR</div>
+                <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
+              </div>
+
+              <div
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleFileDrop}
+                onClick={() => !isProcessing && fileInputRef.current?.click()}
+                style={{
+                  border: `2px dashed ${isDragging ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                  borderRadius: 'var(--radius-md)',
+                  padding: 48,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 12,
+                  background: isDragging ? 'var(--bg-tertiary)' : 'transparent',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  opacity: isProcessing ? 0.7 : 1,
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                <UploadCloud size={32} style={{ color: isDragging ? 'var(--accent-primary)' : 'var(--text-tertiary)' }} />
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {isProcessing ? 'Importing File...' : 'Drop files here or click to browse'}
+                  </div>
+                  {!isProcessing && (
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+                      Supports Postman Collection (.json) and Environment (.json)
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept=".json"
+                  style={{ display: 'none' }}
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  disabled={isProcessing}
+                />
+              </div>
+
+              {status !== 'idle' && (
+                <div
+                  style={{
+                    padding: '12px 16px',
+                    borderRadius: 'var(--radius-md)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    background: status === 'success' ? 'var(--status-get-bg)' : 'var(--status-delete-bg)',
+                    color: status === 'success' ? 'var(--status-get)' : 'var(--status-delete)',
+                  }}
+                >
+                  {status === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  {message}
+                </div>
+              )}
+            </>
           )}
 
         </div>

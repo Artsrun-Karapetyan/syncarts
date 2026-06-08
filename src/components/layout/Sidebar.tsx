@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Trash2, Upload, Download } from 'lucide-react';
+import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Trash2, Download } from 'lucide-react';
 
 import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/WorkspaceContext';
 import { ConfirmModal } from '../ui/ConfirmModal';
@@ -17,12 +17,14 @@ interface CtxMenuState {
 
 function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: IFolder | SavedRequest, collectionId: string, onContextMenu: (e: React.MouseEvent, itemId: string, type: 'folder' | 'request') => void, level?: number }) {
   const [isOpen, setIsOpen] = useState(false);
-  const { addTab, openFolderTab } = useWorkspace();
+  const [isExamplesOpen, setIsExamplesOpen] = useState(false);
+  const { addTab, openFolderTab, openExampleTab } = useWorkspace();
 
   const paddingLeft = `${level * 12 + 8}px`;
 
   if (item.type === 'request') {
     return (
+      <>
       <div
         style={{
           display: 'flex',
@@ -49,7 +51,29 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           e.currentTarget.style.transform = 'translateX(0)';
         }}
       >
-        <FileText size={14} style={{ opacity: 0.45, flexShrink: 0 }} />
+        <div 
+          onClick={(e) => {
+            if (item.examples && item.examples.length > 0) {
+              e.stopPropagation();
+              setIsExamplesOpen(!isExamplesOpen);
+            }
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 14,
+            height: 14,
+            cursor: item.examples && item.examples.length > 0 ? 'pointer' : 'default',
+            color: 'var(--text-tertiary)'
+          }}
+        >
+          {item.examples && item.examples.length > 0 ? (
+            isExamplesOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+          ) : (
+            <FileText size={14} style={{ opacity: 0.45 }} />
+          )}
+        </div>
         <span
           className="font-mono"
           style={{
@@ -88,6 +112,44 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           <MoreHorizontal size={13} />
         </div>
       </div>
+      {isExamplesOpen && item.examples && item.examples.length > 0 && (
+        <div>
+          {item.examples.map((example) => (
+            <div
+              key={example.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 13,
+                color: 'var(--text-tertiary)',
+                padding: '4px 8px',
+                paddingLeft: `${level * 12 + 24}px`,
+                borderRadius: 8,
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+              onClick={() => openExampleTab(collectionId, example.id)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+                e.currentTarget.style.transform = 'translateX(2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-tertiary)';
+                e.currentTarget.style.transform = 'translateX(0)';
+              }}
+            >
+              <FileText size={13} style={{ opacity: 0.3 }} />
+              <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {example.name}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      </>
     );
   }
 

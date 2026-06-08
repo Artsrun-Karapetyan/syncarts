@@ -1,4 +1,4 @@
-import { Collection, Environment, EnvironmentVariable, Folder, HeaderItem, SavedRequest } from '../contexts/WorkspaceContext';
+import { Collection, Environment, EnvironmentVariable, Folder, HeaderItem, SavedRequest, SavedExample, BodyType } from '../contexts/WorkspaceContext';
 
 export function importPostmanCollection(jsonString: string): Omit<Collection, 'id'> {
   const data = JSON.parse(jsonString);
@@ -94,9 +94,86 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
         }
       }
 
-      let body = '';
-      if (req.body && req.body.raw) {
-        body = req.body.raw;
+      const parseBody = (postmanBody: any) => {
+        let body = '';
+        let bodyType: BodyType | undefined = undefined;
+        let formData: any[] = [];
+        
+        if (postmanBody) {
+          if (postmanBody.mode === 'raw') {
+            bodyType = 'raw';
+            body = postmanBody.raw || '';
+          } else if (postmanBody.mode === 'formdata') {
+            bodyType = 'form-data';
+            if (Array.isArray(postmanBody.formdata)) {
+              formData = postmanBody.formdata.map((f: any) => ({
+                id: crypto.randomUUID(),
+                key: f.key || '',
+                value: f.value || '',
+                type: f.type === 'file' ? 'file' : 'text',
+                enabled: f.disabled !== true
+              }));
+            }
+          } else if (postmanBody.mode === 'urlencoded') {
+            bodyType = 'x-www-form-urlencoded';
+            if (Array.isArray(postmanBody.urlencoded)) {
+              formData = postmanBody.urlencoded.map((f: any) => ({
+                id: crypto.randomUUID(),
+                key: f.key || '',
+                value: f.value || '',
+                type: 'text',
+                enabled: f.disabled !== true
+              }));
+            }
+          } else if (postmanBody.raw) {
+            body = postmanBody.raw;
+          }
+        }
+        
+        return { body, bodyType, formData: formData.length > 0 ? formData : undefined };
+      };
+
+      const parsedMainBody = parseBody(req.body);
+
+      let examples: SavedExample[] = [];
+      if (Array.isArray(item.response)) {
+        examples = item.response.map((res: any) => {
+          let resHeaders: HeaderItem[] = [];
+          if (Array.isArray(res.header)) {
+            resHeaders = res.header.map((h: any) => ({
+              key: h.key || '',
+              value: h.value || ''
+            }));
+          }
+          let reqHeaders: HeaderItem[] = [];
+          if (res.originalRequest && Array.isArray(res.originalRequest.header)) {
+             reqHeaders = res.originalRequest.header.map((h: any) => ({
+              key: h.key || '',
+              value: h.value || ''
+            }));
+          }
+          let parsedOrigBody = { body: '', bodyType: undefined as BodyType | undefined, formData: undefined as any[] | undefined };
+          if (res.originalRequest?.body) {
+            parsedOrigBody = parseBody(res.originalRequest.body);
+          }
+          
+          return {
+            id: crypto.randomUUID(),
+            name: res.name || 'Example',
+            code: res.code || 200,
+            status: res.status || 'OK',
+            body: res.body || '',
+            headers: resHeaders,
+            originalRequest: res.originalRequest ? {
+              method: res.originalRequest.method || 'GET',
+              url: typeof res.originalRequest.url === 'string' ? res.originalRequest.url : (res.originalRequest.url?.raw || ''),
+              headers: reqHeaders,
+              body: parsedOrigBody.body,
+              bodyType: parsedOrigBody.bodyType,
+              formData: parsedOrigBody.formData
+            } : undefined
+          };
+        });
       }
 
       return {
@@ -106,12 +183,15 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
         method,
         url,
         headers,
-        body,
+        body: parsedMainBody.body,
+        bodyType: parsedMainBody.bodyType,
+        formData: parsedMainBody.formData,
         preRequestScript,
         testScript,
         authType,
         bearerToken,
-        description
+        description,
+        examples: examples.length > 0 ? examples : undefined
       };
     }
   };

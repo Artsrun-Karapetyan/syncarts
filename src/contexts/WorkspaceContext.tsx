@@ -34,7 +34,7 @@ export interface TestResult {
 
 export interface TabData {
   id: string;
-  type?: 'request' | 'collection' | 'folder';
+  type?: 'request' | 'collection' | 'folder' | 'example';
   name: string;
   method: string;
   url: string;
@@ -54,6 +54,17 @@ export interface TabData {
   consoleLogs?: string[];
   collectionId?: string;
   folderId?: string;
+  exampleId?: string;
+}
+
+export interface SavedExample {
+  id: string;
+  name: string;
+  originalRequest?: Partial<TabData>;
+  code: number;
+  status: string;
+  body: string;
+  headers: HeaderItem[];
 }
 
 export interface SavedRequest {
@@ -71,6 +82,7 @@ export interface SavedRequest {
   body: string;
   preRequestScript?: string;
   testScript?: string;
+  examples?: SavedExample[];
 }
 
 export interface Folder {
@@ -165,6 +177,7 @@ interface WorkspaceContextState {
   closeTab: (id: string) => void;
   openCollectionTab: (collectionId: string) => void;
   openFolderTab: (collectionId: string, folderId: string) => void;
+  openExampleTab: (collectionId: string, exampleId: string) => void;
   updateActiveTab: (data: Partial<TabData>) => void;
   
   // Collection Actions
@@ -696,7 +709,7 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
       
       const headerMap: Record<string, string> = {};
       activeTab.headers.forEach((h) => {
-        if (h.key && h.value && h.key.toLowerCase() !== 'authorization') {
+        if (h.key && h.value) {
           headerMap[interpolate(h.key)] = interpolate(h.value);
         }
       });
@@ -1016,6 +1029,12 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
       type: 'collection',
       name: col.name,
       collectionId,
+      authType: col.authType,
+      bearerToken: col.bearerToken,
+      preRequestScript: col.preRequestScript,
+      testScript: col.testScript,
+      variables: col.variables,
+      description: col.description,
     });
   };
 
@@ -1048,6 +1067,58 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
       name: folder.name,
       collectionId,
       folderId,
+      authType: folder.authType,
+      bearerToken: folder.bearerToken,
+      preRequestScript: folder.preRequestScript,
+      testScript: folder.testScript,
+      description: folder.description,
+    });
+  };
+
+  const openExampleTab = (collectionId: string, exampleId: string) => {
+    const col = currentWorkspace?.collections.find(c => c.id === collectionId);
+    if (!col) return;
+
+    const findExample = (items: any[]): SavedExample | null => {
+      for (const item of items) {
+        if (item.type === 'folder') {
+          const found = findExample(item.items);
+          if (found) return found;
+        } else if (item.type === 'request' && item.examples) {
+          const found = item.examples.find((e: SavedExample) => e.id === exampleId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    const example = findExample(col.items);
+    if (!example) return;
+
+    const existing = currentTabs.find(t => t.type === 'example' && t.exampleId === exampleId);
+    if (existing) {
+      setActiveTabId(existing.id);
+      return;
+    }
+
+    addTab({
+      type: 'example',
+      name: example.name,
+      collectionId,
+      exampleId,
+      method: example.originalRequest?.method || 'GET',
+      url: example.originalRequest?.url || '',
+      body: example.originalRequest?.body || '',
+      bodyType: example.originalRequest?.bodyType || 'none',
+      formData: example.originalRequest?.formData,
+      headers: example.originalRequest?.headers || [],
+      response: {
+        status: example.code,
+        status_text: example.status,
+        headers: example.headers.reduce((acc, h) => ({ ...acc, [h.key]: h.value }), {}),
+        body: example.body,
+        time_ms: 0
+      }
     });
   };
 
@@ -1455,13 +1526,13 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
         
         openCollectionTab,
         openFolderTab,
-        
+        openExampleTab,
+        updateActiveTab,
         collections,
         
         setActiveTabId,
         addTab,
         closeTab,
-        updateActiveTab,
         
         addCollection,
         updateCollection,
