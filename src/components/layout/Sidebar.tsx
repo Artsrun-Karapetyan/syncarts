@@ -313,7 +313,9 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div style={{ flexShrink: 0, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-        <img src="/logo.png" alt="Syncarts Logo" style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'contain', boxShadow: '0 4px 12px rgba(0, 240, 255, 0.15)' }} />
+        <div style={{ width: 44, height: 44, borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0, 240, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src="/logo.png" alt="Syncarts Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
+        </div>
         <div>
           <h1 style={{ 
             fontWeight: 800, 
