@@ -28,5 +28,13 @@ This guide documents the architecture, commands, and decisions made during the d
 - **Global Request State (`src/contexts/RequestContext.tsx`):**
   - Uses standard React Context (`createContext`, `useState`) to manage URL, Method, Headers, and Body.
   - Uses `useSWRMutation` (from `swr`) to handle the execution of requests to the Rust backend (`invoke('make_request')`), providing automatic loading (`isMutating`) and error states to the UI.
+- **Workspace persistence (`src/contexts/WorkspaceContext.tsx`):**
+  - Local collections are treated as the source of truth on reload when a workspace already has local data.
+  - Empty backend workspaces hydrate local state; stale backend workspaces are pushed back up instead of wiping local collections.
+  - Workspace sync now includes the workspace `name`, and the backend upserts missing workspaces so invites do not create empty shells.
+  - Local default workspaces use a per-user id (`local-${userId}`) to avoid collisions with shared workspace ids from other accounts.
+- **Invites (`src/components/workspace/InviteModal.tsx`, `backend/src/invite/`):**
+  - Invites can target multiple selected workspaces.
+  - Accepting an invite adds the user to every workspace in the invite payload.
 
 *(This guide will be updated as new components and features are built).*

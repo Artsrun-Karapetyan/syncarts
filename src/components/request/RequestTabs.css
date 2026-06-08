@@ -1,0 +1,57 @@
+/* RequestTabs styles */
+
+.tab-button {
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  white-space: nowrap;
+}
+
+.tab-button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: transparent;
+  border-radius: 2px 2px 0 0;
+  transition: background var(--transition-fast);
+}
+
+.tab-button:hover {
+  color: var(--text-secondary);
+}
+
+.tab-button.active {
+  color: var(--text-primary);
+  text-shadow: 0.5px 0 0 currentColor;
+}
+
+.tab-button.active::after {
+  background: var(--accent-primary);
+}
+
+.tab-button:disabled {
+  cursor: not-allowed;
+}
+
+.tab-badge {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--accent-primary);
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 7px;
+  min-width: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

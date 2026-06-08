@@ -1,0 +1,62 @@
+/* MethodSelector styles */
+
+.method-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 13px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.4);
+  min-width: 100px;
+}
+
+.method-pill:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: var(--border-highlight);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.method-pill.get    { color: var(--status-get); }
+.method-pill.post   { color: var(--status-post); }
+.method-pill.put    { color: var(--status-put); }
+.method-pill.delete { color: var(--status-delete); }
+.method-pill.patch  { color: var(--status-patch); }
+
+.method-dropdown {
+  min-width: 140px;
+  background: rgba(16, 16, 16, 0.97);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-highlight);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 6px;
+}
+
+.method-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.method-dropdown-item:hover,
+.method-dropdown-item.active {
+  background: var(--bg-tertiary);
+}

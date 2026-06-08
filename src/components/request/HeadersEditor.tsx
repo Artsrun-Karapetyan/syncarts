@@ -22,43 +22,78 @@ export function HeadersEditor() {
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-1">Headers</div>
-      
-      <div className="flex flex-col gap-2">
-        {headers.map((header, idx) => (
-          <div key={idx} className="flex gap-2 items-center">
-            <input 
-              className="input flex-1 font-mono text-sm" 
-              placeholder="Key (e.g. Authorization)" 
-              value={header.key}
-              onChange={(e) => updateHeader(idx, e.target.value, header.value)}
-              disabled={!activeTab}
-            />
-            <input 
-              className="input flex-1 font-mono text-sm" 
-              placeholder="Value" 
-              value={header.value}
-              onChange={(e) => updateHeader(idx, header.key, e.target.value)}
-              disabled={!activeTab}
-            />
-            <div 
-              className={`p-2 text-status-delete rounded transition-fast flex items-center justify-center ${activeTab ? 'hover:bg-tertiary cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
-              onClick={() => { if(activeTab) removeHeader(idx); }}
-              title="Remove Header"
-            >
-              <Trash2 size={16} />
-            </div>
-          </div>
-        ))}
-        
-        <div 
-          className={`p-2 text-sm w-full mt-2 rounded border border-dashed border-color transition-fast flex items-center justify-center gap-2 font-semibold ${activeTab ? 'text-secondary hover:text-primary hover:border-primary hover:bg-tertiary cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
-          onClick={() => { if(activeTab) addHeader(); }}
-        >
-          <Plus size={16} /> Add Header
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {headers.map((header, idx) => (
+        <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            className="input font-mono"
+            style={{ flex: 1, fontSize: 13, padding: '8px 12px' }}
+            placeholder="Key (e.g. Authorization)"
+            value={header.key}
+            onChange={(e) => updateHeader(idx, e.target.value, header.value)}
+            disabled={!activeTab}
+          />
+          <input
+            className="input font-mono"
+            style={{ flex: 1, fontSize: 13, padding: '8px 12px' }}
+            placeholder="Value"
+            value={header.value}
+            onChange={(e) => updateHeader(idx, header.key, e.target.value)}
+            disabled={!activeTab}
+          />
+          <button
+            type="button"
+            style={{
+              padding: 6,
+              color: 'var(--status-delete)',
+              borderRadius: 'var(--radius-sm)',
+              transition: 'all var(--transition-fast)',
+              opacity: activeTab ? 0.6 : 0.3,
+              cursor: activeTab ? 'pointer' : 'not-allowed',
+            }}
+            onClick={() => { if (activeTab) removeHeader(idx); }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--status-delete-bg)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.background = 'transparent'; }}
+            title="Remove Header"
+          >
+            <Trash2 size={15} />
+          </button>
         </div>
-      </div>
+      ))}
+
+      <button
+        type="button"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          padding: '10px 0',
+          fontSize: 13,
+          fontWeight: 500,
+          color: 'var(--text-tertiary)',
+          border: '1px dashed var(--border-highlight)',
+          borderRadius: 'var(--radius-sm)',
+          background: 'transparent',
+          cursor: activeTab ? 'pointer' : 'not-allowed',
+          transition: 'all var(--transition-fast)',
+          opacity: activeTab ? 1 : 0.4,
+        }}
+        onClick={() => { if (activeTab) addHeader(); }}
+        onMouseEnter={(e) => {
+          if (!activeTab) return;
+          e.currentTarget.style.color = 'var(--text-primary)';
+          e.currentTarget.style.borderColor = 'var(--text-tertiary)';
+          e.currentTarget.style.background = 'var(--bg-glass)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = 'var(--text-tertiary)';
+          e.currentTarget.style.borderColor = 'var(--border-highlight)';
+          e.currentTarget.style.background = 'transparent';
+        }}
+      >
+        <Plus size={15} /> Add Header
+      </button>
     </div>
   );
 }

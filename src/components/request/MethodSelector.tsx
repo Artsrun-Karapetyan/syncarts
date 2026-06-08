@@ -1,6 +1,9 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ChevronDown, Circle } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+
+import './MethodSelector.css';
 
 const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
@@ -22,7 +25,7 @@ export function MethodSelector() {
       if (!rect) return;
 
       setDropdownPos({
-        top: rect.bottom + 4,
+        top: rect.bottom + 6,
         left: rect.left,
       });
     };
@@ -51,46 +54,44 @@ export function MethodSelector() {
     };
   }, [isOpen]);
 
-  const handleToggle = () => {
-    setIsOpen((open) => !open);
-  };
-
-  const getMethodColor = (m: string) => `text-status-${m.toLowerCase()}`;
-
   return (
     <div className="relative" ref={ref}>
       <button 
         ref={btnRef}
         type="button"
-        className={`input bg-transparent border-transparent font-bold cursor-pointer w-28 h-10 text-sm focus:border-transparent focus:shadow-none flex items-center justify-center gap-2 ${getMethodColor(method)}`}
-        onClick={handleToggle}
+        className={`method-pill ${method.toLowerCase()}`}
+        onClick={() => setIsOpen((open) => !open)}
         disabled={!activeTab}
       >
         <span>{method}</span>
-        <span className="text-[10px] opacity-50 text-secondary">▼</span>
+        <ChevronDown size={14} style={{ opacity: 0.6, transition: 'transform 0.15s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
       </button>
       
       {isOpen && createPortal(
         <div 
           ref={dropdownRef}
-          className="fixed w-32 bg-secondary border border-color rounded-md shadow-lg flex flex-col p-1 z-50"
+          className="method-dropdown animate-fade-in"
           style={{
             position: 'fixed',
+            zIndex: 50,
             top: `${dropdownPos.top}px`,
             left: `${dropdownPos.left}px`,
           }}
         >
           {METHODS.map(m => (
-            <div 
+            <button
               key={m}
-              className={`p-2 text-sm font-bold cursor-pointer hover:bg-tertiary rounded transition-fast text-center ${getMethodColor(m)} ${method === m ? 'bg-tertiary' : ''}`}
+              type="button"
+              className={`method-dropdown-item ${method === m ? 'active' : ''}`}
+              style={{ color: `var(--status-${m.toLowerCase()})` }}
               onClick={() => {
                 updateActiveTab({ method: m });
                 setIsOpen(false);
               }}
             >
+              <Circle size={8} fill="currentColor" />
               {m}
-            </div>
+            </button>
           ))}
         </div>,
         document.body

@@ -1,58 +1,128 @@
+import { useRef, useState } from 'react';
+import { Send, Loader2 } from 'lucide-react';
+
 import { MethodSelector } from '../request/MethodSelector';
 import { UrlBar } from '../request/UrlBar';
-import { HeadersEditor } from '../request/HeadersEditor';
-import { BodyEditor } from '../request/BodyEditor';
+import { RequestTabs } from '../request/RequestTabs';
 import { ResponseViewer } from '../response/ResponseViewer';
 import { TabsBar } from './TabsBar';
 import { SaveDialog } from '../request/SaveDialog';
+import { CollectionFolderTabs } from './CollectionFolderTabs';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { useState } from 'react';
 
 export function Workspace() {
-  const { sendRequest, isMutating } = useWorkspace();
+  const { sendRequest, isMutating, activeTab } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const saveBtnRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Tabs */}
       <TabsBar />
 
-      {/* URL Bar */}
-      <div className="p-4 shrink-0">
-        <div className="glass-panel p-2 flex gap-2 items-center rounded-full">
+      {(!activeTab || activeTab.type === 'request' || !activeTab.type) ? (
+        <>
+          {/* URL Bar */}
+          <div style={{ padding: 16, flexShrink: 0, position: 'relative', zIndex: 50 }}>
+        <div
+          className="glass-panel"
+          style={{
+            padding: 6,
+            display: 'flex',
+            gap: 6,
+            alignItems: 'center',
+            borderRadius: 9999,
+          }}
+        >
           <MethodSelector />
           <UrlBar />
-          <button 
-            className="btn text-sm px-6 rounded-full h-10 border border-color hover:bg-tertiary font-bold transition-fast"
-            onClick={() => setShowSaveDialog(true)}
+          <button
+            ref={saveBtnRef}
+            className="btn"
+            style={{
+              fontSize: 13,
+              padding: '0 20px',
+              borderRadius: 9999,
+              height: 38,
+              fontWeight: 600,
+            }}
+            onClick={() => setShowSaveDialog((current) => !current)}
           >
             Save
           </button>
-          <button 
-            className="btn btn-primary px-6 rounded-full h-10 text-sm font-bold uppercase tracking-wider transition-fast"
+          <button
+            className="btn-success"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              fontSize: 13,
+              padding: '0 24px',
+              borderRadius: 9999,
+              height: 38,
+              fontWeight: 700,
+              letterSpacing: '0.03em',
+              border: 'none',
+              cursor: isMutating ? 'not-allowed' : 'pointer',
+              opacity: isMutating ? 0.7 : 1,
+              transition: 'all var(--transition-fast)',
+            }}
             onClick={sendRequest}
             disabled={isMutating}
+            onMouseEnter={(e) => {
+              if (!isMutating) {
+                e.currentTarget.style.boxShadow = 'var(--shadow-success-glow)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
           >
-            {isMutating ? 'Sending...' : 'Send'}
+            {isMutating ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                Sending…
+              </>
+            ) : (
+              <>
+                <Send size={14} />
+                SEND
+              </>
+            )}
           </button>
         </div>
+
+        {showSaveDialog && <SaveDialog onClose={() => setShowSaveDialog(false)} anchorRef={saveBtnRef} />}
       </div>
 
-      {showSaveDialog && <SaveDialog onClose={() => setShowSaveDialog(false)} />}
-
-      {/* Main Content */}
-      <div className="flex-1 flex gap-4 px-4 pb-4 min-h-0">
-        {/* Configuration Area */}
-        <div className="glass-panel p-4 flex-1 flex flex-col overflow-auto rounded-lg">
-          <HeadersEditor />
-          <BodyEditor />
+      {/* Main Content — Request + Response */}
+      <div style={{ flex: 1, display: 'flex', gap: 12, padding: '0 16px 16px', minHeight: 0 }}>
+        {/* Request panel with tabs */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Request</div>
+          <div
+            className="glass-panel"
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}
+          >
+            <RequestTabs />
+          </div>
         </div>
 
-        {/* Response Area */}
-        <div className="flex-1 flex flex-col">
-          <ResponseViewer />
+        {/* Response panel */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Response</div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <ResponseViewer />
+          </div>
         </div>
       </div>
+      </>
+      ) : (
+        <CollectionFolderTabs />
+      )}
     </div>
   );
 }

@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: syncarts-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: syncarts
+    ports:
+      - "5432:5432"
+    volumes:
+      - syncarts_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  syncarts_postgres_data:

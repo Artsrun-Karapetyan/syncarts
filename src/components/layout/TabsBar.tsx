@@ -1,58 +1,158 @@
-import { X, Plus } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { X, Plus, Circle } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function TabsBar() {
   const { tabs, activeTabId, setActiveTabId, closeTab, addTab } = useWorkspace();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const getMethodColor = (m: string) => `text-status-${m.toLowerCase()}`;
+  useEffect(() => {
+    if (!scrollRef.current || !activeTabId) return;
+
+    const activeTabEl = scrollRef.current.querySelector<HTMLElement>(`[data-tab-id="${activeTabId}"]`);
+    activeTabEl?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+  }, [activeTabId]);
 
   return (
-    <div 
-      className="flex items-stretch shrink-0 overflow-x-auto overflow-y-hidden bg-secondary border-b border-color"
-      style={{ minHeight: '42px' }}
+    <div
+      style={{
+        flexShrink: 0,
+        width: '100%',
+        minWidth: 0,
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border-color)',
+      }}
     >
-      {tabs.map((tab) => (
-        <div 
-          key={tab.id}
-          className={`group flex items-center gap-3 cursor-pointer transition-fast whitespace-nowrap border-r border-color ${
-            activeTabId === tab.id 
-              ? 'text-primary bg-primary' 
-              : 'text-secondary hover:text-primary hover:bg-tertiary'
-          }`}
-          style={{ 
-            minWidth: '200px', 
-            maxWidth: '280px',
-            padding: '0 20px',
-            fontSize: '13px',
-            borderTop: activeTabId === tab.id ? '2px solid var(--accent-primary)' : '2px solid transparent',
+      <div style={{ display: 'flex', alignItems: 'stretch', minWidth: 0 }}>
+        <div
+          ref={scrollRef}
+          style={{
+            display: 'flex',
+            alignItems: 'stretch',
+            flex: 1,
+            minWidth: 0,
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            minHeight: 44,
           }}
-          onClick={() => setActiveTabId(tab.id)}
+          onWheel={(event) => {
+            if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+            event.currentTarget.scrollLeft += event.deltaY;
+          }}
         >
-          <span className={`font-bold shrink-0 ${getMethodColor(tab.method)}`} style={{ fontSize: '11px' }}>
-            {tab.method}
-          </span>
-          <span className="truncate flex-1 font-medium">
-            {tab.name || 'Untitled Request'}
-          </span>
-          <div 
-            className={`p-1 rounded hover:bg-tertiary transition-fast shrink-0 flex items-center justify-center ${
-              activeTabId === tab.id ? 'opacity-70 hover:opacity-100' : 'opacity-0 group-hover:opacity-70 hover:opacity-100'
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              closeTab(tab.id);
-            }}
-          >
-            <X size={14} />
+          <div style={{ display: 'flex', alignItems: 'stretch', minWidth: 'max-content' }}>
+            {tabs.map((tab) => {
+              const isActive = activeTabId === tab.id;
+              return (
+                <div
+                  key={tab.id}
+                  data-tab-id={tab.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    whiteSpace: 'nowrap',
+                    borderRight: '1px solid var(--border-color)',
+                    minWidth: 180,
+                    maxWidth: 280,
+                    padding: '0 16px',
+                    fontSize: 13,
+                    borderTop: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                    background: isActive ? 'var(--bg-primary)' : 'transparent',
+                    color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  }}
+                  onClick={() => setActiveTabId(tab.id)}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'var(--bg-tertiary)';
+                      e.currentTarget.style.color = 'var(--text-primary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--text-tertiary)';
+                    }
+                  }}
+                >
+                  <Circle
+                    size={7}
+                    fill={`var(--status-${tab.method.toLowerCase()})`}
+                    color={`var(--status-${tab.method.toLowerCase()})`}
+                  />
+                  <span style={{ fontWeight: 600, fontSize: 11, color: `var(--status-${tab.method.toLowerCase()})`, flexShrink: 0 }}>
+                    {tab.method}
+                  </span>
+                  <span
+                    style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      flex: 1,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {tab.name || 'Untitled Request'}
+                  </span>
+                  <div
+                    style={{
+                      padding: 4,
+                      borderRadius: 6,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: isActive ? 0.5 : 0,
+                      transition: 'all var(--transition-fast)',
+                      flexShrink: 0,
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeTab(tab.id);
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = '1';
+                      e.currentTarget.style.background = 'var(--status-delete-bg)';
+                      e.currentTarget.style.color = 'var(--status-delete)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = isActive ? '0.5' : '0';
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'inherit';
+                    }}
+                  >
+                    <X size={13} />
+                  </div>
+                </div>
+              );
+            })}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 16px',
+                color: 'var(--text-tertiary)',
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'all var(--transition-fast)',
+              }}
+              onClick={() => addTab()}
+              title="New Tab"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--text-primary)';
+                e.currentTarget.style.background = 'var(--bg-tertiary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--text-tertiary)';
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <Plus size={15} />
+            </div>
           </div>
         </div>
-      ))}
-      <div 
-        className="flex items-center justify-center px-3 text-secondary hover:text-primary hover:bg-tertiary transition-fast cursor-pointer"
-        onClick={() => addTab()}
-        title="New Tab"
-      >
-        <Plus size={16} />
       </div>
     </div>
   );
