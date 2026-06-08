@@ -161,7 +161,8 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     if (newEnvName.trim()) {
-                      createEnvironment(newEnvName.trim());
+                      const id = createEnvironment(newEnvName.trim());
+                      setSelectedEnvId(id);
                       setNewEnvName('');
                       setIsCreatingEnv(false);
                     }
@@ -176,7 +177,8 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
                 <button className="btn" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { setIsCreatingEnv(false); setNewEnvName(''); }}>Cancel</button>
                 <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => {
                   if (newEnvName.trim()) {
-                    createEnvironment(newEnvName.trim());
+                    const id = createEnvironment(newEnvName.trim());
+                    setSelectedEnvId(id);
                     setNewEnvName('');
                     setIsCreatingEnv(false);
                   }

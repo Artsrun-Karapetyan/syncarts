@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 
 interface SelectOption {
@@ -20,15 +21,42 @@ interface SelectProps {
 export function Select({ value, options, onChange, disabled, className = '', style, variant = 'default' }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!isOpen || !btnRef.current) return;
+
+    const updatePosition = () => {
+      const rect = btnRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setDropdownPos({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
     const handleOutsideClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current && !containerRef.current.contains(e.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
-    if (isOpen) document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('mousedown', handleOutsideClick);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
   }, [isOpen]);
 
   const selectedOption = options.find(o => o.value === value) || options[0];
@@ -40,6 +68,7 @@ export function Select({ value, options, onChange, disabled, className = '', sty
       style={{ position: 'relative', ...style }}
     >
       <button
+        ref={btnRef}
         type="button"
         className={variant === 'default' ? 'input' : ''}
         disabled={disabled}
@@ -95,15 +124,16 @@ export function Select({ value, options, onChange, disabled, className = '', sty
         <ChevronDown size={variant === 'pill' ? 14 : 16} style={{ opacity: 0.6, transition: 'transform var(--transition-fast)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
       </button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div
+          ref={dropdownRef}
           className="animate-fade-in"
           style={{
-            position: 'absolute',
-            top: 'calc(100% + 4px)',
-            left: 0,
-            right: 0,
-            zIndex: 50,
+            position: 'fixed',
+            top: `${dropdownPos.top}px`,
+            left: `${dropdownPos.left}px`,
+            width: `${dropdownPos.width}px`,
+            zIndex: 9999,
             background: 'rgba(15, 15, 15, 0.98)',
             backdropFilter: 'blur(16px)',
             border: '1px solid var(--border-highlight)',
@@ -156,7 +186,8 @@ export function Select({ value, options, onChange, disabled, className = '', sty
               </div>
             </div>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

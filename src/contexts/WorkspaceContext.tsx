@@ -546,6 +546,7 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
       return w;
     }));
     setActiveEnvironmentId(newEnv.id);
+    return newEnv.id;
   };
 
   const updateEnvironment = (id: string, data: Partial<Environment>) => {
