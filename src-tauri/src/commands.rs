@@ -68,13 +68,27 @@ pub async fn make_request(request: HttpRequest) -> Result<HttpResponse, String> 
     let status_text = response.status().to_string();
 
     let mut resp_headers = std::collections::HashMap::new();
+    let mut content_type_header = String::new();
     for (k, v) in response.headers() {
         if let Ok(value) = v.to_str() {
             resp_headers.insert(k.to_string(), value.to_string());
+            if k == reqwest::header::CONTENT_TYPE {
+                content_type_header = value.to_string();
+            }
         }
     }
 
-    let body = response.text().await.unwrap_or_default();
+    let is_binary = content_type_header.starts_with("image/") || content_type_header.starts_with("application/pdf");
+
+    let body = if is_binary {
+        use base64::{Engine as _, engine::general_purpose};
+        match response.bytes().await {
+            Ok(bytes) => format!("data:{};base64,{}", content_type_header, general_purpose::STANDARD.encode(bytes)),
+            Err(e) => format!("Error reading binary response: {}", e),
+        }
+    } else {
+        response.text().await.unwrap_or_default()
+    };
 
     Ok(HttpResponse {
         status,
