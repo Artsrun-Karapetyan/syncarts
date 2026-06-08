@@ -195,6 +195,12 @@ interface WorkspaceContextState {
   sendRequest: () => Promise<void>;
   isMutating: boolean;
   error: unknown;
+
+  // New Actions
+  renameItem: (collectionId: string, itemId: string, newName: string) => void;
+  addExample: (collectionId: string, requestId: string, exampleName: string) => void;
+  deleteExample: (collectionId: string, requestId: string, exampleId: string) => void;
+  sortItems: (collectionId: string, folderId: string | null, type: 'default' | 'az') => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextState | undefined>(undefined);
@@ -1283,6 +1289,143 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
     }));
   };
 
+  const renameItem = (collectionId: string, itemId: string, newName: string) => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id !== activeWorkspaceId) return w;
+      
+      const recursivelyRename = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
+        return items.map(item => {
+          if (item.id === itemId) return { ...item, name: newName };
+          if (item.type === 'folder') return { ...item, items: recursivelyRename(item.items) };
+          if (item.type === 'request' && item.examples) {
+            const renamedExamples = item.examples.map(e => e.id === itemId ? { ...e, name: newName } : e);
+            return { ...item, examples: renamedExamples };
+          }
+          return item;
+        });
+      };
+      
+      return {
+        ...w,
+        collections: w.collections.map(col => 
+          col.id === collectionId ? { ...col, name: col.id === itemId ? newName : col.name, items: recursivelyRename(col.items) } : col
+        )
+      };
+    }));
+    
+    // Also rename open tab if applicable
+    setTabsByWorkspace(prev => {
+      const wsTabs = prev[activeWorkspaceId] || [];
+      const newTabs = wsTabs.map(t => {
+        if (t.collectionId === collectionId && (t.id === itemId || t.folderId === itemId || t.exampleId === itemId || t.savedRequestId === itemId)) {
+          return { ...t, name: newName };
+        }
+        return t;
+      });
+      return { ...prev, [activeWorkspaceId]: newTabs };
+    });
+  };
+
+  const addExample = (collectionId: string, requestId: string, exampleName: string) => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id !== activeWorkspaceId) return w;
+      
+      const recursivelyAdd = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
+        return items.map(item => {
+          if (item.type === 'folder') return { ...item, items: recursivelyAdd(item.items) };
+          if (item.type === 'request' && item.id === requestId) {
+            const newExample: SavedExample = {
+              id: crypto.randomUUID(),
+              name: exampleName,
+              code: activeTab?.response?.status || 200,
+              status: activeTab?.response?.status_text || 'OK',
+              body: activeTab?.response?.body || '',
+              headers: Object.entries(activeTab?.response?.headers || {}).map(([key, value]) => ({ key, value }))
+            };
+            return { ...item, examples: [...(item.examples || []), newExample] };
+          }
+          return item;
+        });
+      };
+      
+      return {
+        ...w,
+        collections: w.collections.map(col => 
+          col.id === collectionId ? { ...col, items: recursivelyAdd(col.items) } : col
+        )
+      };
+    }));
+  };
+
+  const deleteExample = (collectionId: string, requestId: string, exampleId: string) => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id !== activeWorkspaceId) return w;
+      
+      const recursivelyDelete = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
+        return items.map(item => {
+          if (item.type === 'folder') return { ...item, items: recursivelyDelete(item.items) };
+          if (item.type === 'request' && item.id === requestId && item.examples) {
+            return { ...item, examples: item.examples.filter(e => e.id !== exampleId) };
+          }
+          return item;
+        });
+      };
+      
+      return {
+        ...w,
+        collections: w.collections.map(col => 
+          col.id === collectionId ? { ...col, items: recursivelyDelete(col.items) } : col
+        )
+      };
+    }));
+  };
+
+  const sortItems = (collectionId: string, folderId: string | null, type: 'default' | 'az') => {
+    updateWorkspaces(prev => prev.map(w => {
+      if (w.id !== activeWorkspaceId) return w;
+      
+      const performSort = (items: (Folder | SavedRequest)[]) => {
+        return [...items].sort((a, b) => {
+          if (type === 'default') {
+            if (a.type === 'folder' && b.type !== 'folder') return -1;
+            if (a.type !== 'folder' && b.type === 'folder') return 1;
+            return a.name.localeCompare(b.name);
+          } else {
+            return a.name.localeCompare(b.name);
+          }
+        });
+      };
+
+      if (!folderId) {
+        return {
+          ...w,
+          collections: w.collections.map(col => 
+            col.id === collectionId ? { ...col, items: performSort(col.items) } : col
+          )
+        };
+      }
+
+      const recursivelySort = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
+        return items.map(item => {
+          if (item.type === 'folder') {
+            if (item.id === folderId) {
+              return { ...item, items: performSort(item.items) };
+            }
+            return { ...item, items: recursivelySort(item.items) };
+          }
+          return item;
+        });
+      };
+      
+      return {
+        ...w,
+        collections: w.collections.map(col => 
+          col.id === collectionId ? { ...col, items: recursivelySort(col.items) } : col
+        )
+      };
+    }));
+  };
+
   const createBlankRequestInFolder = (collectionId: string, folderId: string | null) => {
     const newReqId = crypto.randomUUID();
     const newReq: SavedRequest = {
@@ -1547,6 +1690,11 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
         sendRequest,
         isMutating,
         error,
+        
+        renameItem,
+        addExample,
+        deleteExample,
+        sortItems,
       }}
     >
       {children}

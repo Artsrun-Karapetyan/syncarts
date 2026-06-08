@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Trash2, Download } from 'lucide-react';
+import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Trash2, Download, Edit2, ListOrdered, ArrowDownAZ } from 'lucide-react';
 
 import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/WorkspaceContext';
 import { ConfirmModal } from '../ui/ConfirmModal';
@@ -12,10 +12,24 @@ interface CtxMenuState {
   y: number;
   collectionId: string;
   itemId: string | null;
-  itemType: 'collection' | 'folder' | 'request';
+  itemType: 'collection' | 'folder' | 'request' | 'example';
+  itemName?: string;
+  requestId?: string;
 }
 
-function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: IFolder | SavedRequest, collectionId: string, onContextMenu: (e: React.MouseEvent, itemId: string, type: 'folder' | 'request') => void, level?: number }) {
+interface SidebarItemProps {
+  item: IFolder | SavedRequest;
+  collectionId: string;
+  onContextMenu: (e: React.MouseEvent, itemId: string, type: 'folder' | 'request' | 'example', itemName: string, requestId?: string) => void;
+  level?: number;
+  renamingId: string | null;
+  setRenamingId: (id: string | null) => void;
+  renameValue: string;
+  setRenameValue: (val: string) => void;
+  handleRenameSubmit: () => void;
+}
+
+function SidebarItem({ item, collectionId, onContextMenu, level = 1, renamingId, setRenamingId, renameValue, setRenameValue, handleRenameSubmit }: SidebarItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExamplesOpen, setIsExamplesOpen] = useState(false);
   const { addTab, openFolderTab, openExampleTab } = useWorkspace();
@@ -39,7 +53,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           transition: 'all var(--transition-fast)',
         }}
         onClick={() => addTab({ ...item, id: crypto.randomUUID(), response: null })}
-        onContextMenu={(e) => onContextMenu(e, item.id, 'request')}
+        onContextMenu={(e) => onContextMenu(e, item.id, 'request', item.name)}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--bg-tertiary)';
           e.currentTarget.style.color = 'var(--text-primary)';
@@ -86,9 +100,25 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
         >
           {item.method}
         </span>
-        <span style={{ whiteSpace: 'nowrap', flex: 1 }}>
-          {item.name}
-        </span>
+        {renamingId === item.id ? (
+          <input
+            autoFocus
+            className="input"
+            style={{ fontSize: 13, flex: 1, padding: '2px 6px', margin: '-2px -6px' }}
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleRenameSubmit();
+              if (e.key === 'Escape') setRenamingId(null);
+            }}
+            onBlur={() => handleRenameSubmit()}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {item.name}
+          </span>
+        )}
         <div
           style={{
             opacity: 0,
@@ -104,7 +134,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           }}
           onClick={(e) => {
             e.stopPropagation();
-            onContextMenu(e, item.id, 'request');
+            onContextMenu(e, item.id, 'request', item.name);
           }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
@@ -130,6 +160,11 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
                 transition: 'all var(--transition-fast)',
               }}
               onClick={() => openExampleTab(collectionId, example.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onContextMenu(e, example.id, 'example', example.name, item.id);
+              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'var(--bg-tertiary)';
                 e.currentTarget.style.color = 'var(--text-secondary)';
@@ -142,9 +177,25 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
               }}
             >
               <FileText size={13} style={{ opacity: 0.3 }} />
-              <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {example.name}
-              </span>
+              {renamingId === example.id ? (
+                <input
+                  autoFocus
+                  className="input"
+                  style={{ fontSize: 13, flex: 1, padding: '2px 6px', margin: '-2px -6px' }}
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleRenameSubmit();
+                    if (e.key === 'Escape') setRenamingId(null);
+                  }}
+                  onBlur={() => handleRenameSubmit()}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {example.name}
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -172,7 +223,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           if (!isOpen) setIsOpen(true);
           openFolderTab(collectionId, item.id);
         }}
-        onContextMenu={(e) => onContextMenu(e, item.id, 'folder')}
+        onContextMenu={(e) => onContextMenu(e, item.id, 'folder', item.name)}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--bg-tertiary)';
           e.currentTarget.style.color = 'var(--text-primary)';
@@ -193,7 +244,23 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           {isOpen ? <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6 }} /> : <ChevronRight size={14} style={{ flexShrink: 0, opacity: 0.6 }} />}
         </div>
         <Folder size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-        <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{item.name}</span>
+        {renamingId === item.id ? (
+          <input
+            autoFocus
+            className="input"
+            style={{ fontSize: 13, flex: 1, padding: '2px 6px', margin: '-2px -6px' }}
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleRenameSubmit();
+              if (e.key === 'Escape') setRenamingId(null);
+            }}
+            onBlur={() => handleRenameSubmit()}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
+        )}
         <div
           style={{
             opacity: 0,
@@ -209,7 +276,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
           }}
           onClick={(e) => {
             e.stopPropagation();
-            onContextMenu(e, item.id, 'folder');
+            onContextMenu(e, item.id, 'folder', item.name);
           }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
@@ -220,7 +287,18 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
       {isOpen && (
         <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 20, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
           {item.items.map(subItem => (
-            <SidebarItem key={subItem.id} item={subItem} collectionId={collectionId} onContextMenu={onContextMenu} level={level + 1} />
+            <SidebarItem 
+              key={subItem.id} 
+              item={subItem} 
+              collectionId={collectionId} 
+              onContextMenu={onContextMenu} 
+              level={level + 1} 
+              renamingId={renamingId}
+              setRenamingId={setRenamingId}
+              renameValue={renameValue}
+              setRenameValue={setRenameValue}
+              handleRenameSubmit={handleRenameSubmit}
+            />
           ))}
         </div>
       )}
@@ -231,7 +309,8 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
 export function Sidebar() {
   const { 
     collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder,
-    openCollectionTab
+    openCollectionTab,
+    renameItem, sortItems, deleteExample, addExample, activeTab
   } = useWorkspace();
   const [isAdding, setIsAdding] = useState(false);
   const [newColName, setNewColName] = useState('');
@@ -239,9 +318,12 @@ export function Sidebar() {
   const [expandedCollections, setExpandedCollections] = useState<Record<string, boolean>>({});
   const [newFolderName, setNewFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'collection' | 'item', collectionId?: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'collection' | 'item' | 'example', collectionId?: string, requestId?: string } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -303,10 +385,10 @@ export function Sidebar() {
     }
   };
 
-  const handleContextMenu = (e: React.MouseEvent, collectionId: string, itemId: string | null, itemType: 'collection' | 'folder' | 'request') => {
+  const handleContextMenu = (e: React.MouseEvent, collectionId: string, itemId: string | null, itemType: 'collection' | 'folder' | 'request' | 'example', itemName?: string, requestId?: string) => {
     e.preventDefault();
     e.stopPropagation();
-    setCtxMenu({ x: e.clientX, y: e.clientY, collectionId, itemId, itemType });
+    setCtxMenu({ x: e.clientX, y: e.clientY, collectionId, itemId, itemType, itemName, requestId });
   };
 
   const handleCreateFolder = () => {
@@ -328,6 +410,41 @@ export function Sidebar() {
     const folderId = ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null;
     createBlankRequestInFolder(ctxMenu.collectionId, folderId);
     setCtxMenu(null);
+  };
+
+  const handleRenameSubmit = () => {
+    if (renamingId && renameValue.trim()) {
+      // Find collection id from context or anywhere?
+      // Actually we need collectionId for renameItem. We can store the renaming target explicitly or assume it from state.
+      // Wait, we don't have collectionId easily here if we just use renamingId.
+      // But renamingId is set via context menu, so we can use ctxMenu.collectionId? No, ctxMenu is null while renaming.
+      // We can just find it by traversing collections.
+      for (const col of collections) {
+        if (col.id === renamingId) {
+          renameItem(col.id, renamingId, renameValue.trim());
+          break;
+        }
+        let found = false;
+        const findInItems = (items: any[]) => {
+          for (const item of items) {
+            if (item.id === renamingId) {
+              renameItem(col.id, renamingId, renameValue.trim());
+              found = true;
+              break;
+            }
+            if (item.examples?.some((e: any) => e.id === renamingId)) {
+              renameItem(col.id, renamingId, renameValue.trim());
+              found = true;
+              break;
+            }
+            if (item.type === 'folder') findInItems(item.items);
+          }
+        };
+        findInItems(col.items);
+        if (found) break;
+      }
+    }
+    setRenamingId(null);
   };
 
 
@@ -483,7 +600,7 @@ export function Sidebar() {
                 }
                 openCollectionTab(col.id);
               }}
-              onContextMenu={(e) => handleContextMenu(e, col.id, null, 'collection')}
+              onContextMenu={(e) => handleContextMenu(e, col.id, null, 'collection', col.name)}
             >
               <button
                 type="button"
@@ -510,7 +627,23 @@ export function Sidebar() {
                 {expandedCollections[col.id] ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
               </button>
               <Folder size={13} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-              <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{col.name}</span>
+              {renamingId === col.id ? (
+                <input
+                  autoFocus
+                  className="input"
+                  style={{ fontSize: 13, flex: 1, padding: '2px 6px', margin: '-2px -6px' }}
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleRenameSubmit();
+                    if (e.key === 'Escape') setRenamingId(null);
+                  }}
+                  onBlur={() => handleRenameSubmit()}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{col.name}</span>
+              )}
               {/* Item count badge */}
               <span
                 style={{
@@ -564,7 +697,7 @@ export function Sidebar() {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleContextMenu(e, col.id, null, 'collection');
+                  handleContextMenu(e, col.id, col.id, 'collection', col.name); // passing col.id as itemId for rename
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
@@ -579,7 +712,12 @@ export function Sidebar() {
                     key={item.id}
                     item={item}
                     collectionId={col.id}
-                    onContextMenu={(e, itemId, type) => handleContextMenu(e, col.id, itemId, type)}
+                    onContextMenu={(e, itemId, type, itemName, requestId) => handleContextMenu(e, col.id, itemId, type, itemName, requestId)}
+                    renamingId={renamingId}
+                    setRenamingId={setRenamingId}
+                    renameValue={renameValue}
+                    setRenameValue={setRenameValue}
+                    handleRenameSubmit={handleRenameSubmit}
                   />
                 ))}
               </div>
@@ -606,7 +744,7 @@ export function Sidebar() {
             className="animate-fade-in"
             style={{
               position: 'fixed',
-              zIndex: 50,
+              zIndex: 99999,
               border: '1px solid var(--border-highlight)',
               borderRadius: 'var(--radius-md)',
               boxShadow: 'var(--shadow-md)',
@@ -621,7 +759,108 @@ export function Sidebar() {
               padding: 4,
             }}
           >
-            {ctxMenu.itemType !== 'request' && (
+            {/* RENAME ACTION */}
+            {ctxMenu.itemId && (
+              <button
+                type="button"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '10px 12px',
+                  fontSize: 13,
+                  color: 'var(--text-primary)',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  transition: 'background var(--transition-fast)',
+                  textAlign: 'left',
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setRenameValue(ctxMenu.itemName || '');
+                  setRenamingId(ctxMenu.itemId);
+                  setCtxMenu(null);
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 7,
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text-secondary)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Edit2 size={13} />
+                </span>
+                <span style={{ fontWeight: 500 }}>Rename</span>
+              </button>
+            )}
+
+            {ctxMenu.itemType === 'request' && (
+              <>
+                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+                <button
+                  type="button"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 12px',
+                    fontSize: 13,
+                    color: 'var(--text-primary)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    transition: 'background var(--transition-fast)',
+                    textAlign: 'left',
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (ctxMenu.itemId && activeTab?.response) {
+                      addExample(ctxMenu.collectionId, ctxMenu.itemId, 'Example Response');
+                    } else if (ctxMenu.itemId) {
+                      addExample(ctxMenu.collectionId, ctxMenu.itemId, 'New Example');
+                    }
+                    setCtxMenu(null);
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <FileText size={13} />
+                  </span>
+                  <span style={{ fontWeight: 500 }}>Add example</span>
+                </button>
+              </>
+            )}
+
+            {ctxMenu.itemType !== 'request' && ctxMenu.itemType !== 'example' && (
               <>
                 <button
                   type="button"
@@ -781,6 +1020,98 @@ export function Sidebar() {
               </>
             )}
 
+            {(ctxMenu.itemType === 'collection' || ctxMenu.itemType === 'folder') && (
+              <>
+                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+                <button
+                  type="button"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 12px',
+                    fontSize: 13,
+                    color: 'var(--text-primary)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    transition: 'background var(--transition-fast)',
+                    textAlign: 'left',
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sortItems(ctxMenu.collectionId, ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null, 'default');
+                    setCtxMenu(null);
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <ListOrdered size={13} />
+                  </span>
+                  <span style={{ fontWeight: 500 }}>Sort (Folders first)</span>
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 12px',
+                    fontSize: 13,
+                    color: 'var(--text-primary)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    transition: 'background var(--transition-fast)',
+                    textAlign: 'left',
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sortItems(ctxMenu.collectionId, ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null, 'az');
+                    setCtxMenu(null);
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <ArrowDownAZ size={13} />
+                  </span>
+                  <span style={{ fontWeight: 500 }}>Sort (A to Z)</span>
+                </button>
+              </>
+            )}
+
             <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
             <button
               type="button"
@@ -803,6 +1134,8 @@ export function Sidebar() {
                 e.stopPropagation();
                 if (ctxMenu.itemType === 'collection') {
                   setDeleteTarget({ id: ctxMenu.collectionId, type: 'collection' });
+                } else if (ctxMenu.itemType === 'example' && ctxMenu.itemId && ctxMenu.requestId) {
+                  setDeleteTarget({ id: ctxMenu.itemId, type: 'example', collectionId: ctxMenu.collectionId, requestId: ctxMenu.requestId });
                 } else if (ctxMenu.itemId) {
                   setDeleteTarget({ id: ctxMenu.itemId, type: 'item', collectionId: ctxMenu.collectionId });
                 }
@@ -838,7 +1171,7 @@ export function Sidebar() {
 
       <ConfirmModal
         isOpen={deleteTarget !== null}
-        title={deleteTarget?.type === 'collection' ? "Delete Collection" : "Delete Item"}
+        title={deleteTarget?.type === 'collection' ? "Delete Collection" : deleteTarget?.type === 'example' ? "Delete Example" : "Delete Item"}
         message={`Are you sure you want to delete this ${deleteTarget?.type}? ${deleteTarget?.type === 'collection' || deleteTarget?.type === 'item' ? 'All contents inside it will be permanently lost.' : ''} This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
@@ -847,6 +1180,8 @@ export function Sidebar() {
           if (deleteTarget) {
             if (deleteTarget.type === 'collection') {
               deleteCollection(deleteTarget.id);
+            } else if (deleteTarget.type === 'example' && deleteTarget.collectionId && deleteTarget.requestId) {
+              deleteExample(deleteTarget.collectionId, deleteTarget.requestId, deleteTarget.id);
             } else if (deleteTarget.type === 'item' && deleteTarget.collectionId) {
               deleteItem(deleteTarget.collectionId, deleteTarget.id);
             }
