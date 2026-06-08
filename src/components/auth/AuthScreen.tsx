@@ -110,7 +110,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
               <input
                 className="input"
                 style={{ fontSize: 14 }}
-                placeholder="Artsrunk"
+                placeholder="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoComplete="name"

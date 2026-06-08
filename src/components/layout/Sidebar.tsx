@@ -4,7 +4,8 @@ import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plu
 
 import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/WorkspaceContext';
 import { ConfirmModal } from '../ui/ConfirmModal';
-import { importPostmanCollection, exportToPostmanCollection } from '../../utils/postmanParser';
+import { exportToPostmanCollection } from '../../utils/postmanParser';
+import { ImportModal } from '../workspace/ImportModal';
 
 interface CtxMenuState {
   x: number;
@@ -167,7 +168,7 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1 }: { item: I
 
 export function Sidebar() {
   const { 
-    collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder, importCollection,
+    collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder,
     openCollectionTab
   } = useWorkspace();
   const [isAdding, setIsAdding] = useState(false);
@@ -178,7 +179,7 @@ export function Sidebar() {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'collection' | 'item', collectionId?: string } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -218,27 +219,6 @@ export function Sidebar() {
     }
   };
 
-  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = event.target?.result as string;
-        const parsedCollection = importPostmanCollection(json);
-        importCollection(parsedCollection);
-      } catch (err) {
-        console.error('Failed to import collection:', err);
-        alert('Failed to import collection. Make sure it is a valid Postman Collection v2.1 format.');
-      }
-      // Reset input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    };
-    reader.readAsText(file);
-  };
 
   const handleExportCollection = (collectionId: string) => {
     const collection = collections.find(c => c.id === collectionId);
@@ -340,16 +320,9 @@ export function Sidebar() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Collections</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <input 
-              type="file" 
-              accept=".json" 
-              style={{ display: 'none' }} 
-              ref={fileInputRef} 
-              onChange={handleImportFile} 
-            />
             <div
               className="tooltip-trigger"
-              data-tooltip="Import Postman Collection"
+              data-tooltip="Import Data"
               style={{
                 width: 26,
                 height: 26,
@@ -361,7 +334,7 @@ export function Sidebar() {
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
               }}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setIsImportModalOpen(true)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'var(--bg-tertiary)';
                 e.currentTarget.style.color = 'var(--text-primary)';
@@ -371,7 +344,7 @@ export function Sidebar() {
                 e.currentTarget.style.color = 'var(--text-tertiary)';
               }}
             >
-              <Upload size={14} />
+              <Download size={14} />
             </div>
             <div
               className="tooltip-trigger"
@@ -798,6 +771,8 @@ export function Sidebar() {
           document.body
         )
       )}
+
+      <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
 
       <ConfirmModal
         isOpen={deleteTarget !== null}
