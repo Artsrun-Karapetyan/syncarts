@@ -201,6 +201,22 @@ export function useTabActions(args: TabActionsArgs) {
     });
   };
 
+  const openRequestTab = (collectionId: string, folderId: string | null, requestId: string) => {
+    const saved = findSavedRequestById(requestId);
+    if (!saved) return;
+    const existing = currentTabs.find(t => (t.type === 'request' || !t.type) && (t.savedRequestId === requestId || t.id === requestId));
+    if (existing) return setActiveTabId(existing.id);
+
+    addTab({
+      ...saved.request,
+      id: crypto.randomUUID(),
+      savedRequestId: requestId,
+      collectionId,
+      folderId: folderId || undefined,
+      response: null
+    });
+  };
+
   const openExampleTab = (collectionId: string, exampleId: string) => {
     const col = currentWorkspace?.collections.find(c => c.id === collectionId);
     if (!col) return;
@@ -267,6 +283,7 @@ export function useTabActions(args: TabActionsArgs) {
     openCollectionTab,
     openExampleTab,
     openFolderTab,
+    openRequestTab,
     rememberTabSnapshot,
     resolveTabSavedRequestId,
     saveActiveRequestInPlace,

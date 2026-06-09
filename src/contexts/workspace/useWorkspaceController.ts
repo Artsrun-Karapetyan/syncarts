@@ -264,6 +264,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     reloadWorkspaces,
     openCollectionTab: tabActions.openCollectionTab,
     openFolderTab: tabActions.openFolderTab,
+    openRequestTab: tabActions.openRequestTab,
     openExampleTab: tabActions.openExampleTab,
     updateActiveTab: tabActions.updateActiveTab,
     rememberTabSnapshot: tabActions.rememberTabSnapshot,

@@ -49,7 +49,7 @@ function SidebarItem({
   highlightedRequestId,
 }: SidebarItemProps) {
   const [isExamplesOpen, setIsExamplesOpen] = useState(false);
-  const { addTab, openFolderTab, openExampleTab } = useWorkspace();
+  const { openFolderTab, openExampleTab, openRequestTab } = useWorkspace();
 
   const paddingLeft = `${level * 12 + 8}px`;
 
@@ -71,7 +71,7 @@ function SidebarItem({
           cursor: 'pointer',
           transition: 'all 0.4s ease-out',
         }}
-        onClick={() => addTab({ ...item, id: crypto.randomUUID(), savedRequestId: item.id, collectionId, folderId: parentFolderId ?? undefined, response: null })}
+        onClick={() => openRequestTab(collectionId, parentFolderId, item.id)}
         onContextMenu={(e) => onContextMenu(e, item.id, 'request', item.name)}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--bg-tertiary)';

@@ -171,6 +171,7 @@ export interface WorkspaceContextState {
   closeTab: (id: string) => void;
   openCollectionTab: (collectionId: string, view?: TabData['collectionView']) => void;
   openFolderTab: (collectionId: string, folderId: string) => void;
+  openRequestTab: (collectionId: string, folderId: string | null, requestId: string) => void;
   openExampleTab: (collectionId: string, exampleId: string) => void;
   updateActiveTab: (data: Partial<TabData>) => void;
   rememberTabSnapshot: (tabId: string, request: Partial<TabData>) => void;
