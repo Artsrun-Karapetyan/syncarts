@@ -21,7 +21,9 @@ export class WorkspaceController {
 
   @Get()
   async findAll(@Request() req: any) {
-    return this.workspaceService.getWorkspacesForUser(req.authUser.id);
+    const workspaces = await this.workspaceService.getWorkspacesForUser(req.authUser.id);
+    fs.appendFileSync('/tmp/syncarts_backend.log', `\n[GET] Workspaces for User ${req.authUser.id}: ${workspaces.map((w: any) => w.id).join(', ')}\n`);
+    return workspaces;
   }
 
   @Get(':id')
@@ -35,7 +37,15 @@ export class WorkspaceController {
 
   @Delete(':id')
   async delete(@Request() req: any, @Param('id') id: string) {
-    return this.workspaceService.deleteWorkspace(id, req.authUser.id);
+    fs.appendFileSync('/tmp/syncarts_backend.log', `\n[DELETE] Workspace ${id} by User ${req.authUser.id}\n`);
+    try {
+      const result = await this.workspaceService.deleteWorkspace(id, req.authUser.id);
+      fs.appendFileSync('/tmp/syncarts_backend.log', `[DELETE] Success: ${JSON.stringify(result)}\n`);
+      return result;
+    } catch (err: any) {
+      fs.appendFileSync('/tmp/syncarts_backend.log', `[DELETE] Error: ${err.message}\n`);
+      throw err;
+    }
   }
 
   @Delete(':id/members/:memberUserId')

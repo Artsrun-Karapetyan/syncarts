@@ -3,11 +3,26 @@ import { createPortal } from 'react-dom';
 import { Plus } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { parseCurlCommand } from '../../utils/curlParser';
+import { resolveScopedVariable, upsertActiveVariableValue } from './variableResolution';
 
 import './UrlBar.css';
 
+const AUTO_REQUEST_NAMES = new Set(['Untitled Request', 'New Request']);
+
 export function UrlBar() {
-  const { activeTab, updateActiveTab, sendRequest, activeEnvironmentId, activeEnvironment, updateEnvironment, collections, globalVariables, updateGlobalVariables } = useWorkspace();
+  const {
+    activeTab,
+    updateActiveTab,
+    sendRequest,
+    activeEnvironmentId,
+    activeEnvironment,
+    updateEnvironment,
+    collections,
+    globalVariables,
+    updateGlobalVariables,
+    updateCollection,
+    openCollectionTab
+  } = useWorkspace();
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const text = e.clipboardData.getData('text');
@@ -26,19 +41,10 @@ export function UrlBar() {
   const hideTimeout = useRef<any>(null);
   const url = activeTab?.url || '';
   
-  const [hoveredVar, setHoveredVar] = useState<{ name: string, x: number, y: number, exists: boolean, value?: string, source?: string } | null>(null);
+  const [hoveredVar, setHoveredVar] = useState<{ name: string, x: number, y: number, exists: boolean, hasValue: boolean, value?: string, source?: string } | null>(null);
   const activeCollection = activeTab?.collectionId ? collections.find((collection) => collection.id === activeTab.collectionId) : undefined;
   const resolveVariable = (varName: string) => {
-    const envVar = activeEnvironment?.variables.find((variable) => variable.key === varName && variable.enabled);
-    if (envVar) return { exists: true, value: envVar.value, source: activeEnvironment?.name || 'Environment' };
-
-    const collectionVar = activeCollection?.variables?.find((variable) => variable.key === varName && variable.enabled);
-    if (collectionVar) return { exists: true, value: collectionVar.value, source: `${activeCollection?.name || 'Collection'} collection` };
-
-    const globalVar = globalVariables.find((variable) => variable.key === varName && variable.enabled);
-    if (globalVar) return { exists: true, value: globalVar.value, source: 'Globals' };
-
-    return { exists: false, value: '', source: 'Not found' };
+    return resolveScopedVariable({ activeCollection, activeEnvironment, globalVariables, varName });
   };
 
   useEffect(() => {
@@ -86,12 +92,13 @@ export function UrlBar() {
         found = true;
         const varName = span.getAttribute('data-varname') || '';
         const exists = span.getAttribute('data-exists') === 'true';
+        const hasValue = span.getAttribute('data-has-value') === 'true';
         const value = span.getAttribute('data-value') || '';
         const source = span.getAttribute('data-source') || '';
         
-        if (hoveredVar?.name !== varName) {
+        if (hoveredVar?.name !== varName || hoveredVar?.hasValue !== hasValue) {
           clearTimeout(hideTimeout.current);
-          setHoveredVar({ name: varName, x: rect.left, y: rect.bottom + 4, exists, value, source });
+          setHoveredVar({ name: varName, x: rect.left, y: rect.bottom + 4, exists, hasValue, value, source });
         }
         break;
       }
@@ -105,8 +112,14 @@ export function UrlBar() {
   };
 
   const handleAddVar = (varName: string, value: string) => {
+    if (activeCollection) {
+      updateCollection(activeCollection.id, { variables: upsertActiveVariableValue(activeCollection.variables || [], varName, value) });
+      setHoveredVar(null);
+      return;
+    }
+
     if (activeEnvironmentId === 'globals') {
-      updateGlobalVariables([...globalVariables, { id: crypto.randomUUID(), key: varName, value, enabled: true }]);
+      updateGlobalVariables(upsertActiveVariableValue(globalVariables, varName, value));
       setHoveredVar(null);
       return;
     }
@@ -115,8 +128,7 @@ export function UrlBar() {
       alert("Please select an Environment or Globals first (top right corner).");
       return;
     }
-    const newVars = [...activeEnvironment.variables, { id: crypto.randomUUID(), key: varName, value, enabled: true }];
-    updateEnvironment(activeEnvironment.id, { variables: newVars });
+    updateEnvironment(activeEnvironment.id, { variables: upsertActiveVariableValue(activeEnvironment.variables, varName, value) });
     setHoveredVar(null);
   };
 
@@ -132,10 +144,11 @@ export function UrlBar() {
             className="env-var-span"
             data-varname={varName}
             data-exists={resolved.exists}
+            data-has-value={resolved.hasValue}
             data-value={resolved.value || ''}
             data-source={resolved.source}
             style={{ 
-              color: resolved.exists ? 'var(--accent-primary)' : 'var(--status-delete)', 
+              color: resolved.hasValue ? 'var(--accent-primary)' : 'var(--status-delete)',
             }}
           >
             {part}
@@ -144,6 +157,12 @@ export function UrlBar() {
       }
       return <span key={i}>{part}</span>;
     });
+  };
+
+  const openCollectionVariables = () => {
+    if (!activeCollection) return;
+    setHoveredVar(null);
+    openCollectionTab(activeCollection.id, 'variables');
   };
 
   return (
@@ -185,7 +204,7 @@ export function UrlBar() {
         onChange={(e) => {
           const newUrl = e.target.value;
           const updates: any = { url: newUrl };
-          if (!activeTab?.name || activeTab.name === 'Untitled Request' || activeTab.name === activeTab.url) {
+          if (!activeTab?.name || AUTO_REQUEST_NAMES.has(activeTab.name) || activeTab.name === activeTab.url) {
             updates.name = newUrl;
           }
           updateActiveTab(updates);
@@ -221,56 +240,66 @@ export function UrlBar() {
             background: 'var(--bg-tertiary)',
             border: '1px solid var(--border-color)',
             borderRadius: 'var(--radius-sm)',
-            padding: '12px 16px',
+            padding: 0,
             zIndex: 999999,
             boxShadow: 'var(--shadow-lg)',
-            minWidth: 200,
+            minWidth: 340,
+            overflow: 'hidden',
             fontSize: 13,
             color: 'var(--text-primary)'
           }}
           onMouseEnter={() => clearTimeout(hideTimeout.current)}
           onMouseLeave={handleMouseLeave}
         >
-          <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 11, textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>
-            Variable
+          <div style={{ padding: '14px 16px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <input
+              id="new-env-var-input"
+              className="input"
+              style={{ fontSize: 13, padding: '8px 10px', height: 36 }}
+              defaultValue={hoveredVar.value || ''}
+              placeholder="Enter value"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddVar(hoveredVar.name, e.currentTarget.value);
+              }}
+            />
+            <button
+              className="btn"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => {
+                const input = document.getElementById('new-env-var-input') as HTMLInputElement;
+                handleAddVar(hoveredVar.name, input?.value || '');
+              }}
+            >
+              <Plus size={14} /> {hoveredVar.exists ? 'Update' : 'Add'} {activeCollection ? 'Collection' : 'Environment'} Variable
+            </button>
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', marginBottom: hoveredVar.exists ? 0 : 12, fontWeight: 600, color: hoveredVar.exists ? 'var(--accent-primary)' : 'var(--status-delete)' }}>
-            {hoveredVar.name}
-          </div>
-          
-          {hoveredVar.exists ? (
-            <div style={{ marginTop: 4, color: 'var(--text-secondary)' }}>
-              <div style={{ marginBottom: 4 }}>
-                <span style={{ color: 'var(--text-tertiary)', fontSize: 11, marginRight: 4 }}>Source:</span>
-                {hoveredVar.source}
-              </div>
-              <span style={{ color: 'var(--text-tertiary)', fontSize: 11, marginRight: 4 }}>Value:</span>
-              {hoveredVar.value || <span style={{ opacity: 0.5, fontStyle: 'italic' }}>empty</span>}
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <input 
-                id="new-env-var-input"
-                className="input" 
-                style={{ fontSize: 12, padding: '4px 8px', height: 28 }} 
-                placeholder="Initial Value..." 
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddVar(hoveredVar.name, e.currentTarget.value);
-                }}
-              />
-              <button 
-                className="btn" 
-                style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => {
-                  const input = document.getElementById('new-env-var-input') as HTMLInputElement;
-                  handleAddVar(hoveredVar.name, input?.value || '');
-                }}
-              >
-                <Plus size={14} /> Add to Environment
-              </button>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={openCollectionVariables}
+            disabled={!activeCollection}
+            style={{
+              width: '100%',
+              border: 0,
+              borderTop: '1px solid var(--border-color)',
+              background: 'transparent',
+              color: activeCollection ? 'var(--text-secondary)' : 'var(--text-tertiary)',
+              padding: '10px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: activeCollection ? 'pointer' : 'default',
+              fontSize: 13
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 20, height: 20, borderRadius: 5, background: '#9b7200', color: '#fff0a8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                C
+              </span>
+              Collection
+            </span>
+            <span>Variables in request -&gt;</span>
+          </button>
         </div>,
         document.body
       )}

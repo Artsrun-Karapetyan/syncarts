@@ -2,28 +2,28 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useWorkspace, EnvironmentVariable } from '../../contexts/WorkspaceContext';
 
 export function CollectionVariablesEditor() {
-  const { activeTab, updateActiveTab } = useWorkspace();
+  const { activeTab, collections, updateCollection } = useWorkspace();
 
   if (!activeTab || activeTab.type !== 'collection') return null;
 
-  const variables = activeTab.variables || [];
+  const activeCollection = collections.find(collection => collection.id === activeTab.collectionId);
+  const variables = activeCollection?.variables || activeTab.variables || [];
+  const updateVariables = (nextVariables: EnvironmentVariable[]) => {
+    if (activeTab.collectionId) {
+      updateCollection(activeTab.collectionId, { variables: nextVariables });
+    }
+  };
 
   const updateVariable = (id: string, updates: Partial<EnvironmentVariable>) => {
-    updateActiveTab({
-      variables: variables.map(v => v.id === id ? { ...v, ...updates } : v)
-    });
+    updateVariables(variables.map(v => v.id === id ? { ...v, ...updates } : v));
   };
 
   const removeVariable = (id: string) => {
-    updateActiveTab({
-      variables: variables.filter(v => v.id !== id)
-    });
+    updateVariables(variables.filter(v => v.id !== id));
   };
 
   const addVariable = () => {
-    updateActiveTab({
-      variables: [...variables, { id: crypto.randomUUID(), key: '', value: '', enabled: true }]
-    });
+    updateVariables([...variables, { id: crypto.randomUUID(), key: '', value: '', enabled: true }]);
   };
 
   return (

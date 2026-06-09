@@ -16,7 +16,8 @@
     "backend:db:deploy": "bun run --cwd backend db:deploy",
     "backend:db:reset": "bun run --cwd backend db:reset",
     "db:up": "cd backend && docker compose up -d",
-    "db:down": "cd backend && docker compose down"
+    "db:down": "cd backend && docker compose down",
+    "db:studio": "cd backend && bunx prisma studio"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.13",

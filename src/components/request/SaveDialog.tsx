@@ -10,7 +10,7 @@ interface SaveDialogProps {
 }
 
 export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
-  const { activeTab, collections, saveRequest, updateActiveTab } = useWorkspace();
+  const { activeTab, collections, saveRequest, updateActiveTab, rememberTabSnapshot } = useWorkspace();
   const [requestName, setRequestName] = useState(activeTab?.name === 'Untitled Request' ? '' : activeTab?.name || '');
   
   // Build flattened options for collections and folders
@@ -108,6 +108,7 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
       body: activeTab.body || '',
     };
 
+    rememberTabSnapshot(activeTab.id, req);
     saveRequest(collectionId, folderId, req);
     updateActiveTab({
       name: req.name,

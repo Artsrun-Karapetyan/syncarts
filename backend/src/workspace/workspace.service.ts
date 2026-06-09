@@ -67,11 +67,13 @@ export class WorkspaceService {
 
     if (existing) {
       const member = existing.members.find(m => m.userId === userId);
-      if (!member) {
-        throw new ForbiddenException('Only workspace members can sync this workspace');
-      }
+      const isOwner = existing.ownerId === userId;
       
-      if (member.role === 'VIEWER') {
+      if (!member && !isOwner) {
+        throw new ForbiddenException('Only workspace members or owners can sync this workspace');
+      }
+
+      if (member?.role === 'VIEWER' && !isOwner) {
         throw new ForbiddenException('You only have view access to this workspace');
       }
 

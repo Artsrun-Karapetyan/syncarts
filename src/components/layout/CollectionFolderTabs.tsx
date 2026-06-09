@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { DocsEditor } from '../request/DocsEditor';
 import { AuthEditor } from '../request/AuthEditor';
@@ -8,14 +7,17 @@ import { CollectionVariablesEditor } from '../request/CollectionVariablesEditor'
 type Tab = 'overview' | 'authorization' | 'scripts' | 'variables' | 'runs';
 
 export function CollectionFolderTabs() {
-  const { activeTab } = useWorkspace();
-  const [activeView, setActiveView] = useState<Tab>('overview');
+  const { activeTab, updateActiveTab } = useWorkspace();
 
   if (!activeTab || (activeTab.type !== 'collection' && activeTab.type !== 'folder')) {
     return null;
   }
 
   const isCollection = activeTab.type === 'collection';
+  const activeView: Tab = activeTab.collectionView || 'overview';
+  const handleViewChange = (view: Tab) => {
+    updateActiveTab({ collectionView: view });
+  };
 
   const TABS: { id: Tab; label: string; hide?: boolean }[] = [
     { id: 'overview', label: 'Overview' },
@@ -53,7 +55,7 @@ export function CollectionFolderTabs() {
             key={tab.id}
             type="button"
             className={`tab-button ${activeView === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveView(tab.id)}
+            onClick={() => handleViewChange(tab.id)}
             style={{ padding: '12px 16px', fontSize: 13 }}
           >
             {tab.label}
