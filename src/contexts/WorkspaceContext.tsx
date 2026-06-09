@@ -144,6 +144,12 @@ export interface WorkspaceMember {
   };
 }
 
+export interface SavedRequestLocation {
+  collectionId: string;
+  folderId: string | null;
+  request: SavedRequest;
+}
+
 interface WorkspaceContextState {
   workspaces: Workspace[];
   activeWorkspaceId: string;
@@ -180,6 +186,10 @@ interface WorkspaceContextState {
   openFolderTab: (collectionId: string, folderId: string) => void;
   openExampleTab: (collectionId: string, exampleId: string) => void;
   updateActiveTab: (data: Partial<TabData>) => void;
+  findSavedRequestById: (requestId?: string) => SavedRequestLocation | null;
+  resolveTabSavedRequestId: (tab?: TabData) => string | undefined;
+  isTabDirty: (tab?: TabData) => boolean;
+  saveActiveRequestInPlace: () => boolean;
   
   // Collection Actions
   addCollection: (name: string) => void;
@@ -419,6 +429,34 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
     };
   };
 
+  const getWorkspaceSyncPayload = (workspace: Workspace) => ({
+    name: workspace.name,
+    ownerId: workspace.ownerId,
+    collections: workspace.collections,
+    environments: workspace.environments || [],
+    globalVariables: workspace.globalVariables || []
+  });
+
+  const getRemoteSyncPayload = (remote: any) => ({
+    name: remote.name || '',
+    ownerId: remote.ownerId,
+    collections: remote.data?.collections || [],
+    environments: remote.data?.environments || [],
+    globalVariables: remote.data?.globalVariables || []
+  });
+
+  const getSyncSignature = (payload: unknown) => JSON.stringify(payload);
+
+  const canSyncWorkspace = (workspace: Workspace) => {
+    if (workspace.ownerId === userId || !workspace.ownerId) return true;
+    const member = workspace.members?.find((m) => m.userId === userId);
+    return member?.role !== 'VIEWER';
+  };
+
+  const dirtyWorkspaceIdsRef = useRef<Set<string>>(new Set());
+  const syncingWorkspaceIdsRef = useRef<Set<string>>(new Set());
+  const lastSyncedSignaturesRef = useRef<Record<string, string>>({});
+
   useEffect(() => {
     setWorkspaces((prev) => {
       const normalized = normalizeLegacyWorkspaces(prev);
@@ -477,8 +515,116 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
   const activeTabId = activeTabIdByWorkspace[activeWorkspaceId] || (currentTabs.length > 0 ? currentTabs[0].id : null);
   const activeTab = currentTabs.find(t => t.id === activeTabId) || currentTabs[0];
 
+  const findSavedRequestById = (requestId?: string): SavedRequestLocation | null => {
+    if (!requestId) return null;
+
+    for (const collection of collections) {
+      const walk = (items: (Folder | SavedRequest)[], parentFolderId: string | null): SavedRequestLocation | null => {
+        for (const item of items) {
+          if (item.type === 'request' && item.id === requestId) {
+            return { collectionId: collection.id, folderId: parentFolderId, request: item };
+          }
+          if (item.type === 'folder') {
+            const found = walk(item.items, item.id);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const found = walk(collection.items, null);
+      if (found) return found;
+    }
+
+    return null;
+  };
+
+  const resolveTabSavedRequestId = (tab?: TabData) => {
+    if (!tab || (tab.type && tab.type !== 'request')) return undefined;
+    if (tab.savedRequestId && findSavedRequestById(tab.savedRequestId)) return tab.savedRequestId;
+    if (findSavedRequestById(tab.id)) return tab.id;
+    return undefined;
+  };
+
+  const requestSnapshot = (request: Partial<TabData | SavedRequest>) => JSON.stringify({
+    name: request.name || '',
+    method: request.method || 'GET',
+    url: request.url || '',
+    headers: request.headers || [],
+    authType: request.authType || 'inherit',
+    bearerToken: request.bearerToken || '',
+    bodyType: request.bodyType || 'raw',
+    formData: request.formData || [],
+    body: request.body || '',
+    description: request.description || '',
+    preRequestScript: request.preRequestScript || '',
+    testScript: request.testScript || '',
+  });
+
+  const isTabDirty = (tab?: TabData) => {
+    if (!tab || (tab.type && tab.type !== 'request')) return false;
+    const savedRequestId = resolveTabSavedRequestId(tab);
+    if (!savedRequestId) return true;
+    const saved = findSavedRequestById(savedRequestId);
+    if (!saved) return true;
+    return requestSnapshot(saved.request) !== requestSnapshot(tab);
+  };
+
+  const buildSavedRequestFromTab = (tab: TabData, id: string, existing?: SavedRequest): SavedRequest => ({
+    type: 'request',
+    id,
+    name: tab.name || 'Untitled Request',
+    method: tab.method || 'GET',
+    url: tab.url || '',
+    headers: tab.headers || [],
+    authType: tab.authType,
+    bearerToken: tab.bearerToken,
+    bodyType: tab.bodyType,
+    formData: tab.formData,
+    description: tab.description,
+    preRequestScript: tab.preRequestScript,
+    testScript: tab.testScript,
+    body: tab.body || '',
+    examples: existing?.examples,
+  });
+
+  const syncTabWithSavedRequest = (
+    request: SavedRequest,
+    collectionId: string,
+    folderId: string | null,
+    savedRequestId = request.id
+  ) => {
+    updateActiveTab({
+      name: request.name,
+      method: request.method,
+      url: request.url,
+      headers: request.headers,
+      authType: request.authType,
+      bearerToken: request.bearerToken,
+      bodyType: request.bodyType,
+      formData: request.formData,
+      description: request.description,
+      preRequestScript: request.preRequestScript,
+      testScript: request.testScript,
+      body: request.body,
+      collectionId,
+      folderId: folderId || undefined,
+      savedRequestId,
+    });
+  };
+
   const updateWorkspaces = (updater: (prev: Workspace[]) => Workspace[]) => {
-    setWorkspaces(updater);
+    setWorkspaces((prev) => {
+      const next = updater(prev);
+      const before = prev.find((workspace) => workspace.id === activeWorkspaceId);
+      const after = next.find((workspace) => workspace.id === activeWorkspaceId);
+
+      if (after && canSyncWorkspace(after) && getSyncSignature(getWorkspaceSyncPayload(before || after)) !== getSyncSignature(getWorkspaceSyncPayload(after))) {
+        dirtyWorkspaceIdsRef.current.add(after.id);
+      }
+
+      return next;
+    });
   };
 
   const updateCurrentTabs = (updater: (prev: TabData[]) => TabData[]) => {
@@ -487,6 +633,32 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
       [activeWorkspaceId]: updater(prev[activeWorkspaceId] || [])
     }));
   };
+
+  useEffect(() => {
+    if (currentTabs.length === 0) return;
+
+    let changed = false;
+    const normalizedTabs = currentTabs.map((tab) => {
+      if ((tab.type && tab.type !== 'request') || tab.savedRequestId) return tab;
+
+      const saved = findSavedRequestById(tab.id);
+      if (!saved) return tab;
+
+      changed = true;
+      return {
+        ...tab,
+        savedRequestId: tab.id,
+        collectionId: saved.collectionId,
+        folderId: saved.folderId || undefined,
+      };
+    });
+
+    if (!changed) return;
+    setTabsByWorkspace((prev) => ({
+      ...prev,
+      [activeWorkspaceId]: normalizedTabs,
+    }));
+  }, [activeWorkspaceId, collections, currentTabs, setTabsByWorkspace]);
 
   const reloadWorkspaces = async () => {
     try {
@@ -526,6 +698,7 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
 
   const createWorkspace = (name: string) => {
     const newWsId = crypto.randomUUID();
+    dirtyWorkspaceIdsRef.current.add(newWsId);
     setWorkspaces(prev => [...prev, { id: newWsId, name, collections: [], environments: [] }]);
     
     // Initialize tabs for new workspace
@@ -1232,6 +1405,50 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
     updateWorkspaces(prev => prev.map(w => {
       if (w.id !== activeWorkspaceId) return w;
       
+      // Check if it already exists in the TARGET location
+      let foundInTargetLocation = false;
+      const targetCol = w.collections.find(c => c.id === collectionId);
+      
+      if (targetCol) {
+        if (!folderId) {
+          foundInTargetLocation = targetCol.items.some(item => item.type === 'request' && item.id === request.id);
+        } else {
+          const findFolder = (items: any[]): any => {
+            for (const item of items) {
+              if (item.type === 'folder' && item.id === folderId) return item;
+              if (item.type === 'folder') {
+                const found = findFolder(item.items);
+                if (found) return found;
+              }
+            }
+            return null;
+          };
+          const f = findFolder(targetCol.items);
+          if (f) {
+            foundInTargetLocation = f.items.some((item: any) => item.type === 'request' && item.id === request.id);
+          }
+        }
+      }
+
+      if (foundInTargetLocation) {
+        // Update in-place to preserve order
+        const recursivelyUpdate = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
+          return items.map(item => {
+            if (item.type === 'request' && item.id === request.id) {
+              return request;
+            }
+            if (item.type === 'folder') {
+              return { ...item, items: recursivelyUpdate(item.items) };
+            }
+            return item;
+          });
+        };
+        return {
+          ...w,
+          collections: w.collections.map(col => col.id === collectionId ? { ...col, items: recursivelyUpdate(col.items) } : col)
+        };
+      }
+      
       const removeRequest = (items: (Folder | SavedRequest)[]): (Folder | SavedRequest)[] => {
         return items.filter(item => {
           if (item.type === 'request' && item.id === request.id) return false;
@@ -1268,6 +1485,21 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
 
       return { ...w, collections: newCollections };
     }));
+  };
+
+  const saveActiveRequestInPlace = () => {
+    if (!activeTab || (activeTab.type && activeTab.type !== 'request')) return false;
+
+    const savedRequestId = resolveTabSavedRequestId(activeTab);
+    if (!savedRequestId) return false;
+
+    const saved = findSavedRequestById(savedRequestId);
+    if (!saved) return false;
+
+    const updatedRequest = buildSavedRequestFromTab(activeTab, savedRequestId, saved.request);
+    saveRequest(saved.collectionId, saved.folderId, updatedRequest);
+    syncTabWithSavedRequest(updatedRequest, saved.collectionId, saved.folderId, savedRequestId);
+    return true;
   };
 
   const deleteItem = (collectionId: string, itemId: string) => {
@@ -1441,7 +1673,7 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
       body: ''
     };
     saveRequest(collectionId, folderId, newReq);
-    addTab({ ...newReq, id: crypto.randomUUID(), savedRequestId: newReqId, response: null });
+    addTab({ ...newReq, id: crypto.randomUUID(), savedRequestId: newReqId, collectionId, folderId: folderId || undefined, response: null });
   };
   const activeTabIdRef = useRef(activeTabId);
   const closeTabRef = useRef(closeTab);
@@ -1483,10 +1715,6 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
       if (!isMounted) return;
       const remoteWorkspaces = res.data || [];
       const remoteIds = new Set<string>(remoteWorkspaces.map((remote: any) => remote.id));
-      const workspacesToPush: Array<{
-        workspaceId: string;
-        data: { name: string; ownerId?: string; collections: Collection[]; environments: Environment[]; globalVariables: EnvironmentVariable[] };
-      }> = [];
       
       setWorkspaces((prevLocals) => {
         let hasChanges = false;
@@ -1501,20 +1729,21 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
           }
 
           const localIndex = nextLocals.findIndex(w => w.id === remote.id);
-          const remoteData = remote.data || { collections: [], environments: [] };
+          const remoteSignature = getSyncSignature(getRemoteSyncPayload(remote));
+          lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
           
           if (localIndex === -1) {
-            nextLocals.push({
-              ...mapRemoteWorkspace(remote),
-              collections: remoteData.collections || [],
-              environments: remoteData.environments || []
-            });
+            nextLocals.push(mapRemoteWorkspace(remote));
             hasChanges = true;
           } else {
             const local = nextLocals[localIndex];
             const remoteWorkspace = mapRemoteWorkspace(remote, local);
-
-            if (remote.ownerId && remote.ownerId !== userId) {
+            const member = remote.members?.find((m: any) => m.userId === userId);
+            const isViewer = member?.role === 'VIEWER';
+            const localSignature = getSyncSignature(getWorkspaceSyncPayload(local));
+            const hasPendingLocalChanges = dirtyWorkspaceIdsRef.current.has(remote.id) || syncingWorkspaceIdsRef.current.has(remote.id);
+            
+            if (isViewer && remote.ownerId !== userId) {
               if (JSON.stringify(local) !== JSON.stringify(remoteWorkspace)) {
                 nextLocals[localIndex] = remoteWorkspace;
                 hasChanges = true;
@@ -1522,35 +1751,19 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
               continue;
             }
 
-            const localData = {
-              name: local.name,
-              collections: local.collections,
-              environments: local.environments || [],
-              globalVariables: local.globalVariables || []
-            };
-            const localSyncData = {
-              ...localData,
-              ownerId: local.ownerId
-            };
-            const remoteName = remote.name || '';
-            const remoteCollections = remoteData.collections || [];
-            const remoteEnvironments = remoteData.environments || [];
-            const remoteGlobalVariables = remoteData.globalVariables || [];
-            const localHasData = localData.collections.length > 0 || localData.environments.length > 0 || localData.globalVariables.length > 0;
-            const remoteHasData = remoteCollections.length > 0 || remoteEnvironments.length > 0 || remoteGlobalVariables.length > 0;
-            const nameChanged = localData.name !== remoteName;
+            if (hasPendingLocalChanges) {
+              nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
+              hasChanges = true;
+              continue;
+            }
 
-            // Keep local edits on reload, but hydrate empty local workspaces from the backend.
-            if (!localHasData && remoteHasData) {
-               nextLocals[localIndex] = mapRemoteWorkspace(remote, local);
-               hasChanges = true;
-            } else if (localHasData && (!remoteHasData || nameChanged)) {
-               workspacesToPush.push({ workspaceId: remote.id, data: localSyncData });
-            } else if (localHasData && remoteHasData && (nameChanged || JSON.stringify(localData) !== JSON.stringify(remoteData))) {
-               workspacesToPush.push({ workspaceId: remote.id, data: localSyncData });
+            if (localSignature !== remoteSignature) {
+              dirtyWorkspaceIdsRef.current.add(local.id);
+              nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
+              hasChanges = true;
             } else if (JSON.stringify(local.members || []) !== JSON.stringify(remote.members || [])) {
-               nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
-               hasChanges = true;
+              nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
+              hasChanges = true;
             }
           }
         }
@@ -1558,12 +1771,6 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
         const normalizedLocals = normalizeLegacyWorkspaces(prevLocals);
         return normalizedLocals.length !== prevLocals.length ? normalizedLocals : prevLocals;
       });
-
-      for (const workspace of workspacesToPush) {
-        api.put(`/workspaces/${workspace.workspaceId}/sync`, workspace.data).catch((err: any) => {
-          console.error('Failed to sync workspace to backend', err);
-        });
-      }
     }).catch((err: any) => {
       console.error('Failed to fetch workspaces from backend', err);
     });
@@ -1576,21 +1783,30 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
 
     const timeoutId = setTimeout(() => {
       workspaces.forEach((workspace) => {
-        const dataPayload = {
-          name: workspace.name,
-          ownerId: workspace.ownerId,
-          collections: workspace.collections,
-          environments: workspace.environments || [],
-          globalVariables: workspace.globalVariables || []
-        };
-
-        if (workspace.ownerId && workspace.ownerId !== userId) {
+        if (!canSyncWorkspace(workspace)) {
           return;
         }
 
-        api.put(`/workspaces/${workspace.id}/sync`, dataPayload).catch((err: any) => {
-          console.error('Failed to sync workspace to backend', workspace.id, err);
-        });
+        const dataPayload = getWorkspaceSyncPayload(workspace);
+        const signature = getSyncSignature(dataPayload);
+        const lastSyncedSignature = lastSyncedSignaturesRef.current[workspace.id];
+        const shouldSync = dirtyWorkspaceIdsRef.current.has(workspace.id) || signature !== lastSyncedSignature;
+
+        if (!shouldSync || syncingWorkspaceIdsRef.current.has(workspace.id)) return;
+
+        syncingWorkspaceIdsRef.current.add(workspace.id);
+        api.put(`/workspaces/${workspace.id}/sync`, dataPayload)
+          .then(() => {
+            lastSyncedSignaturesRef.current[workspace.id] = signature;
+            dirtyWorkspaceIdsRef.current.delete(workspace.id);
+          })
+          .catch((err: any) => {
+            dirtyWorkspaceIdsRef.current.add(workspace.id);
+            console.error('Failed to sync workspace to backend', workspace.id, err);
+          })
+          .finally(() => {
+            syncingWorkspaceIdsRef.current.delete(workspace.id);
+          });
       });
     }, 2000);
 
@@ -1612,26 +1828,62 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
 
           for (const remote of remoteWorkspaces) {
             const localIndex = nextLocals.findIndex((workspace) => workspace.id === remote.id);
-            const isOwnedWorkspace = remote.ownerId === userId;
-            const remoteWorkspace = mapRemoteWorkspace(remote);
+            const remoteWorkspace = mapRemoteWorkspace(remote, localIndex !== -1 ? nextLocals[localIndex] : undefined);
+            const remoteSignature = getSyncSignature(getRemoteSyncPayload(remote));
 
             if (localIndex === -1) {
               nextLocals.push(remoteWorkspace);
+              lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
               hasChanges = true;
               continue;
             }
 
-            if (isOwnedWorkspace) {
-              const local = nextLocals[localIndex];
-              if (JSON.stringify(local.members || []) !== JSON.stringify(remote.members || [])) {
+            const local = nextLocals[localIndex];
+            const localSignature = getSyncSignature(getWorkspaceSyncPayload(local));
+            const lastSyncedSignature = lastSyncedSignaturesRef.current[remote.id];
+            const hasPendingLocalChanges = dirtyWorkspaceIdsRef.current.has(remote.id) || syncingWorkspaceIdsRef.current.has(remote.id);
+            const member = remote.members?.find((m: any) => m.userId === userId);
+            const isViewer = member?.role === 'VIEWER';
+
+            if (isViewer && remote.ownerId !== userId) {
+              nextLocals[localIndex] = remoteWorkspace;
+              lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+              hasChanges = true;
+              continue;
+            }
+
+            if (hasPendingLocalChanges) {
+              nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
+              hasChanges = true;
+              continue;
+            }
+
+            if (lastSyncedSignature && localSignature !== lastSyncedSignature) {
+              dirtyWorkspaceIdsRef.current.add(local.id);
+              nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
+              hasChanges = true;
+              continue;
+            }
+
+            if (!lastSyncedSignature) {
+              lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+              if (localSignature !== remoteSignature) {
+                dirtyWorkspaceIdsRef.current.add(local.id);
                 nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
                 hasChanges = true;
               }
               continue;
             }
 
-            if (JSON.stringify(nextLocals[localIndex]) !== JSON.stringify(remoteWorkspace)) {
-              nextLocals[localIndex] = mapRemoteWorkspace(remote, nextLocals[localIndex]);
+            if (remoteSignature !== lastSyncedSignature) {
+              nextLocals[localIndex] = remoteWorkspace;
+              lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+              hasChanges = true;
+              continue;
+            }
+
+            if (JSON.stringify(local.members || []) !== JSON.stringify(remote.members || [])) {
+              nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
               hasChanges = true;
             }
           }
@@ -1674,6 +1926,10 @@ export function WorkspaceProvider({ children, userId }: { children: ReactNode, u
         openFolderTab,
         openExampleTab,
         updateActiveTab,
+        findSavedRequestById,
+        resolveTabSavedRequestId,
+        isTabDirty,
+        saveActiveRequestInPlace,
         collections,
         
         setActiveTabId,

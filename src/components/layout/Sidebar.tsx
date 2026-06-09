@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
 import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Trash2, Download, Edit2, ListOrdered, ArrowDownAZ } from 'lucide-react';
 
@@ -20,6 +20,7 @@ interface CtxMenuState {
 interface SidebarItemProps {
   item: IFolder | SavedRequest;
   collectionId: string;
+  parentFolderId: string | null;
   onContextMenu: (e: React.MouseEvent, itemId: string, type: 'folder' | 'request' | 'example', itemName: string, requestId?: string) => void;
   level?: number;
   renamingId: string | null;
@@ -27,10 +28,26 @@ interface SidebarItemProps {
   renameValue: string;
   setRenameValue: (val: string) => void;
   handleRenameSubmit: () => void;
+  expandedFolders: Record<string, boolean>;
+  setExpandedFolders: Dispatch<SetStateAction<Record<string, boolean>>>;
+  highlightedRequestId: string | null;
 }
 
-function SidebarItem({ item, collectionId, onContextMenu, level = 1, renamingId, setRenamingId, renameValue, setRenameValue, handleRenameSubmit }: SidebarItemProps) {
-  const [isOpen, setIsOpen] = useState(false);
+function SidebarItem({
+  item,
+  collectionId,
+  parentFolderId,
+  onContextMenu,
+  level = 1,
+  renamingId,
+  setRenamingId,
+  renameValue,
+  setRenameValue,
+  handleRenameSubmit,
+  expandedFolders,
+  setExpandedFolders,
+  highlightedRequestId,
+}: SidebarItemProps) {
   const [isExamplesOpen, setIsExamplesOpen] = useState(false);
   const { addTab, openFolderTab, openExampleTab } = useWorkspace();
 
@@ -45,14 +62,16 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1, renamingId,
           alignItems: 'center',
           gap: 8,
           fontSize: 13,
-          color: 'var(--text-secondary)',
+          color: highlightedRequestId === item.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+          background: highlightedRequestId === item.id ? 'var(--bg-tertiary)' : 'transparent',
+          boxShadow: highlightedRequestId === item.id ? 'inset 0 0 0 1px var(--accent-primary)' : 'none',
           padding: '4px 8px',
           paddingLeft,
           borderRadius: 8,
           cursor: 'pointer',
-          transition: 'all var(--transition-fast)',
+          transition: 'all 0.4s ease-out',
         }}
-        onClick={() => addTab({ ...item, id: crypto.randomUUID(), response: null })}
+        onClick={() => addTab({ ...item, id: crypto.randomUUID(), savedRequestId: item.id, collectionId, folderId: parentFolderId ?? undefined, response: null })}
         onContextMenu={(e) => onContextMenu(e, item.id, 'request', item.name)}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--bg-tertiary)';
@@ -60,8 +79,8 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1, renamingId,
           e.currentTarget.style.transform = 'translateX(2px)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'transparent';
-          e.currentTarget.style.color = 'var(--text-secondary)';
+          e.currentTarget.style.background = highlightedRequestId === item.id ? 'var(--bg-tertiary)' : 'transparent';
+          e.currentTarget.style.color = highlightedRequestId === item.id ? 'var(--text-primary)' : 'var(--text-secondary)';
           e.currentTarget.style.transform = 'translateX(0)';
         }}
       >
@@ -220,7 +239,9 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1, renamingId,
           transition: 'all var(--transition-fast)',
         }}
         onClick={() => {
-          if (!isOpen) setIsOpen(true);
+          if (!expandedFolders[item.id]) {
+            setExpandedFolders((prev) => ({ ...prev, [item.id]: true }));
+          }
           openFolderTab(collectionId, item.id);
         }}
         onContextMenu={(e) => onContextMenu(e, item.id, 'folder', item.name)}
@@ -236,12 +257,12 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1, renamingId,
         <div
           onClick={(e) => {
             e.stopPropagation();
-            setIsOpen(!isOpen);
+            setExpandedFolders((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
           }}
           style={{ display: 'flex', alignItems: 'center', padding: 2, margin: -2, borderRadius: 4 }}
           className="hover-bg-secondary"
         >
-          {isOpen ? <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6 }} /> : <ChevronRight size={14} style={{ flexShrink: 0, opacity: 0.6 }} />}
+          {expandedFolders[item.id] ? <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6 }} /> : <ChevronRight size={14} style={{ flexShrink: 0, opacity: 0.6 }} />}
         </div>
         <Folder size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
         {renamingId === item.id ? (
@@ -284,13 +305,14 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1, renamingId,
           <MoreHorizontal size={13} />
         </div>
       </div>
-      {isOpen && (
+      {expandedFolders[item.id] && (
         <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 20, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
           {item.items.map(subItem => (
             <SidebarItem 
               key={subItem.id} 
               item={subItem} 
               collectionId={collectionId} 
+              parentFolderId={item.id}
               onContextMenu={onContextMenu} 
               level={level + 1} 
               renamingId={renamingId}
@@ -298,6 +320,9 @@ function SidebarItem({ item, collectionId, onContextMenu, level = 1, renamingId,
               renameValue={renameValue}
               setRenameValue={setRenameValue}
               handleRenameSubmit={handleRenameSubmit}
+              expandedFolders={expandedFolders}
+              setExpandedFolders={setExpandedFolders}
+              highlightedRequestId={highlightedRequestId}
             />
           ))}
         </div>
@@ -310,7 +335,7 @@ export function Sidebar() {
   const { 
     collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder,
     openCollectionTab,
-    renameItem, sortItems, deleteExample, addExample, activeTab
+    renameItem, sortItems, deleteExample, addExample, activeTab, resolveTabSavedRequestId
   } = useWorkspace();
   const [isAdding, setIsAdding] = useState(false);
   const [newColName, setNewColName] = useState('');
@@ -324,6 +349,9 @@ export function Sidebar() {
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  const [highlightedRequestId, setHighlightedRequestId] = useState<string | null>(null);
+  const highlightTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -353,6 +381,77 @@ export function Sidebar() {
 
       return next;
     });
+  }, [collections]);
+
+  const highlightRequest = (savedRequestId?: string) => {
+    if (!savedRequestId) return;
+
+    let requestPath: { collectionId: string; folderIds: string[] } | null = null;
+
+    for (const col of collections) {
+      const walk = (items: (IFolder | SavedRequest)[], folderIds: string[]): boolean => {
+        for (const item of items) {
+          if (item.type === 'request' && item.id === savedRequestId) {
+            requestPath = { collectionId: col.id, folderIds };
+            return true;
+          }
+          if (item.type === 'folder' && walk(item.items, [...folderIds, item.id])) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      if (walk(col.items, [])) break;
+    }
+
+    if (!requestPath) return;
+
+    setExpandedCollections((prev) => ({
+      ...prev,
+      [requestPath!.collectionId]: true,
+    }));
+    setExpandedFolders((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const folderId of requestPath!.folderIds) {
+        if (!next[folderId]) {
+          next[folderId] = true;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+
+    setHighlightedRequestId(savedRequestId);
+    if (highlightTimeoutRef.current) {
+      window.clearTimeout(highlightTimeoutRef.current);
+    }
+    highlightTimeoutRef.current = window.setTimeout(() => {
+      setHighlightedRequestId(null);
+      highlightTimeoutRef.current = null;
+    }, 1250);
+  };
+
+  useEffect(() => {
+    const savedRequestId = resolveTabSavedRequestId(activeTab);
+    if (savedRequestId) {
+      highlightRequest(savedRequestId);
+    }
+    return () => {
+      if (highlightTimeoutRef.current) {
+        window.clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+  }, [activeTab, collections, resolveTabSavedRequestId]);
+
+  useEffect(() => {
+    const onHighlightEvent = (e: Event) => {
+      const savedRequestId = (e as CustomEvent<{ savedRequestId?: string }>).detail?.savedRequestId;
+      highlightRequest(savedRequestId);
+    };
+    window.addEventListener('highlight-sidebar', onHighlightEvent);
+    return () => window.removeEventListener('highlight-sidebar', onHighlightEvent);
   }, [collections]);
 
   const handleAddCollection = () => {
@@ -459,10 +558,7 @@ export function Sidebar() {
   return (
     <div
       style={{
-        width: '20vw',
-        minWidth: 240,
-        maxWidth: 300,
-        borderRight: '1px solid var(--border-color)',
+        width: '100%',
         height: '100%',
         background: 'var(--bg-secondary)',
         padding: 16,
@@ -712,12 +808,16 @@ export function Sidebar() {
                     key={item.id}
                     item={item}
                     collectionId={col.id}
+                    parentFolderId={null}
                     onContextMenu={(e, itemId, type, itemName, requestId) => handleContextMenu(e, col.id, itemId, type, itemName, requestId)}
                     renamingId={renamingId}
                     setRenamingId={setRenamingId}
                     renameValue={renameValue}
                     setRenameValue={setRenameValue}
                     handleRenameSubmit={handleRenameSubmit}
+                    expandedFolders={expandedFolders}
+                    setExpandedFolders={setExpandedFolders}
+                    highlightedRequestId={highlightedRequestId}
                   />
                 ))}
               </div>

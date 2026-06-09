@@ -88,20 +88,44 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
 
     const finalName = requestName.trim() || 'Untitled Request';
 
-    const reqId = activeTab.savedRequestId || crypto.randomUUID();
+    // Always generate a new UUID for Save As / initial save to prevent overwriting/moving existing requests unintentionally
+    const reqId = crypto.randomUUID();
 
     const req: SavedRequest = {
       type: 'request',
       id: reqId,
       name: finalName,
-      method: activeTab.method,
-      url: activeTab.url,
-      headers: activeTab.headers,
-      body: activeTab.body,
+      method: activeTab.method || 'GET',
+      url: activeTab.url || '',
+      headers: activeTab.headers || [],
+      authType: activeTab.authType,
+      bearerToken: activeTab.bearerToken,
+      bodyType: activeTab.bodyType,
+      formData: activeTab.formData,
+      description: activeTab.description,
+      preRequestScript: activeTab.preRequestScript,
+      testScript: activeTab.testScript,
+      body: activeTab.body || '',
     };
 
     saveRequest(collectionId, folderId, req);
-    updateActiveTab({ name: finalName, savedRequestId: reqId });
+    updateActiveTab({
+      name: req.name,
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      authType: req.authType,
+      bearerToken: req.bearerToken,
+      bodyType: req.bodyType,
+      formData: req.formData,
+      description: req.description,
+      preRequestScript: req.preRequestScript,
+      testScript: req.testScript,
+      body: req.body,
+      collectionId,
+      folderId: folderId || undefined,
+      savedRequestId: reqId,
+    });
     onClose();
   };
 

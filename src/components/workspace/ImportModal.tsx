@@ -180,9 +180,10 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     setIsProcessing(true);
     const reader = new FileReader();
     reader.onload = (event) => {
-      if (event.target?.result) {
+      const target = event.target;
+      if (target && target.result) {
         setTimeout(() => {
-          processContent(event.target.result as string);
+          processContent(target.result as string);
         }, 50);
       } else {
         setIsProcessing(false);

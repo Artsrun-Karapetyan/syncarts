@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Clock, Zap, Braces, ChevronDown, Play, Maximize2, Minimize2 } from 'lucide-react';
+import { Clock, Zap, Braces, Play, Maximize2, Minimize2 } from 'lucide-react';
 import JsonView from '@uiw/react-json-view';
 import { darkTheme } from '@uiw/react-json-view/dark';
 import CodeEditor from '@uiw/react-textarea-code-editor';
@@ -78,20 +78,19 @@ export function ResponseViewer() {
       if (url.startsWith('http')) {
         if (e.metaKey || e.ctrlKey) {
           import('@tauri-apps/plugin-opener').then((opener) => opener.openUrl(url));
-        } else {
-          addTab({ 
-            id: crypto.randomUUID(), 
-            name: url.split('/').pop() || 'New Request', 
-            method: 'GET', 
-            url, 
-            bodyType: 'none',
-            headers: [],
-            params: [],
-            auth: { type: 'none' }
-          });
+          } else {
+            addTab({ 
+              id: crypto.randomUUID(), 
+              name: url.split('/').pop() || 'New Request', 
+              method: 'GET', 
+              url, 
+              bodyType: 'none',
+              headers: [],
+              authType: 'none'
+            });
+          }
         }
       }
-    }
   };
 
   return (

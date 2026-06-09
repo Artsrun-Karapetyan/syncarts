@@ -43,6 +43,11 @@ export class WorkspaceController {
     return this.workspaceService.removeMember(id, memberUserId, req.authUser.id);
   }
 
+  @Put(':id/members/:memberUserId/role')
+  async updateMemberRole(@Request() req: any, @Param('id') id: string, @Param('memberUserId') memberUserId: string, @Body() body: any) {
+    return this.workspaceService.updateMemberRole(id, memberUserId, body.role, req.authUser.id);
+  }
+
   @Put(':id/sync')
   async syncData(@Request() req: any, @Param('id') id: string, @Body() body: any) {
     try {

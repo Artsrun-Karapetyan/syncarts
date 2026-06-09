@@ -182,7 +182,14 @@ export function UrlBar() {
           lineHeight: '38px',
         }}
         value={url}
-        onChange={(e) => updateActiveTab({ url: e.target.value })}
+        onChange={(e) => {
+          const newUrl = e.target.value;
+          const updates: any = { url: newUrl };
+          if (!activeTab?.name || activeTab.name === 'Untitled Request' || activeTab.name === activeTab.url) {
+            updates.name = newUrl;
+          }
+          updateActiveTab(updates);
+        }}
         onScroll={(e) => {
           if (overlayRef.current) {
             overlayRef.current.scrollLeft = e.currentTarget.scrollLeft;
