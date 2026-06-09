@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { createEmptyRequestTab } from './defaults';
 import { buildSavedRequestFromTab, findSavedRequestByIdInCollections, requestSnapshot } from './tabHelpers';
 import type { Collection, Folder, SavedExample, SavedRequest, SavedRequestLocation, TabData, Workspace } from './types';
 
@@ -143,17 +142,15 @@ export function useTabActions(args: TabActionsArgs) {
     updateCurrentTabs(prev => {
       const newTabs = prev.filter(t => t.id !== id);
       closedIdWasActive = activeTabId === id;
-      if (newTabs.length === 0) {
-        const emptyTab = createEmptyRequestTab();
-        newTabsToSet = [emptyTab];
-        return [emptyTab];
-      }
       newTabsToSet = newTabs;
       return newTabs;
     });
 
-    if (closedIdWasActive && newTabsToSet.length > 0) {
-      setActiveTabId(newTabsToSet[newTabsToSet.length - 1].id);
+    if (closedIdWasActive) {
+      setActiveTabIdByWorkspace(prev => ({
+        ...prev,
+        [activeWorkspaceId]: newTabsToSet.length > 0 ? newTabsToSet[newTabsToSet.length - 1].id : null
+      }));
     }
     delete lastSavedTabSnapshotsRef.current[id];
   };

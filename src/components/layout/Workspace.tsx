@@ -12,7 +12,7 @@ import { CollectionFolderTabs } from './CollectionFolderTabs';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function Workspace() {
-  const { sendRequest, isMutating, activeTab, collections, updateActiveTab, saveActiveRequestInPlace } = useWorkspace();
+  const { sendRequest, isMutating, activeTab, collections, updateActiveTab, saveActiveRequestInPlace, addTab } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const saveBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -47,7 +47,17 @@ export function Workspace() {
       {/* Tabs */}
       <TabsBar />
 
-      {(!activeTab || activeTab.type === 'request' || activeTab.type === 'example' || !activeTab.type) ? (
+      {!activeTab ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>No request open</div>
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Create a request or open one from a collection.</div>
+            <button className="btn" style={{ marginTop: 4 }} onClick={() => addTab()}>
+              New Request
+            </button>
+          </div>
+        </div>
+      ) : (activeTab.type === 'request' || activeTab.type === 'example' || !activeTab.type) ? (
         <>
           {/* Header & URL Bar */}
           <div style={{ padding: '16px 16px 0 16px', flexShrink: 0, position: 'relative', zIndex: 50 }}>

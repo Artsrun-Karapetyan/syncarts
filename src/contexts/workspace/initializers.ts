@@ -1,4 +1,3 @@
-import { DEFAULT_COLLECTIONS, createEmptyRequestTab } from './defaults';
 import type { TabData, Workspace } from './types';
 
 export function createDefaultWorkspaces(userId: string, localDefaultWorkspaceId: string): Workspace[] {
@@ -16,7 +15,7 @@ export function createDefaultWorkspaces(userId: string, localDefaultWorkspaceId:
     }
   } catch {}
 
-  return [{ id: localDefaultWorkspaceId, name: 'My Workspace', ownerId: userId, collections: DEFAULT_COLLECTIONS }];
+  return [{ id: localDefaultWorkspaceId, name: 'My Workspace', ownerId: userId, collections: [] }];
 }
 
 export function createDefaultTabsByWorkspace(localDefaultWorkspaceId: string): Record<string, TabData[]> {
@@ -34,7 +33,7 @@ export function createDefaultTabsByWorkspace(localDefaultWorkspaceId: string): R
     }
   } catch {}
 
-  return { [localDefaultWorkspaceId]: [createEmptyRequestTab()] };
+  return { [localDefaultWorkspaceId]: [] };
 }
 
 export function createDefaultActiveTabByWorkspace(localDefaultWorkspaceId: string): Record<string, string | null> {

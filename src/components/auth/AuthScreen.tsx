@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { AlertCircle } from 'lucide-react';
 
 import { getAuthToken, setAuthToken } from '../../lib/auth';
 import { setStoredUser } from '../../lib/session';
@@ -40,7 +41,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
       setStoredUser(result.user);
       await navigate({ to: '/' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(getAuthErrorMessage(err, mode));
     } finally {
       setBusy(false);
     }
@@ -143,7 +144,25 @@ export function AuthScreen({ mode }: AuthScreenProps) {
             />
           </label>
 
-          {error ? <div style={{ fontSize: 14, color: 'var(--status-delete)' }}>{error}</div> : null}
+          {error ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 10,
+                padding: '12px 14px',
+                borderRadius: 10,
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                background: 'rgba(239, 68, 68, 0.10)',
+                color: 'var(--status-delete)',
+                fontSize: 13,
+                lineHeight: 1.5,
+              }}
+            >
+              <AlertCircle size={17} style={{ flexShrink: 0, marginTop: 1 }} />
+              <span>{error}</span>
+            </div>
+          ) : null}
 
           <button className="btn btn-primary" style={{ height: 48, marginTop: 4 }} type="submit" disabled={busy}>
             {busy ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
@@ -164,4 +183,25 @@ export function AuthScreen({ mode }: AuthScreenProps) {
       </section>
     </main>
   );
+}
+
+function getAuthErrorMessage(error: unknown, mode: Mode) {
+  const message = error instanceof Error ? error.message : String(error || '');
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes('invalid email or password') || normalized.includes('unauthorized')) {
+    return 'Incorrect email or password. Please check your credentials and try again.';
+  }
+
+  if (normalized.includes('email is already registered')) {
+    return 'This email is already registered. Try signing in instead.';
+  }
+
+  if (normalized.includes('email') || normalized.includes('password')) {
+    return mode === 'login'
+      ? 'Please enter a valid email and password.'
+      : 'Please enter a valid email and use a password with at least 8 characters.';
+  }
+
+  return 'Something went wrong. Please try again.';
 }

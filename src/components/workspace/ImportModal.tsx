@@ -3,6 +3,7 @@ import { X, UploadCloud, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { importPostmanCollection, importPostmanEnvironment } from '../../utils/postmanParser';
 import { parseCurlCommand } from '../../utils/curlParser';
+import { ImportDuplicatePrompt, type DuplicateImportItem } from './ImportDuplicatePrompt';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ interface ImportModalProps {
 type ImportStatus = 'idle' | 'success' | 'error';
 
 export function ImportModal({ isOpen, onClose }: ImportModalProps) {
-  const { addTab, importCollection, createEnvironment, collections, environments } = useWorkspace();
+  const { addTab, importCollection, updateCollection, createEnvironment, collections, environments } = useWorkspace();
   const [inputText, setInputText] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [status, setStatus] = useState<ImportStatus>('idle');
@@ -20,12 +21,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
 
-  const [duplicateItem, setDuplicateItem] = useState<{
-    type: 'collection' | 'environment';
-    data: any;
-    originalName: string;
-    proposedName: string;
-  } | null>(null);
+  const [duplicateItem, setDuplicateItem] = useState<DuplicateImportItem | null>(null);
 
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -74,7 +70,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               type: 'environment',
               data: envData,
               originalName: envName,
-              proposedName: `${envName} (Copy)`
+              proposedName: `${envName} (Copy)`,
             });
             return;
           }
@@ -87,12 +83,14 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         // Check if it's a Collection
         if (data.info && data.info.name) {
           const collectionData = importPostmanCollection(trimmed);
-          if (collections.some(c => c.name === collectionData.name)) {
+          const existingCollection = collections.find(c => c.name === collectionData.name);
+          if (existingCollection) {
             setDuplicateItem({
               type: 'collection',
               data: collectionData,
               originalName: collectionData.name,
-              proposedName: `${collectionData.name} (Copy)`
+              proposedName: `${collectionData.name} (Copy)`,
+              existingId: existingCollection.id
             });
             return;
           }
@@ -123,6 +121,12 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       createEnvironment(duplicateItem.proposedName, duplicateItem.data.variables);
     }
     
+    handleClose();
+  };
+
+  const handleReplaceDuplicate = () => {
+    if (!duplicateItem || duplicateItem.type !== 'collection' || !duplicateItem.existingId) return;
+    updateCollection(duplicateItem.existingId, duplicateItem.data);
     handleClose();
   };
 
@@ -252,50 +256,13 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           
           {duplicateItem ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.2s ease' }}>
-              <div style={{ 
-                padding: 16, 
-                borderRadius: 'var(--radius-md)', 
-                background: 'var(--status-put-bg)',
-                color: 'var(--status-put)',
-                fontSize: 13,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12
-              }}>
-                <AlertCircle size={20} />
-                <span>
-                  A {duplicateItem.type} named <strong>"{duplicateItem.originalName}"</strong> already exists. 
-                  Would you like to import it with a new name?
-                </span>
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
-                  Import as
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={duplicateItem.proposedName}
-                  onChange={(e) => setDuplicateItem({ ...duplicateItem, proposedName: e.target.value })}
-                  style={{ width: '100%' }}
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleConfirmDuplicate();
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
-                <button className="btn btn-secondary" onClick={() => setDuplicateItem(null)}>
-                  Cancel
-                </button>
-                <button className="btn btn-primary" onClick={handleConfirmDuplicate}>
-                  Import Copy
-                </button>
-              </div>
-            </div>
+            <ImportDuplicatePrompt
+              duplicateItem={duplicateItem}
+              onCancel={() => setDuplicateItem(null)}
+              onChange={setDuplicateItem}
+              onImportCopy={handleConfirmDuplicate}
+              onReplace={handleReplaceDuplicate}
+            />
           ) : (
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

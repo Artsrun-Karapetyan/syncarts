@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { api } from '../../lib/api';
-import { createEmptyRequestTab } from './defaults';
 import {
   createDefaultActiveEnvByWorkspace,
   createDefaultActiveTabByWorkspace,
@@ -62,19 +61,16 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
   useEffect(() => {
     if (workspaces.length > 0) return;
     const defaultWorkspace = createDefaultWorkspaces(userId, localDefaultWorkspaceId)[0];
-    const defaultTab = createEmptyRequestTab();
-    const existingTabs = tabsByWorkspace[defaultWorkspace.id] || [];
-    const tabsToUse = existingTabs.length ? existingTabs : [defaultTab];
 
     setWorkspaces([defaultWorkspace]);
     setActiveWorkspaceId(defaultWorkspace.id);
     setTabsByWorkspace(prev => ({
       ...prev,
-      [defaultWorkspace.id]: prev[defaultWorkspace.id]?.length ? prev[defaultWorkspace.id] : tabsToUse
+      [defaultWorkspace.id]: prev[defaultWorkspace.id] || []
     }));
     setActiveTabIdByWorkspace(prev => ({
       ...prev,
-      [defaultWorkspace.id]: prev[defaultWorkspace.id] || tabsToUse[0].id
+      [defaultWorkspace.id]: prev[defaultWorkspace.id] || null
     }));
     setActiveEnvIdByWorkspace(prev => ({
       ...prev,
@@ -177,9 +173,8 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     const newWsId = crypto.randomUUID();
     dirtyWorkspaceIdsRef.current.add(newWsId);
     setWorkspaces(prev => [...prev, { id: newWsId, name, collections: [], environments: [] }]);
-    const newTab = createEmptyRequestTab();
-    setTabsByWorkspace(prev => ({ ...prev, [newWsId]: [newTab] }));
-    setActiveTabIdByWorkspace(prev => ({ ...prev, [newWsId]: newTab.id }));
+    setTabsByWorkspace(prev => ({ ...prev, [newWsId]: [] }));
+    setActiveTabIdByWorkspace(prev => ({ ...prev, [newWsId]: null }));
     setActiveEnvIdByWorkspace(prev => ({ ...prev, [newWsId]: null }));
     setActiveWorkspaceId(newWsId);
   };
