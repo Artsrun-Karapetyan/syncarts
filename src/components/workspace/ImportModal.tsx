@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { X, UploadCloud, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { importPostmanCollection, importPostmanEnvironment } from '../../utils/postmanParser';
 import { parseCurlCommand } from '../../utils/curlParser';
 import { ImportDuplicatePrompt, type DuplicateImportItem } from './ImportDuplicatePrompt';
+import { ImportDropZone } from './ImportDropZone';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -306,47 +307,16 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                 <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
               </div>
 
-              <div
+              <ImportDropZone
+                fileInputRef={fileInputRef}
+                isDragging={isDragging}
+                isProcessing={isProcessing}
                 onDragEnter={handleDragEnter}
-                onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
                 onDrop={handleFileDrop}
-                onClick={() => !isProcessing && fileInputRef.current?.click()}
-                style={{
-                  border: `2px dashed ${isDragging ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                  borderRadius: 'var(--radius-md)',
-                  padding: 48,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 12,
-                  background: isDragging ? 'var(--bg-tertiary)' : 'transparent',
-                  cursor: isProcessing ? 'not-allowed' : 'pointer',
-                  opacity: isProcessing ? 0.7 : 1,
-                  transition: 'all var(--transition-fast)',
-                }}
-              >
-                <UploadCloud size={32} style={{ color: isDragging ? 'var(--accent-primary)' : 'var(--text-tertiary)' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {isProcessing ? 'Importing File...' : 'Drop files here or click to browse'}
-                  </div>
-                  {!isProcessing && (
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
-                      Supports Postman Collection (.json) and Environment (.json)
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  accept=".json"
-                  style={{ display: 'none' }}
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  disabled={isProcessing}
-                />
-              </div>
+                onFileSelect={handleFileSelect}
+              />
 
               {status !== 'idle' && (
                 <div
