@@ -69,6 +69,7 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       if (panelRef.current?.contains(event.target as Node)) return;
+      if ((event.target as Element).closest?.('.syncarts-select-dropdown')) return;
       onClose();
     };
 
