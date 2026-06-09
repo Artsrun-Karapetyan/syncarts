@@ -4,7 +4,10 @@ use std::collections::HashMap;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FormDataItem {
     pub key: String,
-    pub value: String,
+    pub value: Option<String>,
+    #[serde(rename = "type")]
+    pub item_type: Option<String>,
+    pub files: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

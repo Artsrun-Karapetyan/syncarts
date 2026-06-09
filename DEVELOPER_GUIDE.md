@@ -29,12 +29,19 @@ This guide documents the architecture, commands, and decisions made during the d
   - Uses standard React Context (`createContext`, `useState`) to manage URL, Method, Headers, and Body.
   - Uses `useSWRMutation` (from `swr`) to handle the execution of requests to the Rust backend (`invoke('make_request')`), providing automatic loading (`isMutating`) and error states to the UI.
 - **Workspace persistence (`src/contexts/WorkspaceContext.tsx`):**
-  - Local collections are treated as the source of truth on reload when a workspace already has local data.
+  - Remote data is treated as the source of truth on initial load (when `lastSyncedSignature` is missing) if there is a signature mismatch, to prevent local stale data from reverting changes made by other users in shared workspaces.
   - Empty backend workspaces hydrate local state; stale backend workspaces are pushed back up instead of wiping local collections.
   - Workspace sync now includes the workspace `name`, and the backend upserts missing workspaces so invites do not create empty shells.
   - Local default workspaces use a per-user id (`local-${userId}`) to avoid collisions with shared workspace ids from other accounts.
+  - The legacy `default` workspace is only mapped to `local-userId` if the user is the owner, preventing shared legacy workspaces from hijacking the user's primary workspace.
+  - On the backend, owners can always sync their workspaces, even if they don't have an explicit `WorkspaceMember` record.
 - **Invites (`src/components/workspace/InviteModal.tsx`, `backend/src/invite/`):**
   - Invites can target multiple selected workspaces.
   - Accepting an invite adds the user to every workspace in the invite payload.
+
+## 5. UI & Component Architecture
+- **Portals & Modals:**
+  - Components rendered via `createPortal` (like the `Select` dropdown) exist outside the normal DOM tree.
+  - To prevent Modals (like `SaveDialog`) from incorrectly closing due to 'click outside' events when a portal element is clicked, portal components must use identifiable classes (e.g., `.syncarts-select-dropdown`) which are explicitly ignored by the modal's pointerdown handlers.
 
 *(This guide will be updated as new components and features are built).*

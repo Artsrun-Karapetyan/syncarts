@@ -4,6 +4,7 @@ import { X, Copy, Check, Mail, Link as LinkIcon, Loader2, UserMinus, Users } fro
 import { api } from '../../lib/api';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useStoredUser } from '../../lib/session';
+import { Select } from '../ui/Select';
 
 interface Props {
   isOpen: boolean;
@@ -123,6 +124,19 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
       setStatusMsg('Member removed');
     } catch (err: any) {
       setStatusMsg(err.message || 'Error removing member');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangeRole = async (targetWorkspaceId: string, memberUserId: string, newRole: string) => {
+    try {
+      setLoading(true);
+      await api.put(`/workspaces/${targetWorkspaceId}/members/${memberUserId}/role`, { role: newRole });
+      await reloadWorkspaces();
+      setStatusMsg('Role updated');
+    } catch (err: any) {
+      setStatusMsg(err.message || 'Error updating role');
     } finally {
       setLoading(false);
     }
@@ -309,9 +323,27 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
                               </div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
-                                {isOwner ? 'Owner' : member.role}
-                              </span>
+                              {canManageMembers && !isOwner ? (
+                                <Select
+                                  value={member.role}
+                                  disabled={loading}
+                                  onChange={(val) => handleChangeRole(memberWorkspace.id, member.userId, val)}
+                                  options={[
+                                    { value: 'MEMBER', label: 'Editor' },
+                                    { value: 'VIEWER', label: 'Viewer' }
+                                  ]}
+                                  variant="ghost"
+                                  style={{ 
+                                    width: 100,
+                                    color: member.role === 'VIEWER' ? 'var(--status-put)' : 'var(--status-get)',
+                                    background: member.role === 'VIEWER' ? 'var(--status-put-bg)' : 'var(--status-get-bg)'
+                                  }}
+                                />
+                              ) : (
+                                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                                  {isOwner ? 'Owner' : member.role === 'VIEWER' ? 'Viewer' : 'Editor'}
+                                </span>
+                              )}
                               {canManageMembers && !isOwner && (
                                 <button
                                   className="btn"

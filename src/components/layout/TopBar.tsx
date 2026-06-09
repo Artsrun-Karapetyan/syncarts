@@ -63,7 +63,7 @@ export function TopBar() {
       data-tauri-drag-region
       onMouseDown={handleWindowDrag}
       style={{
-        height: 60,
+        height: 48,
         width: '100%',
         background: 'var(--bg-secondary)',
         borderBottom: '1px solid var(--border-color)',

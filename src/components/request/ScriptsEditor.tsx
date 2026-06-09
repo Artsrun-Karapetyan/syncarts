@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { BookTemplate, Search, X } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import CodeEditor from '@uiw/react-textarea-code-editor';
@@ -8,66 +8,95 @@ const SNIPPET_GROUPS = [
   {
     category: 'Variables',
     items: [
-      { name: 'Get a global variable', code: 'sy.globals.get("variable_key");' },
-      { name: 'Get a collection variable', code: 'sy.collectionVariables.get("variable_key");' },
-      { name: 'Get an environment variable', code: 'sy.environment.get("variable_key");' },
-      { name: 'Get a variable', code: 'sy.variables.get("variable_key");' },
-      { name: 'Set a global variable', code: 'sy.globals.set("variable_key", "variable_value");' },
-      { name: 'Set a collection variable', code: 'sy.collectionVariables.set("variable_key", "variable_value");' },
-      { name: 'Set an environment variable', code: 'sy.environment.set("variable_key", "variable_value");' },
-      { name: 'Set a variable', code: 'sy.variables.set("variable_key", "variable_value");' },
-      { name: 'Clear a global variable', code: 'sy.globals.unset("variable_key");' },
-      { name: 'Clear a collection variable', code: 'sy.collectionVariables.unset("variable_key");' },
-      { name: 'Clear an environment variable', code: 'sy.environment.unset("variable_key");' },
-      { name: 'Clear a local variable', code: 'sy.variables.unset("variable_key");' },
+      { name: 'Get a global variable', code: 'pm.globals.get("variable_key");' },
+      { name: 'Get a collection variable', code: 'pm.collectionVariables.get("variable_key");' },
+      { name: 'Get an environment variable', code: 'pm.environment.get("variable_key");' },
+      { name: 'Get a variable', code: 'pm.variables.get("variable_key");' },
+      { name: 'Set a global variable', code: 'pm.globals.set("variable_key", "variable_value");' },
+      { name: 'Set a collection variable', code: 'pm.collectionVariables.set("variable_key", "variable_value");' },
+      { name: 'Set an environment variable', code: 'pm.environment.set("variable_key", "variable_value");' },
+      { name: 'Set a variable', code: 'pm.variables.set("variable_key", "variable_value");' },
+      { name: 'Clear a global variable', code: 'pm.globals.unset("variable_key");' },
+      { name: 'Clear a collection variable', code: 'pm.collectionVariables.unset("variable_key");' },
+      { name: 'Clear an environment variable', code: 'pm.environment.unset("variable_key");' },
+      { name: 'Clear a local variable', code: 'pm.variables.unset("variable_key");' },
     ]
   },
   {
     category: 'Workflows',
     items: [
-      { name: 'Send an HTTP request', code: 'sy.sendRequest("https://postman-echo.com/get", function (err, response) {\n    console.log(response.json());\n});' },
-      { name: 'Send an HTTP request from a Collection', code: 'sy.sendRequest("https://postman-echo.com/get", function (err, response) {\n    console.log(response.json());\n});' },
+      { name: 'Send an HTTP request', code: 'pm.sendRequest("https://postman-echo.com/get", function (err, response) {\n    console.log(response.json());\n});' },
+      { name: 'Send an HTTP request from a Collection', code: 'pm.sendRequest("https://postman-echo.com/get", function (err, response) {\n    console.log(response.json());\n});' },
     ]
   },
   {
     category: 'Tests',
     items: [
-      { name: 'Status code: Code is 200', code: 'sy.test("Status code is 200", function () {\n    sy.response.to.have.status(200);\n});' },
-      { name: 'Response body: Contains string', code: 'sy.test("Body matches string", function () {\n    sy.expect(sy.response.text()).to.include("string_you_want_to_search");\n});' },
-      { name: 'Response body: JSON value check', code: 'var jsonData = sy.response.json();\nsy.test("Your test name", function () {\n    sy.expect(jsonData.value).to.eql(100);\n});' },
-      { name: 'Response body: Is equal to a string', code: 'sy.test("Body is correct", function () {\n    sy.response.to.have.body("response_body_string");\n});' },
-      { name: 'Response headers: Content-Type header check', code: 'sy.test("Content-Type is present", function () {\n    sy.response.to.have.header("Content-Type");\n});' },
-      { name: 'Response time is less than 200ms', code: 'sy.test("Response time is less than 200ms", function () {\n    sy.expect(sy.response.responseTime).to.be.below(200);\n});' },
-      { name: 'Status code: Successful POST request', code: 'sy.test("Successful POST request", function () {\n    sy.expect(sy.response.code).to.be.oneOf([201, 202]);\n});' },
-      { name: 'Status code: Code name has string', code: 'sy.test("Status code name has string", function () {\n    sy.response.to.have.status("Created");\n});' },
-      { name: 'Response body: Convert XML body to a JSON Object', code: 'var jsonObject = xml2Json(sy.response.text());\nconsole.log(jsonObject);' },
-      { name: 'Use Tiny Validator for JSON data', code: 'var schema = {\n    "items": {\n        "type": "boolean"\n    }\n};\n\nvar data1 = [true, false];\nvar data2 = [true, 123];\n\nsy.test(\'Schema is valid\', function() {\n  sy.expect(tv4.validate(data1, schema)).to.be.true;\n  sy.expect(tv4.validate(data2, schema)).to.be.true;\n});' },
+      { name: 'Status code: Code is 200', code: 'pm.test("Status code is 200", function () {\n    pm.response.to.have.status(200);\n});' },
+      { name: 'Response body: Contains string', code: 'pm.test("Body matches string", function () {\n    pm.expect(pm.response.text()).to.include("string_you_want_to_search");\n});' },
+      { name: 'Response body: JSON value check', code: 'var jsonData = pm.response.json();\npm.test("Your test name", function () {\n    pm.expect(jsonData.value).to.eql(100);\n});' },
+      { name: 'Response body: Is equal to a string', code: 'pm.test("Body is correct", function () {\n    pm.response.to.have.body("response_body_string");\n});' },
+      { name: 'Response headers: Content-Type header check', code: 'pm.test("Content-Type is present", function () {\n    pm.response.to.have.header("Content-Type");\n});' },
+      { name: 'Response time is less than 200ms', code: 'pm.test("Response time is less than 200ms", function () {\n    pm.expect(pm.response.responseTime).to.be.below(200);\n});' },
+      { name: 'Status code: Successful POST request', code: 'pm.test("Successful POST request", function () {\n    pm.expect(pm.response.code).to.be.oneOf([201, 202]);\n});' },
+      { name: 'Status code: Code name has string', code: 'pm.test("Status code name has string", function () {\n    pm.response.to.have.status("Created");\n});' },
+      { name: 'Response body: Convert XML body to a JSON Object', code: 'var jsonObject = xml2Json(pm.response.text());\nconsole.log(jsonObject);' },
+      { name: 'Use Tiny Validator for JSON data', code: 'var schema = {\n    "items": {\n        "type": "boolean"\n    }\n};\n\nvar data1 = [true, false];\nvar data2 = [true, 123];\n\npm.test(\'Schema is valid\', function() {\n  pm.expect(tv4.validate(data1, schema)).to.be.true;\n  pm.expect(tv4.validate(data2, schema)).to.be.true;\n});' },
     ]
   }
 ];
+
+type HistoryState = {
+  past: string[];
+  future: string[];
+};
 
 export function ScriptsEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
   const [showSnippets, setShowSnippets] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubTab, setActiveSubTab] = useState<'pre' | 'post'>('pre');
+  const historyRef = useRef<Record<string, HistoryState>>({});
 
   if (!activeTab) return null;
 
-  const handleSnippetClick = (code: string) => {
-    if (activeSubTab === 'pre') {
-      const currentCode = activeTab.preRequestScript || '';
-      const newCode = currentCode.length > 0 && !currentCode.endsWith('\n') 
-        ? `${currentCode}\n${code}` 
-        : `${currentCode}${code}`;
-      updateActiveTab({ preRequestScript: newCode });
-    } else {
-      const currentCode = activeTab.testScript || '';
-      const newCode = currentCode.length > 0 && !currentCode.endsWith('\n') 
-        ? `${currentCode}\n${code}` 
-        : `${currentCode}${code}`;
-      updateActiveTab({ testScript: newCode });
+  const scriptField = activeSubTab === 'pre' ? 'preRequestScript' : 'testScript';
+  const scriptHistoryKey = `${activeTab.id}:${scriptField}`;
+  const currentScript = activeTab[scriptField] || '';
+  const getHistory = () => {
+    historyRef.current[scriptHistoryKey] ||= { past: [], future: [] };
+    return historyRef.current[scriptHistoryKey];
+  };
+  const updateScript = (value: string, trackHistory = true) => {
+    if (value === currentScript) return;
+    const history = getHistory();
+    if (trackHistory) {
+      const last = history.past[history.past.length - 1];
+      if (last !== currentScript) history.past.push(currentScript);
+      if (history.past.length > 100) history.past.shift();
+      history.future = [];
     }
+    updateActiveTab({ [scriptField]: value });
+  };
+  const undoScript = () => {
+    const history = getHistory();
+    const previous = history.past.pop();
+    if (previous === undefined) return;
+    history.future.push(currentScript);
+    updateScript(previous, false);
+  };
+  const redoScript = () => {
+    const history = getHistory();
+    const next = history.future.pop();
+    if (next === undefined) return;
+    history.past.push(currentScript);
+    updateScript(next, false);
+  };
+  const handleSnippetClick = (code: string) => {
+    const newCode = currentScript.length > 0 && !currentScript.endsWith('\n')
+      ? `${currentScript}\n${code}`
+      : `${currentScript}${code}`;
+    updateScript(newCode);
   };
 
   const filteredGroups = SNIPPET_GROUPS.map(group => ({
@@ -108,7 +137,7 @@ export function ScriptsEditor() {
           {activeSubTab === 'pre' 
             ? 'Scripts written here will be executed before a request is sent.'
             : 'Scripts written here will be executed after a response is received.'}
-          {' '}You can use the <code>sy</code> object to interact with the environment.
+          {' '}You can use the <code>pm</code> object to interact with the environment.
         </div>
         <div 
           data-color-mode="dark"
@@ -129,14 +158,19 @@ export function ScriptsEditor() {
           }}
         >
           <CodeEditor
-            value={activeSubTab === 'pre' ? (activeTab.preRequestScript || '') : (activeTab.testScript || '')}
+            value={currentScript}
             language="js"
-            placeholder="Write your scripts here... Example: sy.environment.set('token', sy.response.json().access_token);"
+            placeholder="Write your scripts here... Example: pm.environment.set('token', pm.response.json().access_token);"
             onChange={(evn) => {
-              if (activeSubTab === 'pre') {
-                updateActiveTab({ preRequestScript: evn.target.value });
+              updateScript(evn.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'z') return;
+              event.preventDefault();
+              if (event.shiftKey) {
+                redoScript();
               } else {
-                updateActiveTab({ testScript: evn.target.value });
+                undoScript();
               }
             }}
             padding={24}

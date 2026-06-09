@@ -17,10 +17,22 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   });
 
   if (!response.ok) {
-    throw new Error(await response.text());
+    throw new Error(formatApiError(await response.text(), response.status));
   }
 
   return response.json() as Promise<T>;
+}
+
+function formatApiError(rawText: string, status: number) {
+  try {
+    const payload = JSON.parse(rawText);
+    const message = Array.isArray(payload.message) ? payload.message.join(', ') : payload.message;
+
+    if (typeof message === 'string' && message.trim()) return message;
+    if (payload.error && status) return `${payload.error} (${status})`;
+  } catch {}
+
+  return rawText || `Request failed (${status})`;
 }
 
 export type AuthUser = {

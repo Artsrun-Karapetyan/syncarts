@@ -105,8 +105,10 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
       <div
         className="animate-fade-in"
         style={{
-          width: 800,
-          height: 600,
+          width: '90vw',
+          maxWidth: 800,
+          height: '85vh',
+          maxHeight: 600,
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: 'var(--radius-lg)',

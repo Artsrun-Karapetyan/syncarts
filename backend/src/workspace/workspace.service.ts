@@ -54,10 +54,6 @@ export class WorkspaceService {
   }
 
   async syncWorkspace(workspaceId: string, data: any, userId: string) {
-    if (data?.ownerId && data.ownerId !== userId) {
-      throw new ForbiddenException('Shared workspaces cannot be synced by members');
-    }
-
     const workspaceData = {
       collections: data?.collections ?? [],
       environments: data?.environments ?? [],
@@ -65,12 +61,20 @@ export class WorkspaceService {
     };
 
     const existing = await this.prisma.workspace.findFirst({
-      where: { id: workspaceId }
+      where: { id: workspaceId },
+      include: { members: true }
     });
 
     if (existing) {
-      if (existing.ownerId !== userId) {
-        throw new ForbiddenException('Only the workspace owner can sync this workspace');
+      const member = existing.members.find(m => m.userId === userId);
+      const isOwner = existing.ownerId === userId;
+      
+      if (!member && !isOwner) {
+        throw new ForbiddenException('Only workspace members or owners can sync this workspace');
+      }
+
+      if (member?.role === 'VIEWER' && !isOwner) {
+        throw new ForbiddenException('You only have view access to this workspace');
       }
 
       return this.prisma.workspace.update({
@@ -154,5 +158,35 @@ export class WorkspaceService {
     });
 
     return { status: 'removed', workspaceId, userId: memberUserId };
+  }
+
+  async updateMemberRole(workspaceId: string, memberUserId: string, role: string, userId: string) {
+    const workspace = await this.prisma.workspace.findUnique({
+      where: { id: workspaceId }
+    });
+
+    if (!workspace || workspace.ownerId !== userId) {
+      throw new ForbiddenException('Only the workspace owner can update member roles');
+    }
+
+    if (memberUserId === workspace.ownerId) {
+      throw new ForbiddenException('The workspace owner role cannot be changed');
+    }
+
+    if (!['MEMBER', 'EDITOR', 'VIEWER'].includes(role)) {
+      throw new ForbiddenException('Invalid role. Must be MEMBER, EDITOR, or VIEWER');
+    }
+
+    await this.prisma.workspaceMember.update({
+      where: {
+        userId_workspaceId: {
+          userId: memberUserId,
+          workspaceId
+        }
+      },
+      data: { role }
+    });
+
+    return { status: 'updated', workspaceId, userId: memberUserId, role };
   }
 }

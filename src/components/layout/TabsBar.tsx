@@ -3,7 +3,7 @@ import { X, Plus, Circle } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function TabsBar() {
-  const { tabs, activeTabId, setActiveTabId, closeTab, addTab } = useWorkspace();
+  const { tabs, activeTabId, activeTab, setActiveTabId, closeTab, addTab, isTabDirty, resolveTabSavedRequestId } = useWorkspace();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -12,6 +12,12 @@ export function TabsBar() {
     const activeTabEl = scrollRef.current.querySelector<HTMLElement>(`[data-tab-id="${activeTabId}"]`);
     activeTabEl?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
   }, [activeTabId]);
+
+  useEffect(() => {
+    const savedRequestId = resolveTabSavedRequestId(activeTab);
+    if (!savedRequestId) return;
+    window.dispatchEvent(new CustomEvent('highlight-sidebar', { detail: { savedRequestId } }));
+  }, [activeTabId, activeTab, resolveTabSavedRequestId]);
 
   return (
     <div
@@ -33,7 +39,7 @@ export function TabsBar() {
             minWidth: 0,
             overflowX: 'auto',
             overflowY: 'hidden',
-            minHeight: 44,
+            minHeight: 36,
           }}
           onWheel={(event) => {
             if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
@@ -43,6 +49,7 @@ export function TabsBar() {
           <div style={{ display: 'flex', alignItems: 'stretch', minWidth: 'max-content' }}>
             {tabs.map((tab) => {
               const isActive = activeTabId === tab.id;
+              const isDirty = isTabDirty(tab);
               return (
                 <div
                   key={tab.id}
@@ -50,39 +57,54 @@ export function TabsBar() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 10,
+                    gap: 8,
                     cursor: 'pointer',
                     transition: 'all var(--transition-fast)',
                     whiteSpace: 'nowrap',
                     borderRight: '1px solid var(--border-color)',
-                    minWidth: 180,
-                    maxWidth: 280,
-                    padding: '0 16px',
+                    minWidth: 140,
+                    maxWidth: 240,
+                    padding: '0 12px',
                     fontSize: 13,
                     borderTop: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
                     background: isActive ? 'var(--bg-primary)' : 'transparent',
                     color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
                   }}
-                  onClick={() => setActiveTabId(tab.id)}
+                  onClick={() => {
+                    const wasActive = activeTabId === tab.id;
+                    const savedRequestId = resolveTabSavedRequestId(tab);
+                    setActiveTabId(tab.id);
+                    if (wasActive && savedRequestId) {
+                      window.dispatchEvent(new CustomEvent('highlight-sidebar', { detail: { savedRequestId } }));
+                    }
+                  }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
                       e.currentTarget.style.background = 'var(--bg-tertiary)';
                       e.currentTarget.style.color = 'var(--text-primary)';
                     }
+                    const closeBtn = e.currentTarget.querySelector('.tab-close-btn') as HTMLElement;
+                    if (closeBtn) closeBtn.style.opacity = '1';
+                    const dirtyDot = e.currentTarget.querySelector('.tab-dirty-dot') as HTMLElement;
+                    if (dirtyDot) dirtyDot.style.opacity = '0';
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
                       e.currentTarget.style.background = 'transparent';
                       e.currentTarget.style.color = 'var(--text-tertiary)';
                     }
+                    const closeBtn = e.currentTarget.querySelector('.tab-close-btn') as HTMLElement;
+                    if (closeBtn) closeBtn.style.opacity = isActive ? '0.5' : '0';
+                    const dirtyDot = e.currentTarget.querySelector('.tab-dirty-dot') as HTMLElement;
+                    if (dirtyDot) dirtyDot.style.opacity = '1';
                   }}
                 >
                   <Circle
                     size={7}
-                    fill={`var(--status-${tab.method.toLowerCase()})`}
-                    color={`var(--status-${tab.method.toLowerCase()})`}
+                    fill={`var(--status-${tab.method?.toLowerCase() || 'get'})`}
+                    color={`var(--status-${tab.method?.toLowerCase() || 'get'})`}
                   />
-                  <span style={{ fontWeight: 600, fontSize: 11, color: `var(--status-${tab.method.toLowerCase()})`, flexShrink: 0 }}>
+                  <span style={{ fontWeight: 600, fontSize: 11, color: `var(--status-${tab.method?.toLowerCase() || 'get'})`, flexShrink: 0 }}>
                     {tab.method}
                   </span>
                   <span
@@ -96,33 +118,49 @@ export function TabsBar() {
                   >
                     {tab.name || 'Untitled Request'}
                   </span>
-                  <div
-                    style={{
-                      padding: 4,
-                      borderRadius: 6,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      opacity: isActive ? 0.5 : 0,
-                      transition: 'all var(--transition-fast)',
-                      flexShrink: 0,
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      closeTab(tab.id);
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = '1';
-                      e.currentTarget.style.background = 'var(--status-delete-bg)';
-                      e.currentTarget.style.color = 'var(--status-delete)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = isActive ? '0.5' : '0';
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = 'inherit';
-                    }}
-                  >
-                    <X size={13} />
+                  <div style={{ position: 'relative', width: 20, height: 20, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isDirty && (
+                      <div 
+                        className="tab-dirty-dot"
+                        style={{ 
+                          width: 8, 
+                          height: 8, 
+                          borderRadius: '50%', 
+                          background: 'var(--status-put)', // Orange dot
+                          position: 'absolute',
+                          transition: 'opacity 0.15s',
+                        }} 
+                      />
+                    )}
+                    <div
+                      className="tab-close-btn"
+                      style={{
+                        padding: 4,
+                        borderRadius: 6,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        opacity: isActive && !isDirty ? 0.5 : 0,
+                        transition: 'all var(--transition-fast)',
+                        position: 'absolute',
+                        background: 'transparent',
+                        color: 'inherit',
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        closeTab(tab.id);
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--status-delete-bg)';
+                        e.currentTarget.style.color = 'var(--status-delete)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'inherit';
+                      }}
+                    >
+                      <X size={13} />
+                    </div>
                   </div>
                 </div>
               );

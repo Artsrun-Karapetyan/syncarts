@@ -127,7 +127,7 @@ export function Select({ value, options, onChange, disabled, className = '', sty
       {isOpen && createPortal(
         <div
           ref={dropdownRef}
-          className="animate-fade-in"
+          className="syncarts-select-dropdown animate-fade-in"
           style={{
             position: 'fixed',
             top: `${dropdownPos.top}px`,

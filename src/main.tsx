@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from '@tanstack/react-router';
+import { invoke } from '@tauri-apps/api/core';
 import "./styles/global.css";
 
 // Import the generated route tree
@@ -56,7 +57,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 );
 
 window.requestAnimationFrame(() => {
-  const bootScreen = document.getElementById('boot-screen');
-  bootScreen?.classList.add('boot-hidden');
-  window.setTimeout(() => bootScreen?.remove(), 220);
+  window.requestAnimationFrame(() => {
+    void invoke('show_main_window').catch(() => undefined);
+
+    const bootScreen = document.getElementById('boot-screen');
+    bootScreen?.classList.add('boot-hidden');
+    window.setTimeout(() => bootScreen?.remove(), 220);
+  });
 });

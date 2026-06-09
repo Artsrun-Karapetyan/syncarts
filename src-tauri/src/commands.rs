@@ -47,14 +47,33 @@ pub async fn make_request(request: HttpRequest) -> Result<HttpResponse, String> 
         BodyPayload::FormData { items } => {
             let mut form = reqwest::multipart::Form::new();
             for item in items {
-                form = form.text(item.key, item.value);
+                let is_file = item.item_type.as_deref() == Some("file");
+                if is_file {
+                    if let Some(files) = item.files {
+                        for path_str in files {
+                            if let Ok(file_bytes) = std::fs::read(&path_str) {
+                                let file_name = std::path::Path::new(&path_str)
+                                    .file_name()
+                                    .and_then(|n| n.to_str())
+                                    .unwrap_or("file")
+                                    .to_string();
+                                let part = reqwest::multipart::Part::bytes(file_bytes).file_name(file_name);
+                                form = form.part(item.key.clone(), part);
+                            }
+                        }
+                    }
+                } else if let Some(val) = item.value {
+                    form = form.text(item.key, val);
+                } else {
+                    form = form.text(item.key, "");
+                }
             }
             req_builder = req_builder.multipart(form);
         }
         BodyPayload::FormUrlEncoded { items } => {
             let mut map = std::collections::HashMap::new();
             for item in items {
-                map.insert(item.key, item.value);
+                map.insert(item.key, item.value.unwrap_or_default());
             }
             req_builder = req_builder.form(&map);
         }
@@ -68,13 +87,27 @@ pub async fn make_request(request: HttpRequest) -> Result<HttpResponse, String> 
     let status_text = response.status().to_string();
 
     let mut resp_headers = std::collections::HashMap::new();
+    let mut content_type_header = String::new();
     for (k, v) in response.headers() {
         if let Ok(value) = v.to_str() {
             resp_headers.insert(k.to_string(), value.to_string());
+            if k == reqwest::header::CONTENT_TYPE {
+                content_type_header = value.to_string();
+            }
         }
     }
 
-    let body = response.text().await.unwrap_or_default();
+    let is_binary = content_type_header.starts_with("image/") || content_type_header.starts_with("application/pdf");
+
+    let body = if is_binary {
+        use base64::{Engine as _, engine::general_purpose};
+        match response.bytes().await {
+            Ok(bytes) => format!("data:{};base64,{}", content_type_header, general_purpose::STANDARD.encode(bytes)),
+            Err(e) => format!("Error reading binary response: {}", e),
+        }
+    } else {
+        response.text().await.unwrap_or_default()
+    };
 
     Ok(HttpResponse {
         status,

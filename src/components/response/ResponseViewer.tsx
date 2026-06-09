@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
-import { Clock, Zap } from 'lucide-react';
+import { Clock, Zap, Braces, Play, Maximize2, Minimize2 } from 'lucide-react';
 import JsonView from '@uiw/react-json-view';
 import { darkTheme } from '@uiw/react-json-view/dark';
+import CodeEditor from '@uiw/react-textarea-code-editor';
 
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { ResponseEmptyState } from './ResponseEmptyState';
 import { ResponseLoadingState } from './ResponseLoadingState';
+import { Select } from '../ui/Select';
 
 import './ResponseViewer.css';
 import '../request/RequestTabs.css';
@@ -13,19 +15,41 @@ import '../request/RequestTabs.css';
 type ResponseTab = 'body' | 'headers' | 'test-results';
 
 export function ResponseViewer() {
-  const { activeTab, error, isMutating } = useWorkspace();
+  const { activeTab, addTab, error, isMutating } = useWorkspace();
   const response = activeTab?.response;
   const [viewTab, setViewTab] = useState<ResponseTab>('body');
-  const [bodyFormat, setBodyFormat] = useState<'pretty' | 'raw'>('pretty');
+  const [bodyFormat, setBodyFormat] = useState<'pretty' | 'raw' | 'preview'>('pretty');
+  const [language, setLanguage] = useState<'auto' | 'json' | 'xml' | 'html' | 'text'>('auto');
+  const [jsonCollapsed, setJsonCollapsed] = useState<number | false>(1);
+
+  const contentType = (response?.headers?.['content-type'] || response?.headers?.['Content-Type'] || '').toLowerCase();
+  const isImage = contentType.startsWith('image/');
+  const isPdf = contentType.startsWith('application/pdf');
+  const isBinary = isImage || isPdf;
 
   const parsedBody = useMemo(() => {
-    if (!response?.body) return null;
+    if (!response?.body || isBinary) return null;
     try {
       return JSON.parse(response.body);
     } catch {
       return null;
     }
-  }, [response?.body]);
+  }, [response?.body, isBinary]);
+
+  const effectiveLanguage = language === 'auto'
+    ? (contentType.includes('xml') ? 'xml' : contentType.includes('html') ? 'html' : contentType.includes('json') ? 'json' : 'text')
+    : language;
+
+  // Set default format to preview for HTML
+  useMemo(() => {
+    if (response) {
+      if (contentType.includes('html')) {
+        setBodyFormat('preview');
+      } else {
+        setBodyFormat('pretty');
+      }
+    }
+  }, [response]);
 
   const getStatusClass = (status: number) => {
     if (status >= 200 && status < 300) return 'success';
@@ -39,6 +63,35 @@ export function ResponseViewer() {
   };
 
   const responseHeaderEntries = response?.headers ? Object.entries(response.headers) : [];
+
+  const handleJsonClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // @uiw/react-json-view renders strings inside spans. 
+    // We check if the clicked text looks like a URL.
+    if (target.tagName === 'SPAN' && (target.innerText.includes('http://') || target.innerText.includes('https://'))) {
+      let url = target.innerText.trim();
+      if (url.startsWith('"')) url = url.slice(1);
+      if (url.endsWith('"')) url = url.slice(0, -1);
+      if (url.endsWith('",')) url = url.slice(0, -2);
+      
+      // Basic URL validation
+      if (url.startsWith('http')) {
+        if (e.metaKey || e.ctrlKey) {
+          import('@tauri-apps/plugin-opener').then((opener) => opener.openUrl(url));
+          } else {
+            addTab({ 
+              id: crypto.randomUUID(), 
+              name: url.split('/').pop() || 'New Request', 
+              method: 'GET', 
+              url, 
+              bodyType: 'none',
+              headers: [],
+              authType: 'none'
+            });
+          }
+        }
+      }
+  };
 
   return (
     <div
@@ -157,49 +210,140 @@ export function ResponseViewer() {
 
         {!isMutating && !error && response && viewTab === 'body' && (
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-            {parsedBody && (
+            {!isBinary && (
               <div style={{ 
                 padding: '8px 16px', 
                 display: 'flex', 
-                justifyContent: 'flex-end', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
                 borderBottom: '1px solid var(--border-color)',
-                background: 'rgba(0, 0, 0, 0.2)'
+                background: 'var(--bg-primary)',
               }}>
-                <div style={{ display: 'flex', gap: 4, background: 'var(--bg-tertiary)', padding: 4, borderRadius: 'var(--radius-sm)' }}>
-                  <button 
-                    onClick={() => setBodyFormat('pretty')} 
-                    style={{ 
-                      padding: '4px 12px', 
-                      borderRadius: '4px', 
-                      background: bodyFormat === 'pretty' ? 'var(--bg-primary)' : 'transparent', 
-                      color: bodyFormat === 'pretty' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                      fontSize: 12, 
-                      fontWeight: 600,
-                      transition: 'all var(--transition-fast)'
-                    }}
-                  >
-                    Pretty
-                  </button>
-                  <button 
-                    onClick={() => setBodyFormat('raw')} 
-                    style={{ 
-                      padding: '4px 12px', 
-                      borderRadius: '4px', 
-                      background: bodyFormat === 'raw' ? 'var(--bg-primary)' : 'transparent', 
-                      color: bodyFormat === 'raw' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                      fontSize: 12, 
-                      fontWeight: 600,
-                      transition: 'all var(--transition-fast)'
-                    }}
-                  >
-                    Raw
-                  </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  {/* Language Selector */}
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{ marginRight: -8, zIndex: 1, pointerEvents: 'none', color: 'var(--text-tertiary)', display: 'flex' }}>
+                      <Braces size={13} />
+                    </div>
+                    <Select
+                      value={effectiveLanguage}
+                      options={[
+                        { value: 'json', label: 'JSON' },
+                        { value: 'xml', label: 'XML' },
+                        { value: 'html', label: 'HTML' },
+                        { value: 'text', label: 'Text' },
+                      ]}
+                      onChange={(val) => setLanguage(val as any)}
+                      variant="ghost"
+                      style={{ paddingLeft: 24, paddingRight: 4, minWidth: 80 }}
+                    />
+                  </div>
+
+                  <div style={{ width: 1, height: 14, background: 'var(--border-color)', margin: '0 4px' }} />
+
+                  {/* Format Buttons */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <button 
+                      onClick={() => setBodyFormat('pretty')} 
+                      style={{ 
+                        background: bodyFormat === 'pretty' ? 'var(--bg-tertiary)' : 'transparent', 
+                        border: 'none', 
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        color: bodyFormat === 'pretty' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                        fontSize: 12, 
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={(e) => { if (bodyFormat !== 'pretty') e.currentTarget.style.color = 'var(--text-secondary)' }}
+                      onMouseLeave={(e) => { if (bodyFormat !== 'pretty') e.currentTarget.style.color = 'var(--text-tertiary)' }}
+                    >
+                      Pretty
+                    </button>
+                    <button 
+                      onClick={() => setBodyFormat('raw')} 
+                      style={{ 
+                        background: bodyFormat === 'raw' ? 'var(--bg-tertiary)' : 'transparent', 
+                        border: 'none', 
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        color: bodyFormat === 'raw' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                        fontSize: 12, 
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={(e) => { if (bodyFormat !== 'raw') e.currentTarget.style.color = 'var(--text-secondary)' }}
+                      onMouseLeave={(e) => { if (bodyFormat !== 'raw') e.currentTarget.style.color = 'var(--text-tertiary)' }}
+                    >
+                      Raw
+                    </button>
+                    <button 
+                      onClick={() => setBodyFormat('preview')} 
+                      style={{ 
+                        background: bodyFormat === 'preview' ? 'var(--bg-tertiary)' : 'transparent', 
+                        border: 'none', 
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        color: bodyFormat === 'preview' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                        fontSize: 12, 
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={(e) => { if (bodyFormat !== 'preview') e.currentTarget.style.color = 'var(--text-secondary)' }}
+                      onMouseLeave={(e) => { if (bodyFormat !== 'preview') e.currentTarget.style.color = 'var(--text-tertiary)' }}
+                    >
+                      <Play size={11} fill={bodyFormat === 'preview' ? 'currentColor' : 'none'} /> Preview
+                    </button>
+                  </div>
                 </div>
+
+                {parsedBody && effectiveLanguage === 'json' && bodyFormat === 'pretty' && (
+                  <button 
+                    onClick={() => setJsonCollapsed(prev => prev === false ? 1 : false)} 
+                    style={{ 
+                      background: 'var(--bg-tertiary)', 
+                      border: '1px solid var(--border-color)', 
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      color: 'var(--text-secondary)',
+                      fontSize: 11, 
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                  >
+                    {jsonCollapsed === false ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
+                    {jsonCollapsed === false ? 'Collapse All' : 'Expand All'}
+                  </button>
+                )}
               </div>
             )}
-            <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
-              {parsedBody && bodyFormat === 'pretty' ? (
-                <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>
+            <div style={{ flex: 1, overflow: 'auto', padding: isBinary ? 0 : 20 }} onClick={handleJsonClick}>
+              {isBinary ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', background: '#fff' }}>
+                  {isImage ? (
+                    <img src={response.body} alt="Response Image" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <iframe src={response.body} style={{ width: '100%', height: '100%', border: 'none' }} />
+                  )}
+                </div>
+              ) : bodyFormat === 'preview' ? (
+                <div style={{ width: '100%', height: '100%', background: '#fff', borderRadius: '4px', overflow: 'hidden' }}>
+                  <iframe srcDoc={response.body} style={{ width: '100%', height: '100%', border: 'none' }} title="Preview" sandbox="allow-scripts allow-same-origin" />
+                </div>
+              ) : parsedBody && effectiveLanguage === 'json' && bodyFormat === 'pretty' ? (
+                <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }} className="json-view-container">
                   <JsonView 
                     value={parsedBody} 
                     style={{
@@ -224,7 +368,22 @@ export function ResponseViewer() {
                     displayDataTypes={false} 
                     displayObjectSize={false}
                     enableClipboard={false}
-                    collapsed={1}
+                    collapsed={jsonCollapsed}
+                  />
+                </div>
+              ) : bodyFormat === 'pretty' && response?.body ? (
+                <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>
+                  <CodeEditor
+                    value={response.body}
+                    language={effectiveLanguage}
+                    placeholder="Please enter code."
+                    disabled
+                    padding={15}
+                    style={{
+                      fontSize: 13,
+                      backgroundColor: "transparent",
+                      fontFamily: 'var(--font-mono)',
+                    }}
                   />
                 </div>
               ) : (
@@ -232,7 +391,7 @@ export function ResponseViewer() {
                   className="font-mono"
                   style={{ fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.7, color: 'var(--text-primary)' }}
                 >
-                  {response.body}
+                  {response?.body}
                 </pre>
               )}
             </div>

@@ -15,10 +15,10 @@ docker compose up -d
 
 ## Scripts
 
-- `npm run dev`
-- `npm run typecheck`
-- `npm run db:generate`
-- `npm run db:migrate`
+- `bun run dev`
+- `bun run typecheck`
+- `bun run db:generate`
+- `bun run db:migrate`
 
 ## Auth endpoints
 
