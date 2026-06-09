@@ -170,11 +170,11 @@ function mergeInitialRemoteWorkspace(remote: any, nextLocals: Workspace[], hasCh
   const { dirtyWorkspaceIdsRef, lastSyncedSignaturesRef, syncingWorkspaceIdsRef, userId } = args;
   const localIndex = nextLocals.findIndex(w => w.id === remote.id);
   const remoteSignature = getSyncSignature(getRemoteSyncPayload(remote));
-  lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
 
   if (localIndex === -1) {
     console.log('[SYNC] Adding missing remote workspace:', remote.id);
     nextLocals.push(mapRemoteWorkspace(remote));
+    lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
     return true;
   }
 
@@ -186,6 +186,7 @@ function mergeInitialRemoteWorkspace(remote: any, nextLocals: Workspace[], hasCh
   const hasPendingLocalChanges = dirtyWorkspaceIdsRef.current.has(remote.id) || syncingWorkspaceIdsRef.current.has(remote.id);
 
   if (isViewer && remote.ownerId !== userId) {
+    lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
     if (JSON.stringify(local) !== JSON.stringify(remoteWorkspace)) {
       nextLocals[localIndex] = remoteWorkspace;
       return true;
@@ -199,11 +200,13 @@ function mergeInitialRemoteWorkspace(remote: any, nextLocals: Workspace[], hasCh
   }
 
   if (localSignature !== remoteSignature) {
-    console.log('[SYNC] Signature mismatch for', local.id, 'updating locally.');
-    dirtyWorkspaceIdsRef.current.add(local.id);
-    nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
+    console.log('[SYNC] Signature mismatch for', local.id, 'pulling remote workspace.');
+    nextLocals[localIndex] = remoteWorkspace;
+    lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
     return true;
   }
+
+  lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
 
   if (JSON.stringify(local.members || []) !== JSON.stringify(remote.members || [])) {
     console.log('[SYNC] Members mismatch for', local.id, 'updating locally.');
@@ -240,12 +243,6 @@ function mergePolledRemoteWorkspace(remote: any, nextLocals: Workspace[], hasCha
   }
 
   if (hasPendingLocalChanges) {
-    nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
-    return true;
-  }
-
-  if (lastSyncedSignature && localSignature !== lastSyncedSignature) {
-    dirtyWorkspaceIdsRef.current.add(local.id);
     nextLocals[localIndex] = { ...local, ownerId: remote.ownerId, members: remote.members || [] };
     return true;
   }

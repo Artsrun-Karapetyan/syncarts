@@ -131,6 +131,7 @@ export function useTabActions(args: TabActionsArgs) {
       ...data
     };
     if (!newTab.savedRequestId && data?.id && data.id !== newTab.id) newTab.savedRequestId = data.id;
+    if (newTab.savedRequestId) rememberTabSnapshot(newTab.id, newTab);
     updateCurrentTabs(prev => [...prev, newTab]);
     setActiveTabId(newTab.id);
   };
@@ -207,9 +208,10 @@ export function useTabActions(args: TabActionsArgs) {
     const existing = currentTabs.find(t => (t.type === 'request' || !t.type) && (t.savedRequestId === requestId || t.id === requestId));
     if (existing) return setActiveTabId(existing.id);
 
+    const tabId = crypto.randomUUID();
     addTab({
       ...saved.request,
-      id: crypto.randomUUID(),
+      id: tabId,
       savedRequestId: requestId,
       collectionId,
       folderId: folderId || undefined,
@@ -264,11 +266,32 @@ export function useTabActions(args: TabActionsArgs) {
     if (currentTabs.length === 0) return;
     let changed = false;
     const normalizedTabs = currentTabs.map((tab) => {
-      if ((tab.type && tab.type !== 'request') || tab.savedRequestId) return tab;
-      const saved = findSavedRequestById(tab.id);
+      if (tab.type && tab.type !== 'request') return tab;
+      const requestId = tab.savedRequestId || tab.id;
+      const saved = findSavedRequestById(requestId);
       if (!saved) return tab;
+      const savedSnapshot = requestSnapshot(saved.request);
+      const tabSnapshot = requestSnapshot(tab);
+      const baselineSnapshot = lastSavedTabSnapshotsRef.current[tab.id] || tabSnapshot;
+      lastSavedTabSnapshotsRef.current[tab.id] = baselineSnapshot;
+
+      if (tabSnapshot !== baselineSnapshot) return tab;
+      if (tab.savedRequestId && savedSnapshot === baselineSnapshot) return tab;
+
       changed = true;
-      return { ...tab, savedRequestId: tab.id, collectionId: saved.collectionId, folderId: saved.folderId || undefined };
+      lastSavedTabSnapshotsRef.current[tab.id] = savedSnapshot;
+      return {
+        ...tab,
+        ...saved.request,
+        id: tab.id,
+        type: 'request' as const,
+        savedRequestId: requestId,
+        collectionId: saved.collectionId,
+        folderId: saved.folderId || undefined,
+        response: tab.response,
+        testResults: tab.testResults,
+        consoleLogs: tab.consoleLogs
+      };
     });
 
     if (!changed) return;
