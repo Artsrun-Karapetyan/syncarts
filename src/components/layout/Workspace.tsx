@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { Send, Loader2, ChevronDown } from 'lucide-react';
+import { Send, Loader2, ChevronDown, Code2 } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import { MethodSelector } from '../request/MethodSelector';
@@ -8,12 +8,14 @@ import { RequestTabs } from '../request/RequestTabs';
 import { ResponseViewer } from '../response/ResponseViewer';
 import { TabsBar } from './TabsBar';
 import { SaveDialog } from '../request/SaveDialog';
+import { RequestCodeModal } from '../request/RequestCodeModal';
 import { CollectionFolderTabs } from './CollectionFolderTabs';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function Workspace() {
   const { sendRequest, isMutating, activeTab, collections, updateActiveTab, saveActiveRequestInPlace, addTab } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
   const saveBtnRef = useRef<HTMLButtonElement>(null);
 
   const handleDirectSave = () => {
@@ -132,6 +134,27 @@ export function Workspace() {
             >
               <MethodSelector />
               <UrlBar />
+              {activeTab?.type !== 'example' && (
+                <button
+                  className="btn"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    fontSize: 13,
+                    padding: '0 16px',
+                    borderRadius: 9999,
+                    height: 38,
+                    fontWeight: 700,
+                  }}
+                  onClick={() => setShowCodeModal(true)}
+                  title="Generate cURL"
+                >
+                  <Code2 size={14} />
+                  Code
+                </button>
+              )}
               <button
                 className={activeTab?.type === 'example' ? "btn" : "btn-success"}
                 style={{
@@ -176,6 +199,7 @@ export function Workspace() {
             </div>
 
             {showSaveDialog && <SaveDialog onClose={() => setShowSaveDialog(false)} anchorRef={saveBtnRef} />}
+            {showCodeModal && <RequestCodeModal onClose={() => setShowCodeModal(false)} />}
           </div>
 
           {/* Main Content — Request + Response */}
