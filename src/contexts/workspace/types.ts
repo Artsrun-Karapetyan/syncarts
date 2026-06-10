@@ -22,6 +22,13 @@ export interface FormDataItem {
   files?: string[];
 }
 
+export interface PathVariable {
+  id: string;
+  key: string;
+  value: string;
+  description?: string;
+}
+
 export interface TestResult {
   name: string;
   passed: boolean;
@@ -39,6 +46,7 @@ export interface TabData {
   bearerToken?: string;
   bodyType?: BodyType;
   description?: string;
+  pathVariables?: PathVariable[];
   preRequestScript?: string;
   testScript?: string;
   variables?: EnvironmentVariable[];
@@ -75,6 +83,7 @@ export interface SavedRequest {
   bearerToken?: string;
   bodyType?: BodyType;
   description?: string;
+  pathVariables?: PathVariable[];
   formData?: FormDataItem[];
   body: string;
   preRequestScript?: string;

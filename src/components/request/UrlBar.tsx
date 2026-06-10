@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Plus } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { parseCurlCommand } from '../../utils/curlParser';
+import { syncPathVariablesWithUrl, upsertPathVariable } from '../../utils/pathVariables';
 import { resolveScopedVariable, upsertActiveVariableValue } from './variableResolution';
+import { UrlVariablePopover } from './UrlVariablePopover';
 
 import './UrlBar.css';
 
 const AUTO_REQUEST_NAMES = new Set(['Untitled Request', 'New Request']);
+const PATH_VARIABLE_REGEX = /(^|\/):([A-Za-z_][A-Za-z0-9_]*)/g;
+type HoveredUrlVariable = { kind: 'environment' | 'path', name: string, x: number, y: number, exists: boolean, hasValue: boolean, value?: string, source?: string };
 
 export function UrlBar() {
   const {
@@ -38,14 +40,30 @@ export function UrlBar() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const hideTimeout = useRef<any>(null);
+  const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const url = activeTab?.url || '';
   
-  const [hoveredVar, setHoveredVar] = useState<{ name: string, x: number, y: number, exists: boolean, hasValue: boolean, value?: string, source?: string } | null>(null);
+  const [hoveredVar, setHoveredVar] = useState<HoveredUrlVariable | null>(null);
   const activeCollection = activeTab?.collectionId ? collections.find((collection) => collection.id === activeTab.collectionId) : undefined;
   const resolveVariable = (varName: string) => {
     return resolveScopedVariable({ activeCollection, activeEnvironment, globalVariables, varName });
   };
+
+  const clearHideTimeout = () => {
+    if (!hideTimeout.current) return;
+    clearTimeout(hideTimeout.current);
+    hideTimeout.current = null;
+  };
+
+  const scheduleHidePopover = () => {
+    clearHideTimeout();
+    hideTimeout.current = setTimeout(() => {
+      setHoveredVar(null);
+      hideTimeout.current = null;
+    }, 120);
+  };
+
+  useEffect(() => clearHideTimeout, []);
 
   useEffect(() => {
     if (!hoveredVar) return;
@@ -80,7 +98,7 @@ export function UrlBar() {
   const handleMouseMove = (e: React.MouseEvent<HTMLInputElement>) => {
     if (!overlayRef.current) return;
     
-    const spans = overlayRef.current.querySelectorAll('.env-var-span');
+    const spans = overlayRef.current.querySelectorAll('.env-var-span, .path-var-span');
     let found = false;
     
     for (let i = 0; i < spans.length; i++) {
@@ -91,27 +109,34 @@ export function UrlBar() {
       if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
         found = true;
         const varName = span.getAttribute('data-varname') || '';
+        const kind = (span.getAttribute('data-kind') === 'path' ? 'path' : 'environment') as HoveredUrlVariable['kind'];
         const exists = span.getAttribute('data-exists') === 'true';
         const hasValue = span.getAttribute('data-has-value') === 'true';
         const value = span.getAttribute('data-value') || '';
         const source = span.getAttribute('data-source') || '';
         
-        if (hoveredVar?.name !== varName || hoveredVar?.hasValue !== hasValue) {
-          clearTimeout(hideTimeout.current);
-          setHoveredVar({ name: varName, x: rect.left, y: rect.bottom + 4, exists, hasValue, value, source });
+        if (hoveredVar?.name !== varName || hoveredVar?.kind !== kind || hoveredVar?.hasValue !== hasValue) {
+          clearHideTimeout();
+          setHoveredVar({ kind, name: varName, x: rect.left, y: rect.bottom + 4, exists, hasValue, value, source });
         }
         break;
       }
     }
     
-    if (!found) clearTimeout(hideTimeout.current);
+    if (!found && hoveredVar) scheduleHidePopover();
   };
 
   const handleMouseLeave = () => {
-    clearTimeout(hideTimeout.current);
+    if (hoveredVar) scheduleHidePopover();
   };
 
   const handleAddVar = (varName: string, value: string) => {
+    if (hoveredVar?.kind === 'path') {
+      updateActiveTab({ pathVariables: upsertPathVariable(activeTab?.pathVariables || [], varName, value) });
+      setHoveredVar(null);
+      return;
+    }
+
     if (activeCollection) {
       updateCollection(activeCollection.id, { variables: upsertActiveVariableValue(activeCollection.variables || [], varName, value) });
       setHoveredVar(null);
@@ -132,6 +157,43 @@ export function UrlBar() {
     setHoveredVar(null);
   };
 
+  const renderPathVariables = (part: string, baseKey: string) => {
+    const nodes: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    PATH_VARIABLE_REGEX.lastIndex = 0;
+    while ((match = PATH_VARIABLE_REGEX.exec(part)) !== null) {
+      const prefix = match[1];
+      const key = match[2];
+      const tokenStart = match.index + prefix.length;
+      const tokenEnd = tokenStart + key.length + 1;
+      const variable = activeTab?.pathVariables?.find((item) => item.key === key);
+      const value = variable?.value || '';
+
+      if (tokenStart > lastIndex) nodes.push(<span key={`${baseKey}-t-${lastIndex}`}>{part.slice(lastIndex, tokenStart)}</span>);
+      nodes.push(
+        <span
+          key={`${baseKey}-p-${tokenStart}`}
+          className="path-var-span"
+          data-kind="path"
+          data-varname={key}
+          data-exists={!!variable}
+          data-has-value={!!value}
+          data-value={value}
+          data-source="Path variable"
+          style={{ color: value ? 'var(--accent-primary)' : 'var(--status-delete)' }}
+        >
+          :{key}
+        </span>
+      );
+      lastIndex = tokenEnd;
+    }
+
+    if (lastIndex < part.length) nodes.push(<span key={`${baseKey}-t-end`}>{part.slice(lastIndex)}</span>);
+    return nodes;
+  };
+
   const renderHighlighted = () => {
     const parts = url.split(/(\{\{[^}]*\}\})/g);
     return parts.map((part, i) => {
@@ -142,6 +204,7 @@ export function UrlBar() {
           <span 
             key={i} 
             className="env-var-span"
+            data-kind="environment"
             data-varname={varName}
             data-exists={resolved.exists}
             data-has-value={resolved.hasValue}
@@ -155,7 +218,7 @@ export function UrlBar() {
           </span>
         );
       }
-      return <span key={i}>{part}</span>;
+      return renderPathVariables(part, String(i));
     });
   };
 
@@ -163,6 +226,11 @@ export function UrlBar() {
     if (!activeCollection) return;
     setHoveredVar(null);
     openCollectionTab(activeCollection.id, 'variables');
+  };
+
+  const openPathVariables = () => {
+    setHoveredVar(null);
+    window.dispatchEvent(new CustomEvent('syncarts:open-request-tab', { detail: { tab: 'params' } }));
   };
 
   return (
@@ -203,7 +271,10 @@ export function UrlBar() {
         value={url}
         onChange={(e) => {
           const newUrl = e.target.value;
-          const updates: any = { url: newUrl };
+          const updates: any = {
+            url: newUrl,
+            pathVariables: syncPathVariablesWithUrl(newUrl, activeTab?.pathVariables || [])
+          };
           if (!activeTab?.name || AUTO_REQUEST_NAMES.has(activeTab.name) || activeTab.name === activeTab.url) {
             updates.name = newUrl;
           }
@@ -229,79 +300,18 @@ export function UrlBar() {
         spellCheck={false}
       />
 
-      {/* Popover */}
-      {hoveredVar && createPortal(
-        <div 
-          ref={popoverRef}
-          style={{
-            position: 'fixed',
-            left: hoveredVar.x,
-            top: hoveredVar.y,
-            background: 'var(--bg-tertiary)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-sm)',
-            padding: 0,
-            zIndex: 999999,
-            boxShadow: 'var(--shadow-lg)',
-            minWidth: 340,
-            overflow: 'hidden',
-            fontSize: 13,
-            color: 'var(--text-primary)'
-          }}
-          onMouseEnter={() => clearTimeout(hideTimeout.current)}
+      {hoveredVar && (
+        <UrlVariablePopover
+          hoveredVar={hoveredVar}
+          popoverRef={popoverRef}
+          onSave={handleAddVar}
+          onMouseEnter={clearHideTimeout}
           onMouseLeave={handleMouseLeave}
-        >
-          <div style={{ padding: '14px 16px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <input
-              id="new-env-var-input"
-              className="input"
-              style={{ fontSize: 13, padding: '8px 10px', height: 36 }}
-              defaultValue={hoveredVar.value || ''}
-              placeholder="Enter value"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddVar(hoveredVar.name, e.currentTarget.value);
-              }}
-            />
-            <button
-              className="btn"
-              style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => {
-                const input = document.getElementById('new-env-var-input') as HTMLInputElement;
-                handleAddVar(hoveredVar.name, input?.value || '');
-              }}
-            >
-              <Plus size={14} /> {hoveredVar.exists ? 'Update' : 'Add'} {activeCollection ? 'Collection' : 'Environment'} Variable
-            </button>
-          </div>
-          <button
-            type="button"
-            onClick={openCollectionVariables}
-            disabled={!activeCollection}
-            style={{
-              width: '100%',
-              border: 0,
-              borderTop: '1px solid var(--border-color)',
-              background: 'transparent',
-              color: activeCollection ? 'var(--text-secondary)' : 'var(--text-tertiary)',
-              padding: '10px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: activeCollection ? 'pointer' : 'default',
-              fontSize: 13
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 20, height: 20, borderRadius: 5, background: '#9b7200', color: '#fff0a8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-                C
-              </span>
-              Collection
-            </span>
-            <span>Variables in request -&gt;</span>
-          </button>
-        </div>,
-        document.body
+          onOpenCollectionVariables={openCollectionVariables}
+          onOpenPathVariables={openPathVariables}
+          canOpenCollectionVariables={!!activeCollection}
+          variableTargetLabel={activeCollection ? 'Collection' : 'Environment'}
+        />
       )}
     </div>
   );

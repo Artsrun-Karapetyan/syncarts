@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { PathVariable, useWorkspace } from '../../contexts/WorkspaceContext';
+import { syncPathVariablesWithUrl } from '../../utils/pathVariables';
 
 export function ParamsEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
   const [params, setParams] = useState<{key: string, value: string}[]>([{ key: '', value: '' }]);
+  const pathVariables = activeTab?.pathVariables || [];
+
+  useEffect(() => {
+    if (!activeTab) return;
+    const synced = syncPathVariablesWithUrl(activeTab.url || '', activeTab.pathVariables || []);
+    if (JSON.stringify(synced) !== JSON.stringify(activeTab.pathVariables || [])) {
+      updateActiveTab({ pathVariables: synced });
+    }
+  }, [activeTab?.url, activeTab?.pathVariables]);
 
   // Sync from URL to local state
   useEffect(() => {
@@ -72,8 +82,18 @@ export function ParamsEditor() {
     syncUrl(newParams);
   };
 
+  const updatePathVariable = (id: string, data: Partial<PathVariable>) => {
+    updateActiveTab({
+      pathVariables: pathVariables.map((variable) => (
+        variable.id === id ? { ...variable, ...data } : variable
+      ))
+    });
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <ParamSectionTitle title="Query Params" />
       {params.map((param, idx) => (
         <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
@@ -146,6 +166,51 @@ export function ParamsEditor() {
       >
         <Plus size={14} /> Add Param
       </button>
+      </div>
+
+      {pathVariables.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <ParamSectionTitle title="Path Variables" />
+          {pathVariables.map((variable) => (
+            <div key={variable.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 32px', gap: 8, alignItems: 'center' }}>
+              <input
+                className="input font-mono"
+                style={{ fontSize: 13, padding: '8px 12px', color: 'var(--text-secondary)' }}
+                value={variable.key}
+                disabled
+              />
+              <input
+                className="input font-mono"
+                style={{ fontSize: 13, padding: '8px 12px' }}
+                placeholder="Value"
+                value={variable.value}
+                onChange={(e) => updatePathVariable(variable.id, { value: e.target.value })}
+                disabled={!activeTab}
+              />
+              <input
+                className="input"
+                style={{ fontSize: 13, padding: '8px 12px' }}
+                placeholder="Description"
+                value={variable.description || ''}
+                onChange={(e) => updatePathVariable(variable.id, { description: e.target.value })}
+                disabled={!activeTab}
+              />
+              <span style={{ color: 'var(--text-tertiary)', textAlign: 'center' }}>...</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ParamSectionTitle({ title }: { title: string }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 32px', gap: 8, alignItems: 'center' }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>{title}</div>
+      <div />
+      <div />
+      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center' }}>Bulk Edit</div>
     </div>
   );
 }

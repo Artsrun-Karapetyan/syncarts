@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { HeadersEditor } from './HeadersEditor';
 import { BodyEditor } from './BodyEditor';
@@ -7,6 +7,7 @@ import { AuthEditor } from './AuthEditor';
 import { ScriptsEditor } from './ScriptsEditor';
 import { DocsEditor } from './DocsEditor';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { extractPathVariableKeys } from '../../utils/pathVariables';
 
 import './RequestTabs.css';
 
@@ -25,6 +26,16 @@ export function RequestTabs() {
   const [activeTab, setActiveTab] = useState<Tab>('headers');
   const { activeTab: activeRequest } = useWorkspace();
 
+  useEffect(() => {
+    const handleOpenTab = (event: Event) => {
+      const tab = (event as CustomEvent<{ tab?: Tab }>).detail?.tab;
+      if (tab && TABS.some((item) => item.id === tab)) setActiveTab(tab);
+    };
+
+    window.addEventListener('syncarts:open-request-tab', handleOpenTab);
+    return () => window.removeEventListener('syncarts:open-request-tab', handleOpenTab);
+  }, []);
+
   const filledHeadersCount = activeRequest?.headers.filter(h => h.key.trim()).length ?? 0;
 
   // Calculate params count
@@ -32,10 +43,12 @@ export function RequestTabs() {
     if (!activeRequest?.url) return 0;
     try {
       const [, query] = activeRequest.url.split('?');
-      if (!query) return 0;
-      return query.split('&').filter(p => p.trim() && p !== '=').length;
+      const pathCount = extractPathVariableKeys(activeRequest.url).length;
+      if (!query) return pathCount;
+      const queryCount = query.split('&').filter(p => p.trim() && p !== '=').length;
+      return queryCount + pathCount;
     } catch {
-      return 0;
+      return extractPathVariableKeys(activeRequest.url).length;
     }
   };
   const paramsCount = getParamsCount();

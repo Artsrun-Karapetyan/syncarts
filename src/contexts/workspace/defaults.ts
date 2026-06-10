@@ -58,6 +58,7 @@ export function createEmptyRequestTab(): TabData {
     headers: [{ key: '', value: '' }],
     authType: 'inherit',
     bodyType: 'raw',
+    pathVariables: [],
     formData: [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }],
     body: '',
     response: null

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Clock, Zap, Braces, Play, Maximize2, Minimize2 } from 'lucide-react';
 import JsonView from '@uiw/react-json-view';
 import { darkTheme } from '@uiw/react-json-view/dark';
@@ -8,18 +8,20 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { ResponseEmptyState } from './ResponseEmptyState';
 import { ResponseLoadingState } from './ResponseLoadingState';
 import { Select } from '../ui/Select';
+import { detectResponseLanguage, type ResponseLanguage } from './responseLanguage';
 
 import './ResponseViewer.css';
 import '../request/RequestTabs.css';
 
 type ResponseTab = 'body' | 'headers' | 'test-results';
+type BodyFormat = 'pretty' | 'raw' | 'preview';
 
 export function ResponseViewer() {
   const { activeTab, addTab, error, isMutating } = useWorkspace();
   const response = activeTab?.response;
   const [viewTab, setViewTab] = useState<ResponseTab>('body');
-  const [bodyFormat, setBodyFormat] = useState<'pretty' | 'raw' | 'preview'>('pretty');
-  const [language, setLanguage] = useState<'auto' | 'json' | 'xml' | 'html' | 'text'>('auto');
+  const [bodyFormat, setBodyFormat] = useState<BodyFormat>('pretty');
+  const [language, setLanguage] = useState<ResponseLanguage | 'auto'>('auto');
   const [jsonCollapsed, setJsonCollapsed] = useState<number | false>(1);
 
   const contentType = (response?.headers?.['content-type'] || response?.headers?.['Content-Type'] || '').toLowerCase();
@@ -36,20 +38,17 @@ export function ResponseViewer() {
     }
   }, [response?.body, isBinary]);
 
-  const effectiveLanguage = language === 'auto'
-    ? (contentType.includes('xml') ? 'xml' : contentType.includes('html') ? 'html' : contentType.includes('json') ? 'json' : 'text')
-    : language;
+  const detectedLanguage = useMemo(
+    () => detectResponseLanguage(contentType, response?.body, !!parsedBody),
+    [contentType, response?.body, parsedBody]
+  );
+  const effectiveLanguage: ResponseLanguage = language === 'auto' ? detectedLanguage : language;
 
-  // Set default format to preview for HTML
-  useMemo(() => {
-    if (response) {
-      if (contentType.includes('html')) {
-        setBodyFormat('preview');
-      } else {
-        setBodyFormat('pretty');
-      }
-    }
-  }, [response]);
+  useEffect(() => {
+    if (!response) return;
+    setLanguage(detectedLanguage);
+    setBodyFormat(detectedLanguage === 'html' ? 'preview' : 'pretty');
+  }, [response?.body, response?.status, response?.time_ms, detectedLanguage]);
 
   const getStatusClass = (status: number) => {
     if (status >= 200 && status < 300) return 'success';
