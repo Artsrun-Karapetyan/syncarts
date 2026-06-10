@@ -4,6 +4,8 @@ import { parseCurlCommand } from '../../utils/curlParser';
 import { syncPathVariablesWithUrl, upsertPathVariable } from '../../utils/pathVariables';
 import { resolveScopedVariable, upsertActiveVariableValue } from './variableResolution';
 import { UrlVariablePopover } from './UrlVariablePopover';
+import { VariableAutocompletePopover } from './VariableAutocompletePopover';
+import { useVariableAutocomplete } from './useVariableAutocomplete';
 
 import './UrlBar.css';
 
@@ -48,6 +50,17 @@ export function UrlBar() {
   const resolveVariable = (varName: string) => {
     return resolveScopedVariable({ activeCollection, activeEnvironment, globalVariables, varName });
   };
+  const updateUrlValue = (newUrl: string) => {
+    const updates: any = {
+      url: newUrl,
+      pathVariables: syncPathVariablesWithUrl(newUrl, activeTab?.pathVariables || [])
+    };
+    if (!activeTab?.name || AUTO_REQUEST_NAMES.has(activeTab.name) || activeTab.name === activeTab.url) {
+      updates.name = newUrl;
+    }
+    updateActiveTab(updates);
+  };
+  const autocomplete = useVariableAutocomplete({ value: url, onChange: updateUrlValue });
 
   const clearHideTimeout = () => {
     if (!hideTimeout.current) return;
@@ -269,17 +282,10 @@ export function UrlBar() {
           lineHeight: '38px',
         }}
         value={url}
-        onChange={(e) => {
-          const newUrl = e.target.value;
-          const updates: any = {
-            url: newUrl,
-            pathVariables: syncPathVariablesWithUrl(newUrl, activeTab?.pathVariables || [])
-          };
-          if (!activeTab?.name || AUTO_REQUEST_NAMES.has(activeTab.name) || activeTab.name === activeTab.url) {
-            updates.name = newUrl;
-          }
-          updateActiveTab(updates);
-        }}
+        onBlur={autocomplete.handleBlur}
+        onChange={autocomplete.handleChange}
+        onClick={autocomplete.handleClick}
+        onFocus={autocomplete.handleFocus}
         onScroll={(e) => {
           if (overlayRef.current) {
             overlayRef.current.scrollLeft = e.currentTarget.scrollLeft;
@@ -288,6 +294,7 @@ export function UrlBar() {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onKeyDown={(e) => {
+          if (autocomplete.handleKeyDown(e)) return;
           if (e.key === 'Enter' && url) {
             sendRequest();
           }
@@ -295,6 +302,7 @@ export function UrlBar() {
             setHoveredVar(null);
           }
         }}
+        onKeyUp={autocomplete.handleKeyUp}
         onPaste={handlePaste}
         disabled={!activeTab}
         spellCheck={false}
@@ -311,6 +319,15 @@ export function UrlBar() {
           onOpenPathVariables={openPathVariables}
           canOpenCollectionVariables={!!activeCollection}
           variableTargetLabel={activeCollection ? 'Collection' : 'Environment'}
+        />
+      )}
+      {autocomplete.autocompleteState && (
+        <VariableAutocompletePopover
+          activeIndex={autocomplete.activeIndex}
+          suggestions={autocomplete.suggestions}
+          x={autocomplete.autocompleteState.x}
+          y={autocomplete.autocompleteState.y}
+          onSelect={suggestion => autocomplete.insertSuggestion(suggestion, inputRef.current)}
         />
       )}
     </div>

@@ -57,6 +57,12 @@ export function interpolateVariables(args: {
   if (matches) {
     for (const match of matches) {
       const key = match.slice(2, -2);
+      const dynamicValue = resolveDynamicVariable(key);
+      if (dynamicValue !== null) {
+        result = result.split(match).join(dynamicValue);
+        continue;
+      }
+
       const colVar = colVars.find(v => v.key === key);
       if (colVar) {
         result = result.split(match).join(colVar.value);
@@ -69,6 +75,13 @@ export function interpolateVariables(args: {
   }
 
   return result;
+}
+
+function resolveDynamicVariable(key: string) {
+  if (key === '$guid') return crypto.randomUUID();
+  if (key === '$timestamp') return Math.floor(Date.now() / 1000).toString();
+  if (key === '$isoTimestamp') return new Date().toISOString();
+  return null;
 }
 
 function getFolderPath(items: (Folder | SavedRequest)[], targetId: string): Folder[] | null {

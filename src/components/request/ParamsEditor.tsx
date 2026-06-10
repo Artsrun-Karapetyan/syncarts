@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { PathVariable, useWorkspace } from '../../contexts/WorkspaceContext';
 import { syncPathVariablesWithUrl } from '../../utils/pathVariables';
+import { VariableTextInput } from './VariableTextInput';
 
 export function ParamsEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
@@ -96,20 +97,20 @@ export function ParamsEditor() {
         <ParamSectionTitle title="Query Params" />
       {params.map((param, idx) => (
         <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
+          <VariableTextInput
             className="input font-mono"
             style={{ flex: 1, fontSize: 13, padding: '8px 12px' }}
             placeholder="Key"
             value={param.key}
-            onChange={(e) => updateParam(idx, e.target.value, param.value)}
+            onChange={(value) => updateParam(idx, value, param.value)}
             disabled={!activeTab}
           />
-          <input
+          <VariableTextInput
             className="input font-mono"
             style={{ flex: 1, fontSize: 13, padding: '8px 12px' }}
             placeholder="Value"
             value={param.value}
-            onChange={(e) => updateParam(idx, param.key, e.target.value)}
+            onChange={(value) => updateParam(idx, param.key, value)}
             disabled={!activeTab}
           />
           <button
@@ -179,20 +180,20 @@ export function ParamsEditor() {
                 value={variable.key}
                 disabled
               />
-              <input
+              <VariableTextInput
                 className="input font-mono"
                 style={{ fontSize: 13, padding: '8px 12px' }}
                 placeholder="Value"
                 value={variable.value}
-                onChange={(e) => updatePathVariable(variable.id, { value: e.target.value })}
+                onChange={(value) => updatePathVariable(variable.id, { value })}
                 disabled={!activeTab}
               />
-              <input
+              <VariableTextInput
                 className="input"
                 style={{ fontSize: 13, padding: '8px 12px' }}
                 placeholder="Description"
                 value={variable.description || ''}
-                onChange={(e) => updatePathVariable(variable.id, { description: e.target.value })}
+                onChange={(value) => updatePathVariable(variable.id, { description: value })}
                 disabled={!activeTab}
               />
               <span style={{ color: 'var(--text-tertiary)', textAlign: 'center' }}>...</span>

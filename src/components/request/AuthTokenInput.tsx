@@ -1,4 +1,6 @@
 import type { MutableRefObject, ReactNode, RefObject, MouseEvent } from 'react';
+import { VariableAutocompletePopover } from './VariableAutocompletePopover';
+import { useVariableAutocomplete } from './useVariableAutocomplete';
 
 export interface HoveredVariable {
   name: string;
@@ -24,6 +26,7 @@ interface AuthTokenInputProps {
 
 export function AuthTokenInput(props: AuthTokenInputProps) {
   const { disabled, hideTimeout, hoveredVar, label, overlayRef, renderHighlighted, setHoveredVar, token, onChange } = props;
+  const autocomplete = useVariableAutocomplete({ value: token, onChange });
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
     if (!overlayRef.current) return;
@@ -96,8 +99,21 @@ export function AuthTokenInput(props: AuthTokenInputProps) {
             cursor: disabled ? 'default' : 'text',
           }}
           value={token}
-          onChange={(e) => {
-            if (!disabled) onChange(e.target.value);
+          onBlur={autocomplete.handleBlur}
+          onChange={(event) => {
+            if (!disabled) autocomplete.handleChange(event);
+          }}
+          onClick={(event) => {
+            if (!disabled) autocomplete.handleClick(event);
+          }}
+          onFocus={(event) => {
+            if (!disabled) autocomplete.handleFocus(event);
+          }}
+          onKeyDown={(event) => {
+            if (!disabled) autocomplete.handleKeyDown(event);
+          }}
+          onKeyUp={(event) => {
+            if (!disabled) autocomplete.handleKeyUp(event);
           }}
           onScroll={(e) => {
             if (overlayRef.current) overlayRef.current.scrollLeft = e.currentTarget.scrollLeft;
@@ -106,6 +122,15 @@ export function AuthTokenInput(props: AuthTokenInputProps) {
           aria-disabled={disabled}
           spellCheck={false}
         />
+        {!disabled && autocomplete.autocompleteState && (
+          <VariableAutocompletePopover
+            activeIndex={autocomplete.activeIndex}
+            suggestions={autocomplete.suggestions}
+            x={autocomplete.autocompleteState.x}
+            y={autocomplete.autocompleteState.y}
+            onSelect={suggestion => autocomplete.insertSuggestion(suggestion, document.activeElement as HTMLInputElement)}
+          />
+        )}
       </div>
     </>
   );

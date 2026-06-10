@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { Plus, Trash2, CheckSquare, Square, X, File } from 'lucide-react';
 import { useWorkspace, BodyType, FormDataItem } from '../../contexts/WorkspaceContext';
 import { Select } from '../ui/Select';
+import { VariableTextInput } from './VariableTextInput';
+import { VariableTextarea } from './VariableTextarea';
 
 function FileValueEditor({ item, handleUpdateFormData }: { item: FormDataItem; handleUpdateFormData: (id: string, updates: Partial<FormDataItem>) => void }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -220,7 +222,7 @@ export function BodyEditor() {
       )}
 
       {currentBodyType === 'raw' && (
-        <textarea
+        <VariableTextarea
           className="input font-mono"
           style={{
             flex: 1,
@@ -235,9 +237,8 @@ export function BodyEditor() {
           }}
           placeholder={'{\n  "key": "value"\n}'}
           value={activeTab?.body || ''}
-          onChange={(e) => updateActiveTab({ body: e.target.value })}
+          onChange={(value) => updateActiveTab({ body: value })}
           disabled={!activeTab}
-          spellCheck={false}
         />
       )}
 
@@ -261,12 +262,12 @@ export function BodyEditor() {
                 </button>
               </div>
               <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <input
+                <VariableTextInput
                   className="input"
                   style={{ width: '100%', fontSize: 13, background: 'transparent', paddingRight: currentBodyType === 'form-data' ? 60 : undefined }}
                   placeholder="Key"
                   value={item.key}
-                  onChange={(e) => handleUpdateFormData(item.id, { key: e.target.value })}
+                  onChange={(value) => handleUpdateFormData(item.id, { key: value })}
                 />
                 {currentBodyType === 'form-data' && (
                   <div style={{ position: 'absolute', right: 4, display: 'flex', alignItems: 'center' }}>
@@ -287,12 +288,12 @@ export function BodyEditor() {
                 {item.type === 'file' ? (
                   <FileValueEditor item={item} handleUpdateFormData={handleUpdateFormData} />
                 ) : (
-                  <input
+                  <VariableTextInput
                     className="input"
                     style={{ width: '100%', fontSize: 13, background: 'transparent' }}
                     placeholder="Value"
                     value={item.value}
-                    onChange={(e) => handleUpdateFormData(item.id, { value: e.target.value })}
+                    onChange={(value) => handleUpdateFormData(item.id, { value })}
                   />
                 )}
               </div>
