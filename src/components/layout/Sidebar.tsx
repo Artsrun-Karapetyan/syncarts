@@ -351,7 +351,6 @@ export function Sidebar() {
   const [renameValue, setRenameValue] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [highlightedRequestId, setHighlightedRequestId] = useState<string | null>(null);
-  const highlightTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -424,25 +423,15 @@ export function Sidebar() {
     });
 
     setHighlightedRequestId(savedRequestId);
-    if (highlightTimeoutRef.current) {
-      window.clearTimeout(highlightTimeoutRef.current);
-    }
-    highlightTimeoutRef.current = window.setTimeout(() => {
-      setHighlightedRequestId(null);
-      highlightTimeoutRef.current = null;
-    }, 1250);
   };
 
   useEffect(() => {
     const savedRequestId = resolveTabSavedRequestId(activeTab);
     if (savedRequestId) {
       highlightRequest(savedRequestId);
+    } else {
+      setHighlightedRequestId(null);
     }
-    return () => {
-      if (highlightTimeoutRef.current) {
-        window.clearTimeout(highlightTimeoutRef.current);
-      }
-    };
   }, [activeTab, collections, resolveTabSavedRequestId]);
 
   useEffect(() => {
