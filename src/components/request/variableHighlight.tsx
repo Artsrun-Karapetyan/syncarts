@@ -22,6 +22,13 @@ export function renderVariableHighlight(args: {
     return (
       <span
         key={index}
+        className="env-var-span"
+        data-kind="environment"
+        data-varname={varName}
+        data-exists={resolved.exists}
+        data-has-value={resolved.hasValue}
+        data-value={resolved.value || ''}
+        data-source={resolved.source}
         style={{
           color: resolved.hasValue || isDynamic ? 'var(--accent-primary)' : 'var(--status-delete)',
           background: resolved.hasValue || isDynamic ? 'rgba(88, 166, 255, 0.12)' : 'rgba(239, 68, 68, 0.12)',

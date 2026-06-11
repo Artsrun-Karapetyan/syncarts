@@ -6,12 +6,12 @@ import { resolveScopedVariable, upsertActiveVariableValue } from './variableReso
 import { UrlVariablePopover } from './UrlVariablePopover';
 import { VariableAutocompletePopover } from './VariableAutocompletePopover';
 import { useVariableAutocomplete } from './useVariableAutocomplete';
+import { useVariableHover } from './useVariableHover';
 
 import './UrlBar.css';
 
 const AUTO_REQUEST_NAMES = new Set(['Untitled Request', 'New Request']);
 const PATH_VARIABLE_REGEX = /(^|\/):([A-Za-z_][A-Za-z0-9_]*)/g;
-type HoveredUrlVariable = { kind: 'environment' | 'path', name: string, x: number, y: number, exists: boolean, hasValue: boolean, value?: string, source?: string };
 
 export function UrlBar() {
   const {
@@ -41,11 +41,9 @@ export function UrlBar() {
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const url = activeTab?.url || '';
   
-  const [hoveredVar, setHoveredVar] = useState<HoveredUrlVariable | null>(null);
+  const hover = useVariableHover(overlayRef);
   const activeCollection = activeTab?.collectionId ? collections.find((collection) => collection.id === activeTab.collectionId) : undefined;
   const resolveVariable = (varName: string) => {
     return resolveScopedVariable({ activeCollection, activeEnvironment, globalVariables, varName });
@@ -62,42 +60,7 @@ export function UrlBar() {
   };
   const autocomplete = useVariableAutocomplete({ value: url, onChange: updateUrlValue });
 
-  const clearHideTimeout = () => {
-    if (!hideTimeout.current) return;
-    clearTimeout(hideTimeout.current);
-    hideTimeout.current = null;
-  };
 
-  const scheduleHidePopover = () => {
-    clearHideTimeout();
-    hideTimeout.current = setTimeout(() => {
-      setHoveredVar(null);
-      hideTimeout.current = null;
-    }, 120);
-  };
-
-  useEffect(() => clearHideTimeout, []);
-
-  useEffect(() => {
-    if (!hoveredVar) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (popoverRef.current?.contains(target) || inputRef.current?.contains(target)) return;
-      setHoveredVar(null);
-    };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setHoveredVar(null);
-    };
-
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [hoveredVar]);
 
   useEffect(() => {
     // Auto-focus URL bar when a new/empty request is opened
@@ -108,67 +71,7 @@ export function UrlBar() {
     }
   }, [activeTab?.id]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLInputElement>) => {
-    if (!overlayRef.current) return;
-    
-    const spans = overlayRef.current.querySelectorAll('.env-var-span, .path-var-span');
-    let found = false;
-    
-    for (let i = 0; i < spans.length; i++) {
-      const span = spans[i] as HTMLSpanElement;
-      const rect = span.getBoundingClientRect();
-      
-      // Check if mouse is within the span's bounding box
-      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
-        found = true;
-        const varName = span.getAttribute('data-varname') || '';
-        const kind = (span.getAttribute('data-kind') === 'path' ? 'path' : 'environment') as HoveredUrlVariable['kind'];
-        const exists = span.getAttribute('data-exists') === 'true';
-        const hasValue = span.getAttribute('data-has-value') === 'true';
-        const value = span.getAttribute('data-value') || '';
-        const source = span.getAttribute('data-source') || '';
-        
-        if (hoveredVar?.name !== varName || hoveredVar?.kind !== kind || hoveredVar?.hasValue !== hasValue) {
-          clearHideTimeout();
-          setHoveredVar({ kind, name: varName, x: rect.left, y: rect.bottom + 4, exists, hasValue, value, source });
-        }
-        break;
-      }
-    }
-    
-    if (!found && hoveredVar) scheduleHidePopover();
-  };
 
-  const handleMouseLeave = () => {
-    if (hoveredVar) scheduleHidePopover();
-  };
-
-  const handleAddVar = (varName: string, value: string) => {
-    if (hoveredVar?.kind === 'path') {
-      updateActiveTab({ pathVariables: upsertPathVariable(activeTab?.pathVariables || [], varName, value) });
-      setHoveredVar(null);
-      return;
-    }
-
-    if (activeCollection) {
-      updateCollection(activeCollection.id, { variables: upsertActiveVariableValue(activeCollection.variables || [], varName, value) });
-      setHoveredVar(null);
-      return;
-    }
-
-    if (activeEnvironmentId === 'globals') {
-      updateGlobalVariables(upsertActiveVariableValue(globalVariables, varName, value));
-      setHoveredVar(null);
-      return;
-    }
-
-    if (!activeEnvironment) {
-      alert("Please select an Environment or Globals first (top right corner).");
-      return;
-    }
-    updateEnvironment(activeEnvironment.id, { variables: upsertActiveVariableValue(activeEnvironment.variables, varName, value) });
-    setHoveredVar(null);
-  };
 
   const renderPathVariables = (part: string, baseKey: string) => {
     const nodes: React.ReactNode[] = [];
@@ -235,16 +138,7 @@ export function UrlBar() {
     });
   };
 
-  const openCollectionVariables = () => {
-    if (!activeCollection) return;
-    setHoveredVar(null);
-    openCollectionTab(activeCollection.id, 'variables');
-  };
 
-  const openPathVariables = () => {
-    setHoveredVar(null);
-    window.dispatchEvent(new CustomEvent('syncarts:open-request-tab', { detail: { tab: 'params' } }));
-  };
 
   return (
     <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', height: 38, overflow: 'hidden', borderRadius: 9999 }}>
@@ -291,15 +185,15 @@ export function UrlBar() {
             overlayRef.current.scrollLeft = e.currentTarget.scrollLeft;
           }
         }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
+        onMouseMove={hover.handleMouseMove}
+        onMouseLeave={hover.handleMouseLeave}
         onKeyDown={(e) => {
           if (autocomplete.handleKeyDown(e)) return;
           if (e.key === 'Enter' && url) {
             sendRequest();
           }
           if (e.key === 'Escape') {
-            setHoveredVar(null);
+            hover.clearHideTimeout();
           }
         }}
         onKeyUp={autocomplete.handleKeyUp}
@@ -308,17 +202,17 @@ export function UrlBar() {
         spellCheck={false}
       />
 
-      {hoveredVar && (
+      {hover.hoveredVar && (
         <UrlVariablePopover
-          hoveredVar={hoveredVar}
-          popoverRef={popoverRef}
-          onSave={handleAddVar}
-          onMouseEnter={clearHideTimeout}
-          onMouseLeave={handleMouseLeave}
-          onOpenCollectionVariables={openCollectionVariables}
-          onOpenPathVariables={openPathVariables}
-          canOpenCollectionVariables={!!activeCollection}
-          variableTargetLabel={activeCollection ? 'Collection' : 'Environment'}
+          hoveredVar={hover.hoveredVar}
+          popoverRef={hover.popoverRef}
+          onSave={hover.handleAddVar}
+          onMouseEnter={hover.clearHideTimeout}
+          onMouseLeave={hover.handleMouseLeave}
+          onOpenCollectionVariables={hover.openCollectionVariables}
+          onOpenPathVariables={hover.openPathVariables}
+          canOpenCollectionVariables={!!hover.activeCollection}
+          variableTargetLabel={hover.activeCollection ? 'Collection' : 'Environment'}
         />
       )}
       {autocomplete.autocompleteState && (

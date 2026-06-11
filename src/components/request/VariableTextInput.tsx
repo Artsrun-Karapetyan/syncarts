@@ -5,6 +5,8 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { renderVariableHighlight } from './variableHighlight';
 import { VariableAutocompletePopover } from './VariableAutocompletePopover';
 import { useVariableAutocomplete } from './useVariableAutocomplete';
+import { useVariableHover } from './useVariableHover';
+import { UrlVariablePopover } from './UrlVariablePopover';
 
 interface VariableTextInputProps {
   className?: string;
@@ -21,6 +23,7 @@ export function VariableTextInput(props: VariableTextInputProps) {
   const activeCollection = activeTab?.collectionId ? collections.find(collection => collection.id === activeTab.collectionId) : undefined;
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const autocomplete = useVariableAutocomplete({ value, onChange });
+  const hover = useVariableHover(overlayRef);
 
   return (
     <div style={{ position: 'relative', width: style?.width || '100%', flex: style?.flex, display: 'flex' }}>
@@ -58,6 +61,8 @@ export function VariableTextInput(props: VariableTextInputProps) {
         onChange={autocomplete.handleChange}
         onClick={autocomplete.handleClick}
         onFocus={autocomplete.handleFocus}
+        onMouseMove={hover.handleMouseMove}
+        onMouseLeave={hover.handleMouseLeave}
         onKeyDown={(event) => {
           autocomplete.handleKeyDown(event);
         }}
@@ -74,6 +79,19 @@ export function VariableTextInput(props: VariableTextInputProps) {
           x={autocomplete.autocompleteState.x}
           y={autocomplete.autocompleteState.y}
           onSelect={suggestion => autocomplete.insertSuggestion(suggestion, document.activeElement as HTMLInputElement)}
+        />
+      )}
+      {hover.hoveredVar && (
+        <UrlVariablePopover
+          hoveredVar={hover.hoveredVar}
+          popoverRef={hover.popoverRef}
+          onSave={hover.handleAddVar}
+          onMouseEnter={hover.clearHideTimeout}
+          onMouseLeave={hover.handleMouseLeave}
+          onOpenCollectionVariables={hover.openCollectionVariables}
+          onOpenPathVariables={hover.openPathVariables}
+          canOpenCollectionVariables={!!hover.activeCollection}
+          variableTargetLabel={hover.activeCollection ? 'Collection' : 'Environment'}
         />
       )}
     </div>

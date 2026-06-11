@@ -23,7 +23,19 @@ export function resolveScopedVariable(args: {
   const globalVar = globalVariables.find(variable => variable.key === varName && variable.enabled);
   if (globalVar) return toResolved(globalVar, 'Globals');
 
+  const dynamicValue = resolveDynamicVariable(varName);
+  if (dynamicValue !== null) {
+    return { exists: true, hasValue: true, value: dynamicValue, source: 'Dynamic' };
+  }
+
   return { exists: false, hasValue: false, value: '', source: 'Not found' };
+}
+
+export function resolveDynamicVariable(key: string): string | null {
+  if (key === '$guid') return crypto.randomUUID();
+  if (key === '$timestamp') return Math.floor(Date.now() / 1000).toString();
+  if (key === '$isoTimestamp') return new Date().toISOString();
+  return null;
 }
 
 export function upsertActiveVariableValue(

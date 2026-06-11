@@ -39,6 +39,7 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
   } = props;
   const inputId = `url-var-input-${hoveredVar.kind}-${hoveredVar.name}`;
   const isPathVariable = hoveredVar.kind === 'path';
+  const isDynamic = hoveredVar.source === 'Dynamic';
 
   return createPortal(
     <div
@@ -63,31 +64,41 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
     >
       <div style={{ padding: '14px 16px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <input
+          key={inputId}
           id={inputId}
           className="input"
-          style={{ fontSize: 13, padding: '8px 10px', height: 36 }}
+          style={{ 
+            fontSize: 13, 
+            padding: '8px 10px', 
+            height: 36,
+            opacity: isDynamic ? 0.8 : 1,
+            cursor: isDynamic ? 'not-allowed' : 'text'
+          }}
           defaultValue={hoveredVar.value || ''}
           placeholder="Enter value"
-          autoFocus
+          autoFocus={!isDynamic}
+          disabled={isDynamic}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') onSave(hoveredVar.name, e.currentTarget.value);
+            if (!isDynamic && e.key === 'Enter') onSave(hoveredVar.name, e.currentTarget.value);
           }}
         />
-        <button
-          className="btn"
-          style={{ width: '100%', justifyContent: 'center' }}
-          onClick={() => {
-            const input = document.getElementById(inputId) as HTMLInputElement;
-            onSave(hoveredVar.name, input?.value || '');
-          }}
-        >
-          <Plus size={14} /> {hoveredVar.exists ? 'Update' : 'Add'} {isPathVariable ? 'Path' : variableTargetLabel} Variable
-        </button>
+        {!isDynamic && (
+          <button
+            className="btn"
+            style={{ width: '100%', justifyContent: 'center' }}
+            onClick={() => {
+              const input = document.getElementById(inputId) as HTMLInputElement;
+              onSave(hoveredVar.name, input?.value || '');
+            }}
+          >
+            <Plus size={14} /> {hoveredVar.exists ? 'Update' : 'Add'} {isPathVariable ? 'Path' : variableTargetLabel} Variable
+          </button>
+        )}
       </div>
       <button
         type="button"
-        onClick={isPathVariable ? onOpenPathVariables : onOpenCollectionVariables}
-        disabled={isPathVariable ? false : !canOpenCollectionVariables}
+        onClick={isDynamic ? undefined : (isPathVariable ? onOpenPathVariables : onOpenCollectionVariables)}
+        disabled={isDynamic || (!isPathVariable && !canOpenCollectionVariables)}
         style={{
           width: '100%',
           border: 0,
@@ -98,17 +109,27 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          cursor: isPathVariable || canOpenCollectionVariables ? 'pointer' : 'default',
+          cursor: isDynamic ? 'default' : (isPathVariable || canOpenCollectionVariables ? 'pointer' : 'default'),
           fontSize: 13
         }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ width: 20, height: 20, borderRadius: 5, background: isPathVariable ? 'var(--bg-secondary)' : '#9b7200', color: isPathVariable ? 'var(--text-secondary)' : '#fff0a8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-            {isPathVariable ? ':' : 'C'}
+          <span style={{ 
+            width: 20, 
+            height: 20, 
+            borderRadius: 5, 
+            background: isDynamic ? 'var(--accent-primary)' : (isPathVariable ? 'var(--bg-secondary)' : '#9b7200'), 
+            color: isDynamic ? '#fff' : (isPathVariable ? 'var(--text-secondary)' : '#fff0a8'), 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            fontWeight: 700 
+          }}>
+            {isDynamic ? 'G' : (isPathVariable ? ':' : 'C')}
           </span>
-          {isPathVariable ? 'Path variable' : 'Collection'}
+          {isDynamic ? 'Dynamic variable' : (isPathVariable ? 'Path variable' : 'Collection')}
         </span>
-        <span>{isPathVariable ? 'Variables in request ->' : 'Variables in request ->'}</span>
+        <span>{isDynamic ? 'Auto-generated' : 'Variables in request ->'}</span>
       </button>
     </div>,
     document.body

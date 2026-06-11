@@ -276,6 +276,35 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
                   <div style={{ width: 40 }}></div>
                 </div>
 
+                {isGlobals && [
+                  { key: '$guid', desc: 'Generated UUID (dynamic)' },
+                  { key: '$timestamp', desc: 'Unix timestamp (dynamic)' },
+                  { key: '$isoTimestamp', desc: 'ISO timestamp (dynamic)' }
+                ].map(v => (
+                  <div key={v.key} style={{ display: 'flex', alignItems: 'center', gap: 12, opacity: 0.6 }}>
+                    <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
+                      <CheckSquare size={16} style={{ color: 'var(--text-tertiary)' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <input
+                        className="input"
+                        style={{ width: '100%', fontSize: 13, background: 'var(--bg-secondary)', cursor: 'not-allowed', color: 'var(--accent-primary)' }}
+                        value={v.key}
+                        disabled
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <input
+                        className="input"
+                        style={{ width: '100%', fontSize: 13, background: 'var(--bg-secondary)', cursor: 'not-allowed', color: 'var(--text-tertiary)' }}
+                        value={v.desc}
+                        disabled
+                      />
+                    </div>
+                    <div style={{ width: 40 }}></div>
+                  </div>
+                ))}
+
                 {currentVariables.map(v => (
                   <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>

@@ -1,3 +1,4 @@
+import { resolveDynamicVariable } from '../../components/request/variableResolution';
 import type { Collection, Environment, EnvironmentVariable, Folder, SavedRequest, TabData } from './types';
 
 export function getRequestAncestors(activeTab: TabData | undefined, collections: Collection[]): (Collection | Folder)[] {
@@ -77,12 +78,6 @@ export function interpolateVariables(args: {
   return result;
 }
 
-function resolveDynamicVariable(key: string) {
-  if (key === '$guid') return crypto.randomUUID();
-  if (key === '$timestamp') return Math.floor(Date.now() / 1000).toString();
-  if (key === '$isoTimestamp') return new Date().toISOString();
-  return null;
-}
 
 function getFolderPath(items: (Folder | SavedRequest)[], targetId: string): Folder[] | null {
   for (const item of items) {

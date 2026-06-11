@@ -1,11 +1,14 @@
 import type { Collection, Environment, EnvironmentVariable } from '../../contexts/WorkspaceContext';
 import type { VariableSuggestion } from './variableAutocompleteTypes';
+import { resolveDynamicVariable } from './variableResolution';
 
-export const DYNAMIC_VARIABLES: VariableSuggestion[] = [
-  { key: '$guid', value: 'Generated UUID', source: 'Globals' },
-  { key: '$timestamp', value: 'Unix timestamp', source: 'Globals' },
-  { key: '$isoTimestamp', value: 'ISO timestamp', source: 'Globals' },
-];
+export function getDynamicVariables(): VariableSuggestion[] {
+  return [
+    { key: '$guid', value: resolveDynamicVariable('$guid') || 'Generated UUID', source: 'Dynamic' },
+    { key: '$timestamp', value: resolveDynamicVariable('$timestamp') || 'Unix timestamp', source: 'Dynamic' },
+    { key: '$isoTimestamp', value: resolveDynamicVariable('$isoTimestamp') || 'ISO timestamp', source: 'Dynamic' },
+  ];
+}
 
 export function getVariableSuggestions(args: {
   activeCollection?: Collection;
@@ -19,7 +22,7 @@ export function getVariableSuggestions(args: {
     ...toSuggestions(activeEnvironment?.variables || [], 'Environment'),
     ...toSuggestions(activeCollection?.variables || [], 'Collection'),
     ...toSuggestions(globalVariables, 'Globals'),
-    ...DYNAMIC_VARIABLES
+    ...getDynamicVariables()
   ];
 
   return suggestions
