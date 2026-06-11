@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
-  const { workspaces, activeWorkspaceId, reloadWorkspaces } = useWorkspace();
+  const { workspaces, activeWorkspaceId, reloadWorkspaces, createWorkspace, switchWorkspace, localDefaultWorkspaceId } = useWorkspace();
   const user = useStoredUser();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,9 +63,21 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
 
     try {
       setLoading(true);
+      const finalWorkspaceIds = [...selectedWorkspaceIds];
+      const finalWorkspaces = [...selectedWorkspaces];
+
+      const defaultWsIndex = finalWorkspaces.findIndex(w => w.id === localDefaultWorkspaceId);
+      if (defaultWsIndex !== -1) {
+        const defaultWs = finalWorkspaces[defaultWsIndex];
+        const newWsId = createWorkspace('Shared Workspace', defaultWs.collections, defaultWs.environments);
+        finalWorkspaceIds[finalWorkspaceIds.indexOf(localDefaultWorkspaceId)] = newWsId;
+        finalWorkspaces[defaultWsIndex] = { ...defaultWs, id: newWsId, name: 'Shared Workspace' };
+        switchWorkspace(newWsId);
+      }
+
       const res = await api.post('/invites/generate', {
-        workspaceIds: selectedWorkspaceIds,
-        workspaces: selectedWorkspaces.map((workspace) => ({
+        workspaceIds: finalWorkspaceIds,
+        workspaces: finalWorkspaces.map((workspace) => ({
           id: workspace.id,
           name: workspace.name,
           collections: workspace.collections,
@@ -93,9 +105,21 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
 
     try {
       setLoading(true);
+      const finalWorkspaceIds = [...selectedWorkspaceIds];
+      const finalWorkspaces = [...selectedWorkspaces];
+
+      const defaultWsIndex = finalWorkspaces.findIndex(w => w.id === localDefaultWorkspaceId);
+      if (defaultWsIndex !== -1) {
+        const defaultWs = finalWorkspaces[defaultWsIndex];
+        const newWsId = createWorkspace('Shared Workspace', defaultWs.collections, defaultWs.environments);
+        finalWorkspaceIds[finalWorkspaceIds.indexOf(localDefaultWorkspaceId)] = newWsId;
+        finalWorkspaces[defaultWsIndex] = { ...defaultWs, id: newWsId, name: 'Shared Workspace' };
+        switchWorkspace(newWsId);
+      }
+
       await api.post('/invites/add-member', {
-        workspaceIds: selectedWorkspaceIds,
-        workspaces: selectedWorkspaces.map((workspace) => ({
+        workspaceIds: finalWorkspaceIds,
+        workspaces: finalWorkspaces.map((workspace) => ({
           id: workspace.id,
           name: workspace.name,
           collections: workspace.collections,
@@ -215,7 +239,7 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{workspace.name}</span>
-                        {isSharedWorkspace(workspace) && (
+                        {workspace.id !== localDefaultWorkspaceId && (
                           <span
                             style={{
                               flexShrink: 0,

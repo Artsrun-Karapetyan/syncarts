@@ -169,21 +169,33 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     workspaces
   });
 
-  const createWorkspace = (name: string) => {
+  const createWorkspace = (name: string, collections: any[] = [], environments: any[] = []) => {
     const newWsId = crypto.randomUUID();
     dirtyWorkspaceIdsRef.current.add(newWsId);
-    setWorkspaces(prev => [...prev, { id: newWsId, name, collections: [], environments: [] }]);
+    setWorkspaces(prev => [...prev, { id: newWsId, name, collections, environments }]);
     setTabsByWorkspace(prev => ({ ...prev, [newWsId]: [] }));
     setActiveTabIdByWorkspace(prev => ({ ...prev, [newWsId]: null }));
     setActiveEnvIdByWorkspace(prev => ({ ...prev, [newWsId]: null }));
     setActiveWorkspaceId(newWsId);
+    return newWsId;
   };
 
   const switchWorkspace = (id: string) => {
     setActiveWorkspaceId(id);
   };
 
+  const renameWorkspace = (id: string, newName: string) => {
+    if (id === localDefaultWorkspaceId) {
+      throw new Error('Cannot rename your default workspace.');
+    }
+    dirtyWorkspaceIdsRef.current.add(id);
+    setWorkspaces(prev => prev.map(w => w.id === id ? { ...w, name: newName } : w));
+  };
+
   const removeWorkspace = async (id: string) => {
+    if (id === localDefaultWorkspaceId) {
+      throw new Error('Cannot delete your default workspace.');
+    }
     console.log('[SYNC] removeWorkspace called for id:', id);
     const nextWorkspaceId = workspaces.find((workspace) => workspace.id !== id)?.id || localDefaultWorkspaceId;
     deletedWorkspaceIdsRef.current.add(id);
@@ -245,8 +257,10 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
   return {
     workspaces,
     activeWorkspaceId,
+    localDefaultWorkspaceId,
     createWorkspace,
     switchWorkspace,
+    renameWorkspace,
     removeWorkspace,
     tabs: currentTabs,
     activeTabId,

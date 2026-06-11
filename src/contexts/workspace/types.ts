@@ -155,11 +155,13 @@ export interface SavedRequestLocation {
   request: SavedRequest;
 }
 
-export interface WorkspaceContextState {
+export interface WorkspaceContextState extends TabActions, CollectionActions, EnvironmentActions, RequestSenderActions {
   workspaces: Workspace[];
   activeWorkspaceId: string;
-  createWorkspace: (name: string) => void;
+  localDefaultWorkspaceId: string;
+  createWorkspace: (name: string, collections?: any[], environments?: any[]) => string;
   switchWorkspace: (id: string) => void;
+  renameWorkspace: (id: string, newName: string) => void;
   removeWorkspace: (id: string) => Promise<void>;
   environments: Environment[];
   globalVariables: EnvironmentVariable[];
