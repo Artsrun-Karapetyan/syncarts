@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { getVariableSuggestions } from './variableSuggestions';
 import type { VariableAutocompleteState, VariableSuggestion } from './variableAutocompleteTypes';
+import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
 
 type TextControl = HTMLInputElement | HTMLTextAreaElement;
 
@@ -14,15 +15,15 @@ interface UseVariableAutocompleteArgs {
 export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
   const { value, onChange } = args;
   const { activeEnvironment, activeTab, collections, globalVariables } = useWorkspace();
-  const activeCollection = activeTab?.collectionId ? collections.find(collection => collection.id === activeTab.collectionId) : undefined;
   const [state, setState] = useState<VariableAutocompleteState | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const ancestors = useMemo(() => getRequestAncestors(activeTab, collections), [activeTab, collections]);
   const suggestions = useMemo(() => getVariableSuggestions({
-    activeCollection,
+    ancestors,
     activeEnvironment,
     globalVariables,
     query: state?.query || ''
-  }), [activeCollection, activeEnvironment, globalVariables, state?.query]);
+  }), [ancestors, activeEnvironment, globalVariables, state?.query]);
 
   const updateFromElement = (element: TextControl, nextValue = element.value) => {
     const caretIndex = element.selectionStart ?? nextValue.length;

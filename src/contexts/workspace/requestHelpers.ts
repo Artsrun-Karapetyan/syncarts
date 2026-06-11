@@ -51,10 +51,9 @@ export function interpolateVariables(args: {
     result = result.split(`{{${v.key}}}`).join(v.value);
   }
 
-  const col = activeTab?.collectionId ? collections.find(c => c.id === activeTab.collectionId) : null;
-  const colVars = col?.variables?.filter(v => v.enabled && v.key) || [];
+  const ancestors = getRequestAncestors(activeTab, collections);
+  
   const matches = result.match(/\{\{([^}]+)\}\}/g);
-
   if (matches) {
     for (const match of matches) {
       const key = match.slice(2, -2);
@@ -64,11 +63,16 @@ export function interpolateVariables(args: {
         continue;
       }
 
-      const colVar = colVars.find(v => v.key === key);
-      if (colVar) {
-        result = result.split(match).join(colVar.value);
-        continue;
+      let foundInAncestor = false;
+      for (let i = ancestors.length - 1; i >= 0; i--) {
+        const ancestorVar = ancestors[i].variables?.find((v: any) => v.key === key && v.enabled);
+        if (ancestorVar) {
+          result = result.split(match).join(ancestorVar.value);
+          foundInAncestor = true;
+          break;
+        }
       }
+      if (foundInAncestor) continue;
 
       const globalVar = globalVariables.find(v => v.key === key && v.enabled);
       if (globalVar) result = result.split(match).join(globalVar.value);

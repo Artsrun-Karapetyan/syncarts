@@ -3,6 +3,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { parseCurlCommand } from '../../utils/curlParser';
 import { syncPathVariablesWithUrl, upsertPathVariable } from '../../utils/pathVariables';
 import { resolveScopedVariable, upsertActiveVariableValue } from './variableResolution';
+import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
 import { UrlVariablePopover } from './UrlVariablePopover';
 import { VariableAutocompletePopover } from './VariableAutocompletePopover';
 import { useVariableAutocomplete } from './useVariableAutocomplete';
@@ -46,7 +47,8 @@ export function UrlBar() {
   const hover = useVariableHover(overlayRef);
   const activeCollection = activeTab?.collectionId ? collections.find((collection) => collection.id === activeTab.collectionId) : undefined;
   const resolveVariable = (varName: string) => {
-    return resolveScopedVariable({ activeCollection, activeEnvironment, globalVariables, varName });
+    const ancestors = getRequestAncestors(activeTab, collections);
+    return resolveScopedVariable({ ancestors, activeEnvironment, globalVariables, varName });
   };
   const updateUrlValue = (newUrl: string) => {
     const updates: any = {

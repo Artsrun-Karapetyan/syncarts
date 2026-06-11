@@ -23,7 +23,7 @@ export function CollectionFolderTabs() {
     { id: 'overview', label: 'Overview' },
     { id: 'authorization', label: 'Authorization' },
     { id: 'scripts', label: 'Scripts' },
-    { id: 'variables', label: 'Variables', hide: !isCollection },
+    { id: 'variables', label: 'Variables' },
     { id: 'runs', label: 'Runs', hide: !isCollection },
   ];
 

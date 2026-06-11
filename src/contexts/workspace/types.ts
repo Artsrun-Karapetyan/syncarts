@@ -101,6 +101,7 @@ export interface Folder {
   description?: string;
   preRequestScript?: string;
   testScript?: string;
+  variables?: EnvironmentVariable[];
 }
 
 export interface Collection {

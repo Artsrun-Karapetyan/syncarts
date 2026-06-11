@@ -42,7 +42,7 @@ export function VariableTextInput(props: VariableTextInputProps) {
         }}
         aria-hidden="true"
       >
-        {value ? renderVariableHighlight({ activeCollection, activeEnvironment, globalVariables, text: value }) : placeholder}
+        {value ? renderVariableHighlight({ text: value, activeTab, collections, activeEnvironment, globalVariables }) : placeholder}
       </div>
       <input
         className={className}
@@ -90,8 +90,8 @@ export function VariableTextInput(props: VariableTextInputProps) {
           onMouseLeave={hover.handleMouseLeave}
           onOpenCollectionVariables={hover.openCollectionVariables}
           onOpenPathVariables={hover.openPathVariables}
-          canOpenCollectionVariables={!!hover.activeCollection}
-          variableTargetLabel={hover.activeCollection ? 'Collection' : 'Environment'}
+          canOpenCollectionVariables={!!hover.closestAncestor}
+          variableTargetLabel={hover.closestAncestor?.type === 'folder' ? 'Folder' : (hover.closestAncestor ? 'Collection' : 'Environment')}
         />
       )}
     </div>

@@ -8,17 +8,22 @@ export interface ResolvedVariable {
 }
 
 export function resolveScopedVariable(args: {
-  activeCollection?: Collection;
+  ancestors?: any[]; // (Collection | Folder)[]
   activeEnvironment?: Environment;
   globalVariables: EnvironmentVariable[];
   varName: string;
 }): ResolvedVariable {
-  const { activeCollection, activeEnvironment, globalVariables, varName } = args;
-  const envVar = activeEnvironment?.variables.find(variable => variable.key === varName && variable.enabled);
+  const { ancestors, activeEnvironment, globalVariables, varName } = args;
+  const envVar = activeEnvironment?.variables?.find(variable => variable.key === varName && variable.enabled);
   if (envVar) return toResolved(envVar, activeEnvironment?.name || 'Environment');
 
-  const collectionVar = activeCollection?.variables?.find(variable => variable.key === varName && variable.enabled);
-  if (collectionVar) return toResolved(collectionVar, 'Collection');
+  if (ancestors && ancestors.length > 0) {
+    for (let i = ancestors.length - 1; i >= 0; i--) {
+      const ancestor = ancestors[i];
+      const ancestorVar = ancestor.variables?.find((variable: any) => variable.key === varName && variable.enabled);
+      if (ancestorVar) return toResolved(ancestorVar, ancestor.type === 'folder' ? 'Folder' : 'Collection');
+    }
+  }
 
   const globalVar = globalVariables.find(variable => variable.key === varName && variable.enabled);
   if (globalVar) return toResolved(globalVar, 'Globals');

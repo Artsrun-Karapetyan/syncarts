@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, RefObject } from 'react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { upsertActiveVariableValue } from './variableResolution';
 import { upsertPathVariable } from '../../utils/pathVariables';
+import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
 
 export type HoveredUrlVariable = {
   kind: 'environment' | 'path';
@@ -25,7 +26,9 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
     globalVariables,
     updateGlobalVariables,
     updateCollection,
-    openCollectionTab
+    updateFolder,
+    openCollectionTab,
+    openFolderTab
   } = useWorkspace();
 
   const [hoveredVar, setHoveredVar] = useState<HoveredUrlVariable | null>(null);
@@ -35,6 +38,9 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
   const activeCollection = activeTab?.collectionId 
     ? collections.find(c => c.id === activeTab.collectionId) 
     : undefined;
+
+  const ancestors = getRequestAncestors(activeTab, collections);
+  const closestAncestor = ancestors.length > 0 ? ancestors[ancestors.length - 1] : undefined;
 
   const clearHideTimeout = () => {
     if (!hideTimeout.current) return;
@@ -115,8 +121,12 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
       return;
     }
 
-    if (activeCollection) {
-      updateCollection(activeCollection.id, { variables: upsertActiveVariableValue(activeCollection.variables || [], varName, value) });
+    if (closestAncestor) {
+      if (closestAncestor.type === 'folder' && activeTab?.collectionId) {
+        updateFolder(activeTab.collectionId, closestAncestor.id, { variables: upsertActiveVariableValue(closestAncestor.variables || [], varName, value) });
+      } else {
+        updateCollection(closestAncestor.id, { variables: upsertActiveVariableValue(closestAncestor.variables || [], varName, value) });
+      }
       setHoveredVar(null);
       return;
     }
@@ -136,9 +146,14 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
   };
 
   const openCollectionVariables = () => {
-    if (!activeCollection) return;
+    if (!closestAncestor || !activeTab?.collectionId) return;
     setHoveredVar(null);
-    openCollectionTab(activeCollection.id, 'variables');
+    if (closestAncestor.type === 'folder') {
+      openFolderTab(activeTab.collectionId, closestAncestor.id);
+      setTimeout(() => updateActiveTab({ collectionView: 'variables' }), 50);
+    } else {
+      openCollectionTab(closestAncestor.id, 'variables');
+    }
   };
 
   const openPathVariables = () => {
@@ -149,7 +164,7 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
   return {
     hoveredVar,
     popoverRef,
-    activeCollection,
+    closestAncestor,
     handleMouseMove,
     handleMouseLeave,
     handleAddVar,

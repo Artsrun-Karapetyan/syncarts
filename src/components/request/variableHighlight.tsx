@@ -1,13 +1,15 @@
 import type { Collection, Environment, EnvironmentVariable } from '../../contexts/WorkspaceContext';
 import { resolveScopedVariable } from './variableResolution';
+import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
 
 export function renderVariableHighlight(args: {
-  activeCollection?: Collection;
+  text: string;
+  activeTab: any;
+  collections: any[];
   activeEnvironment?: Environment;
   globalVariables: EnvironmentVariable[];
-  text: string;
 }) {
-  const { activeCollection, activeEnvironment, globalVariables, text } = args;
+  const { text, activeTab, collections, activeEnvironment, globalVariables } = args;
   const parts = text.split(/(\{\{[^}]*\}\})/g);
 
   return parts.map((part, index) => {
@@ -16,7 +18,8 @@ export function renderVariableHighlight(args: {
     }
 
     const varName = part.slice(2, -2);
-    const resolved = resolveScopedVariable({ activeCollection, activeEnvironment, globalVariables, varName });
+    const ancestors = getRequestAncestors(activeTab, collections);
+    const resolved = resolveScopedVariable({ ancestors, activeEnvironment, globalVariables, varName });
     const isDynamic = ['$guid', '$timestamp', '$isoTimestamp'].includes(varName);
 
     return (

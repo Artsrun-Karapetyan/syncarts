@@ -11,16 +11,27 @@ export function getDynamicVariables(): VariableSuggestion[] {
 }
 
 export function getVariableSuggestions(args: {
-  activeCollection?: Collection;
+  ancestors?: any[]; // (Collection | Folder)[]
   activeEnvironment?: Environment;
   globalVariables: EnvironmentVariable[];
   query: string;
 }) {
-  const { activeCollection, activeEnvironment, globalVariables, query } = args;
+  const { ancestors, activeEnvironment, globalVariables, query } = args;
   const normalizedQuery = query.toLowerCase();
+  
+  const ancestorSuggestions: VariableSuggestion[] = [];
+  if (ancestors && ancestors.length > 0) {
+    for (let i = ancestors.length - 1; i >= 0; i--) {
+      const ancestor = ancestors[i];
+      if (ancestor.variables) {
+        ancestorSuggestions.push(...toSuggestions(ancestor.variables, ancestor.type === 'folder' ? 'Folder' : 'Collection'));
+      }
+    }
+  }
+
   const suggestions: VariableSuggestion[] = [
     ...toSuggestions(activeEnvironment?.variables || [], 'Environment'),
-    ...toSuggestions(activeCollection?.variables || [], 'Collection'),
+    ...ancestorSuggestions,
     ...toSuggestions(globalVariables, 'Globals'),
     ...getDynamicVariables()
   ];
