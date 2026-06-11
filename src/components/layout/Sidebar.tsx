@@ -4,10 +4,11 @@ import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plu
 
 import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/WorkspaceContext';
 import { ConfirmModal } from '../ui/ConfirmModal';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { api } from '../../lib/api';
 import { exportToPostmanCollection } from '../../utils/postmanParser';
 import { ImportModal } from '../workspace/ImportModal';
 import { CreateMergeRequestModal } from '../workspace/CreateMergeRequestModal';
-import { MergeRequestsModal } from '../workspace/MergeRequestsModal';
 import { GitPullRequest } from 'lucide-react';
 
 interface CtxMenuState {
@@ -336,8 +337,9 @@ export function Sidebar() {
   const { 
     collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder,
     openCollectionTab, addTab,
-    renameItem, sortItems, deleteExample, addExample, activeTab, resolveTabSavedRequestId, forkCollection
+    renameItem, sortItems, deleteExample, addExample, activeTab, resolveTabSavedRequestId, forkCollection, activeWorkspaceId
   } = useWorkspace();
+  const navigate = useNavigate();
   const [isAdding, setIsAdding] = useState(false);
   const [newColName, setNewColName] = useState('');
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
@@ -346,8 +348,26 @@ export function Sidebar() {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'collection' | 'item' | 'example', collectionId?: string, requestId?: string } | null>(null);
   const [mergeRequestTarget, setMergeRequestTarget] = useState<{ sourceCollectionId: string, targetWorkspaceId: string, targetCollectionId: string } | null>(null);
-  const [isMergeRequestsModalOpen, setIsMergeRequestsModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [openMrCount, setOpenMrCount] = useState(0);
+
+  // Poll for open MRs
+  useEffect(() => {
+    if (!activeWorkspaceId) return;
+    const fetchMrs = async () => {
+      try {
+        const res = await api.get(`/merge-requests/workspace/${activeWorkspaceId}`);
+        const mrs = res.data || [];
+        setOpenMrCount(mrs.filter((mr: any) => mr.status === 'OPEN').length);
+      } catch (err) {
+        console.error('Failed to fetch MRs for badge:', err);
+      }
+    };
+    fetchMrs();
+    const interval = setInterval(fetchMrs, 15000); // Poll every 15s
+    return () => clearInterval(interval);
+  }, [activeWorkspaceId]);
+
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -603,21 +623,53 @@ export function Sidebar() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--text-tertiary)',
+                justifyContent: 'center',
+                color: openMrCount > 0 ? '#00f0ff' : 'var(--text-tertiary)',
+                background: openMrCount > 0 ? 'rgba(0, 240, 255, 0.1)' : 'transparent',
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
+                position: 'relative'
               }}
-              onClick={() => setIsMergeRequestsModalOpen(true)}
+              onClick={() => navigate({ to: '/merge-requests' })}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--bg-tertiary)';
-                e.currentTarget.style.color = '#b000ff';
+                if (openMrCount === 0) {
+                  e.currentTarget.style.background = 'var(--bg-tertiary)';
+                  e.currentTarget.style.color = '#b000ff';
+                } else {
+                  e.currentTarget.style.background = 'rgba(0, 240, 255, 0.2)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--text-tertiary)';
+                if (openMrCount === 0) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-tertiary)';
+                } else {
+                  e.currentTarget.style.background = 'rgba(0, 240, 255, 0.1)';
+                }
               }}
             >
               <GitPullRequest size={14} />
+              {openMrCount > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  background: '#ff0055',
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 900,
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid var(--bg-primary)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                  {openMrCount > 9 ? '9+' : openMrCount}
+                </div>
+              )}
             </div>
             <div
               className="tooltip-trigger"
@@ -1465,7 +1517,7 @@ export function Sidebar() {
       />
 
       <CreateMergeRequestModal
-        isOpen={mergeRequestTarget !== null}
+        isOpen={!!mergeRequestTarget}
         onClose={() => setMergeRequestTarget(null)}
         sourceCollectionId={mergeRequestTarget?.sourceCollectionId || ''}
         targetWorkspaceId={mergeRequestTarget?.targetWorkspaceId || ''}
@@ -1473,12 +1525,6 @@ export function Sidebar() {
         onSuccess={() => {
           showToast('Merge Request created successfully!');
         }}
-      />
-
-      <MergeRequestsModal
-        isOpen={isMergeRequestsModalOpen}
-        onClose={() => setIsMergeRequestsModalOpen(false)}
-        workspaceId={useWorkspace().activeWorkspaceId}
       />
 
       {/* Toast Notification */}

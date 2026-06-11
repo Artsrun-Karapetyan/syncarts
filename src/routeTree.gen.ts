@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as MergeRequestsRouteImport } from './routes/merge-requests'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -23,6 +24,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MergeRequestsRoute = MergeRequestsRouteImport.update({
+  id: '/merge-requests',
+  path: '/merge-requests',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -44,6 +50,7 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/merge-requests': typeof MergeRequestsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/merge-requests': typeof MergeRequestsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -59,21 +67,42 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/merge-requests': typeof MergeRequestsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/invite/$token': typeof InviteTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/profile' | '/register' | '/invite/$token'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/merge-requests'
+    | '/profile'
+    | '/register'
+    | '/invite/$token'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/profile' | '/register' | '/invite/$token'
-  id: '__root__' | '/' | '/login' | '/profile' | '/register' | '/invite/$token'
+  to:
+    | '/'
+    | '/login'
+    | '/merge-requests'
+    | '/profile'
+    | '/register'
+    | '/invite/$token'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/merge-requests'
+    | '/profile'
+    | '/register'
+    | '/invite/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  MergeRequestsRoute: typeof MergeRequestsRoute
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   InviteTokenRoute: typeof InviteTokenRoute
@@ -93,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merge-requests': {
+      id: '/merge-requests'
+      path: '/merge-requests'
+      fullPath: '/merge-requests'
+      preLoaderRoute: typeof MergeRequestsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -122,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  MergeRequestsRoute: MergeRequestsRoute,
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   InviteTokenRoute: InviteTokenRoute,

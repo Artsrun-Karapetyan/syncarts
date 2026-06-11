@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { Settings2, Eye, LayoutGrid, UserPlus, LogIn, Trash2, Edit2 } from 'lucide-react';
 
 import { useStoredUser } from '../../lib/session';
@@ -13,6 +13,7 @@ import { JoinWorkspaceModal } from '../workspace/JoinWorkspaceModal';
 
 export function TopBar() {
   const { workspaces, activeWorkspaceId, switchWorkspace, createWorkspace, removeWorkspace, renameWorkspace, environments, globalVariables, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment, localDefaultWorkspaceId } = useWorkspace();
+  const navigate = useNavigate();
   const user = useStoredUser();
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -377,9 +378,11 @@ export function TopBar() {
         </div>
 
         {/* Profile */}
-        <Link
-        to="/profile"
+        <div
+        onClick={() => navigate({ to: '/profile' })}
+        data-tauri-drag-region="false"
         style={{
+          WebkitAppRegion: 'no-drag',
           borderRadius: 9999,
           border: '1px solid var(--border-color)',
           background: 'var(--bg-primary)',
@@ -399,6 +402,7 @@ export function TopBar() {
         }}
       >
         <div
+          data-tauri-drag-region="false"
           style={{
             width: 32,
             height: 32,
@@ -414,13 +418,13 @@ export function TopBar() {
             flexShrink: 0,
           }}
         >
-          {(user?.name?.trim()?.[0] ?? user?.email?.[0] ?? 'A').toUpperCase()}
+          <span data-tauri-drag-region="false">{(user?.name?.trim()?.[0] ?? user?.email?.[0] ?? 'A').toUpperCase()}</span>
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+        <div data-tauri-drag-region="false" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
           {user?.name?.trim() || 'Your profile'}
         </div>
         <Settings2 size={13} style={{ color: 'var(--text-tertiary)', marginLeft: 4 }} />
-      </Link>
+      </div>
       </div>
       
       <EnvironmentManager 
