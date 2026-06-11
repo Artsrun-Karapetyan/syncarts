@@ -104,6 +104,12 @@ export interface Folder {
   variables?: EnvironmentVariable[];
 }
 
+export interface ForkMetadata {
+  originalWorkspaceId: string;
+  originalCollectionId: string;
+  forkedAt: number;
+}
+
 export interface Collection {
   id: string;
   name: string;
@@ -114,6 +120,7 @@ export interface Collection {
   preRequestScript?: string;
   testScript?: string;
   variables?: EnvironmentVariable[];
+  fork?: ForkMetadata;
 }
 
 export interface EnvironmentVariable {
@@ -192,6 +199,7 @@ export interface WorkspaceContextState extends TabActions, CollectionActions, En
   isTabDirty: (tab?: TabData) => boolean;
   saveActiveRequestInPlace: () => boolean;
   addCollection: (name: string) => void;
+  forkCollection: (collectionId: string) => void;
   updateCollection: (id: string, data: Partial<Collection>) => void;
   deleteCollection: (id: string) => void;
   deleteItem: (collectionId: string, itemId: string) => void;

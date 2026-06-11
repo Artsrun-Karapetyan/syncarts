@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
-import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Trash2, Download, Edit2, ListOrdered, ArrowDownAZ } from 'lucide-react';
+import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Trash2, Download, Edit2, ListOrdered, ArrowDownAZ, GitFork } from 'lucide-react';
 
 import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/WorkspaceContext';
 import { ConfirmModal } from '../ui/ConfirmModal';
@@ -333,7 +333,7 @@ export function Sidebar() {
   const { 
     collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder,
     openCollectionTab, addTab,
-    renameItem, sortItems, deleteExample, addExample, activeTab, resolveTabSavedRequestId
+    renameItem, sortItems, deleteExample, addExample, activeTab, resolveTabSavedRequestId, forkCollection
   } = useWorkspace();
   const [isAdding, setIsAdding] = useState(false);
   const [newColName, setNewColName] = useState('');
@@ -349,6 +349,12 @@ export function Sidebar() {
   const [renameValue, setRenameValue] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [highlightedRequestId, setHighlightedRequestId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -753,7 +759,28 @@ export function Sidebar() {
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{col.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, overflow: 'hidden' }}>
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{col.name}</span>
+                  {col.fork && (
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 800,
+                        color: '#000',
+                        background: 'linear-gradient(135deg, #00f0ff 0%, #00b8ff 100%)',
+                        borderRadius: 4,
+                        padding: '1px 5px',
+                        flexShrink: 0,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        boxShadow: '0 2px 8px rgba(0, 240, 255, 0.25)'
+                      }}
+                      title="This is a forked collection"
+                    >
+                      Fork
+                    </span>
+                  )}
+                </div>
               )}
               {/* Item count badge */}
               <span
@@ -1132,6 +1159,51 @@ export function Sidebar() {
                   </span>
                   <span style={{ fontWeight: 500 }}>Export collection</span>
                 </button>
+                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+                <button
+                  type="button"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 12px',
+                    fontSize: 13,
+                    color: 'var(--text-primary)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    transition: 'background var(--transition-fast)',
+                    textAlign: 'left',
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    forkCollection(ctxMenu.collectionId);
+                    setCtxMenu(null);
+                    showToast('Fork created in "My Workspace"');
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--accent-primary)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <GitFork size={13} />
+                  </span>
+                  <span style={{ fontWeight: 500 }}>Fork collection</span>
+                </button>
               </>
             )}
 
@@ -1305,6 +1377,32 @@ export function Sidebar() {
         }}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div style={{
+          position: 'absolute',
+          bottom: 24,
+          left: 16,
+          right: 16,
+          background: 'var(--status-success-bg)',
+          color: 'var(--status-success)',
+          border: '1px solid var(--status-success)',
+          padding: '12px 16px',
+          borderRadius: 8,
+          fontSize: 13,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          boxShadow: 'var(--shadow-lg)',
+          zIndex: 99999,
+          animation: 'fade-in 0.3s ease-out'
+        }}>
+          <GitFork size={16} />
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }
