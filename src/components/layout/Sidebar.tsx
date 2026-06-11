@@ -22,7 +22,6 @@ interface SidebarItemProps {
   collectionId: string;
   parentFolderId: string | null;
   onContextMenu: (e: React.MouseEvent, itemId: string, type: 'folder' | 'request' | 'example', itemName: string, requestId?: string) => void;
-  level?: number;
   renamingId: string | null;
   setRenamingId: (id: string | null) => void;
   renameValue: string;
@@ -51,7 +50,7 @@ function SidebarItem({
   const [isExamplesOpen, setIsExamplesOpen] = useState(false);
   const { openFolderTab, openExampleTab, openRequestTab } = useWorkspace();
 
-  const paddingLeft = `${level * 12 + 8}px`;
+  const paddingLeft = `8px`;
 
   if (item.type === 'request') {
     return (
@@ -60,16 +59,16 @@ function SidebarItem({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 6,
           fontSize: 13,
           color: highlightedRequestId === item.id ? 'var(--text-primary)' : 'var(--text-secondary)',
           background: highlightedRequestId === item.id ? 'var(--bg-tertiary)' : 'transparent',
           boxShadow: highlightedRequestId === item.id ? 'inset 0 0 0 1px var(--accent-primary)' : 'none',
-          padding: '4px 8px',
+          padding: '3px 8px',
           paddingLeft,
-          borderRadius: 8,
+          borderRadius: 6,
           cursor: 'pointer',
-          transition: 'all 0.4s ease-out',
+          transition: 'all 0.2s ease-out',
         }}
         onClick={() => openRequestTab(collectionId, parentFolderId, item.id)}
         onContextMenu={(e) => onContextMenu(e, item.id, 'request', item.name)}
@@ -169,12 +168,12 @@ function SidebarItem({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
-                fontSize: 13,
+                gap: 6,
+                fontSize: 12,
                 color: 'var(--text-tertiary)',
-                padding: '4px 8px',
-                paddingLeft: `${level * 12 + 24}px`,
-                borderRadius: 8,
+                padding: '3px 8px',
+                paddingLeft: `28px`,
+                borderRadius: 6,
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
               }}
@@ -229,12 +228,12 @@ function SidebarItem({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 6,
           fontSize: 13,
           color: 'var(--text-secondary)',
-          padding: '4px 8px',
+          padding: '3px 8px',
           paddingLeft,
-          borderRadius: 8,
+          borderRadius: 6,
           cursor: 'pointer',
           transition: 'all var(--transition-fast)',
         }}
@@ -306,7 +305,7 @@ function SidebarItem({
         </div>
       </div>
       {expandedFolders[item.id] && (
-        <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 20, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 14, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 0 }}>
           {item.items.map(subItem => (
             <SidebarItem 
               key={subItem.id} 
@@ -314,7 +313,6 @@ function SidebarItem({
               collectionId={collectionId} 
               parentFolderId={item.id}
               onContextMenu={onContextMenu} 
-              level={level + 1} 
               renamingId={renamingId}
               setRenamingId={setRenamingId}
               renameValue={renameValue}
@@ -697,13 +695,13 @@ export function Sidebar() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 6,
                 fontSize: 13,
                 color: 'var(--text-primary)',
                 fontWeight: 600,
-                padding: '8px 10px',
+                padding: '6px 10px',
                 background: 'var(--bg-tertiary)',
-                borderRadius: 8,
+                borderRadius: 6,
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
               }}
@@ -819,7 +817,7 @@ export function Sidebar() {
               </div>
             </div>
             {expandedCollections[col.id] && (
-              <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 14, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 10, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {col.items.map(item => (
                   <SidebarItem
                     key={item.id}
