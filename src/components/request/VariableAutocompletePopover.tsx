@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { VariableSuggestion } from './variableAutocompleteTypes';
 import { VariableSourceBadge } from './VariableSourceBadge';
@@ -15,10 +15,14 @@ interface VariableAutocompletePopoverProps {
 export function VariableAutocompletePopover(props: VariableAutocompletePopoverProps) {
   const { activeIndex, onSelect, suggestions, x, y } = props;
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    itemRefs.current[activeIndex]?.scrollIntoView({ block: 'nearest' });
+  }, [activeIndex]);
+
   if (suggestions.length === 0) return null;
 
-  const hoveredSuggestion = hoveredIndex === null ? null : suggestions[hoveredIndex];
-  const showPreviewOnLeft = typeof window !== 'undefined' && x + 704 > window.innerWidth;
 
   return createPortal(
     <div
@@ -27,12 +31,12 @@ export function VariableAutocompletePopover(props: VariableAutocompletePopoverPr
         left: x,
         top: y,
         zIndex: 999999,
-        width: 360,
+        width: 320,
         overflow: 'visible',
-        padding: 8,
-        background: 'rgba(28, 28, 28, 0.98)',
+        padding: 4,
+        background: 'rgba(29, 32, 27, 0.98)',
         border: '1px solid var(--border-highlight)',
-        borderRadius: 'var(--radius-md)',
+        borderRadius: 6,
         boxShadow: 'var(--shadow-lg)',
       }}
     >
@@ -40,6 +44,9 @@ export function VariableAutocompletePopover(props: VariableAutocompletePopoverPr
         {suggestions.map((suggestion, index) => (
           <button
             key={`${suggestion.source}-${suggestion.key}-${index}`}
+            ref={node => {
+              itemRefs.current[index] = node;
+            }}
             type="button"
             onMouseDown={(event) => {
               event.preventDefault();
@@ -50,68 +57,29 @@ export function VariableAutocompletePopover(props: VariableAutocompletePopoverPr
             style={{
               width: '100%',
               display: 'flex',
-              alignItems: 'flex-start',
-              gap: 10,
-              padding: '10px 12px',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 8px',
               border: 0,
-              borderRadius: 8,
-              background: index === activeIndex || index === hoveredIndex ? 'var(--bg-tertiary)' : 'transparent',
+              borderRadius: 6,
+              background: index === activeIndex || index === hoveredIndex ? 'rgba(139, 137, 113, 0.75)' : 'transparent',
               color: 'var(--text-primary)',
               cursor: 'pointer',
               textAlign: 'left',
             }}
           >
             <VariableSourceBadge source={suggestion.source} />
-            <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span className="font-mono" style={{ fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {suggestion.key}
               </span>
-              <span className="font-mono" style={{ fontSize: 12, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {suggestion.value || 'empty'}
               </span>
             </span>
           </button>
         ))}
       </div>
-      {hoveredSuggestion && (
-        <div
-          style={{
-            position: 'absolute',
-            left: showPreviewOnLeft ? -336 : 376,
-            top: Math.min(hoveredIndex ?? 0, 6) * 58 + 8,
-            width: 320,
-            padding: 12,
-            background: 'rgba(32, 32, 32, 0.98)',
-            border: '1px solid var(--border-highlight)',
-            borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-lg)',
-            color: 'var(--text-primary)',
-            pointerEvents: 'none',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <VariableSourceBadge source={hoveredSuggestion.source} />
-            <strong style={{ fontSize: 13 }}>{hoveredSuggestion.key}</strong>
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 6 }}>
-            {hoveredSuggestion.source} variable
-          </div>
-          <div
-            className="font-mono"
-            style={{
-              maxHeight: 160,
-              overflow: 'hidden',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-              fontSize: 12,
-              lineHeight: 1.5,
-              color: hoveredSuggestion.value ? 'var(--text-secondary)' : 'var(--text-tertiary)',
-            }}
-          >
-            {hoveredSuggestion.value || 'empty'}
-          </div>
-        </div>
-      )}
     </div>,
     document.body
   );

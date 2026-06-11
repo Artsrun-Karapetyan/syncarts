@@ -28,10 +28,14 @@ export function createScriptApi(args: {
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
 }) {
   const { activeEnvironmentId, collectionVariablesDraft, environments, globalVariables, requestDraft, testResults, updateEnvironment, updateGlobalVariables } = args;
+  const requestHeaders = createRequestHeadersApi(requestDraft);
   const api = {
     request: {
-      headers: createRequestHeadersApi(requestDraft),
+      addHeader: requestHeaders.add,
+      getHeaders: requestHeaders.all,
+      headers: requestHeaders,
       method: requestDraft.method,
+      removeHeader: requestHeaders.remove,
       url: requestDraft.url
     },
     environment: {
@@ -147,6 +151,7 @@ function createRequestHeadersApi(requestDraft: TabData) {
       requestDraft.headers = requestDraft.headers.filter(h => h.key.toLowerCase() !== key.toLowerCase());
     },
     get: (key: string) => requestDraft.headers.find(h => h.key.toLowerCase() === key.toLowerCase())?.value,
+    has: (key: string) => requestDraft.headers.some(h => h.key.toLowerCase() === key.toLowerCase()),
     all: () => requestDraft.headers
   };
 }

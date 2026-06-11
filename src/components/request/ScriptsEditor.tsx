@@ -1,8 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BookTemplate, Search, X } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import CodeEditor from '@uiw/react-textarea-code-editor';
 import '@uiw/react-textarea-code-editor/dist.css';
+import { ScriptAutocompletePopover } from './ScriptAutocompletePopover';
+import { useScriptAutocomplete } from './useScriptAutocomplete';
 
 const SNIPPET_GROUPS = [
   {
@@ -56,18 +58,20 @@ export function ScriptsEditor() {
   const [showSnippets, setShowSnippets] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubTab, setActiveSubTab] = useState<'pre' | 'post'>('pre');
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const historyRef = useRef<Record<string, HistoryState>>({});
-
-  if (!activeTab) return null;
+  const snippetsButtonRef = useRef<HTMLButtonElement | null>(null);
+  const snippetsDrawerRef = useRef<HTMLDivElement | null>(null);
 
   const scriptField = activeSubTab === 'pre' ? 'preRequestScript' : 'testScript';
-  const scriptHistoryKey = `${activeTab.id}:${scriptField}`;
-  const currentScript = activeTab[scriptField] || '';
+  const scriptHistoryKey = `${activeTab?.id || 'empty'}:${scriptField}`;
+  const currentScript = activeTab?.[scriptField] || '';
   const getHistory = () => {
     historyRef.current[scriptHistoryKey] ||= { past: [], future: [] };
     return historyRef.current[scriptHistoryKey];
   };
   const updateScript = (value: string, trackHistory = true) => {
+    if (!activeTab) return;
     if (value === currentScript) return;
     const history = getHistory();
     if (trackHistory) {
@@ -78,6 +82,7 @@ export function ScriptsEditor() {
     }
     updateActiveTab({ [scriptField]: value });
   };
+  const autocomplete = useScriptAutocomplete(currentScript, value => updateScript(value));
   const undoScript = () => {
     const history = getHistory();
     const previous = history.past.pop();
@@ -104,6 +109,22 @@ export function ScriptsEditor() {
     items: group.items.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
   })).filter(group => group.items.length > 0);
 
+  useEffect(() => {
+    if (!showSnippets) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (snippetsDrawerRef.current?.contains(target)) return;
+      if (snippetsButtonRef.current?.contains(target)) return;
+      setShowSnippets(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [showSnippets]);
+
+  if (!activeTab) return null;
+
   return (
     <div style={{ display: 'flex', height: '100%', overflow: 'hidden', position: 'relative' }}>
       {/* Editor Section */}
@@ -126,6 +147,7 @@ export function ScriptsEditor() {
             </button>
           </div>
           <button 
+            ref={snippetsButtonRef}
             className="btn" 
             style={{ padding: '6px 12px', fontSize: 12, background: showSnippets ? 'var(--bg-tertiary)' : 'transparent' }}
             onClick={() => setShowSnippets(!showSnippets)}
@@ -156,23 +178,30 @@ export function ScriptsEditor() {
               textarea.setSelectionRange(length, length);
             }
           }}
+          onKeyDownCapture={(event) => {
+            const target = event.target as HTMLElement;
+            if (target.tagName !== 'TEXTAREA') return;
+            if (autocomplete.handleKeyDown(event as any)) return;
+            if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'z') return;
+            event.preventDefault();
+            event.stopPropagation();
+            if (event.shiftKey) {
+              redoScript();
+            } else {
+              undoScript();
+            }
+          }}
         >
           <CodeEditor
+            ref={editorRef}
             value={currentScript}
             language="js"
             placeholder="Write your scripts here... Example: pm.environment.set('token', pm.response.json().access_token);"
-            onChange={(evn) => {
-              updateScript(evn.target.value);
-            }}
-            onKeyDown={(event) => {
-              if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'z') return;
-              event.preventDefault();
-              if (event.shiftKey) {
-                redoScript();
-              } else {
-                undoScript();
-              }
-            }}
+            onBlur={autocomplete.handleBlur}
+            onChange={autocomplete.handleChange}
+            onClick={autocomplete.handleClick}
+            onFocus={autocomplete.handleFocus}
+            onKeyUp={autocomplete.handleKeyUp}
             padding={24}
             style={{
               flex: 1,
@@ -182,12 +211,21 @@ export function ScriptsEditor() {
               minHeight: '100%',
             }}
           />
+          {autocomplete.state && (
+            <ScriptAutocompletePopover
+              activeIndex={autocomplete.activeIndex}
+              suggestions={autocomplete.suggestions}
+              x={autocomplete.state.x}
+              y={autocomplete.state.y}
+              onSelect={suggestion => autocomplete.insertSuggestion(suggestion, editorRef.current)}
+            />
+          )}
         </div>
       </div>
 
       {/* Snippets Drawer */}
       {showSnippets && (
-        <div style={{ 
+        <div ref={snippetsDrawerRef} style={{ 
           position: 'absolute', 
           top: 0, 
           right: 0, 

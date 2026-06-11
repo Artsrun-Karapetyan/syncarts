@@ -1,4 +1,5 @@
-import { Braces, Maximize2, Minimize2, Play, WrapText } from 'lucide-react';
+import { useState } from 'react';
+import { Braces, ChevronDown, ChevronUp, Maximize2, Minimize2, Play, Search, WrapText } from 'lucide-react';
 
 import { Select } from '../ui/Select';
 import type { ResponseLanguage } from './responseLanguage';
@@ -28,6 +29,14 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
     onLanguageChange,
     onWrapLinesChange
   } = props;
+
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (forward: boolean) => {
+    if (!searchQuery) return;
+    // window.find(aString, aCaseSensitive, aBackwards, aWrapAround)
+    window.find(searchQuery, false, !forward, true, false, false, false);
+  };
 
   return (
     <div className="response-body-toolbar">
@@ -59,18 +68,49 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
         </div>
       </div>
 
-      {hasJsonBody && bodyFormat === 'pretty' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className={toolButtonClass(wrapLines)} onClick={() => onWrapLinesChange(prev => !prev)}>
-            <WrapText size={11} />
-            {wrapLines ? 'Unwrap Lines' : 'Wrap Lines'}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-tertiary)', borderRadius: 6, padding: '2px 6px', height: 24, border: '1px solid var(--border-color)' }}>
+          <Search size={11} color="var(--text-tertiary)" style={{ marginRight: 6 }} />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearch(!e.shiftKey);
+              }
+            }}
+            placeholder="Search..."
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-primary)',
+              fontSize: 11,
+              outline: 'none',
+              width: 120,
+            }}
+          />
+          <button onClick={() => handleSearch(false)} style={{ background: 'transparent', border: 'none', padding: 2, cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Previous (Shift+Enter)">
+            <ChevronUp size={12} />
           </button>
-          <button className="response-tool-button" onClick={() => onJsonCollapsedChange(prev => prev === false ? 1 : false)}>
-            {jsonCollapsed === false ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
-            {jsonCollapsed === false ? 'Collapse All' : 'Expand All'}
+          <button onClick={() => handleSearch(true)} style={{ background: 'transparent', border: 'none', padding: 2, cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Next (Enter)">
+            <ChevronDown size={12} />
           </button>
         </div>
-      )}
+
+        {hasJsonBody && bodyFormat === 'pretty' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className={toolButtonClass(wrapLines)} onClick={() => onWrapLinesChange(prev => !prev)}>
+              <WrapText size={11} />
+              {wrapLines ? 'Unwrap Lines' : 'Wrap Lines'}
+            </button>
+            <button className="response-tool-button" onClick={() => onJsonCollapsedChange(prev => prev === false ? 1 : false)}>
+              {jsonCollapsed === false ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
+              {jsonCollapsed === false ? 'Collapse All' : 'Expand All'}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

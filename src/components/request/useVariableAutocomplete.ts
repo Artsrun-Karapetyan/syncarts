@@ -32,10 +32,10 @@ export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
       return;
     }
 
-    const rect = element.getBoundingClientRect();
+    const point = getCaretCoordinates(element, caretIndex);
     setState({
-      x: Math.min(rect.left, window.innerWidth - 380),
-      y: rect.bottom + 6,
+      x: Math.min(point.x, window.innerWidth - 300),
+      y: point.y + 24,
       query: trigger.query,
       startIndex: trigger.startIndex,
       caretIndex
@@ -53,16 +53,19 @@ export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
+      event.stopPropagation();
       setActiveIndex(index => (index + 1) % suggestions.length);
       return true;
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault();
+      event.stopPropagation();
       setActiveIndex(index => (index - 1 + suggestions.length) % suggestions.length);
       return true;
     }
     if (event.key === 'Enter' || event.key === 'Tab') {
       event.preventDefault();
+      event.stopPropagation();
       insertSuggestion(suggestions[activeIndex], event.currentTarget);
       return true;
     }
@@ -74,17 +77,28 @@ export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
   };
 
   const insertSuggestion = (suggestion: VariableSuggestion, element?: TextControl | null) => {
-    if (!state) return;
+    if (!state || !element) return;
     const insertion = `{{${suggestion.key}}}`;
     const replaceEndIndex = findVariableReplacementEnd(value, state.caretIndex);
     const nextValue = `${value.slice(0, state.startIndex)}${insertion}${value.slice(replaceEndIndex)}`;
     const caretPosition = state.startIndex + insertion.length;
+    
+    element.focus();
+    element.setSelectionRange(state.startIndex, replaceEndIndex);
+    
+    const success = document.execCommand('insertText', false, insertion);
+    
+    // Always call onChange to sync React state, because execCommand alone might not reliably trigger React's synthetic events
     onChange(nextValue);
+    
+    if (!success) {
+      window.requestAnimationFrame(() => {
+        element.focus();
+        element.setSelectionRange(caretPosition, caretPosition);
+      });
+    }
+    
     setState(null);
-    window.requestAnimationFrame(() => {
-      element?.focus();
-      element?.setSelectionRange(caretPosition, caretPosition);
-    });
   };
 
   return {
@@ -128,4 +142,40 @@ function findVariableReplacementEnd(value: string, caretIndex: number) {
   }
 
   return endIndex;
+}
+
+function getCaretCoordinates(element: HTMLInputElement | HTMLTextAreaElement, caretIndex: number) {
+  const style = window.getComputedStyle(element);
+  const mirror = document.createElement('div');
+  const span = document.createElement('span');
+  const rect = element.getBoundingClientRect();
+
+  mirror.textContent = element.value.slice(0, caretIndex);
+  span.textContent = element.value.slice(caretIndex, caretIndex + 1) || '.';
+  mirror.appendChild(span);
+
+  Object.assign(mirror.style, {
+    border: style.border,
+    boxSizing: style.boxSizing,
+    font: style.font,
+    letterSpacing: style.letterSpacing,
+    lineHeight: style.lineHeight,
+    padding: style.padding,
+    position: 'fixed',
+    whiteSpace: element.tagName === 'INPUT' ? 'pre' : 'pre-wrap',
+    wordBreak: element.tagName === 'INPUT' ? 'normal' : 'break-word',
+    width: `${element.clientWidth}px`,
+    visibility: 'hidden',
+    left: `${rect.left}px`,
+    top: `${rect.top}px`,
+  });
+
+  document.body.appendChild(mirror);
+  const spanRect = span.getBoundingClientRect();
+  document.body.removeChild(mirror);
+
+  return {
+    x: spanRect.left - element.scrollLeft,
+    y: spanRect.top - element.scrollTop,
+  };
 }
