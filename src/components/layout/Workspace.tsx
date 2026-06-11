@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { Send, Loader2, ChevronDown, Code2 } from 'lucide-react';
+import { Send, Loader2, ChevronDown, Code2, Edit2 } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import { MethodSelector } from '../request/MethodSelector';
@@ -65,22 +65,41 @@ export function Workspace() {
           <div style={{ padding: '16px 16px 0 16px', flexShrink: 0, position: 'relative', zIndex: 50 }}>
             {/* Top Row: Name and Save */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingLeft: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-                <input
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 600,
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-primary)',
-                    outline: 'none',
-                    width: '100%',
-                    fontFamily: 'inherit',
-                  }}
-                  value={activeTab?.name || ''}
-                  placeholder="Untitled Request"
-                  onChange={(e) => updateActiveTab({ name: e.target.value })}
-                />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, position: 'relative' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', maxWidth: 400, width: '100%' }}>
+                  <input
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 600,
+                      background: 'transparent',
+                      border: '1px solid transparent',
+                      borderRadius: 6,
+                      padding: '6px 32px 6px 10px',
+                      color: 'var(--text-primary)',
+                      outline: 'none',
+                      width: '100%',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.2s',
+                    }}
+                    value={activeTab?.name || ''}
+                    placeholder="Untitled Request"
+                    onChange={(e) => updateActiveTab({ name: e.target.value })}
+                    onFocus={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; e.currentTarget.style.border = '1px solid var(--border-color)'; }}
+                    onBlur={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.border = '1px solid transparent'; }}
+                    onMouseEnter={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.background = 'var(--bg-secondary)'; }}
+                    onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.background = 'transparent'; }}
+                  />
+                  <Edit2 
+                    size={12} 
+                    style={{ 
+                      position: 'absolute', 
+                      right: 12, 
+                      color: 'var(--text-tertiary)', 
+                      pointerEvents: 'none',
+                      opacity: activeTab?.name ? 0.5 : 0.8
+                    }} 
+                  />
+                </div>
               </div>
 
               {activeTab?.type !== 'example' && (
