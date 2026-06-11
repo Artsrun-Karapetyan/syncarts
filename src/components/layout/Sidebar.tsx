@@ -334,7 +334,7 @@ function SidebarItem({
 export function Sidebar() {
   const { 
     collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder,
-    openCollectionTab,
+    openCollectionTab, addTab,
     renameItem, sortItems, deleteExample, addExample, activeTab, resolveTabSavedRequestId
   } = useWorkspace();
   const [isAdding, setIsAdding] = useState(false);
@@ -612,6 +612,34 @@ export function Sidebar() {
             </div>
             <div
               className="tooltip-trigger"
+              data-tooltip="New Request"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-tertiary)',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+              onClick={() => {
+                addTab();
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-tertiary)';
+              }}
+            >
+              <FilePlus2 size={14} />
+            </div>
+            <div
+              className="tooltip-trigger"
               data-tooltip="New Collection"
               style={{
                 width: 26,
@@ -637,7 +665,7 @@ export function Sidebar() {
                 e.currentTarget.style.color = 'var(--text-tertiary)';
               }}
             >
-              <Plus size={15} />
+              <FolderPlus size={14} />
             </div>
           </div>
         </div>
