@@ -6,6 +6,9 @@ import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/Wo
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { exportToPostmanCollection } from '../../utils/postmanParser';
 import { ImportModal } from '../workspace/ImportModal';
+import { CreateMergeRequestModal } from '../workspace/CreateMergeRequestModal';
+import { MergeRequestsModal } from '../workspace/MergeRequestsModal';
+import { GitPullRequest } from 'lucide-react';
 
 interface CtxMenuState {
   x: number;
@@ -342,6 +345,8 @@ export function Sidebar() {
   const [newFolderName, setNewFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'collection' | 'item' | 'example', collectionId?: string, requestId?: string } | null>(null);
+  const [mergeRequestTarget, setMergeRequestTarget] = useState<{ sourceCollectionId: string, targetWorkspaceId: string, targetCollectionId: string } | null>(null);
+  const [isMergeRequestsModalOpen, setIsMergeRequestsModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
@@ -588,6 +593,32 @@ export function Sidebar() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Collections</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div
+              className="tooltip-trigger"
+              data-tooltip="Merge Requests"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-tertiary)',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+              onClick={() => setIsMergeRequestsModalOpen(true)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                e.currentTarget.style.color = '#b000ff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-tertiary)';
+              }}
+            >
+              <GitPullRequest size={14} />
+            </div>
             <div
               className="tooltip-trigger"
               data-tooltip="Import Data"
@@ -1204,6 +1235,61 @@ export function Sidebar() {
                   </span>
                   <span style={{ fontWeight: 500 }}>Fork collection</span>
                 </button>
+                {collections.find(c => c.id === ctxMenu.collectionId)?.fork && (
+                  <>
+                    <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+                    <button
+                      type="button"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '10px 12px',
+                        fontSize: 13,
+                        color: 'var(--text-primary)',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        transition: 'background var(--transition-fast)',
+                        textAlign: 'left',
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const col = collections.find(c => c.id === ctxMenu.collectionId);
+                        if (col?.fork) {
+                          setMergeRequestTarget({
+                            sourceCollectionId: col.id,
+                            targetWorkspaceId: col.fork.originalWorkspaceId,
+                            targetCollectionId: col.fork.originalCollectionId
+                          });
+                        }
+                        setCtxMenu(null);
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <span
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 7,
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#b000ff',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <GitPullRequest size={13} />
+                      </span>
+                      <span style={{ fontWeight: 500 }}>Create Merge Request</span>
+                    </button>
+                  </>
+                )}
               </>
             )}
 
@@ -1376,6 +1462,23 @@ export function Sidebar() {
           setDeleteTarget(null);
         }}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <CreateMergeRequestModal
+        isOpen={mergeRequestTarget !== null}
+        onClose={() => setMergeRequestTarget(null)}
+        sourceCollectionId={mergeRequestTarget?.sourceCollectionId || ''}
+        targetWorkspaceId={mergeRequestTarget?.targetWorkspaceId || ''}
+        targetCollectionId={mergeRequestTarget?.targetCollectionId || ''}
+        onSuccess={() => {
+          showToast('Merge Request created successfully!');
+        }}
+      />
+
+      <MergeRequestsModal
+        isOpen={isMergeRequestsModalOpen}
+        onClose={() => setIsMergeRequestsModalOpen(false)}
+        workspaceId={useWorkspace().activeWorkspaceId}
       />
 
       {/* Toast Notification */}

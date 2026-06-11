@@ -1,0 +1,112 @@
+import { Injectable, Inject } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service.js';
+
+@Injectable()
+export class MergeRequestService {
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  async createMergeRequest(data: {
+    title: string;
+    description?: string;
+    sourceWorkspaceId: string;
+    targetWorkspaceId: string;
+    sourceCollectionId: string;
+    targetCollectionId: string;
+    authorId: string;
+    data: any;
+  }) {
+    // Validate target workspace exists
+    const targetWs = await this.prisma.workspace.findUnique({
+      where: { id: data.targetWorkspaceId }
+    });
+    if (!targetWs) throw new Error('Target workspace not found');
+
+    return this.prisma.mergeRequest.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        sourceWorkspaceId: data.sourceWorkspaceId,
+        targetWorkspaceId: data.targetWorkspaceId,
+        sourceCollectionId: data.sourceCollectionId,
+        targetCollectionId: data.targetCollectionId,
+        data: data.data,
+        authorId: data.authorId,
+        status: 'OPEN',
+      }
+    });
+  }
+
+  async getMergeRequestsForWorkspace(workspaceId: string) {
+    return this.prisma.mergeRequest.findMany({
+      where: {
+        OR: [
+          { targetWorkspaceId: workspaceId },
+          { sourceWorkspaceId: workspaceId }
+        ]
+      },
+      include: {
+        author: {
+          select: { id: true, name: true, email: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async getMergeRequestById(id: string) {
+    return this.prisma.mergeRequest.findUnique({
+      where: { id },
+      include: {
+        author: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    });
+  }
+
+  async updateMergeRequestStatus(id: string, status: string, userId: string) {
+    const mr = await this.prisma.mergeRequest.findUnique({ where: { id } });
+    if (!mr) throw new Error('Merge request not found');
+
+    // Basic permission check: only target workspace owner/admin or MR author can update
+    // For now, allow any member of the target workspace or the author
+    const isAuthor = mr.authorId === userId;
+    
+    // Check if user is member of target workspace
+    const member = await this.prisma.workspaceMember.findUnique({
+      where: { userId_workspaceId: { userId, workspaceId: mr.targetWorkspaceId } }
+    });
+    const targetWorkspace = await this.prisma.workspace.findUnique({ where: { id: mr.targetWorkspaceId }});
+    const isTargetOwner = targetWorkspace?.ownerId === userId;
+
+    if (!isAuthor && !member && !isTargetOwner) {
+      throw new Error('Unauthorized to update this merge request');
+    }
+
+    return this.prisma.mergeRequest.update({
+      where: { id },
+      data: { status, updatedAt: new Date() }
+    });
+  }
+
+  async getSourceCollection(mrId: string, userId: string) {
+    const mr = await this.prisma.mergeRequest.findUnique({ where: { id: mrId } });
+    if (!mr) throw new Error('Merge request not found');
+
+    if (mr.data) {
+      return mr.data;
+    }
+
+    // Fallback for older MRs
+    const sourceWorkspace = await this.prisma.workspace.findUnique({ where: { id: mr.sourceWorkspaceId }});
+    if (!sourceWorkspace || !sourceWorkspace.data) throw new Error('Source workspace not found or empty');
+
+    const data: any = sourceWorkspace.data;
+    const collections = data.collections || [];
+    const sourceCollection = collections.find((c: any) => c.id === mr.sourceCollectionId);
+
+    if (!sourceCollection) throw new Error('Source collection not found in workspace');
+
+    return sourceCollection;
+  }
+}
