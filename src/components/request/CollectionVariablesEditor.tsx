@@ -2,14 +2,33 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useWorkspace, EnvironmentVariable } from '../../contexts/WorkspaceContext';
 
 export function CollectionVariablesEditor() {
-  const { activeTab, collections, updateCollection } = useWorkspace();
+  const { activeTab, collections, updateCollection, updateFolder } = useWorkspace();
 
-  if (!activeTab || activeTab.type !== 'collection') return null;
+  if (!activeTab || (activeTab.type !== 'collection' && activeTab.type !== 'folder')) return null;
 
   const activeCollection = collections.find(collection => collection.id === activeTab.collectionId);
-  const variables = activeCollection?.variables || activeTab.variables || [];
+  
+  let targetItem: any = activeCollection;
+  if (activeTab.type === 'folder' && activeCollection && activeTab.folderId) {
+    const findFolder = (items: any[], id: string): any => {
+      for (const item of items) {
+        if (item.type === 'folder' && item.id === id) return item;
+        if (item.type === 'folder' && item.items) {
+          const found = findFolder(item.items, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    targetItem = findFolder(activeCollection.items, activeTab.folderId) || activeCollection;
+  }
+
+  const variables = targetItem?.variables || activeTab.variables || [];
   const updateVariables = (nextVariables: EnvironmentVariable[]) => {
-    if (activeTab.collectionId) {
+    if (!activeTab.collectionId) return;
+    if (activeTab.type === 'folder' && activeTab.folderId) {
+      updateFolder(activeTab.collectionId, activeTab.folderId, { variables: nextVariables });
+    } else {
       updateCollection(activeTab.collectionId, { variables: nextVariables });
     }
   };
@@ -30,7 +49,7 @@ export function CollectionVariablesEditor() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-          These variables are specific to this collection and its requests.
+          These variables are specific to this {activeTab.type === 'folder' ? 'folder' : 'collection'} and its nested items.
         </div>
       </div>
       

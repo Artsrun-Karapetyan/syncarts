@@ -1,4 +1,5 @@
 import { Collection, Environment, EnvironmentVariable, Folder, HeaderItem, SavedRequest, SavedExample, BodyType } from '../contexts/WorkspaceContext';
+import { buildPostmanPathVariables, parsePostmanPathVariables } from './postmanPathVariables';
 
 export function importPostmanCollection(jsonString: string): Omit<Collection, 'id'> {
   const data = JSON.parse(jsonString);
@@ -65,6 +66,7 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
           name: item.name || 'Untitled Request',
           method: 'GET',
           url: req,
+          pathVariables: parsePostmanPathVariables(undefined, req),
           headers: [{ key: '', value: '' }],
           body: '',
           preRequestScript,
@@ -82,6 +84,7 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
       } else if (req.url && req.url.raw) {
         url = req.url.raw;
       }
+      const pathVariables = parsePostmanPathVariables(req.url, url);
 
       let headers: HeaderItem[] = [{ key: '', value: '' }];
       if (Array.isArray(req.header) && req.header.length > 0) {
@@ -167,6 +170,7 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
             originalRequest: res.originalRequest ? {
               method: res.originalRequest.method || 'GET',
               url: typeof res.originalRequest.url === 'string' ? res.originalRequest.url : (res.originalRequest.url?.raw || ''),
+              pathVariables: parsePostmanPathVariables(res.originalRequest.url, typeof res.originalRequest.url === 'string' ? res.originalRequest.url : (res.originalRequest.url?.raw || '')),
               headers: reqHeaders,
               body: parsedOrigBody.body,
               bodyType: parsedOrigBody.bodyType,
@@ -182,6 +186,7 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
         name: item.name || 'Untitled Request',
         method,
         url,
+        pathVariables,
         headers,
         body: parsedMainBody.body,
         bodyType: parsedMainBody.bodyType,
@@ -284,7 +289,8 @@ export function exportToPostmanCollection(collection: Collection): string {
           url: {
             raw: item.url,
             host,
-            path
+            path,
+            variable: buildPostmanPathVariables(item.pathVariables)
           }
         },
         response: []

@@ -39,7 +39,7 @@ export function TabsBar() {
             minWidth: 0,
             overflowX: 'auto',
             overflowY: 'hidden',
-            minHeight: 36,
+            minHeight: 32,
           }}
           onWheel={(event) => {
             if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
@@ -62,10 +62,9 @@ export function TabsBar() {
                     transition: 'all var(--transition-fast)',
                     whiteSpace: 'nowrap',
                     borderRight: '1px solid var(--border-color)',
-                    minWidth: 140,
-                    maxWidth: 240,
-                    padding: '0 12px',
-                    fontSize: 13,
+                    width: 140,
+                    padding: '0 10px',
+                    fontSize: 12,
                     borderTop: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
                     background: isActive ? 'var(--bg-primary)' : 'transparent',
                     color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
@@ -104,7 +103,7 @@ export function TabsBar() {
                     fill={`var(--status-${tab.method?.toLowerCase() || 'get'})`}
                     color={`var(--status-${tab.method?.toLowerCase() || 'get'})`}
                   />
-                  <span style={{ fontWeight: 600, fontSize: 11, color: `var(--status-${tab.method?.toLowerCase() || 'get'})`, flexShrink: 0 }}>
+                  <span style={{ fontWeight: 600, fontSize: 10, color: `var(--status-${tab.method?.toLowerCase() || 'get'})`, flexShrink: 0 }}>
                     {tab.method}
                   </span>
                   <span

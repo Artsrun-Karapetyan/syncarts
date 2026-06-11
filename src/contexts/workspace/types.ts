@@ -22,6 +22,13 @@ export interface FormDataItem {
   files?: string[];
 }
 
+export interface PathVariable {
+  id: string;
+  key: string;
+  value: string;
+  description?: string;
+}
+
 export interface TestResult {
   name: string;
   passed: boolean;
@@ -39,6 +46,7 @@ export interface TabData {
   bearerToken?: string;
   bodyType?: BodyType;
   description?: string;
+  pathVariables?: PathVariable[];
   preRequestScript?: string;
   testScript?: string;
   variables?: EnvironmentVariable[];
@@ -75,6 +83,7 @@ export interface SavedRequest {
   bearerToken?: string;
   bodyType?: BodyType;
   description?: string;
+  pathVariables?: PathVariable[];
   formData?: FormDataItem[];
   body: string;
   preRequestScript?: string;
@@ -92,6 +101,13 @@ export interface Folder {
   description?: string;
   preRequestScript?: string;
   testScript?: string;
+  variables?: EnvironmentVariable[];
+}
+
+export interface ForkMetadata {
+  originalWorkspaceId: string;
+  originalCollectionId: string;
+  forkedAt: number;
 }
 
 export interface Collection {
@@ -104,6 +120,7 @@ export interface Collection {
   preRequestScript?: string;
   testScript?: string;
   variables?: EnvironmentVariable[];
+  fork?: ForkMetadata;
 }
 
 export interface EnvironmentVariable {
@@ -146,11 +163,13 @@ export interface SavedRequestLocation {
   request: SavedRequest;
 }
 
-export interface WorkspaceContextState {
+export interface WorkspaceContextState extends TabActions, CollectionActions, EnvironmentActions, RequestSenderActions {
   workspaces: Workspace[];
   activeWorkspaceId: string;
-  createWorkspace: (name: string) => void;
+  localDefaultWorkspaceId: string;
+  createWorkspace: (name: string, collections?: any[], environments?: any[]) => string;
   switchWorkspace: (id: string) => void;
+  renameWorkspace: (id: string, newName: string) => void;
   removeWorkspace: (id: string) => Promise<void>;
   environments: Environment[];
   globalVariables: EnvironmentVariable[];
@@ -180,6 +199,7 @@ export interface WorkspaceContextState {
   isTabDirty: (tab?: TabData) => boolean;
   saveActiveRequestInPlace: () => boolean;
   addCollection: (name: string) => void;
+  forkCollection: (collectionId: string) => void;
   updateCollection: (id: string, data: Partial<Collection>) => void;
   deleteCollection: (id: string) => void;
   deleteItem: (collectionId: string, itemId: string) => void;

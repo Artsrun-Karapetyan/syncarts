@@ -40,6 +40,10 @@ const disableTextAutoCorrection = () => {
 
 disableTextAutoCorrection();
 
+if (import.meta.env.PROD) {
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
 // Create a new router instance
 const router = createRouter({ routeTree });
 

@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { Send, Loader2, ChevronDown } from 'lucide-react';
+import { Send, Loader2, ChevronDown, Code2, Edit2 } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import { MethodSelector } from '../request/MethodSelector';
@@ -8,12 +8,14 @@ import { RequestTabs } from '../request/RequestTabs';
 import { ResponseViewer } from '../response/ResponseViewer';
 import { TabsBar } from './TabsBar';
 import { SaveDialog } from '../request/SaveDialog';
+import { RequestCodeModal } from '../request/RequestCodeModal';
 import { CollectionFolderTabs } from './CollectionFolderTabs';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function Workspace() {
   const { sendRequest, isMutating, activeTab, collections, updateActiveTab, saveActiveRequestInPlace, addTab } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
   const saveBtnRef = useRef<HTMLButtonElement>(null);
 
   const handleDirectSave = () => {
@@ -63,22 +65,41 @@ export function Workspace() {
           <div style={{ padding: '16px 16px 0 16px', flexShrink: 0, position: 'relative', zIndex: 50 }}>
             {/* Top Row: Name and Save */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingLeft: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-                <input
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 600,
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-primary)',
-                    outline: 'none',
-                    width: '100%',
-                    fontFamily: 'inherit',
-                  }}
-                  value={activeTab?.name || ''}
-                  placeholder="Untitled Request"
-                  onChange={(e) => updateActiveTab({ name: e.target.value })}
-                />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, position: 'relative' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', maxWidth: 400, width: '100%' }}>
+                  <input
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 600,
+                      background: 'transparent',
+                      border: '1px solid transparent',
+                      borderRadius: 6,
+                      padding: '6px 32px 6px 10px',
+                      color: 'var(--text-primary)',
+                      outline: 'none',
+                      width: '100%',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.2s',
+                    }}
+                    value={activeTab?.name || ''}
+                    placeholder="Untitled Request"
+                    onChange={(e) => updateActiveTab({ name: e.target.value })}
+                    onFocus={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; e.currentTarget.style.border = '1px solid var(--border-color)'; }}
+                    onBlur={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.border = '1px solid transparent'; }}
+                    onMouseEnter={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.background = 'var(--bg-secondary)'; }}
+                    onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.background = 'transparent'; }}
+                  />
+                  <Edit2 
+                    size={12} 
+                    style={{ 
+                      position: 'absolute', 
+                      right: 12, 
+                      color: 'var(--text-tertiary)', 
+                      pointerEvents: 'none',
+                      opacity: activeTab?.name ? 0.5 : 0.8
+                    }} 
+                  />
+                </div>
               </div>
 
               {activeTab?.type !== 'example' && (
@@ -132,6 +153,27 @@ export function Workspace() {
             >
               <MethodSelector />
               <UrlBar />
+              {activeTab?.type !== 'example' && (
+                <button
+                  className="btn"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    fontSize: 13,
+                    padding: '0 16px',
+                    borderRadius: 9999,
+                    height: 38,
+                    fontWeight: 700,
+                  }}
+                  onClick={() => setShowCodeModal(true)}
+                  title="Generate cURL"
+                >
+                  <Code2 size={14} />
+                  Code
+                </button>
+              )}
               <button
                 className={activeTab?.type === 'example' ? "btn" : "btn-success"}
                 style={{
@@ -176,14 +218,15 @@ export function Workspace() {
             </div>
 
             {showSaveDialog && <SaveDialog onClose={() => setShowSaveDialog(false)} anchorRef={saveBtnRef} />}
+            {showCodeModal && <RequestCodeModal onClose={() => setShowCodeModal(false)} />}
           </div>
 
           {/* Main Content — Request + Response */}
-      <div style={{ flex: 1, display: 'flex', gap: 0, padding: '0 16px 16px', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', gap: 0, padding: '12px 16px 16px', minHeight: 0 }}>
         <PanelGroup direction="horizontal">
           {/* Request panel with tabs */}
           <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingRight: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Request</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Request</div>
             <div
               className="glass-panel"
               style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}
@@ -196,7 +239,7 @@ export function Workspace() {
 
           {/* Response panel */}
           <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingLeft: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>
               {activeTab?.type === 'example' ? 'Example Response' : 'Response'}
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>

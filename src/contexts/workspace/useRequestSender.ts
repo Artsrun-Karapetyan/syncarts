@@ -3,6 +3,7 @@ import useSWRMutation from 'swr/mutation';
 import { getRequestAncestors, interpolateVariables, resolveRequestAuth } from './requestHelpers';
 import { createScriptApi, createScriptConsole, createScriptResponse, runScripts } from './scriptRuntime';
 import type { Collection, Environment, EnvironmentVariable, Folder, HttpResponse, SavedRequest, TabData, TestResult } from './types';
+import { applyPathVariables } from '../../utils/pathVariables';
 
 interface RequestSenderArgs {
   activeEnvironment: Environment | undefined;
@@ -75,8 +76,13 @@ export function useRequestSender(args: RequestSenderArgs) {
       }
     }
 
+    const pathVariables = requestTab.pathVariables?.map((variable) => ({
+      ...variable,
+      value: interpolate(variable.value)
+    }));
+    const requestUrl = applyPathVariables(interpolate(requestTab.url), pathVariables);
     const res: HttpResponse = await invoke('make_request', {
-      request: { url: interpolate(requestTab.url), method: requestTab.method, headers: headerMap, body: reqBodyPayload }
+      request: { url: requestUrl, method: requestTab.method, headers: headerMap, body: reqBodyPayload }
     });
     return res;
   });
@@ -92,19 +98,21 @@ export function useRequestSender(args: RequestSenderArgs) {
       const col = collectionContext?.collection || null;
       const collectionVariablesDraft = [...(col?.variables || [])];
       const requestDraft = { ...activeTab, headers: [...activeTab.headers] };
+      const draftCollections = () => buildCollectionsWithVariableDraft(collections, collectionContext?.collectionId, collectionVariablesDraft);
+      const ancestors = getRequestAncestors(activeTab, draftCollections());
+
       const sy = createScriptApi({
         activeEnvironmentId,
         collectionVariablesDraft,
         environments,
         globalVariables,
+        ancestors,
         requestDraft,
         testResults,
         updateEnvironment,
         updateGlobalVariables
       });
 
-      const draftCollections = () => buildCollectionsWithVariableDraft(collections, collectionContext?.collectionId, collectionVariablesDraft);
-      const ancestors = getRequestAncestors(activeTab, draftCollections());
       const allPreScripts = [...ancestors.map(a => a.preRequestScript), activeTab.preRequestScript].filter(s => s && s.trim());
       const allTestScripts = [...ancestors.map(a => a.testScript), activeTab.testScript].filter(s => s && s.trim());
       runScripts(allPreScripts, sy, customConsole, consoleLogs, 'PRE-SCRIPT ERROR', 'Pre-request script failed:');

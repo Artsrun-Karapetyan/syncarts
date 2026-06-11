@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
-import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Trash2, Download, Edit2, ListOrdered, ArrowDownAZ } from 'lucide-react';
+import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Trash2, Download, Edit2, ListOrdered, ArrowDownAZ, GitFork } from 'lucide-react';
 
 import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/WorkspaceContext';
 import { ConfirmModal } from '../ui/ConfirmModal';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { api } from '../../lib/api';
 import { exportToPostmanCollection } from '../../utils/postmanParser';
 import { ImportModal } from '../workspace/ImportModal';
+import { CreateMergeRequestModal } from '../workspace/CreateMergeRequestModal';
+import { GitPullRequest } from 'lucide-react';
 
 interface CtxMenuState {
   x: number;
@@ -22,7 +26,6 @@ interface SidebarItemProps {
   collectionId: string;
   parentFolderId: string | null;
   onContextMenu: (e: React.MouseEvent, itemId: string, type: 'folder' | 'request' | 'example', itemName: string, requestId?: string) => void;
-  level?: number;
   renamingId: string | null;
   setRenamingId: (id: string | null) => void;
   renameValue: string;
@@ -51,7 +54,7 @@ function SidebarItem({
   const [isExamplesOpen, setIsExamplesOpen] = useState(false);
   const { openFolderTab, openExampleTab, openRequestTab } = useWorkspace();
 
-  const paddingLeft = `${level * 12 + 8}px`;
+  const paddingLeft = `8px`;
 
   if (item.type === 'request') {
     return (
@@ -60,16 +63,16 @@ function SidebarItem({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 6,
           fontSize: 13,
           color: highlightedRequestId === item.id ? 'var(--text-primary)' : 'var(--text-secondary)',
           background: highlightedRequestId === item.id ? 'var(--bg-tertiary)' : 'transparent',
           boxShadow: highlightedRequestId === item.id ? 'inset 0 0 0 1px var(--accent-primary)' : 'none',
-          padding: '4px 8px',
+          padding: '3px 8px',
           paddingLeft,
-          borderRadius: 8,
+          borderRadius: 6,
           cursor: 'pointer',
-          transition: 'all 0.4s ease-out',
+          transition: 'all 0.2s ease-out',
         }}
         onClick={() => openRequestTab(collectionId, parentFolderId, item.id)}
         onContextMenu={(e) => onContextMenu(e, item.id, 'request', item.name)}
@@ -169,12 +172,12 @@ function SidebarItem({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
-                fontSize: 13,
+                gap: 6,
+                fontSize: 12,
                 color: 'var(--text-tertiary)',
-                padding: '4px 8px',
-                paddingLeft: `${level * 12 + 24}px`,
-                borderRadius: 8,
+                padding: '3px 8px',
+                paddingLeft: `28px`,
+                borderRadius: 6,
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
               }}
@@ -229,12 +232,12 @@ function SidebarItem({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 6,
           fontSize: 13,
           color: 'var(--text-secondary)',
-          padding: '4px 8px',
+          padding: '3px 8px',
           paddingLeft,
-          borderRadius: 8,
+          borderRadius: 6,
           cursor: 'pointer',
           transition: 'all var(--transition-fast)',
         }}
@@ -306,7 +309,7 @@ function SidebarItem({
         </div>
       </div>
       {expandedFolders[item.id] && (
-        <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 20, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 14, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 0 }}>
           {item.items.map(subItem => (
             <SidebarItem 
               key={subItem.id} 
@@ -314,7 +317,6 @@ function SidebarItem({
               collectionId={collectionId} 
               parentFolderId={item.id}
               onContextMenu={onContextMenu} 
-              level={level + 1} 
               renamingId={renamingId}
               setRenamingId={setRenamingId}
               renameValue={renameValue}
@@ -334,9 +336,10 @@ function SidebarItem({
 export function Sidebar() {
   const { 
     collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder,
-    openCollectionTab,
-    renameItem, sortItems, deleteExample, addExample, activeTab, resolveTabSavedRequestId
+    openCollectionTab, addTab,
+    renameItem, sortItems, deleteExample, addExample, activeTab, resolveTabSavedRequestId, forkCollection, activeWorkspaceId
   } = useWorkspace();
+  const navigate = useNavigate();
   const [isAdding, setIsAdding] = useState(false);
   const [newColName, setNewColName] = useState('');
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
@@ -344,14 +347,39 @@ export function Sidebar() {
   const [newFolderName, setNewFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'collection' | 'item' | 'example', collectionId?: string, requestId?: string } | null>(null);
+  const [mergeRequestTarget, setMergeRequestTarget] = useState<{ sourceCollectionId: string, targetWorkspaceId: string, targetCollectionId: string } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [openMrCount, setOpenMrCount] = useState(0);
+
+  // Poll for open MRs
+  useEffect(() => {
+    if (!activeWorkspaceId) return;
+    const fetchMrs = async () => {
+      try {
+        const res = await api.get(`/merge-requests/workspace/${activeWorkspaceId}`);
+        const mrs = res.data || [];
+        setOpenMrCount(mrs.filter((mr: any) => mr.status === 'OPEN').length);
+      } catch (err) {
+        console.error('Failed to fetch MRs for badge:', err);
+      }
+    };
+    fetchMrs();
+    const interval = setInterval(fetchMrs, 15000); // Poll every 15s
+    return () => clearInterval(interval);
+  }, [activeWorkspaceId]);
+
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [highlightedRequestId, setHighlightedRequestId] = useState<string | null>(null);
-  const highlightTimeoutRef = useRef<number | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -424,25 +452,15 @@ export function Sidebar() {
     });
 
     setHighlightedRequestId(savedRequestId);
-    if (highlightTimeoutRef.current) {
-      window.clearTimeout(highlightTimeoutRef.current);
-    }
-    highlightTimeoutRef.current = window.setTimeout(() => {
-      setHighlightedRequestId(null);
-      highlightTimeoutRef.current = null;
-    }, 1250);
   };
 
   useEffect(() => {
     const savedRequestId = resolveTabSavedRequestId(activeTab);
     if (savedRequestId) {
       highlightRequest(savedRequestId);
+    } else {
+      setHighlightedRequestId(null);
     }
-    return () => {
-      if (highlightTimeoutRef.current) {
-        window.clearTimeout(highlightTimeoutRef.current);
-      }
-    };
   }, [activeTab, collections, resolveTabSavedRequestId]);
 
   useEffect(() => {
@@ -597,6 +615,64 @@ export function Sidebar() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div
               className="tooltip-trigger"
+              data-tooltip="Merge Requests"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                justifyContent: 'center',
+                color: openMrCount > 0 ? '#00f0ff' : 'var(--text-tertiary)',
+                background: openMrCount > 0 ? 'rgba(0, 240, 255, 0.1)' : 'transparent',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+                position: 'relative'
+              }}
+              onClick={() => navigate({ to: '/merge-requests' })}
+              onMouseEnter={(e) => {
+                if (openMrCount === 0) {
+                  e.currentTarget.style.background = 'var(--bg-tertiary)';
+                  e.currentTarget.style.color = '#b000ff';
+                } else {
+                  e.currentTarget.style.background = 'rgba(0, 240, 255, 0.2)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (openMrCount === 0) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-tertiary)';
+                } else {
+                  e.currentTarget.style.background = 'rgba(0, 240, 255, 0.1)';
+                }
+              }}
+            >
+              <GitPullRequest size={14} />
+              {openMrCount > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  background: '#ff0055',
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 900,
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid var(--bg-primary)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                  {openMrCount > 9 ? '9+' : openMrCount}
+                </div>
+              )}
+            </div>
+            <div
+              className="tooltip-trigger"
               data-tooltip="Import Data"
               style={{
                 width: 26,
@@ -620,6 +696,34 @@ export function Sidebar() {
               }}
             >
               <Download size={14} />
+            </div>
+            <div
+              className="tooltip-trigger"
+              data-tooltip="New Request"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-tertiary)',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+              onClick={() => {
+                addTab();
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-tertiary)';
+              }}
+            >
+              <FilePlus2 size={14} />
             </div>
             <div
               className="tooltip-trigger"
@@ -648,7 +752,7 @@ export function Sidebar() {
                 e.currentTarget.style.color = 'var(--text-tertiary)';
               }}
             >
-              <Plus size={15} />
+              <FolderPlus size={14} />
             </div>
           </div>
         </div>
@@ -680,13 +784,13 @@ export function Sidebar() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 6,
                 fontSize: 13,
                 color: 'var(--text-primary)',
                 fontWeight: 600,
-                padding: '8px 10px',
+                padding: '6px 10px',
                 background: 'var(--bg-tertiary)',
-                borderRadius: 8,
+                borderRadius: 6,
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
               }}
@@ -738,7 +842,28 @@ export function Sidebar() {
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{col.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, overflow: 'hidden' }}>
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{col.name}</span>
+                  {col.fork && (
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 800,
+                        color: '#000',
+                        background: 'linear-gradient(135deg, #00f0ff 0%, #00b8ff 100%)',
+                        borderRadius: 4,
+                        padding: '1px 5px',
+                        flexShrink: 0,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        boxShadow: '0 2px 8px rgba(0, 240, 255, 0.25)'
+                      }}
+                      title="This is a forked collection"
+                    >
+                      Fork
+                    </span>
+                  )}
+                </div>
               )}
               {/* Item count badge */}
               <span
@@ -802,7 +927,7 @@ export function Sidebar() {
               </div>
             </div>
             {expandedCollections[col.id] && (
-              <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 14, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 10, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {col.items.map(item => (
                   <SidebarItem
                     key={item.id}
@@ -1117,6 +1242,106 @@ export function Sidebar() {
                   </span>
                   <span style={{ fontWeight: 500 }}>Export collection</span>
                 </button>
+                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+                <button
+                  type="button"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 12px',
+                    fontSize: 13,
+                    color: 'var(--text-primary)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    transition: 'background var(--transition-fast)',
+                    textAlign: 'left',
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    forkCollection(ctxMenu.collectionId);
+                    setCtxMenu(null);
+                    showToast('Fork created in "My Workspace"');
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--accent-primary)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <GitFork size={13} />
+                  </span>
+                  <span style={{ fontWeight: 500 }}>Fork collection</span>
+                </button>
+                {collections.find(c => c.id === ctxMenu.collectionId)?.fork && (
+                  <>
+                    <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+                    <button
+                      type="button"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '10px 12px',
+                        fontSize: 13,
+                        color: 'var(--text-primary)',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        transition: 'background var(--transition-fast)',
+                        textAlign: 'left',
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const col = collections.find(c => c.id === ctxMenu.collectionId);
+                        if (col?.fork) {
+                          setMergeRequestTarget({
+                            sourceCollectionId: col.id,
+                            targetWorkspaceId: col.fork.originalWorkspaceId,
+                            targetCollectionId: col.fork.originalCollectionId
+                          });
+                        }
+                        setCtxMenu(null);
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <span
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 7,
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#b000ff',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <GitPullRequest size={13} />
+                      </span>
+                      <span style={{ fontWeight: 500 }}>Create Merge Request</span>
+                    </button>
+                  </>
+                )}
               </>
             )}
 
@@ -1290,6 +1515,43 @@ export function Sidebar() {
         }}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      <CreateMergeRequestModal
+        isOpen={!!mergeRequestTarget}
+        onClose={() => setMergeRequestTarget(null)}
+        sourceCollectionId={mergeRequestTarget?.sourceCollectionId || ''}
+        targetWorkspaceId={mergeRequestTarget?.targetWorkspaceId || ''}
+        targetCollectionId={mergeRequestTarget?.targetCollectionId || ''}
+        onSuccess={() => {
+          showToast('Merge Request created successfully!');
+        }}
+      />
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div style={{
+          position: 'absolute',
+          bottom: 24,
+          left: 16,
+          right: 16,
+          background: 'var(--status-success-bg)',
+          color: 'var(--status-success)',
+          border: '1px solid var(--status-success)',
+          padding: '12px 16px',
+          borderRadius: 8,
+          fontSize: 13,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          boxShadow: 'var(--shadow-lg)',
+          zIndex: 99999,
+          animation: 'fade-in 0.3s ease-out'
+        }}>
+          <GitFork size={16} />
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { VariableTextInput } from './VariableTextInput';
 
 export function HeadersEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
@@ -25,20 +26,20 @@ export function HeadersEditor() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {headers.map((header, idx) => (
         <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
+          <VariableTextInput
             className="input font-mono"
             style={{ flex: 1, fontSize: 13, padding: '8px 12px' }}
             placeholder="Key (e.g. Authorization)"
             value={header.key}
-            onChange={(e) => updateHeader(idx, e.target.value, header.value)}
+            onChange={(value) => updateHeader(idx, value, header.value)}
             disabled={!activeTab}
           />
-          <input
+          <VariableTextInput
             className="input font-mono"
             style={{ flex: 1, fontSize: 13, padding: '8px 12px' }}
             placeholder="Value"
             value={header.value}
-            onChange={(e) => updateHeader(idx, header.key, e.target.value)}
+            onChange={(value) => updateHeader(idx, header.key, value)}
             disabled={!activeTab}
           />
           <button

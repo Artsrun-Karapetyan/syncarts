@@ -224,3 +224,15 @@ select.input {
   width: 4px;
   margin: 0 -1.5px;
 }
+
+/* Code Editor Syntax Highlighting Overrides */
+.w-tc-editor[data-color-mode="dark"] textarea,
+.w-tc-editor[data-color-mode="dark"] .w-tc-editor-text,
+[data-color-mode="dark"] .w-tc-editor-text .token.plain {
+  color: #e2e8f0 !important; /* Bright color for normal text */
+}
+
+.w-tc-editor[data-color-mode="dark"] .token.punctuation,
+[data-color-mode="dark"] .w-tc-editor-text .token.punctuation {
+  color: #c9d1d9 !important; /* Lighter color for better visibility */
+}

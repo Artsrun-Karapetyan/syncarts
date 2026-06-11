@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { Link } from '@tanstack/react-router';
-import { Settings2, Eye, LayoutGrid, UserPlus, LogIn, Trash2 } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { Settings2, Eye, LayoutGrid, UserPlus, LogIn, Trash2, Edit2 } from 'lucide-react';
 
 import { useStoredUser } from '../../lib/session';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
@@ -12,10 +12,13 @@ import { InviteModal } from '../workspace/InviteModal';
 import { JoinWorkspaceModal } from '../workspace/JoinWorkspaceModal';
 
 export function TopBar() {
-  const { workspaces, activeWorkspaceId, switchWorkspace, createWorkspace, removeWorkspace, environments, globalVariables, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment } = useWorkspace();
+  const { workspaces, activeWorkspaceId, switchWorkspace, createWorkspace, removeWorkspace, renameWorkspace, environments, globalVariables, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment, localDefaultWorkspaceId } = useWorkspace();
+  const navigate = useNavigate();
   const user = useStoredUser();
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [isRenamingWorkspace, setIsRenamingWorkspace] = useState(false);
+  const [renameWorkspaceName, setRenameWorkspaceName] = useState('');
   const [isEnvManagerOpen, setIsEnvManagerOpen] = useState(false);
   const [isEnvQuickLookOpen, setIsEnvQuickLookOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -99,7 +102,7 @@ export function TopBar() {
                 ...workspaces.map((w) => ({
                   label: w.name,
                   value: w.id,
-                  badge: (w.ownerId && user?.id && w.ownerId !== user.id) || hasSharedMembers(w) ? 'Shared' : undefined,
+                  badge: w.id !== localDefaultWorkspaceId ? 'Shared' : undefined,
                 })),
                 { label: '+ Create Workspace', value: 'new' },
               ]}
@@ -165,8 +168,87 @@ export function TopBar() {
                 </div>
               </div>
             )}
+            {isRenamingWorkspace && activeWorkspace && (
+              <div
+                className="glass-panel"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: 0,
+                  width: 320,
+                  padding: 16,
+                  zIndex: 100,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  boxShadow: 'var(--shadow-lg)',
+                }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Rename Workspace</div>
+                <input
+                  autoFocus
+                  className="input"
+                  style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+                  placeholder="Workspace Name"
+                  value={renameWorkspaceName}
+                  onChange={(e) => setRenameWorkspaceName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (renameWorkspaceName.trim()) renameWorkspace(activeWorkspace.id, renameWorkspaceName.trim());
+                      setIsRenamingWorkspace(false);
+                    }
+                    if (e.key === 'Escape') {
+                      setIsRenamingWorkspace(false);
+                    }
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                  <button
+                    className="btn"
+                    style={{ padding: '6px 12px', fontSize: 12 }}
+                    onClick={() => setIsRenamingWorkspace(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    style={{ padding: '6px 12px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
+                    onClick={() => {
+                      if (renameWorkspaceName.trim()) renameWorkspace(activeWorkspace.id, renameWorkspaceName.trim());
+                      setIsRenamingWorkspace(false);
+                    }}
+                  >
+                    Rename
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-          {activeWorkspace && workspaces.length > 1 && (
+          {activeWorkspace && activeWorkspace.id !== localDefaultWorkspaceId && (
+            <button
+              className="tooltip-trigger"
+              data-tooltip="Rename Workspace"
+              style={{
+                width: 34,
+                height: 34,
+                flexShrink: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 10,
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-tertiary)',
+                background: 'var(--bg-primary)',
+              }}
+              onClick={() => {
+                setRenameWorkspaceName(activeWorkspace.name);
+                setIsRenamingWorkspace(true);
+              }}
+            >
+              <Edit2 size={15} />
+            </button>
+          )}
+          {activeWorkspace && workspaces.length > 1 && activeWorkspace.id !== localDefaultWorkspaceId && (
             <button
               className="tooltip-trigger"
               data-tooltip={isMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
@@ -296,9 +378,11 @@ export function TopBar() {
         </div>
 
         {/* Profile */}
-        <Link
-        to="/profile"
+        <div
+        onClick={() => navigate({ to: '/profile' })}
+        data-tauri-drag-region="false"
         style={{
+          WebkitAppRegion: 'no-drag',
           borderRadius: 9999,
           border: '1px solid var(--border-color)',
           background: 'var(--bg-primary)',
@@ -318,6 +402,7 @@ export function TopBar() {
         }}
       >
         <div
+          data-tauri-drag-region="false"
           style={{
             width: 32,
             height: 32,
@@ -333,13 +418,13 @@ export function TopBar() {
             flexShrink: 0,
           }}
         >
-          {(user?.name?.trim()?.[0] ?? user?.email?.[0] ?? 'A').toUpperCase()}
+          <span data-tauri-drag-region="false">{(user?.name?.trim()?.[0] ?? user?.email?.[0] ?? 'A').toUpperCase()}</span>
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+        <div data-tauri-drag-region="false" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
           {user?.name?.trim() || 'Your profile'}
         </div>
         <Settings2 size={13} style={{ color: 'var(--text-tertiary)', marginLeft: 4 }} />
-      </Link>
+      </div>
       </div>
       
       <EnvironmentManager 

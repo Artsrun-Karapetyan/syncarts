@@ -5,6 +5,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { resolveRequestAuth } from '../../contexts/workspace/requestHelpers';
 import { AuthTokenInput, type HoveredVariable } from './AuthTokenInput';
 import { resolveScopedVariable, upsertActiveVariableValue } from './variableResolution';
+import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
 import { Select } from '../ui/Select';
 
 type AuthType = 'inherit' | 'none' | 'bearer';
@@ -53,7 +54,8 @@ export function AuthEditor() {
   };
 
   const resolveVariable = (varName: string) => {
-    return resolveScopedVariable({ activeCollection, activeEnvironment, globalVariables, varName });
+    const ancestors = getRequestAncestors(activeTab, collections);
+    return resolveScopedVariable({ ancestors, activeEnvironment, globalVariables, varName });
   };
 
   const openCollectionVariables = () => {

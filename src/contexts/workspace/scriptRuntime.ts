@@ -22,16 +22,21 @@ export function createScriptApi(args: {
   collectionVariablesDraft: EnvironmentVariable[];
   environments: Environment[];
   globalVariables: EnvironmentVariable[];
+  ancestors: any[];
   requestDraft: TabData;
   testResults: TestResult[];
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
 }) {
-  const { activeEnvironmentId, collectionVariablesDraft, environments, globalVariables, requestDraft, testResults, updateEnvironment, updateGlobalVariables } = args;
+  const { activeEnvironmentId, collectionVariablesDraft, environments, globalVariables, ancestors, requestDraft, testResults, updateEnvironment, updateGlobalVariables } = args;
+  const requestHeaders = createRequestHeadersApi(requestDraft);
   const api = {
     request: {
-      headers: createRequestHeadersApi(requestDraft),
+      addHeader: requestHeaders.add,
+      getHeaders: requestHeaders.all,
+      headers: requestHeaders,
       method: requestDraft.method,
+      removeHeader: requestHeaders.remove,
       url: requestDraft.url
     },
     environment: {
@@ -64,7 +69,7 @@ export function createScriptApi(args: {
       get: (key: string) => globalVariables.find(v => v.key === key)?.value,
       unset: (key: string) => updateGlobalVariables(globalVariables.filter(v => v.key !== key))
     },
-    variables: createVariablesApi(activeEnvironmentId, collectionVariablesDraft, environments, globalVariables, updateEnvironment, updateGlobalVariables),
+    variables: createVariablesApi(activeEnvironmentId, collectionVariablesDraft, environments, globalVariables, ancestors, updateEnvironment, updateGlobalVariables),
     sendRequest,
     response: null as any,
     test: (name: string, fn: () => void) => {
@@ -147,6 +152,7 @@ function createRequestHeadersApi(requestDraft: TabData) {
       requestDraft.headers = requestDraft.headers.filter(h => h.key.toLowerCase() !== key.toLowerCase());
     },
     get: (key: string) => requestDraft.headers.find(h => h.key.toLowerCase() === key.toLowerCase())?.value,
+    has: (key: string) => requestDraft.headers.some(h => h.key.toLowerCase() === key.toLowerCase()),
     all: () => requestDraft.headers
   };
 }
@@ -156,15 +162,27 @@ function createVariablesApi(
   collectionVariablesDraft: EnvironmentVariable[],
   environments: Environment[],
   globalVariables: EnvironmentVariable[],
+  ancestors: any[],
   updateEnvironment: (id: string, data: Partial<Environment>) => void,
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void
 ) {
   return {
     get: (key: string) => {
-      const envVar = activeEnvironmentId && activeEnvironmentId !== 'none'
-        ? environments.find(e => e.id === activeEnvironmentId)?.variables.find(v => v.key === key)?.value
+      let val = activeEnvironmentId && activeEnvironmentId !== 'none'
+        ? environments.find(e => e.id === activeEnvironmentId)?.variables.find(v => v.key === key && v.enabled)?.value
         : undefined;
-      return envVar ?? collectionVariablesDraft.find(v => v.key === key)?.value ?? globalVariables.find(v => v.key === key)?.value;
+      
+      if (val === undefined && ancestors && ancestors.length > 0) {
+        for (let i = ancestors.length - 1; i >= 0; i--) {
+          const ancestorVar = ancestors[i].variables?.find((v: any) => v.key === key && v.enabled);
+          if (ancestorVar) {
+            val = ancestorVar.value;
+            break;
+          }
+        }
+      }
+
+      return val ?? collectionVariablesDraft.find(v => v.key === key && v.enabled)?.value ?? globalVariables.find(v => v.key === key && v.enabled)?.value;
     },
     set: (key: string, value: string) => {
       if (activeEnvironmentId && activeEnvironmentId !== 'none') {

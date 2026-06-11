@@ -3,18 +3,46 @@ import type { Collection, Folder, SavedExample, SavedRequest, TabData, Workspace
 interface CollectionActionsArgs {
   activeTab: TabData | undefined;
   activeWorkspaceId: string;
+  localDefaultWorkspaceId: string;
   setTabsByWorkspace: (value: Record<string, TabData[]> | ((prev: Record<string, TabData[]>) => Record<string, TabData[]>)) => void;
   updateWorkspaces: (updater: (prev: Workspace[]) => Workspace[]) => void;
 }
 
 export function useCollectionActions(args: CollectionActionsArgs) {
-  const { activeTab, activeWorkspaceId, setTabsByWorkspace, updateWorkspaces } = args;
+  const { activeTab, activeWorkspaceId, localDefaultWorkspaceId, setTabsByWorkspace, updateWorkspaces } = args;
 
   const addCollection = (name: string) => {
     updateWorkspaces(prev => prev.map(ws => {
       if (ws.id !== activeWorkspaceId) return ws;
       return { ...ws, collections: [...ws.collections, { id: crypto.randomUUID(), name, items: [] }] };
     }));
+  };
+
+  const forkCollection = (collectionId: string) => {
+    updateWorkspaces(prev => {
+      const activeWorkspace = prev.find(ws => ws.id === activeWorkspaceId);
+      const collectionToFork = activeWorkspace?.collections.find(c => c.id === collectionId);
+      
+      if (!collectionToFork) return prev;
+      
+      const forkedCollection: Collection = {
+        ...collectionToFork,
+        id: crypto.randomUUID(),
+        name: `${collectionToFork.name} (Fork)`,
+        fork: {
+          originalWorkspaceId: activeWorkspaceId,
+          originalCollectionId: collectionToFork.id,
+          forkedAt: Date.now()
+        }
+      };
+
+      return prev.map(ws => {
+        if (ws.id === localDefaultWorkspaceId) {
+          return { ...ws, collections: [...ws.collections, forkedCollection] };
+        }
+        return ws;
+      });
+    });
   };
 
   const updateCollection = (id: string, data: Partial<Collection>) => {
@@ -185,6 +213,7 @@ export function useCollectionActions(args: CollectionActionsArgs) {
 
   return {
     addCollection,
+    forkCollection,
     updateCollection,
     importCollection,
     deleteCollection,
