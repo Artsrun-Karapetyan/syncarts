@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { AlertCircle } from 'lucide-react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 import { getAuthToken, setAuthToken } from '../../lib/auth';
 import { setStoredUser } from '../../lib/session';
@@ -53,8 +54,20 @@ export function AuthScreen({ mode }: AuthScreenProps) {
       ? 'Sign in to continue working.'
       : 'Create an account to get started with Syncarts.';
 
+  const handleWindowDrag = (event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    const isInteractive = target.closest('button, input, textarea, select, a, [role="button"]');
+    if (event.button !== 0 || isInteractive) return;
+
+    getCurrentWindow().startDragging().catch((err) => {
+      console.error('Failed to start window drag', err);
+    });
+  };
+
   return (
     <main
+      data-tauri-drag-region
+      onMouseDown={handleWindowDrag}
       style={{
         display: 'flex',
         alignItems: 'center',

@@ -376,6 +376,7 @@ export function TopBar() {
 
         {/* Profile */}
         <div
+        role="button"
         onClick={() => navigate({ to: '/profile' })}
         data-tauri-drag-region="false"
         style={{
