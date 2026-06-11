@@ -203,11 +203,11 @@ export function Workspace() {
           </div>
 
           {/* Main Content — Request + Response */}
-      <div style={{ flex: 1, display: 'flex', gap: 0, padding: '0 16px 16px', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', gap: 0, padding: '12px 16px 16px', minHeight: 0 }}>
         <PanelGroup direction="horizontal">
           {/* Request panel with tabs */}
           <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingRight: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Request</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Request</div>
             <div
               className="glass-panel"
               style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}
@@ -220,7 +220,7 @@ export function Workspace() {
 
           {/* Response panel */}
           <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingLeft: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>
               {activeTab?.type === 'example' ? 'Example Response' : 'Response'}
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
