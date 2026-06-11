@@ -5,6 +5,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 interface MergeRequestsModalProps {
   isOpen: boolean;
+  isOpen: boolean;
   onClose: () => void;
   workspaceId: string;
 }
@@ -193,35 +194,96 @@ export function MergeRequestsModal({ isOpen, onClose, workspaceId }: MergeReques
                       {!sourceCollection && !error ? (
                         <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Loading changes...</div>
                       ) : sourceCollection ? (
-                        <>
-                          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                            This will overwrite the target collection with the contents of the fork. 
-                            In this MVP, we perform a full overwrite of the items.
-                          </div>
-                          <button
-                            onClick={handleMerge}
-                            disabled={merging}
-                            style={{
-                              background: 'linear-gradient(135deg, #b000ff 0%, #00f0ff 100%)',
-                              color: '#fff',
-                              border: 'none',
-                              padding: '10px 16px',
-                              borderRadius: 6,
-                              fontSize: 13,
-                              fontWeight: 600,
-                              cursor: merging ? 'not-allowed' : 'pointer',
-                              opacity: merging ? 0.7 : 1,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: 8,
-                              width: 'fit-content'
-                            }}
-                          >
-                            <GitMerge size={16} />
-                            {merging ? 'Merging...' : 'Approve & Merge'}
-                          </button>
-                        </>
+                        (() => {
+                          const targetCol = collections.find(c => c.id === selectedMr.targetCollectionId);
+                          if (!targetCol) return <div style={{ color: 'var(--status-error)' }}>Target collection not found!</div>;
+
+                          // Simple recursive flattener
+                          const flattenItems = (items: any[]): any[] => {
+                            let flat: any[] = [];
+                            for (const item of items) {
+                              if (item.type === 'folder') {
+                                flat.push({ ...item, items: undefined });
+                                if (item.items) flat = flat.concat(flattenItems(item.items));
+                              } else {
+                                flat.push(item);
+                              }
+                            }
+                            return flat;
+                          };
+
+                          const targetFlat = flattenItems(targetCol.items || []);
+                          const sourceFlat = flattenItems(sourceCollection.items || []);
+
+                          const added = sourceFlat.filter(s => !targetFlat.find(t => t.id === s.id));
+                          const deleted = targetFlat.filter(t => !sourceFlat.find(s => s.id === t.id));
+                          const modified = sourceFlat.filter(s => {
+                            const t = targetFlat.find(t => t.id === s.id);
+                            if (!t) return false;
+                            // Simple diff, strip fields that might change naturally
+                            const sCompare = { ...s, updatedAt: undefined, parentId: undefined };
+                            const tCompare = { ...t, updatedAt: undefined, parentId: undefined };
+                            return JSON.stringify(sCompare) !== JSON.stringify(tCompare);
+                          });
+
+                          return (
+                            <>
+                              <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+                                <div style={{ flex: 1, background: 'var(--bg-primary)', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)' }}>
+                                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--status-success)', marginBottom: 8, textTransform: 'uppercase' }}>Added ({added.length})</div>
+                                  {added.length === 0 ? <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No new items</div> : null}
+                                  {added.map(item => (
+                                    <div key={item.id} style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                      <span style={{ color: 'var(--status-success)' }}>+</span> {item.name || item.url}
+                                    </div>
+                                  ))}
+                                </div>
+                                <div style={{ flex: 1, background: 'var(--bg-primary)', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)' }}>
+                                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--status-warning)', marginBottom: 8, textTransform: 'uppercase' }}>Modified ({modified.length})</div>
+                                  {modified.length === 0 ? <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No modified items</div> : null}
+                                  {modified.map(item => (
+                                    <div key={item.id} style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                      <span style={{ color: 'var(--status-warning)' }}>~</span> {item.name || item.url}
+                                    </div>
+                                  ))}
+                                </div>
+                                <div style={{ flex: 1, background: 'var(--bg-primary)', padding: 12, borderRadius: 8, border: '1px solid var(--border-color)' }}>
+                                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--status-error)', marginBottom: 8, textTransform: 'uppercase' }}>Deleted ({deleted.length})</div>
+                                  {deleted.length === 0 ? <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No deleted items</div> : null}
+                                  {deleted.map(item => (
+                                    <div key={item.id} style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                      <span style={{ color: 'var(--status-error)' }}>-</span> {item.name || item.url}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={handleMerge}
+                                disabled={merging}
+                                style={{
+                                  background: 'linear-gradient(135deg, #b000ff 0%, #00f0ff 100%)',
+                                  color: '#fff',
+                                  border: 'none',
+                                  padding: '10px 16px',
+                                  borderRadius: 6,
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  cursor: merging ? 'not-allowed' : 'pointer',
+                                  opacity: merging ? 0.7 : 1,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: 8,
+                                  width: 'fit-content'
+                                }}
+                              >
+                                <GitMerge size={16} />
+                                {merging ? 'Merging...' : 'Approve & Merge'}
+                              </button>
+                            </>
+                          );
+                        })()
                       ) : null}
                     </div>
                   </div>
