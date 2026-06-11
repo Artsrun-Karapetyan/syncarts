@@ -13,7 +13,7 @@ export class MergeRequestService {
     sourceCollectionId: string;
     targetCollectionId: string;
     authorId: string;
-    data: any;
+    data?: any;
   }) {
     // Validate target workspace exists
     const targetWs = await this.prisma.workspace.findUnique({
