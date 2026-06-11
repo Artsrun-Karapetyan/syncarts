@@ -11,6 +11,16 @@ export interface HttpResponse {
   time_ms: number;
 }
 
+import type { useTabActions } from './useTabActions';
+import type { useCollectionActions } from './useCollectionActions';
+import type { useEnvironmentActions } from './useEnvironmentActions';
+import type { useRequestSender } from './useRequestSender';
+
+export type TabActions = ReturnType<typeof useTabActions>;
+export type CollectionActions = ReturnType<typeof useCollectionActions>;
+export type EnvironmentActions = ReturnType<typeof useEnvironmentActions>;
+export type RequestSenderActions = ReturnType<typeof useRequestSender>;
+
 export type BodyType = 'none' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
 
 export interface FormDataItem {

@@ -40,7 +40,7 @@ export function CreateMergeRequestModal({
       const sourceCollection = collections.find(c => c.id === sourceCollectionId);
       if (!sourceCollection) throw new Error('Source collection not found locally');
 
-      const res = await api.post('/merge-requests', {
+      await api.post('/merge-requests', {
         title,
         description,
         sourceCollectionId,

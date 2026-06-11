@@ -20,7 +20,6 @@ interface VariableTextInputProps {
 export function VariableTextInput(props: VariableTextInputProps) {
   const { className = 'input', disabled, placeholder, style, value, onChange } = props;
   const { activeEnvironment, activeTab, collections, globalVariables } = useWorkspace();
-  const activeCollection = activeTab?.collectionId ? collections.find(collection => collection.id === activeTab.collectionId) : undefined;
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const autocomplete = useVariableAutocomplete({ value, onChange });
   const hover = useVariableHover(overlayRef);
@@ -91,7 +90,7 @@ export function VariableTextInput(props: VariableTextInputProps) {
           onOpenCollectionVariables={hover.openCollectionVariables}
           onOpenPathVariables={hover.openPathVariables}
           canOpenCollectionVariables={!!hover.closestAncestor}
-          variableTargetLabel={hover.closestAncestor?.type === 'folder' ? 'Folder' : (hover.closestAncestor ? 'Collection' : 'Environment')}
+          variableTargetLabel={hover.closestAncestor && 'type' in hover.closestAncestor && hover.closestAncestor.type === 'folder' ? 'Folder' : (hover.closestAncestor ? 'Collection' : 'Environment')}
         />
       )}
     </div>

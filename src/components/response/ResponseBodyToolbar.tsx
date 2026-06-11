@@ -35,7 +35,7 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
   const handleSearch = (forward: boolean) => {
     if (!searchQuery) return;
     // window.find(aString, aCaseSensitive, aBackwards, aWrapAround)
-    window.find(searchQuery, false, !forward, true, false, false, false);
+    (window as any).find(searchQuery, false, !forward, true, false, false, false);
   };
 
   return (

@@ -1,4 +1,4 @@
-import type { Collection, Environment, EnvironmentVariable } from '../../contexts/WorkspaceContext';
+import type { Environment, EnvironmentVariable } from '../../contexts/WorkspaceContext';
 import type { VariableSuggestion } from './variableAutocompleteTypes';
 import { resolveDynamicVariable } from './variableResolution';
 
@@ -24,7 +24,8 @@ export function getVariableSuggestions(args: {
     for (let i = ancestors.length - 1; i >= 0; i--) {
       const ancestor = ancestors[i];
       if (ancestor.variables) {
-        ancestorSuggestions.push(...toSuggestions(ancestor.variables, ancestor.type === 'folder' ? 'Folder' : 'Collection'));
+        const source = 'type' in ancestor && ancestor.type === 'folder' ? 'Folder' : 'Collection';
+        ancestorSuggestions.push(...toSuggestions(ancestor.variables, source));
       }
     }
   }

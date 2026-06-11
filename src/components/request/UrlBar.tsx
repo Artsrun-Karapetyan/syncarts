@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { parseCurlCommand } from '../../utils/curlParser';
-import { syncPathVariablesWithUrl, upsertPathVariable } from '../../utils/pathVariables';
-import { resolveScopedVariable, upsertActiveVariableValue } from './variableResolution';
+import { syncPathVariablesWithUrl } from '../../utils/pathVariables';
+import { resolveScopedVariable } from './variableResolution';
 import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
 import { UrlVariablePopover } from './UrlVariablePopover';
 import { VariableAutocompletePopover } from './VariableAutocompletePopover';
@@ -19,14 +19,9 @@ export function UrlBar() {
     activeTab,
     updateActiveTab,
     sendRequest,
-    activeEnvironmentId,
     activeEnvironment,
-    updateEnvironment,
     collections,
-    globalVariables,
-    updateGlobalVariables,
-    updateCollection,
-    openCollectionTab
+    globalVariables
   } = useWorkspace();
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
@@ -45,7 +40,6 @@ export function UrlBar() {
   const url = activeTab?.url || '';
   
   const hover = useVariableHover(overlayRef);
-  const activeCollection = activeTab?.collectionId ? collections.find((collection) => collection.id === activeTab.collectionId) : undefined;
   const resolveVariable = (varName: string) => {
     const ancestors = getRequestAncestors(activeTab, collections);
     return resolveScopedVariable({ ancestors, activeEnvironment, globalVariables, varName });
@@ -213,8 +207,8 @@ export function UrlBar() {
           onMouseLeave={hover.handleMouseLeave}
           onOpenCollectionVariables={hover.openCollectionVariables}
           onOpenPathVariables={hover.openPathVariables}
-          canOpenCollectionVariables={!!hover.activeCollection}
-          variableTargetLabel={hover.activeCollection ? 'Collection' : 'Environment'}
+          canOpenCollectionVariables={!!hover.closestAncestor}
+          variableTargetLabel={hover.closestAncestor && 'type' in hover.closestAncestor && hover.closestAncestor.type === 'folder' ? 'Folder' : (hover.closestAncestor ? 'Collection' : 'Environment')}
         />
       )}
       {autocomplete.autocompleteState && (

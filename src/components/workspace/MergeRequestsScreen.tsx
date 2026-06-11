@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, GitPullRequest, GitMerge, ArrowLeft, Ban } from 'lucide-react';
+import { GitPullRequest, GitMerge, ArrowLeft, Ban } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { api } from '../../lib/api';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
@@ -145,7 +145,7 @@ export function MergeRequestsScreen() {
       {/* Top Bar */}
       <div className="topbar" data-tauri-drag-region style={{
         display: 'flex', alignItems: 'center', padding: '0 20px', height: 48, borderBottom: '1px solid var(--border-color)', background: 'var(--bg-primary)'
-      }}>
+      } as React.CSSProperties}>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16 }}>
           <button
             onClick={() => navigate({ to: '/' })}
@@ -153,7 +153,7 @@ export function MergeRequestsScreen() {
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)',
               borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer', WebkitAppRegion: 'no-drag'
-            }}
+            } as React.CSSProperties}
           >
             <ArrowLeft size={14} /> Back to Workspace
           </button>

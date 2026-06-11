@@ -23,7 +23,7 @@ export function CollectionVariablesEditor() {
     targetItem = findFolder(activeCollection.items, activeTab.folderId) || activeCollection;
   }
 
-  const variables = targetItem?.variables || activeTab.variables || [];
+  const variables: EnvironmentVariable[] = targetItem?.variables || activeTab.variables || [];
   const updateVariables = (nextVariables: EnvironmentVariable[]) => {
     if (!activeTab.collectionId) return;
     if (activeTab.type === 'folder' && activeTab.folderId) {

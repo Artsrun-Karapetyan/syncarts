@@ -1,4 +1,4 @@
-import type { Collection, Environment, EnvironmentVariable } from '../../contexts/WorkspaceContext';
+import type { Environment, EnvironmentVariable } from '../../contexts/WorkspaceContext';
 import { resolveScopedVariable } from './variableResolution';
 import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
 

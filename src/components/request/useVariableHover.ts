@@ -35,9 +35,7 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
   const popoverRef = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const activeCollection = activeTab?.collectionId 
-    ? collections.find(c => c.id === activeTab.collectionId) 
-    : undefined;
+  // const activeCollection = activeTab?.collectionId
 
   const ancestors = getRequestAncestors(activeTab, collections);
   const closestAncestor = ancestors.length > 0 ? ancestors[ancestors.length - 1] : undefined;
@@ -122,7 +120,7 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
     }
 
     if (closestAncestor) {
-      if (closestAncestor.type === 'folder' && activeTab?.collectionId) {
+      if ('type' in closestAncestor && closestAncestor.type === 'folder' && activeTab?.collectionId) {
         updateFolder(activeTab.collectionId, closestAncestor.id, { variables: upsertActiveVariableValue(closestAncestor.variables || [], varName, value) });
       } else {
         updateCollection(closestAncestor.id, { variables: upsertActiveVariableValue(closestAncestor.variables || [], varName, value) });
@@ -148,7 +146,7 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
   const openCollectionVariables = () => {
     if (!closestAncestor || !activeTab?.collectionId) return;
     setHoveredVar(null);
-    if (closestAncestor.type === 'folder') {
+    if ('type' in closestAncestor && closestAncestor.type === 'folder') {
       openFolderTab(activeTab.collectionId, closestAncestor.id);
       setTimeout(() => updateActiveTab({ collectionView: 'variables' }), 50);
     } else {

@@ -30,10 +30,7 @@ export function TopBar() {
   const showingGlobals = activeEnvironmentId === 'globals';
   const quickLookName = showingGlobals ? 'Globals' : activeEnvironment ? activeEnvironment.name : 'No Environment';
   const quickLookVariables = showingGlobals ? globalVariables : activeEnvironment?.variables || [];
-  const hasSharedMembers = (workspace: typeof workspaces[number]) => {
-    const members = workspace.members || [];
-    return members.some((member) => member.userId !== workspace.ownerId);
-  };
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -393,7 +390,7 @@ export function TopBar() {
           textDecoration: 'none',
           transition: 'border-color var(--transition-fast)',
           cursor: 'pointer',
-        }}
+        } as React.CSSProperties}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = 'var(--border-highlight)';
         }}

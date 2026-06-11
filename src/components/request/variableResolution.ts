@@ -1,4 +1,4 @@
-import type { Collection, Environment, EnvironmentVariable } from '../../contexts/WorkspaceContext';
+import type { Environment, EnvironmentVariable } from '../../contexts/WorkspaceContext';
 
 export interface ResolvedVariable {
   exists: boolean;

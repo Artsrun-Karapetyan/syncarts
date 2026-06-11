@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
-import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, Plus, MoreHorizontal, Trash2, Download, Edit2, ListOrdered, ArrowDownAZ, GitFork } from 'lucide-react';
+import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, MoreHorizontal, Trash2, Download, Edit2, ListOrdered, ArrowDownAZ, GitFork } from 'lucide-react';
 
 import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/WorkspaceContext';
 import { ConfirmModal } from '../ui/ConfirmModal';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { api } from '../../lib/api';
 import { exportToPostmanCollection } from '../../utils/postmanParser';
 import { ImportModal } from '../workspace/ImportModal';
@@ -41,7 +41,6 @@ function SidebarItem({
   collectionId,
   parentFolderId,
   onContextMenu,
-  level = 1,
   renamingId,
   setRenamingId,
   renameValue,
@@ -622,7 +621,6 @@ export function Sidebar() {
                 borderRadius: 6,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
                 justifyContent: 'center',
                 color: openMrCount > 0 ? '#00f0ff' : 'var(--text-tertiary)',
                 background: openMrCount > 0 ? 'rgba(0, 240, 255, 0.1)' : 'transparent',
