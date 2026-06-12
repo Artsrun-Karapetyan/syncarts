@@ -76,7 +76,7 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           apt-get update
-          apt-get install -y curl wget git unzip libssl-dev pkg-config build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+          apt-get install -y curl wget git unzip libssl-dev pkg-config build-essential libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           
       - uses: actions/checkout@v4
 
