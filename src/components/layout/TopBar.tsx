@@ -99,7 +99,7 @@ export function TopBar() {
                 ...workspaces.map((w) => ({
                   label: w.name,
                   value: w.id,
-                  badge: w.id !== localDefaultWorkspaceId ? 'Shared' : undefined,
+                  badge: (w.ownerId && user?.id && w.ownerId !== user.id) ? 'Shared' : undefined,
                 })),
                 { label: '+ Create Workspace', value: 'new' },
               ]}

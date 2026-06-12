@@ -671,7 +671,7 @@ export function Sidebar() {
             </div>
             <div
               className="tooltip-trigger"
-              data-tooltip="Import Data"
+              data-tooltip="Import (or drop file anywhere)"
               style={{
                 width: 26,
                 height: 26,

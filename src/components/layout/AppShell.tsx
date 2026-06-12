@@ -4,6 +4,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { GlobalDropZone } from './GlobalDropZone';
 import { WorkspaceProvider } from '../../contexts/WorkspaceContext';
 import { useStoredUser } from '../../lib/session';
 
@@ -18,20 +19,22 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <WorkspaceProvider key={user.id} userId={user.id}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: 'var(--bg-primary)', overflow: 'hidden' }}>
-        <TopBar />
-        <PanelGroup direction="horizontal" style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-          <Panel defaultSize={20} minSize={15} maxSize={40} style={{ display: 'flex', flexDirection: 'column' }}>
-            <Sidebar />
-          </Panel>
-          <PanelResizeHandle className="custom-resize-handle" />
-          <Panel defaultSize={80} style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ flex: 1, minWidth: 0, height: '100%', overflow: 'hidden' }}>
-              {children}
-            </div>
-          </Panel>
-        </PanelGroup>
-      </div>
+      <GlobalDropZone>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: 'var(--bg-primary)', overflow: 'hidden' }}>
+          <TopBar />
+          <PanelGroup direction="horizontal" style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <Panel defaultSize={20} minSize={15} maxSize={40} style={{ display: 'flex', flexDirection: 'column' }}>
+              <Sidebar />
+            </Panel>
+            <PanelResizeHandle className="custom-resize-handle" />
+            <Panel defaultSize={80} style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ flex: 1, minWidth: 0, height: '100%', overflow: 'hidden' }}>
+                {children}
+              </div>
+            </Panel>
+          </PanelGroup>
+        </div>
+      </GlobalDropZone>
     </WorkspaceProvider>
   );
 }

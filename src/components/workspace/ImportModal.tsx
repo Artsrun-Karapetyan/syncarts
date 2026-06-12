@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { importPostmanCollection, importPostmanEnvironment } from '../../utils/postmanParser';
@@ -9,11 +9,12 @@ import { ImportDropZone } from './ImportDropZone';
 interface ImportModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialFile?: File | null;
 }
 
 type ImportStatus = 'idle' | 'success' | 'error';
 
-export function ImportModal({ isOpen, onClose }: ImportModalProps) {
+export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) {
   const { addTab, importCollection, updateCollection, createEnvironment, collections, environments } = useWorkspace();
   const [inputText, setInputText] = useState('');
   const [isDragging, setIsDragging] = useState(false);
@@ -25,6 +26,12 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const [duplicateItem, setDuplicateItem] = useState<DuplicateImportItem | null>(null);
 
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && initialFile) {
+      readFile(initialFile);
+    }
+  }, [isOpen, initialFile]);
 
   if (!isOpen) return null;
 
