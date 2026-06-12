@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "syncarts",
+  "productName": "Syncarts",
   "version": "0.1.8",
   "identifier": "com.artsrunkarapetyan.syncarts",
   "build": {
