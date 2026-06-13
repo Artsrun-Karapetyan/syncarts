@@ -16,7 +16,12 @@ export function Workspace() {
   const { sendRequest, isMutating, activeTab, collections, updateActiveTab, saveActiveRequestInPlace, addTab } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const [preferredSplitDirection, setPreferredSplitDirection] = useState<'horizontal' | 'vertical'>(() => {
+    return window.localStorage.getItem('syncarts-request-response-split') === 'vertical' ? 'vertical' : 'horizontal';
+  });
+  const [isNarrowLayout, setIsNarrowLayout] = useState(false);
   const saveBtnRef = useRef<HTMLButtonElement>(null);
+  const splitDirection = isNarrowLayout ? 'vertical' : preferredSplitDirection;
 
   const handleDirectSave = () => {
     if (!saveActiveRequestInPlace()) {
@@ -43,6 +48,23 @@ export function Workspace() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, collections]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 1100px)');
+    const updateLayout = () => setIsNarrowLayout(media.matches);
+
+    updateLayout();
+    media.addEventListener('change', updateLayout);
+    return () => media.removeEventListener('change', updateLayout);
+  }, []);
+
+  const toggleSplitDirection = () => {
+    setPreferredSplitDirection((current) => {
+      const next = current === 'horizontal' ? 'vertical' : 'horizontal';
+      window.localStorage.setItem('syncarts-request-response-split', next);
+      return next;
+    });
+  };
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -175,6 +197,24 @@ export function Workspace() {
                 </button>
               )}
               <button
+                className="btn"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  padding: '0 14px',
+                  borderRadius: 9999,
+                  height: 38,
+                  fontWeight: 700,
+                }}
+                onClick={toggleSplitDirection}
+                title={splitDirection === 'horizontal' ? 'Stack request and response' : 'Show request and response side by side'}
+              >
+                {splitDirection === 'horizontal' ? 'Stack' : 'Split'}
+              </button>
+              <button
                 className={activeTab?.type === 'example' ? "btn" : "btn-success"}
                 style={{
                   display: 'inline-flex',
@@ -223,9 +263,9 @@ export function Workspace() {
 
           {/* Main Content — Request + Response */}
       <div style={{ flex: 1, display: 'flex', gap: 0, padding: '12px 16px 16px', minHeight: 0 }}>
-        <PanelGroup direction="horizontal">
+        <PanelGroup key={splitDirection} direction={splitDirection}>
           {/* Request panel with tabs */}
-          <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingRight: 8 }}>
+          <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingRight: splitDirection === 'horizontal' ? 8 : 0, paddingBottom: splitDirection === 'vertical' ? 8 : 0 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Request</div>
             <div
               className="glass-panel"
@@ -235,10 +275,10 @@ export function Workspace() {
             </div>
           </Panel>
 
-          <PanelResizeHandle className="custom-resize-handle" />
+          <PanelResizeHandle className={`custom-resize-handle ${splitDirection === 'vertical' ? 'vertical' : ''}`} />
 
           {/* Response panel */}
-          <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingLeft: 8 }}>
+          <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingLeft: splitDirection === 'horizontal' ? 8 : 0, paddingTop: splitDirection === 'vertical' ? 8 : 0 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>
               {activeTab?.type === 'example' ? 'Example Response' : 'Response'}
             </div>

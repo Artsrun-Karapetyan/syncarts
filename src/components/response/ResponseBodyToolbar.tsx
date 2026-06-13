@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Braces, ChevronDown, ChevronUp, Maximize2, Minimize2, Play, Search, WrapText } from 'lucide-react';
 
 import { Select } from '../ui/Select';
@@ -10,6 +10,7 @@ interface ResponseBodyToolbarProps {
   effectiveLanguage: ResponseLanguage;
   hasJsonBody: boolean;
   jsonCollapsed: number | false;
+  searchText: string;
   wrapLines: boolean;
   onBodyFormatChange: (format: BodyFormat) => void;
   onJsonCollapsedChange: (collapsed: number | false | ((prev: number | false) => number | false)) => void;
@@ -23,6 +24,7 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
     effectiveLanguage,
     hasJsonBody,
     jsonCollapsed,
+    searchText,
     wrapLines,
     onBodyFormatChange,
     onJsonCollapsedChange,
@@ -31,11 +33,18 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
   } = props;
 
   const [searchQuery, setSearchQuery] = useState('');
+  const matchCount = useMemo(() => countMatches(searchText, searchQuery), [searchText, searchQuery]);
+  const [currentMatch, setCurrentMatch] = useState(0);
+
+  useEffect(() => {
+    setCurrentMatch(0);
+  }, [matchCount, searchQuery]);
 
   const handleSearch = (forward: boolean) => {
-    if (!searchQuery) return;
+    if (!searchQuery || matchCount === 0) return;
     // window.find(aString, aCaseSensitive, aBackwards, aWrapAround)
     (window as any).find(searchQuery, false, !forward, true, false, false, false);
+    setCurrentMatch(prev => getNextMatchIndex(prev, matchCount, forward));
   };
 
   return (
@@ -90,10 +99,15 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
               width: 120,
             }}
           />
-          <button onClick={() => handleSearch(false)} style={{ background: 'transparent', border: 'none', padding: 2, cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Previous (Shift+Enter)">
+          {searchQuery && (
+            <span style={{ minWidth: 38, textAlign: 'right', fontSize: 11, color: matchCount ? 'var(--text-secondary)' : 'var(--status-delete)', fontFamily: 'var(--font-mono)' }}>
+              {currentMatch}/{matchCount}
+            </span>
+          )}
+          <button disabled={!matchCount} onClick={() => handleSearch(false)} style={{ background: 'transparent', border: 'none', padding: 2, cursor: matchCount ? 'pointer' : 'not-allowed', color: 'var(--text-tertiary)', opacity: matchCount ? 1 : 0.4, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Previous (Shift+Enter)">
             <ChevronUp size={12} />
           </button>
-          <button onClick={() => handleSearch(true)} style={{ background: 'transparent', border: 'none', padding: 2, cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Next (Enter)">
+          <button disabled={!matchCount} onClick={() => handleSearch(true)} style={{ background: 'transparent', border: 'none', padding: 2, cursor: matchCount ? 'pointer' : 'not-allowed', color: 'var(--text-tertiary)', opacity: matchCount ? 1 : 0.4, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Next (Enter)">
             <ChevronDown size={12} />
           </button>
         </div>
@@ -121,4 +135,30 @@ function formatButtonClass(isActive: boolean) {
 
 function toolButtonClass(isActive: boolean) {
   return `response-tool-button ${isActive ? 'active' : ''}`;
+}
+
+function countMatches(text: string, query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return 0;
+
+  const normalizedText = text.toLowerCase();
+  let count = 0;
+  let index = 0;
+
+  while (index < normalizedText.length) {
+    const foundIndex = normalizedText.indexOf(normalizedQuery, index);
+    if (foundIndex === -1) break;
+    count += 1;
+    index = foundIndex + normalizedQuery.length;
+  }
+
+  return count;
+}
+
+function getNextMatchIndex(current: number, total: number, forward: boolean) {
+  if (total === 0) return 0;
+  if (current === 0) return forward ? 1 : total;
+  return forward
+    ? (current % total) + 1
+    : ((current + total - 2) % total) + 1;
 }

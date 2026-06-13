@@ -20,7 +20,7 @@ export function ResponseViewer() {
   const [viewTab, setViewTab] = useState<ResponseTab>('body');
   const [bodyFormat, setBodyFormat] = useState<BodyFormat>('pretty');
   const [language, setLanguage] = useState<ResponseLanguage | 'auto'>('auto');
-  const [jsonCollapsed, setJsonCollapsed] = useState<number | false>(1);
+  const [jsonCollapsed, setJsonCollapsed] = useState<number | false>(false);
   const [wrapLines, setWrapLines] = useState(false);
 
   const contentType = (response?.headers?.['content-type'] || response?.headers?.['Content-Type'] || '').toLowerCase();
@@ -48,6 +48,7 @@ export function ResponseViewer() {
     if (!response) return;
     setLanguage(detectedLanguage);
     setBodyFormat(detectedLanguage === 'html' ? 'preview' : 'pretty');
+    setJsonCollapsed(false);
   }, [response?.body, response?.status, response?.time_ms, detectedLanguage]);
 
   const handleJsonClick = (event: React.MouseEvent) => {
@@ -97,6 +98,7 @@ export function ResponseViewer() {
                 effectiveLanguage={effectiveLanguage}
                 hasJsonBody={!!parsedBody && effectiveLanguage === 'json'}
                 jsonCollapsed={jsonCollapsed}
+                searchText={response.body || ''}
                 wrapLines={wrapLines}
                 onBodyFormatChange={setBodyFormat}
                 onJsonCollapsedChange={setJsonCollapsed}

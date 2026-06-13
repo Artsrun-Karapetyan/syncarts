@@ -231,6 +231,19 @@ select.input {
   margin: 0 -1.5px;
 }
 
+.custom-resize-handle.vertical {
+  width: 100%;
+  height: 1px;
+  cursor: row-resize;
+}
+
+.custom-resize-handle.vertical:hover,
+.custom-resize-handle.vertical[data-resize-handle-active] {
+  width: 100%;
+  height: 4px;
+  margin: -1.5px 0;
+}
+
 /* Code Editor Syntax Highlighting Overrides */
 .w-tc-editor[data-color-mode="dark"] textarea,
 .w-tc-editor[data-color-mode="dark"] .w-tc-editor-text,
