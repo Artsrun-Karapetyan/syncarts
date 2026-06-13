@@ -2,8 +2,8 @@ import { Check, Copy, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { generateCurlCommand } from "../../utils/curlGenerator";
+import { useWorkspace } from "../../../contexts/WorkspaceContext";
+import { generateCurlCommand } from "../../../utils/curlGenerator";
 import { CurlLine } from "./CurlLine";
 
 interface RequestCodeModalProps {

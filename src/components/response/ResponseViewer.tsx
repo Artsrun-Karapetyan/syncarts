@@ -1,5 +1,5 @@
 import "./ResponseViewer.css";
-import "../request/RequestTabs.css";
+import "../request/tabs/RequestTabs.css";
 
 import { useEffect, useMemo, useState } from "react";
 

@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
 import { useRef } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { UrlVariablePopover } from "./UrlVariablePopover";
+import { useWorkspace } from "../../../contexts/WorkspaceContext";
+import { UrlVariablePopover } from "../url/UrlVariablePopover";
 import { useVariableAutocomplete } from "./useVariableAutocomplete";
 import { useVariableHover } from "./useVariableHover";
 import { VariableAutocompletePopover } from "./VariableAutocompletePopover";

@@ -1,8 +1,8 @@
-import { getRequestAncestors } from "../../contexts/workspace/requestHelpers";
+import { getRequestAncestors } from "../../../contexts/workspace/requestHelpers";
 import type {
   Environment,
   EnvironmentVariable,
-} from "../../contexts/WorkspaceContext";
+} from "../../../contexts/WorkspaceContext";
 import { resolveScopedVariable } from "./variableResolution";
 
 export function getVariableColors(

@@ -2,17 +2,17 @@ import "./UrlBar.css";
 
 import { useEffect, useRef } from "react";
 
-import { getRequestAncestors } from "../../contexts/workspace/requestHelpers";
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { parseCurlCommand } from "../../utils/curlParser";
-import { syncPathVariablesWithUrl } from "../../utils/pathVariables";
+import { getRequestAncestors } from "../../../contexts/workspace/requestHelpers";
+import { useWorkspace } from "../../../contexts/WorkspaceContext";
+import { parseCurlCommand } from "../../../utils/curlParser";
+import { syncPathVariablesWithUrl } from "../../../utils/pathVariables";
+import { useVariableAutocomplete } from "../variables/useVariableAutocomplete";
+import { useVariableHover } from "../variables/useVariableHover";
+import { VariableAutocompletePopover } from "../variables/VariableAutocompletePopover";
+import { getVariableColors } from "../variables/variableHighlight";
+import { resolveScopedVariable } from "../variables/variableResolution";
 import { parseQueryParamsFromUrl } from "./urlQueryParams";
 import { UrlVariablePopover } from "./UrlVariablePopover";
-import { useVariableAutocomplete } from "./useVariableAutocomplete";
-import { useVariableHover } from "./useVariableHover";
-import { VariableAutocompletePopover } from "./VariableAutocompletePopover";
-import { getVariableColors } from "./variableHighlight";
-import { resolveScopedVariable } from "./variableResolution";
 
 const AUTO_REQUEST_NAMES = new Set(["Untitled Request", "New Request"]);
 const PATH_VARIABLE_REGEX = /(^|\/):([A-Za-z_][A-Za-z0-9_]*)/g;

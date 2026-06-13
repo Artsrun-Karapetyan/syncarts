@@ -4,11 +4,11 @@ import {
   BodyType,
   FormDataItem,
   useWorkspace,
-} from "../../contexts/WorkspaceContext";
-import { Select } from "../ui/Select";
+} from "../../../contexts/WorkspaceContext";
+import { Select } from "../../ui/Select";
+import { VariableTextarea } from "../variables/VariableTextarea";
+import { VariableTextInput } from "../variables/VariableTextInput";
 import { FileValueEditor } from "./FileValueEditor";
-import { VariableTextarea } from "./VariableTextarea";
-import { VariableTextInput } from "./VariableTextInput";
 
 export function BodyEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();

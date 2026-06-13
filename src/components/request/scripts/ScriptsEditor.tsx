@@ -4,7 +4,7 @@ import CodeEditor from "@uiw/react-textarea-code-editor";
 import { BookTemplate, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
+import { useWorkspace } from "../../../contexts/WorkspaceContext";
 import { ScriptAutocompletePopover } from "./ScriptAutocompletePopover";
 import { useScriptAutocomplete } from "./useScriptAutocomplete";
 

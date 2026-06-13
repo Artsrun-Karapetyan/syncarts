@@ -2,14 +2,14 @@ import "./RequestTabs.css";
 
 import { useEffect, useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { extractPathVariableKeys } from "../../utils/pathVariables";
-import { AuthEditor } from "./AuthEditor";
-import { BodyEditor } from "./BodyEditor";
-import { DocsEditor } from "./DocsEditor";
-import { HeadersEditor } from "./HeadersEditor";
-import { ParamsEditor } from "./ParamsEditor";
-import { ScriptsEditor } from "./ScriptsEditor";
+import { useWorkspace } from "../../../contexts/WorkspaceContext";
+import { extractPathVariableKeys } from "../../../utils/pathVariables";
+import { AuthEditor } from "../auth/AuthEditor";
+import { BodyEditor } from "../body/BodyEditor";
+import { DocsEditor } from "../DocsEditor";
+import { HeadersEditor } from "../HeadersEditor";
+import { ParamsEditor } from "../params/ParamsEditor";
+import { ScriptsEditor } from "../scripts/ScriptsEditor";
 
 type Tab = "headers" | "body" | "auth" | "params" | "scripts" | "docs";
 

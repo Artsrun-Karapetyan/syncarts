@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
-import { getRequestAncestors } from "../../contexts/workspace/requestHelpers";
-import { useWorkspace } from "../../contexts/WorkspaceContext";
+import { getRequestAncestors } from "../../../contexts/workspace/requestHelpers";
+import { useWorkspace } from "../../../contexts/WorkspaceContext";
 import type {
   VariableAutocompleteState,
   VariableSuggestion,

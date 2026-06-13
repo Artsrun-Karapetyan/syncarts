@@ -10,11 +10,11 @@ import { useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { MethodSelector } from "../request/MethodSelector";
-import { RequestCodeModal } from "../request/RequestCodeModal";
-import { RequestTabs } from "../request/RequestTabs";
+import { RequestCodeModal } from "../request/code/RequestCodeModal";
+import { MethodSelector } from "../request/method/MethodSelector";
 import { SaveDialog } from "../request/SaveDialog";
-import { UrlBar } from "../request/UrlBar";
+import { RequestTabs } from "../request/tabs/RequestTabs";
+import { UrlBar } from "../request/url/UrlBar";
 import { ResponseViewer } from "../response/ResponseViewer";
 import { UnsavedChangesModal } from "../ui/UnsavedChangesModal";
 import { CollectionFolderTabs } from "./CollectionFolderTabs";

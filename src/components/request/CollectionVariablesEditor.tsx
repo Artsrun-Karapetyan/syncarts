@@ -4,7 +4,7 @@ import {
   EnvironmentVariable,
   useWorkspace,
 } from "../../contexts/WorkspaceContext";
-import { VariableTextInput } from "./VariableTextInput";
+import { VariableTextInput } from "./variables/VariableTextInput";
 
 export function CollectionVariablesEditor() {
   const { activeTab, collections, updateCollection, updateFolder } =

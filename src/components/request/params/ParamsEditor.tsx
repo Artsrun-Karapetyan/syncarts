@@ -5,15 +5,15 @@ import {
   PathVariable,
   QueryParamItem,
   useWorkspace,
-} from "../../contexts/WorkspaceContext";
-import { syncPathVariablesWithUrl } from "../../utils/pathVariables";
+} from "../../../contexts/WorkspaceContext";
+import { syncPathVariablesWithUrl } from "../../../utils/pathVariables";
+import { VariableTextInput } from "../variables/VariableTextInput";
 import { ParamSectionTitle } from "./ParamSectionTitle";
 import {
   createEmptyParam,
   ensureTrailingBlank,
   parseParamsFromUrl,
 } from "./paramsEditorHelpers";
-import { VariableTextInput } from "./VariableTextInput";
 
 export function ParamsEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();

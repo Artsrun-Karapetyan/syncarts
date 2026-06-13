@@ -2,15 +2,15 @@ import { Plus } from "lucide-react";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { resolveRequestAuth } from "../../contexts/workspace/requestHelpers";
-import { getRequestAncestors } from "../../contexts/workspace/requestHelpers";
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { Select } from "../ui/Select";
-import { AuthTokenInput, type HoveredVariable } from "./AuthTokenInput";
+import { resolveRequestAuth } from "../../../contexts/workspace/requestHelpers";
+import { getRequestAncestors } from "../../../contexts/workspace/requestHelpers";
+import { useWorkspace } from "../../../contexts/WorkspaceContext";
+import { Select } from "../../ui/Select";
 import {
   resolveScopedVariable,
   upsertActiveVariableValue,
-} from "./variableResolution";
+} from "../variables/variableResolution";
+import { AuthTokenInput, type HoveredVariable } from "./AuthTokenInput";
 
 type AuthType = "inherit" | "none" | "bearer";
 

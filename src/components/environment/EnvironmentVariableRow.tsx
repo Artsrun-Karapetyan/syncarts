@@ -1,7 +1,7 @@
 import { CheckSquare, Square, Trash2 } from "lucide-react";
 
 import type { EnvironmentVariable } from "../../contexts/WorkspaceContext";
-import { VariableTextInput } from "../request/VariableTextInput";
+import { VariableTextInput } from "../request/variables/VariableTextInput";
 
 interface EnvironmentVariableRowProps {
   variable: EnvironmentVariable;

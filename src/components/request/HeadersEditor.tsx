@@ -1,7 +1,7 @@
 import { CheckSquare, Plus, Square, Trash2 } from "lucide-react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { VariableTextInput } from "./VariableTextInput";
+import { VariableTextInput } from "./variables/VariableTextInput";
 
 export function HeadersEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();

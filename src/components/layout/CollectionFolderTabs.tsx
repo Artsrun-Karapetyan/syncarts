@@ -1,8 +1,8 @@
 import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { AuthEditor } from "../request/AuthEditor";
+import { AuthEditor } from "../request/auth/AuthEditor";
 import { CollectionVariablesEditor } from "../request/CollectionVariablesEditor";
 import { DocsEditor } from "../request/DocsEditor";
-import { ScriptsEditor } from "../request/ScriptsEditor";
+import { ScriptsEditor } from "../request/scripts/ScriptsEditor";
 
 type Tab = "overview" | "authorization" | "scripts" | "variables" | "runs";
 

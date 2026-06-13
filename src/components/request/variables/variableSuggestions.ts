@@ -1,7 +1,7 @@
 import type {
   Environment,
   EnvironmentVariable,
-} from "../../contexts/WorkspaceContext";
+} from "../../../contexts/WorkspaceContext";
 import type { VariableSuggestion } from "./variableAutocompleteTypes";
 import { resolveDynamicVariable } from "./variableResolution";
 

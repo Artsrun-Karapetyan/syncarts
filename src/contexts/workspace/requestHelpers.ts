@@ -1,4 +1,4 @@
-import { resolveDynamicVariable } from "../../components/request/variableResolution";
+import { resolveDynamicVariable } from "../../components/request/variables/variableResolution";
 import type {
   Collection,
   Environment,

@@ -2,8 +2,8 @@ import { Plus } from "lucide-react";
 import { RefObject } from "react";
 import { createPortal } from "react-dom";
 
-import { interpolateVariables } from "../../contexts/workspace/requestHelpers";
-import { useWorkspace } from "../../contexts/WorkspaceContext";
+import { interpolateVariables } from "../../../contexts/workspace/requestHelpers";
+import { useWorkspace } from "../../../contexts/WorkspaceContext";
 
 type HoveredUrlVariable = {
   kind: "environment" | "path";
