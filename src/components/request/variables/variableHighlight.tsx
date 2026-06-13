@@ -1,4 +1,4 @@
-import { getRequestAncestors } from "../../../contexts/workspace/requestHelpers";
+import { getRequestAncestors } from "../../../contexts/workspace/requests/requestHelpers";
 import type {
   Environment,
   EnvironmentVariable,
@@ -37,9 +37,9 @@ export function renderVariableHighlight(args: {
     args;
   const parts = text.split(/(\{\{[^}]*\}\})/g);
 
-  return parts.map((part, index) => {
+  return parts.map((part) => {
     if (!part.startsWith("{{") || !part.endsWith("}}")) {
-      return <span key={index}>{part}</span>;
+      return <span key={`plain-${part}`}>{part}</span>;
     }
 
     const varName = part.slice(2, -2);
@@ -58,7 +58,7 @@ export function renderVariableHighlight(args: {
       const colors = getVariableColors(resolved.sourceType, isDynamic);
       return (
         <span
-          key={index}
+          key={`env-${part}`}
           className="env-var-span"
           data-kind="environment"
           data-varname={varName}
@@ -78,7 +78,7 @@ export function renderVariableHighlight(args: {
 
     return (
       <span
-        key={index}
+        key={`missing-${part}`}
         className="env-var-span"
         data-kind="environment"
         data-varname={varName}

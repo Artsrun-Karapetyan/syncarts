@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, X } from "lucide-react";
+import { X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
@@ -7,6 +7,10 @@ import {
   importPostmanCollection,
   importPostmanEnvironment,
 } from "../../utils/postmanParser";
+import { ImportDivider } from "./import/ImportDivider";
+import { ImportPasteForm } from "./import/ImportPasteForm";
+import { ImportStatusMessage } from "./import/ImportStatusMessage";
+import type { ImportStatus } from "./import/importTypes";
 import { ImportDropZone } from "./ImportDropZone";
 import {
   type DuplicateImportItem,
@@ -18,8 +22,6 @@ interface ImportModalProps {
   onClose: () => void;
   initialFile?: File | null;
 }
-
-type ImportStatus = "idle" | "success" | "error";
 
 export function ImportModal({
   isOpen,
@@ -65,7 +67,7 @@ export function ImportModal({
     onClose();
   };
 
-  const processContent = (content: string) => {
+  function processContent(content: string) {
     try {
       const trimmed = content.trim();
 
@@ -143,7 +145,7 @@ export function ImportModal({
     } finally {
       setIsProcessing(false);
     }
-  };
+  }
 
   const handleConfirmDuplicate = () => {
     if (!duplicateItem) return;
@@ -225,7 +227,7 @@ export function ImportModal({
     }
   };
 
-  const readFile = (file: File) => {
+  function readFile(file: File) {
     setIsProcessing(true);
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -240,7 +242,7 @@ export function ImportModal({
     };
     reader.onerror = () => setIsProcessing(false);
     reader.readAsText(file);
-  };
+  }
 
   return (
     <div
@@ -333,73 +335,14 @@ export function ImportModal({
             />
           ) : (
             <>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <label
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  Paste cURL or Raw JSON
-                </label>
-                <textarea
-                  className="input"
-                  style={{
-                    width: "100%",
-                    height: 120,
-                    padding: 12,
-                    fontSize: 13,
-                    fontFamily: "monospace",
-                    resize: "none",
-                    borderRadius: "var(--radius-md)",
-                  }}
-                  placeholder="Paste cURL command, Postman Collection, or Environment JSON..."
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                      handlePasteOrSubmit();
-                    }
-                  }}
-                />
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handlePasteOrSubmit}
-                    disabled={!inputText.trim() || isProcessing}
-                  >
-                    {isProcessing ? "Importing..." : "Import Json"}
-                  </button>
-                </div>
-              </div>
+              <ImportPasteForm
+                inputText={inputText}
+                isProcessing={isProcessing}
+                onChange={setInputText}
+                onSubmit={handlePasteOrSubmit}
+              />
 
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <div
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background: "var(--border-color)",
-                  }}
-                />
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-tertiary)",
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  OR
-                </div>
-                <div
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background: "var(--border-color)",
-                  }}
-                />
-              </div>
+              <ImportDivider />
 
               <ImportDropZone
                 fileInputRef={fileInputRef}
@@ -413,32 +356,7 @@ export function ImportModal({
               />
 
               {status !== "idle" && (
-                <div
-                  style={{
-                    padding: "12px 16px",
-                    borderRadius: "var(--radius-md)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    fontSize: 13,
-                    fontWeight: 500,
-                    background:
-                      status === "success"
-                        ? "var(--status-get-bg)"
-                        : "var(--status-delete-bg)",
-                    color:
-                      status === "success"
-                        ? "var(--status-get)"
-                        : "var(--status-delete)",
-                  }}
-                >
-                  {status === "success" ? (
-                    <CheckCircle2 size={16} />
-                  ) : (
-                    <AlertCircle size={16} />
-                  )}
-                  {message}
-                </div>
+                <ImportStatusMessage message={message} status={status} />
               )}
             </>
           )}

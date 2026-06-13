@@ -44,7 +44,7 @@ export function VariableAutocompletePopover(
       <div style={{ maxHeight: 360, overflowY: "auto" }}>
         {suggestions.map((suggestion, index) => (
           <button
-            key={`${suggestion.source}-${suggestion.key}-${index}`}
+            key={`${suggestion.source}-${suggestion.key}-${suggestion.value}`}
             ref={(node) => {
               itemRefs.current[index] = node;
             }}

@@ -117,7 +117,7 @@ export function ParamsEditor() {
         <ParamSectionTitle title="Query Params" />
         {params.map((param, idx) => (
           <div
-            key={idx}
+            key={`${param.key}-${param.value}-${param.description ?? ""}-${param.enabled}`}
             style={{
               display: "grid",
               gridTemplateColumns: "40px 1fr 1fr 1fr 40px",

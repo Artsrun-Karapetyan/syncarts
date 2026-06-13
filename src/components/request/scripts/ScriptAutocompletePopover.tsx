@@ -44,7 +44,7 @@ export function ScriptAutocompletePopover(
     >
       {suggestions.map((suggestion, index) => (
         <button
-          key={`${suggestion.label}-${index}`}
+          key={`${suggestion.label}-${suggestion.insertText}`}
           ref={(node) => {
             itemRefs.current[index] = node;
           }}

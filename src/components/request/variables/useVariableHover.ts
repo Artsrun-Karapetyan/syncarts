@@ -1,6 +1,6 @@
 import { RefObject, useEffect, useRef, useState } from "react";
 
-import { getRequestAncestors } from "../../../contexts/workspace/requestHelpers";
+import { getRequestAncestors } from "../../../contexts/workspace/requests/requestHelpers";
 import { useWorkspace } from "../../../contexts/WorkspaceContext";
 import { upsertPathVariable } from "../../../utils/pathVariables";
 import { upsertActiveVariableValue } from "./variableResolution";

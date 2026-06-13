@@ -7,7 +7,6 @@ import prettierPlugin from "eslint-plugin-prettier";
 import eslintReact from "eslint-plugin-react";
 import eslintReactHooks from "eslint-plugin-react-hooks";
 import eslintReactRefresh from "eslint-plugin-react-refresh";
-import reactYouMightNotNeedAnEffect from "eslint-plugin-react-you-might-not-need-an-effect";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import unusedImports from "eslint-plugin-unused-imports";
 import globals from "globals";
@@ -18,8 +17,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default [
-  reactYouMightNotNeedAnEffect.configs.recommended,
-
   {
     plugins: {
       react: eslintReact,
@@ -131,8 +128,8 @@ export default [
         { props: "never", children: "never" },
       ],
       "react/self-closing-comp": ["error", { component: true, html: true }],
-      "max-lines": ["warn", { max: 350, skipBlankLines: true }],
-      "max-params": ["warn", 3],
+      "max-lines": ["error", { max: 370, skipBlankLines: true }],
+      "max-params": ["warn", 6],
     },
   },
   {

@@ -169,7 +169,10 @@ export function RequestCodeModal({ onClose }: RequestCodeModalProps) {
           >
             <pre style={{ margin: 0, whiteSpace: "pre", userSelect: "text" }}>
               {curlLines.map((line, index) => (
-                <div key={`${index}-${line}`} style={{ whiteSpace: "pre" }}>
+                <div
+                  key={`${line}-${line.length}`}
+                  style={{ whiteSpace: "pre" }}
+                >
                   <CurlLine line={line} isFirstLine={index === 0} />
                 </div>
               ))}

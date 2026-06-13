@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { getRequestAncestors } from "../../../contexts/workspace/requestHelpers";
+import { getRequestAncestors } from "../../../contexts/workspace/requests/requestHelpers";
 import { useWorkspace } from "../../../contexts/WorkspaceContext";
 import type {
   VariableAutocompleteState,
@@ -93,10 +93,10 @@ export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
     return false;
   };
 
-  const insertSuggestion = (
+  function insertSuggestion(
     suggestion: VariableSuggestion,
     element?: TextControl | null,
-  ) => {
+  ) {
     if (!state || !element) return;
     const insertion = `{{${suggestion.key}}}`;
     const replaceEndIndex = findVariableReplacementEnd(value, state.caretIndex);
@@ -119,7 +119,7 @@ export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
     }
 
     setState(null);
-  };
+  }
 
   return {
     activeIndex,

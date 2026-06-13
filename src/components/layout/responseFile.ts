@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { HttpResponse } from "../../contexts/workspace/types";
+import type { HttpResponse } from "../../contexts/workspace/core/types";
 
 export async function saveResponseToFile(response: HttpResponse) {
   const { save } = await import("@tauri-apps/plugin-dialog");

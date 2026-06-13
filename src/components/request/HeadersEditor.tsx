@@ -41,7 +41,7 @@ export function HeadersEditor() {
     >
       {headers.map((header, idx) => (
         <div
-          key={idx}
+          key={`${header.key}-${header.value}-${header.description ?? ""}-${header.enabled ?? true}`}
           style={{
             display: "grid",
             gridTemplateColumns: "40px 1fr 1fr 1fr 40px",

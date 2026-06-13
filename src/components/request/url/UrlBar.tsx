@@ -2,7 +2,7 @@ import "./UrlBar.css";
 
 import { useEffect, useRef } from "react";
 
-import { getRequestAncestors } from "../../../contexts/workspace/requestHelpers";
+import { getRequestAncestors } from "../../../contexts/workspace/requests/requestHelpers";
 import { useWorkspace } from "../../../contexts/WorkspaceContext";
 import { parseCurlCommand } from "../../../utils/curlParser";
 import { syncPathVariablesWithUrl } from "../../../utils/pathVariables";
@@ -155,7 +155,7 @@ export function UrlBar() {
           const colors = getVariableColors(resolved.sourceType, isDynamic);
           return (
             <span
-              key={i}
+              key={`${part}-${varName}`}
               className="env-var-span"
               data-kind="environment"
               data-varname={varName}
@@ -175,7 +175,7 @@ export function UrlBar() {
 
         return (
           <span
-            key={i}
+            key={`missing-${part}-${varName}`}
             className="env-var-span"
             data-kind="environment"
             data-varname={varName}

@@ -4,20 +4,20 @@ import "../request/tabs/RequestTabs.css";
 import { useEffect, useMemo, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { cleanClickedUrl } from "./cleanClickedUrl";
-import { ResponseBodyContent } from "./ResponseBodyContent";
-import { ResponseBodyToolbar } from "./ResponseBodyToolbar";
-import { ResponseEmptyState } from "./ResponseEmptyState";
-import { ResponseHeadersList } from "./ResponseHeadersList";
-import type { ResponseJsonThemeId } from "./responseJsonThemes";
+import { ResponseBodyContent } from "./body/ResponseBodyContent";
+import { ResponseBodyToolbar } from "./body/ResponseBodyToolbar";
+import { ResponseHeadersList } from "./header/ResponseHeadersList";
+import { ResponsePanelHeader } from "./header/ResponsePanelHeader";
+import { ResponseTestResults } from "./header/ResponseTestResults";
+import { cleanClickedUrl } from "./shared/cleanClickedUrl";
+import type { ResponseJsonThemeId } from "./shared/responseJsonThemes";
 import {
   detectResponseLanguage,
   type ResponseLanguage,
-} from "./responseLanguage";
-import { ResponseLoadingState } from "./ResponseLoadingState";
-import { ResponsePanelHeader } from "./ResponsePanelHeader";
-import { ResponseTestResults } from "./ResponseTestResults";
-import type { BodyFormat, ResponseTab } from "./responseTypes";
+} from "./shared/responseLanguage";
+import type { BodyFormat, ResponseTab } from "./shared/responseTypes";
+import { ResponseEmptyState } from "./state/ResponseEmptyState";
+import { ResponseLoadingState } from "./state/ResponseLoadingState";
 
 export function ResponseViewer() {
   const { activeTab, addTab, error, isMutating } = useWorkspace();

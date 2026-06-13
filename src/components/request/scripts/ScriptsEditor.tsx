@@ -1,123 +1,13 @@
 import "@uiw/react-textarea-code-editor/dist.css";
 
 import CodeEditor from "@uiw/react-textarea-code-editor";
-import { BookTemplate, Search, X } from "lucide-react";
+import { BookTemplate } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useWorkspace } from "../../../contexts/WorkspaceContext";
 import { ScriptAutocompletePopover } from "./ScriptAutocompletePopover";
+import { ScriptSnippetsDrawer } from "./ScriptSnippetsDrawer";
 import { useScriptAutocomplete } from "./useScriptAutocomplete";
-
-const SNIPPET_GROUPS = [
-  {
-    category: "Variables",
-    items: [
-      {
-        name: "Get a global variable",
-        code: 'pm.globals.get("variable_key");',
-      },
-      {
-        name: "Get a collection variable",
-        code: 'pm.collectionVariables.get("variable_key");',
-      },
-      {
-        name: "Get an environment variable",
-        code: 'pm.environment.get("variable_key");',
-      },
-      { name: "Get a variable", code: 'pm.variables.get("variable_key");' },
-      {
-        name: "Set a global variable",
-        code: 'pm.globals.set("variable_key", "variable_value");',
-      },
-      {
-        name: "Set a collection variable",
-        code: 'pm.collectionVariables.set("variable_key", "variable_value");',
-      },
-      {
-        name: "Set an environment variable",
-        code: 'pm.environment.set("variable_key", "variable_value");',
-      },
-      {
-        name: "Set a variable",
-        code: 'pm.variables.set("variable_key", "variable_value");',
-      },
-      {
-        name: "Clear a global variable",
-        code: 'pm.globals.unset("variable_key");',
-      },
-      {
-        name: "Clear a collection variable",
-        code: 'pm.collectionVariables.unset("variable_key");',
-      },
-      {
-        name: "Clear an environment variable",
-        code: 'pm.environment.unset("variable_key");',
-      },
-      {
-        name: "Clear a local variable",
-        code: 'pm.variables.unset("variable_key");',
-      },
-    ],
-  },
-  {
-    category: "Workflows",
-    items: [
-      {
-        name: "Send an HTTP request",
-        code: 'pm.sendRequest("https://postman-echo.com/get", function (err, response) {\n    console.log(response.json());\n});',
-      },
-      {
-        name: "Send an HTTP request from a Collection",
-        code: 'pm.sendRequest("https://postman-echo.com/get", function (err, response) {\n    console.log(response.json());\n});',
-      },
-    ],
-  },
-  {
-    category: "Tests",
-    items: [
-      {
-        name: "Status code: Code is 200",
-        code: 'pm.test("Status code is 200", function () {\n    pm.response.to.have.status(200);\n});',
-      },
-      {
-        name: "Response body: Contains string",
-        code: 'pm.test("Body matches string", function () {\n    pm.expect(pm.response.text()).to.include("string_you_want_to_search");\n});',
-      },
-      {
-        name: "Response body: JSON value check",
-        code: 'var jsonData = pm.response.json();\npm.test("Your test name", function () {\n    pm.expect(jsonData.value).to.eql(100);\n});',
-      },
-      {
-        name: "Response body: Is equal to a string",
-        code: 'pm.test("Body is correct", function () {\n    pm.response.to.have.body("response_body_string");\n});',
-      },
-      {
-        name: "Response headers: Content-Type header check",
-        code: 'pm.test("Content-Type is present", function () {\n    pm.response.to.have.header("Content-Type");\n});',
-      },
-      {
-        name: "Response time is less than 200ms",
-        code: 'pm.test("Response time is less than 200ms", function () {\n    pm.expect(pm.response.responseTime).to.be.below(200);\n});',
-      },
-      {
-        name: "Status code: Successful POST request",
-        code: 'pm.test("Successful POST request", function () {\n    pm.expect(pm.response.code).to.be.oneOf([201, 202]);\n});',
-      },
-      {
-        name: "Status code: Code name has string",
-        code: 'pm.test("Status code name has string", function () {\n    pm.response.to.have.status("Created");\n});',
-      },
-      {
-        name: "Response body: Convert XML body to a JSON Object",
-        code: "var jsonObject = xml2Json(pm.response.text());\nconsole.log(jsonObject);",
-      },
-      {
-        name: "Use Tiny Validator for JSON data",
-        code: 'var schema = {\n    "items": {\n        "type": "boolean"\n    }\n};\n\nvar data1 = [true, false];\nvar data2 = [true, 123];\n\npm.test(\'Schema is valid\', function() {\n  pm.expect(tv4.validate(data1, schema)).to.be.true;\n  pm.expect(tv4.validate(data2, schema)).to.be.true;\n});',
-      },
-    ],
-  },
-];
 
 type HistoryState = {
   past: string[];
@@ -178,13 +68,6 @@ export function ScriptsEditor() {
         : `${currentScript}${code}`;
     updateScript(newCode);
   };
-
-  const filteredGroups = SNIPPET_GROUPS.map((group) => ({
-    ...group,
-    items: group.items.filter((s) =>
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()),
-    ),
-  })).filter((group) => group.items.length > 0);
 
   useEffect(() => {
     if (!showSnippets) return;
@@ -363,149 +246,13 @@ export function ScriptsEditor() {
 
       {/* Snippets Drawer */}
       {showSnippets && (
-        <div
-          ref={snippetsDrawerRef}
-          style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: 300,
-            background: "var(--bg-secondary)",
-            borderLeft: "1px solid var(--border-color)",
-            display: "flex",
-            flexDirection: "column",
-            boxShadow: "-4px 0 15px rgba(0,0,0,0.1)",
-            zIndex: 10,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "12px 16px",
-              borderBottom: "1px solid var(--border-color)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-              }}
-            >
-              Snippets
-            </div>
-            <button
-              className="btn"
-              style={{
-                padding: 4,
-                width: 24,
-                height: 24,
-                justifyContent: "center",
-              }}
-              onClick={() => setShowSnippets(false)}
-            >
-              <X size={14} />
-            </button>
-          </div>
-
-          <div
-            style={{
-              padding: 12,
-              borderBottom: "1px solid var(--border-color)",
-            }}
-          >
-            <div style={{ position: "relative" }}>
-              <Search
-                size={14}
-                style={{
-                  position: "absolute",
-                  left: 10,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "var(--text-tertiary)",
-                }}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search snippets..."
-                style={{
-                  width: "100%",
-                  padding: "6px 10px 6px 30px",
-                  background: "var(--bg-primary)",
-                  border: "1px solid var(--border-color)",
-                  borderRadius: 6,
-                  color: "var(--text-primary)",
-                  fontSize: 12,
-                  outline: "none",
-                }}
-              />
-            </div>
-          </div>
-
-          <div style={{ flex: 1, overflow: "auto", padding: "0 8px 8px 8px" }}>
-            {filteredGroups.length === 0 ? (
-              <div
-                style={{
-                  padding: 20,
-                  textAlign: "center",
-                  color: "var(--text-tertiary)",
-                  fontSize: 12,
-                }}
-              >
-                No snippets found
-              </div>
-            ) : (
-              filteredGroups.map((group, gIdx) => (
-                <div key={gIdx} style={{ marginBottom: 12 }}>
-                  <div
-                    style={{
-                      padding: "8px 12px 4px",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "var(--text-tertiary)",
-                    }}
-                  >
-                    {group.category}
-                  </div>
-                  {group.items.map((snippet, idx) => (
-                    <button
-                      key={idx}
-                      className="btn snippet-btn"
-                      style={{
-                        width: "100%",
-                        justifyContent: "flex-start",
-                        textAlign: "left",
-                        padding: "6px 12px",
-                        fontSize: 13,
-                        color: "var(--text-primary)",
-                        background: "transparent",
-                        border: "none",
-                        borderRadius: 6,
-                        lineHeight: 1.4,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "var(--bg-tertiary)";
-                        e.currentTarget.style.color = "var(--text-primary)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.color = "var(--text-primary)";
-                      }}
-                      onClick={() => handleSnippetClick(snippet.code)}
-                    >
-                      {snippet.name}
-                    </button>
-                  ))}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+        <ScriptSnippetsDrawer
+          drawerRef={snippetsDrawerRef}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onClose={() => setShowSnippets(false)}
+          onSnippetClick={handleSnippetClick}
+        />
       )}
     </div>
   );

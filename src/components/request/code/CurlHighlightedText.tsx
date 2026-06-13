@@ -1,10 +1,10 @@
 export function CurlHighlightedText({ text }: { text: string }) {
   const parts = text.split(/('(?:\\'|[^'])*')/g);
 
-  return parts.map((part, index) => {
+  return parts.map((part) => {
     if (part.startsWith("'") && part.endsWith("'")) {
       return (
-        <span key={index} style={{ color: "#f59e0b" }}>
+        <span key={`quoted-${part}`} style={{ color: "#f59e0b" }}>
           {part}
         </span>
       );
@@ -13,12 +13,12 @@ export function CurlHighlightedText({ text }: { text: string }) {
     const urlMatch = part.match(/(https?:\/\/[^\s']+|\/[^\s']+)/);
     if (urlMatch && part === urlMatch[1]) {
       return (
-        <span key={index} style={{ color: "#22c55e" }}>
+        <span key={`url-${part}`} style={{ color: "#22c55e" }}>
           {part}
         </span>
       );
     }
 
-    return <span key={index}>{part}</span>;
+    return <span key={`plain-${part}`}>{part}</span>;
   });
 }

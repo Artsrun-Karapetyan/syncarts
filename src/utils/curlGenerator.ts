@@ -1,7 +1,7 @@
 import {
   interpolateVariables,
   resolveRequestAuth,
-} from "../contexts/workspace/requestHelpers";
+} from "../contexts/workspace/requests/requestHelpers";
 import type {
   Collection,
   Environment,

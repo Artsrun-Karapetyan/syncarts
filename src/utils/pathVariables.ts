@@ -29,20 +29,21 @@ export function syncPathVariablesWithUrl(
 }
 
 export function upsertPathVariable(
-  variables: PathVariable[] = [],
+  variables: PathVariable[] | undefined,
   key: string,
   value: string,
   description?: string,
 ): PathVariable[] {
-  const exists = variables.some((variable) => variable.key === key);
+  const currentVariables = variables ?? [];
+  const exists = currentVariables.some((variable) => variable.key === key);
   if (!exists) {
     return [
-      ...variables,
+      ...currentVariables,
       { id: crypto.randomUUID(), key, value, description: description || "" },
     ];
   }
 
-  return variables.map((variable) =>
+  return currentVariables.map((variable) =>
     variable.key === key
       ? { ...variable, value, description: description ?? variable.description }
       : variable,

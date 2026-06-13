@@ -130,7 +130,7 @@ export function FileValueEditor(props: FileValueEditorProps) {
                   const fileName = file.split(/[/\\]/).pop() || file;
                   return (
                     <div
-                      key={idx}
+                      key={file}
                       style={{
                         display: "flex",
                         alignItems: "center",

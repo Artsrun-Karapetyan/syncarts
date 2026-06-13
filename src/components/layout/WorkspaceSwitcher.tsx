@@ -1,18 +1,31 @@
 import { Edit2, Trash2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
 import {
   isMemberWorkspace,
   isSharedWorkspace,
-} from "../../contexts/workspace/sharing";
+} from "../../contexts/workspace/sync/sharing";
 import { useWorkspace } from "../../contexts/WorkspaceContext";
 import { useStoredUser } from "../../lib/session";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { Select } from "../ui/Select";
+import { WorkspaceNamePopover } from "./WorkspaceNamePopover";
 
 type WorkspaceSwitcherProps = {
   mode?: "sidebar" | "topbar";
+};
+
+const miniActionStyle: React.CSSProperties = {
+  width: 24,
+  height: 24,
+  flexShrink: 0,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: 7,
+  border: "1px solid var(--border-color)",
+  color: "var(--text-tertiary)",
+  background: "rgba(10, 10, 10, 0.55)",
 };
 
 export function WorkspaceSwitcher({
@@ -45,6 +58,17 @@ export function WorkspaceSwitcher({
     (workspace) => workspace.id === activeWorkspaceId,
   );
   const isActiveMemberWorkspace = isMemberWorkspace(activeWorkspace, user?.id);
+  const submitCreateWorkspace = () => {
+    if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
+    setIsCreatingWorkspace(false);
+    setNewWorkspaceName("");
+  };
+  const submitRenameWorkspace = () => {
+    if (activeWorkspace && renameWorkspaceName.trim()) {
+      renameWorkspace(activeWorkspace.id, renameWorkspaceName.trim());
+    }
+    setIsRenamingWorkspace(false);
+  };
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -205,132 +229,36 @@ export function WorkspaceSwitcher({
         />
       </div>
 
-      {isCreatingWorkspace &&
-        createPortal(
-          <div
-            ref={createPopoverRef}
-            className="glass-panel animate-fade-in"
-            style={{
-              ...popoverStyle,
-              position: "fixed",
-              top: `${popoverPosition?.top ?? 0}px`,
-              left: `${popoverPosition?.left ?? 0}px`,
-              width: `${popoverPosition?.width ?? (mode === "topbar" ? 300 : 280)}px`,
-            }}
-          >
-            <div style={popoverTitleStyle}>Create Workspace</div>
-            <input
-              autoFocus
-              className="input"
-              style={popoverInputStyle}
-              placeholder="Workspace Name"
-              value={newWorkspaceName}
-              onChange={(e) => setNewWorkspaceName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  if (newWorkspaceName.trim())
-                    createWorkspace(newWorkspaceName.trim());
-                  setIsCreatingWorkspace(false);
-                  setNewWorkspaceName("");
-                }
-                if (e.key === "Escape") {
-                  setIsCreatingWorkspace(false);
-                  setNewWorkspaceName("");
-                }
-              }}
-            />
-            <div
-              style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
-            >
-              <button
-                className="btn"
-                style={popoverButtonStyle}
-                onClick={() => {
-                  setIsCreatingWorkspace(false);
-                  setNewWorkspaceName("");
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                style={popoverPrimaryButtonStyle}
-                onClick={() => {
-                  if (newWorkspaceName.trim())
-                    createWorkspace(newWorkspaceName.trim());
-                  setIsCreatingWorkspace(false);
-                  setNewWorkspaceName("");
-                }}
-              >
-                Create
-              </button>
-            </div>
-          </div>,
-          document.body,
-        )}
+      {isCreatingWorkspace && (
+        <WorkspaceNamePopover
+          actionLabel="Create"
+          inputRef={createPopoverRef}
+          mode={mode}
+          position={popoverPosition}
+          title="Create Workspace"
+          value={newWorkspaceName}
+          onCancel={() => {
+            setIsCreatingWorkspace(false);
+            setNewWorkspaceName("");
+          }}
+          onSubmit={submitCreateWorkspace}
+          onValueChange={setNewWorkspaceName}
+        />
+      )}
 
-      {isRenamingWorkspace &&
-        activeWorkspace &&
-        createPortal(
-          <div
-            ref={renamePopoverRef}
-            className="glass-panel animate-fade-in"
-            style={{
-              ...popoverStyle,
-              position: "fixed",
-              top: `${popoverPosition?.top ?? 0}px`,
-              left: `${popoverPosition?.left ?? 0}px`,
-              width: `${popoverPosition?.width ?? (mode === "topbar" ? 300 : 280)}px`,
-            }}
-          >
-            <div style={popoverTitleStyle}>Rename Workspace</div>
-            <input
-              autoFocus
-              className="input"
-              style={popoverInputStyle}
-              placeholder="Workspace Name"
-              value={renameWorkspaceName}
-              onChange={(e) => setRenameWorkspaceName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  if (renameWorkspaceName.trim())
-                    renameWorkspace(
-                      activeWorkspace.id,
-                      renameWorkspaceName.trim(),
-                    );
-                  setIsRenamingWorkspace(false);
-                }
-                if (e.key === "Escape") setIsRenamingWorkspace(false);
-              }}
-            />
-            <div
-              style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
-            >
-              <button
-                className="btn"
-                style={popoverButtonStyle}
-                onClick={() => setIsRenamingWorkspace(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                style={popoverPrimaryButtonStyle}
-                onClick={() => {
-                  if (renameWorkspaceName.trim())
-                    renameWorkspace(
-                      activeWorkspace.id,
-                      renameWorkspaceName.trim(),
-                    );
-                  setIsRenamingWorkspace(false);
-                }}
-              >
-                Rename
-              </button>
-            </div>
-          </div>,
-          document.body,
-        )}
+      {isRenamingWorkspace && activeWorkspace && (
+        <WorkspaceNamePopover
+          actionLabel="Rename"
+          inputRef={renamePopoverRef}
+          mode={mode}
+          position={popoverPosition}
+          title="Rename Workspace"
+          value={renameWorkspaceName}
+          onCancel={() => setIsRenamingWorkspace(false)}
+          onSubmit={submitRenameWorkspace}
+          onValueChange={setRenameWorkspaceName}
+        />
+      )}
 
       <ConfirmModal
         isOpen={isDeleteWorkspaceOpen}
@@ -354,51 +282,3 @@ export function WorkspaceSwitcher({
     </div>
   );
 }
-
-const miniActionStyle: React.CSSProperties = {
-  width: 24,
-  height: 24,
-  flexShrink: 0,
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: 7,
-  border: "1px solid var(--border-color)",
-  color: "var(--text-tertiary)",
-  background: "rgba(10, 10, 10, 0.55)",
-};
-
-const popoverStyle: React.CSSProperties = {
-  padding: 12,
-  zIndex: 1000000,
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-  boxShadow: "var(--shadow-lg)",
-  background: "var(--bg-primary)",
-  backdropFilter: "none",
-  WebkitBackdropFilter: "none",
-};
-
-const popoverTitleStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 700,
-  color: "var(--text-primary)",
-};
-
-const popoverInputStyle: React.CSSProperties = {
-  width: "100%",
-  fontSize: 12,
-  padding: "7px 10px",
-};
-
-const popoverButtonStyle: React.CSSProperties = {
-  padding: "5px 9px",
-  fontSize: 11,
-};
-
-const popoverPrimaryButtonStyle: React.CSSProperties = {
-  padding: "5px 9px",
-  fontSize: 11,
-  borderRadius: "var(--radius-sm)",
-};

@@ -93,10 +93,10 @@ export function useScriptAutocomplete(
     return false;
   };
 
-  const insertSuggestion = (
+  function insertSuggestion(
     suggestion: ScriptSuggestion,
     element?: HTMLTextAreaElement | null,
-  ) => {
+  ) {
     if (!state) return;
     const nextValue = `${value.slice(0, state.replaceStart)}${suggestion.insertText}${value.slice(state.caretIndex)}`;
     const caretPosition = state.replaceStart + suggestion.insertText.length;
@@ -106,7 +106,7 @@ export function useScriptAutocomplete(
       element?.focus();
       element?.setSelectionRange(caretPosition, caretPosition);
     });
-  };
+  }
 
   return {
     activeIndex,
