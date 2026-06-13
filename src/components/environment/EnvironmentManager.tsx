@@ -268,12 +268,24 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
 
           <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
             {(isGlobals || selectedEnv) ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', fontWeight: 600, fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', paddingBottom: 8, borderBottom: '1px solid var(--border-color)' }}>
-                  <div style={{ width: 40, textAlign: 'center' }}></div>
-                  <div style={{ flex: 1 }}>Variable</div>
-                  <div style={{ flex: 1 }}>Initial Value</div>
-                  <div style={{ width: 40 }}></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0, paddingTop: 1, paddingLeft: 1 }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '40px 1fr 1fr 40px',
+                  gap: 0,
+                  alignItems: 'center',
+                  background: 'var(--bg-tertiary)',
+                  borderTop: '1px solid var(--border-color)',
+                  borderBottom: '1px solid var(--border-color)',
+                  borderLeft: '1px solid var(--border-color)',
+                  borderRight: '1px solid var(--border-color)',
+                  borderRadius: '4px 4px 0 0',
+                  margin: '-1px 0 0 -1px',
+                }}>
+                  <div style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}></div>
+                  <div style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', borderLeft: '1px solid var(--border-color)' }}>Variable</div>
+                  <div style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', borderLeft: '1px solid var(--border-color)' }}>Initial Value</div>
+                  <div style={{ padding: '6px 12px', borderLeft: '1px solid var(--border-color)' }}></div>
                 </div>
 
                 {isGlobals && [
@@ -281,64 +293,70 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
                   { key: '$timestamp', desc: 'Unix timestamp (dynamic)' },
                   { key: '$isoTimestamp', desc: 'ISO timestamp (dynamic)' }
                 ].map(v => (
-                  <div key={v.key} style={{ display: 'flex', alignItems: 'center', gap: 12, opacity: 0.6 }}>
+                  <div key={v.key} style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '40px 1fr 1fr 40px', 
+                    gap: 0, 
+                    alignItems: 'center',
+                    opacity: 0.6
+                  }}>
                     <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
                       <CheckSquare size={16} style={{ color: 'var(--text-tertiary)' }} />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <input
-                        className="input"
-                        style={{ width: '100%', fontSize: 13, background: 'var(--bg-secondary)', cursor: 'not-allowed', color: 'var(--accent-primary)' }}
-                        value={v.key}
-                        disabled
-                      />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <input
-                        className="input"
-                        style={{ width: '100%', fontSize: 13, background: 'var(--bg-secondary)', cursor: 'not-allowed', color: 'var(--text-tertiary)' }}
-                        value={v.desc}
-                        disabled
-                      />
-                    </div>
+                    <input
+                      className="input"
+                      style={{ width: '100%', fontSize: 13, background: 'var(--bg-secondary)', cursor: 'not-allowed', color: 'var(--accent-primary)', borderRadius: 0, margin: '-1px 0 0 -1px' }}
+                      value={v.key}
+                      disabled
+                    />
+                    <input
+                      className="input"
+                      style={{ width: '100%', fontSize: 13, background: 'var(--bg-secondary)', cursor: 'not-allowed', color: 'var(--text-tertiary)', borderRadius: 0, margin: '-1px 0 0 -1px' }}
+                      value={v.desc}
+                      disabled
+                    />
                     <div style={{ width: 40 }}></div>
                   </div>
                 ))}
 
                 {currentVariables.map(v => (
-                  <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div key={v.id} style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '40px 1fr 1fr 40px', 
+                    gap: 0, 
+                    alignItems: 'center',
+                    opacity: v.enabled === false ? 0.45 : 1,
+                  }}>
                     <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
                       <button
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: v.enabled ? 'var(--accent-primary)' : 'var(--text-tertiary)' }}
                         onClick={() => handleUpdateVariable(v.id, { enabled: !v.enabled })}
+                        title={v.enabled ? 'Disable variable' : 'Enable variable'}
                       >
                         {v.enabled ? <CheckSquare size={16} /> : <Square size={16} />}
                       </button>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <input
-                        className="input"
-                        style={{ width: '100%', fontSize: 13, background: 'var(--bg-secondary)' }}
-                        placeholder="Variable Key"
-                        value={v.key}
-                        onChange={(e) => handleUpdateVariable(v.id, { key: e.target.value })}
-                      />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <input
-                        className="input"
-                        style={{ width: '100%', fontSize: 13, background: 'var(--bg-secondary)' }}
-                        placeholder="Value"
-                        value={v.value}
-                        onChange={(e) => handleUpdateVariable(v.id, { value: e.target.value })}
-                      />
-                    </div>
+                    <input
+                      className="input"
+                      style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
+                      placeholder="Variable Key"
+                      value={v.key}
+                      onChange={(e) => handleUpdateVariable(v.id, { key: e.target.value })}
+                    />
+                    <input
+                      className="input"
+                      style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
+                      placeholder="Value"
+                      value={v.value}
+                      onChange={(e) => handleUpdateVariable(v.id, { value: e.target.value })}
+                    />
                     <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
                       <button
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}
                         onClick={() => handleDeleteVariable(v.id)}
                         onMouseEnter={(e) => e.currentTarget.style.color = 'var(--status-delete)'}
                         onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                        title="Remove Variable"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -347,12 +365,36 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
                 ))}
 
                 <button
-                  className="btn"
-                  style={{ alignSelf: 'flex-start', marginTop: 8 }}
+                  type="button"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    padding: '8px',
+                    border: '1px dashed var(--border-color)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text-secondary)',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    transition: 'all var(--transition-fast)',
+                    marginTop: 12
+                  }}
                   onClick={handleAddVariable}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-highlight)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                    e.currentTarget.style.background = 'transparent';
+                  }}
                 >
-                  <Plus size={14} />
-                  Add Variable
+                  <Plus size={14} /> Add Variable
                 </button>
               </div>
             ) : (
