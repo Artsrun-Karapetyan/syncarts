@@ -10,6 +10,7 @@ import { exportToPostmanCollection } from '../../utils/postmanParser';
 import { ImportModal } from '../workspace/ImportModal';
 import { CreateMergeRequestModal } from '../workspace/CreateMergeRequestModal';
 import { GitPullRequest } from 'lucide-react';
+import { invoke } from '@tauri-apps/api/core';
 
 interface CtxMenuState {
   x: number;
@@ -494,24 +495,124 @@ export function Sidebar() {
   };
 
 
-  const handleExportCollection = (collectionId: string) => {
+  const handleExportCollection = async (collectionId: string) => {
     const collection = collections.find(c => c.id === collectionId);
     if (!collection) return;
 
     try {
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const filePath = await save({
+        defaultPath: `${collection.name || 'collection'}.postman_collection.json`,
+        filters: [{ name: 'Postman Collection', extensions: ['json'] }]
+      });
+
+      if (!filePath) return;
+
       const jsonStr = exportToPostmanCollection(collection);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${collection.name || 'collection'}.postman_collection.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      
+      await invoke('save_response_body', {
+        path: filePath,
+        body: jsonStr,
+      });
     } catch (err) {
       console.error('Failed to export collection:', err);
       alert('Failed to export collection.');
+    }
+  };
+
+  const handleExportFolder = async (collectionId: string, folderId: string) => {
+    const collection = collections.find(c => c.id === collectionId);
+    if (!collection) return;
+    
+    // Find the folder recursively
+    const findFolder = (items: (IFolder | SavedRequest)[]): IFolder | undefined => {
+      for (const item of items) {
+        if (item.id === folderId && item.type === 'folder') return item as IFolder;
+        if (item.type === 'folder') {
+          const found = findFolder(item.items);
+          if (found) return found;
+        }
+      }
+      return undefined;
+    };
+    
+    const folder = findFolder(collection.items);
+    if (!folder) return;
+
+    try {
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const filePath = await save({
+        defaultPath: `${folder.name || 'folder'}.postman_collection.json`,
+        filters: [{ name: 'Postman Collection', extensions: ['json'] }]
+      });
+
+      if (!filePath) return;
+
+      // Wrap folder in a pseudo-collection
+      const pseudoCollection = {
+        ...collection,
+        name: folder.name,
+        description: folder.description || '',
+        items: [folder]
+      };
+
+      const jsonStr = exportToPostmanCollection(pseudoCollection);
+      
+      await invoke('save_response_body', {
+        path: filePath,
+        body: jsonStr,
+      });
+    } catch (err) {
+      console.error('Failed to export folder:', err);
+      alert('Failed to export folder.');
+    }
+  };
+
+  const handleExportRequest = async (collectionId: string, requestId: string) => {
+    const collection = collections.find(c => c.id === collectionId);
+    if (!collection) return;
+    
+    // Find the request recursively
+    const findRequest = (items: (IFolder | SavedRequest)[]): SavedRequest | undefined => {
+      for (const item of items) {
+        if (item.id === requestId && item.type === 'request') return item as SavedRequest;
+        if (item.type === 'folder') {
+          const found = findRequest(item.items);
+          if (found) return found;
+        }
+      }
+      return undefined;
+    };
+    
+    const request = findRequest(collection.items);
+    if (!request) return;
+
+    try {
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const filePath = await save({
+        defaultPath: `${request.name || 'request'}.postman_collection.json`,
+        filters: [{ name: 'Postman Collection', extensions: ['json'] }]
+      });
+
+      if (!filePath) return;
+
+      // Wrap request in a pseudo-collection
+      const pseudoCollection = {
+        ...collection,
+        name: request.name,
+        description: request.description || '',
+        items: [request]
+      };
+
+      const jsonStr = exportToPostmanCollection(pseudoCollection);
+      
+      await invoke('save_response_body', {
+        path: filePath,
+        body: jsonStr,
+      });
+    } catch (err) {
+      console.error('Failed to export request:', err);
+      alert('Failed to export request.');
     }
   };
 
@@ -1188,7 +1289,7 @@ export function Sidebar() {
             </>
             )}
 
-            {ctxMenu.itemType === 'collection' && (
+            {(ctxMenu.itemType === 'collection' || ctxMenu.itemType === 'folder' || ctxMenu.itemType === 'request') && (
               <>
                 <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
                 <button
@@ -1210,7 +1311,13 @@ export function Sidebar() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleExportCollection(ctxMenu.collectionId);
+                    if (ctxMenu.itemType === 'collection') {
+                      handleExportCollection(ctxMenu.collectionId);
+                    } else if (ctxMenu.itemType === 'folder' && ctxMenu.itemId) {
+                      handleExportFolder(ctxMenu.collectionId, ctxMenu.itemId);
+                    } else if (ctxMenu.itemType === 'request' && ctxMenu.itemId) {
+                      handleExportRequest(ctxMenu.collectionId, ctxMenu.itemId);
+                    }
                     setCtxMenu(null);
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
@@ -1232,8 +1339,13 @@ export function Sidebar() {
                   >
                     <Download size={13} />
                   </span>
-                  <span style={{ fontWeight: 500 }}>Export collection</span>
+                  <span style={{ fontWeight: 500 }}>Export {ctxMenu.itemType}</span>
                 </button>
+              </>
+            )}
+
+            {ctxMenu.itemType === 'collection' && (
+              <>
                 <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
                 <button
                   type="button"

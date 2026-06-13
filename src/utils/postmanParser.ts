@@ -44,6 +44,16 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
 
     if (item.item) {
       // It's a folder
+      let variables: EnvironmentVariable[] | undefined = undefined;
+      if (Array.isArray(item.variable) && item.variable.length > 0) {
+        variables = item.variable.map((v: any) => ({
+          id: crypto.randomUUID(),
+          key: v.key || '',
+          value: v.value || '',
+          enabled: v.disabled !== true
+        }));
+      }
+
       return {
         type: 'folder',
         id: crypto.randomUUID(),
@@ -53,7 +63,8 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
         testScript,
         authType,
         bearerToken,
-        description
+        description,
+        variables
       };
     } else {
       // It's a request
@@ -85,6 +96,16 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
         url = req.url.raw;
       }
       const pathVariables = parsePostmanPathVariables(req.url, url);
+
+      let queryParams: any[] | undefined = undefined;
+      if (req.url && Array.isArray(req.url.query) && req.url.query.length > 0) {
+        queryParams = req.url.query.map((q: any) => ({
+          key: q.key || '',
+          value: q.value || '',
+          description: typeof q.description === 'string' ? q.description : '',
+          enabled: q.disabled !== true
+        }));
+      }
 
       let headers: HeaderItem[] = [{ key: '', value: '', enabled: true }];
       if (Array.isArray(req.header) && req.header.length > 0) {
@@ -202,6 +223,7 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
         authType,
         bearerToken,
         description,
+        queryParams,
         examples: examples.length > 0 ? examples : undefined
       };
     }
@@ -255,48 +277,97 @@ export function exportToPostmanCollection(collection: Collection): string {
     };
 
     if (item.type === 'folder') {
-      return {
+      const folderExport: any = {
         name: item.name,
         description: item.description,
         item: item.items.map(exportItem),
         event: buildEvents(item.preRequestScript, item.testScript),
         auth: buildAuth(item.authType, item.bearerToken)
       };
+      
+      if (item.variables && item.variables.length > 0) {
+        folderExport.variable = item.variables.map(v => ({
+          key: v.key,
+          value: v.value,
+          type: 'string',
+          disabled: !v.enabled
+        }));
+      }
+      return folderExport;
     } else {
       const cleanHeaders = item.headers.filter(h => h.key.trim() !== '');
       
-      let host: string[] = [];
-      let path: string[] = [];
+      let host: string[] | undefined = undefined;
+      let path: string[] | undefined = undefined;
+      let query: any[] | undefined = undefined;
       
       try {
         const parsedUrl = new URL(item.url);
         host = parsedUrl.host.split('.');
         path = parsedUrl.pathname.split('/').filter(Boolean);
       } catch (e) {
-        // Fallback if URL is invalid/empty
+        // Fallback if URL contains variables like {{url}} which makes new URL() throw
+        const urlStr = item.url || '';
+        const withoutProto = urlStr.replace(/^https?:\/\//, '');
+        const querySplit = withoutProto.split('?');
+        const pathPart = querySplit[0];
+        
+        const parts = pathPart.split('/');
+        if (parts.length > 0 && parts[0]) {
+          host = parts[0].split('.');
+          path = parts.slice(1).filter(Boolean);
+        }
+      }
+
+      if (item.queryParams && item.queryParams.length > 0) {
+        query = item.queryParams.map(q => ({
+          key: q.key,
+          value: q.value,
+          description: q.description || undefined,
+          disabled: !q.enabled
+        }));
       }
       
-      return {
-        name: item.name,
-        event: buildEvents(item.preRequestScript, item.testScript),
-        request: {
-          method: item.method,
-          description: item.description,
-          auth: buildAuth(item.authType, item.bearerToken),
-          header: cleanHeaders.map(h => ({
-            key: h.key,
-            value: h.value,
-            description: h.description || undefined,
-            type: 'text'
-          })),
-          body: {
-            mode: 'raw',
-            raw: item.body
-          },
+          let postmanBody: any = { mode: item.bodyType || 'raw' };
+          if (item.bodyType === 'raw') {
+            postmanBody.raw = item.body || '';
+          } else if (item.bodyType === 'form-data') {
+            postmanBody.formdata = (item.formData || []).map(f => ({
+              key: f.key,
+              value: f.value,
+              type: f.type || 'text',
+              description: f.description || undefined,
+              disabled: !f.enabled
+            }));
+          } else if (item.bodyType === 'x-www-form-urlencoded') {
+            postmanBody.urlencoded = (item.formData || []).map(f => ({
+              key: f.key,
+              value: f.value,
+              type: 'text',
+              description: f.description || undefined,
+              disabled: !f.enabled
+            }));
+          }
+
+          return {
+            name: item.name,
+            event: buildEvents(item.preRequestScript, item.testScript),
+            request: {
+              method: item.method,
+              description: item.description,
+              auth: buildAuth(item.authType, item.bearerToken),
+              header: cleanHeaders.map(h => ({
+                key: h.key,
+                value: h.value,
+                description: h.description || undefined,
+                type: 'text'
+              })),
+              body: postmanBody,
           url: {
             raw: item.url,
-            host,
-            path,
+            ...(host && host.length > 0 ? { host } : {}),
+            ...(path && path.length > 0 ? { path } : {}),
+            ...(query && query.length > 0 ? { query } : {}),
             variable: buildPostmanPathVariables(item.pathVariables)
           }
         },
