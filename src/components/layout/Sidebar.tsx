@@ -10,7 +10,6 @@ import { exportToPostmanCollection } from '../../utils/postmanParser';
 import { ImportModal } from '../workspace/ImportModal';
 import { CreateMergeRequestModal } from '../workspace/CreateMergeRequestModal';
 import { GitPullRequest } from 'lucide-react';
-import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 
 interface CtxMenuState {
   x: number;
@@ -602,30 +601,6 @@ export function Sidebar() {
         position: 'relative',
       }}
     >
-      {/* Logo */}
-      <div style={{ flexShrink: 0, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0, 240, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <img src="/logo.png" alt="Syncarts Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.4)' }} />
-        </div>
-        <div>
-          <h1 style={{ 
-            fontWeight: 800, 
-            fontSize: 22, 
-            letterSpacing: '-0.03em', 
-            margin: 0,
-            background: 'linear-gradient(135deg, #00f0ff 0%, #b000ff 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textShadow: '0 2px 10px rgba(176, 0, 255, 0.2)'
-          }}>
-            Syncarts
-          </h1>
-          <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.5 }}>API Client</div>
-        </div>
-      </div>
-
-      <WorkspaceSwitcher />
-
       {/* Collections */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, overflow: 'auto', minHeight: 0, paddingRight: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>

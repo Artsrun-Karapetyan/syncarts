@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Edit2, Trash2 } from 'lucide-react';
 
 import { useStoredUser } from '../../lib/session';
@@ -7,7 +8,11 @@ import { isMemberWorkspace, isSharedWorkspace } from '../../contexts/workspace/s
 import { Select } from '../ui/Select';
 import { ConfirmModal } from '../ui/ConfirmModal';
 
-export function WorkspaceSwitcher() {
+type WorkspaceSwitcherProps = {
+  mode?: 'sidebar' | 'topbar';
+};
+
+export function WorkspaceSwitcher({ mode = 'sidebar' }: WorkspaceSwitcherProps) {
   const {
     workspaces,
     activeWorkspaceId,
@@ -23,6 +28,8 @@ export function WorkspaceSwitcher() {
   const [isRenamingWorkspace, setIsRenamingWorkspace] = useState(false);
   const [renameWorkspaceName, setRenameWorkspaceName] = useState('');
   const [isDeleteWorkspaceOpen, setIsDeleteWorkspaceOpen] = useState(false);
+  const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const createPopoverRef = useRef<HTMLDivElement | null>(null);
   const renamePopoverRef = useRef<HTMLDivElement | null>(null);
   const activeWorkspace = workspaces.find((workspace) => workspace.id === activeWorkspaceId);
@@ -43,54 +50,53 @@ export function WorkspaceSwitcher() {
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [isCreatingWorkspace, isRenamingWorkspace]);
 
+  useLayoutEffect(() => {
+    if (!isCreatingWorkspace && !isRenamingWorkspace) return;
+
+    const updatePosition = () => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setPopoverPosition({
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: Math.max(rect.width, mode === 'topbar' ? 300 : 280),
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isCreatingWorkspace, isRenamingWorkspace, mode]);
+
   return (
     <div
+      ref={containerRef}
       style={{
+        position: 'relative',
         display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        padding: 14,
-        border: '1px solid var(--border-color)',
-        borderRadius: 16,
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)',
+        flexDirection: mode === 'topbar' ? 'row' : 'column',
+        alignItems: mode === 'topbar' ? 'center' : 'stretch',
+        gap: mode === 'topbar' ? 6 : 8,
+        padding: mode === 'topbar' ? 0 : 10,
+        minWidth: mode === 'topbar' ? 300 : undefined,
+        border: mode === 'topbar' ? 'none' : '1px solid var(--border-color)',
+        borderRadius: mode === 'topbar' ? 0 : 14,
+        background: 'transparent',
+        boxShadow: mode === 'topbar' ? 'none' : 'inset 0 1px 0 rgba(255,255,255,0.03)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+      <div style={{ display: mode === 'topbar' ? 'none' : 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexShrink: 0 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Workspace
         </div>
-        {activeWorkspace && activeWorkspace.id !== localDefaultWorkspaceId && (
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button
-              type="button"
-              className="tooltip-trigger"
-              data-tooltip="Rename Workspace"
-              style={iconButtonStyle}
-              onClick={() => {
-                setRenameWorkspaceName(activeWorkspace.name);
-                setIsRenamingWorkspace(true);
-                setIsCreatingWorkspace(false);
-              }}
-            >
-              <Edit2 size={14} />
-            </button>
-            {workspaces.length > 1 && (
-              <button
-                type="button"
-                className="tooltip-trigger"
-                data-tooltip={isActiveMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
-                style={iconButtonStyle}
-                onClick={() => setIsDeleteWorkspaceOpen(true)}
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
-      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0 }}>
         <Select
           variant="pill"
           value={activeWorkspaceId}
@@ -111,84 +117,146 @@ export function WorkspaceSwitcher() {
             })),
             { label: '+ Create Workspace', value: 'new' },
           ]}
+          endAdornment={
+            activeWorkspace && activeWorkspace.id !== localDefaultWorkspaceId ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 2 }}>
+                <button
+                  type="button"
+                  className="tooltip-trigger"
+                  data-tooltip="Rename Workspace"
+                  style={miniActionStyle}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRenameWorkspaceName(activeWorkspace.name);
+                    setIsRenamingWorkspace(true);
+                    setIsCreatingWorkspace(false);
+                  }}
+                >
+                  <Edit2 size={13} />
+                </button>
+                {workspaces.length > 1 && (
+                  <button
+                    type="button"
+                    className="tooltip-trigger"
+                    data-tooltip={isActiveMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
+                    style={miniActionStyle}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsDeleteWorkspaceOpen(true);
+                    }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+            ) : null
+          }
+          compact={mode === 'topbar'}
+          style={mode === 'topbar' ? { width: 280 } : undefined}
         />
       </div>
 
       {isCreatingWorkspace && (
-        <div ref={createPopoverRef} className="glass-panel animate-fade-in" style={popoverStyle}>
-          <div style={popoverTitleStyle}>Create New Workspace</div>
-          <input
-            autoFocus
-            className="input"
-            style={popoverInputStyle}
-            placeholder="Workspace Name"
-            value={newWorkspaceName}
-            onChange={(e) => setNewWorkspaceName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
-                setIsCreatingWorkspace(false);
-                setNewWorkspaceName('');
-              }
-              if (e.key === 'Escape') {
-                setIsCreatingWorkspace(false);
-                setNewWorkspaceName('');
-              }
+        createPortal(
+          <div
+            ref={createPopoverRef}
+            className="glass-panel animate-fade-in"
+            style={{
+              ...popoverStyle,
+              position: 'fixed',
+              top: `${popoverPosition?.top ?? 0}px`,
+              left: `${popoverPosition?.left ?? 0}px`,
+              width: `${popoverPosition?.width ?? (mode === 'topbar' ? 300 : 280)}px`,
             }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <button className="btn" style={popoverButtonStyle} onClick={() => { setIsCreatingWorkspace(false); setNewWorkspaceName(''); }}>
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary"
-              style={popoverPrimaryButtonStyle}
-              onClick={() => {
-                if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
-                setIsCreatingWorkspace(false);
-                setNewWorkspaceName('');
+          >
+            <div style={popoverTitleStyle}>Create Workspace</div>
+            <input
+              autoFocus
+              className="input"
+              style={popoverInputStyle}
+              placeholder="Workspace Name"
+              value={newWorkspaceName}
+              onChange={(e) => setNewWorkspaceName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
+                  setIsCreatingWorkspace(false);
+                  setNewWorkspaceName('');
+                }
+                if (e.key === 'Escape') {
+                  setIsCreatingWorkspace(false);
+                  setNewWorkspaceName('');
+                }
               }}
-            >
-              Create
-            </button>
-          </div>
-        </div>
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button className="btn" style={popoverButtonStyle} onClick={() => { setIsCreatingWorkspace(false); setNewWorkspaceName(''); }}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                style={popoverPrimaryButtonStyle}
+                onClick={() => {
+                  if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
+                  setIsCreatingWorkspace(false);
+                  setNewWorkspaceName('');
+                }}
+              >
+                Create
+              </button>
+            </div>
+          </div>,
+          document.body
+        )
       )}
 
       {isRenamingWorkspace && activeWorkspace && (
-        <div ref={renamePopoverRef} className="glass-panel animate-fade-in" style={popoverStyle}>
-          <div style={popoverTitleStyle}>Rename Workspace</div>
-          <input
-            autoFocus
-            className="input"
-            style={popoverInputStyle}
-            placeholder="Workspace Name"
-            value={renameWorkspaceName}
-            onChange={(e) => setRenameWorkspaceName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                if (renameWorkspaceName.trim()) renameWorkspace(activeWorkspace.id, renameWorkspaceName.trim());
-                setIsRenamingWorkspace(false);
-              }
-              if (e.key === 'Escape') setIsRenamingWorkspace(false);
+        createPortal(
+          <div
+            ref={renamePopoverRef}
+            className="glass-panel animate-fade-in"
+            style={{
+              ...popoverStyle,
+              position: 'fixed',
+              top: `${popoverPosition?.top ?? 0}px`,
+              left: `${popoverPosition?.left ?? 0}px`,
+              width: `${popoverPosition?.width ?? (mode === 'topbar' ? 300 : 280)}px`,
             }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <button className="btn" style={popoverButtonStyle} onClick={() => setIsRenamingWorkspace(false)}>
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary"
-              style={popoverPrimaryButtonStyle}
-              onClick={() => {
-                if (renameWorkspaceName.trim()) renameWorkspace(activeWorkspace.id, renameWorkspaceName.trim());
-                setIsRenamingWorkspace(false);
+          >
+            <div style={popoverTitleStyle}>Rename Workspace</div>
+            <input
+              autoFocus
+              className="input"
+              style={popoverInputStyle}
+              placeholder="Workspace Name"
+              value={renameWorkspaceName}
+              onChange={(e) => setRenameWorkspaceName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (renameWorkspaceName.trim()) renameWorkspace(activeWorkspace.id, renameWorkspaceName.trim());
+                  setIsRenamingWorkspace(false);
+                }
+                if (e.key === 'Escape') setIsRenamingWorkspace(false);
               }}
-            >
-              Rename
-            </button>
-          </div>
-        </div>
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button className="btn" style={popoverButtonStyle} onClick={() => setIsRenamingWorkspace(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                style={popoverPrimaryButtonStyle}
+                onClick={() => {
+                  if (renameWorkspaceName.trim()) renameWorkspace(activeWorkspace.id, renameWorkspaceName.trim());
+                  setIsRenamingWorkspace(false);
+                }}
+              >
+                Rename
+              </button>
+            </div>
+          </div>,
+          document.body
+        )
       )}
 
       <ConfirmModal
@@ -212,47 +280,50 @@ export function WorkspaceSwitcher() {
   );
 }
 
-const iconButtonStyle: React.CSSProperties = {
-  width: 28,
-  height: 28,
+const miniActionStyle: React.CSSProperties = {
+  width: 24,
+  height: 24,
   flexShrink: 0,
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  borderRadius: 8,
+  borderRadius: 7,
   border: '1px solid var(--border-color)',
   color: 'var(--text-tertiary)',
-  background: 'var(--bg-primary)',
+  background: 'rgba(10, 10, 10, 0.55)',
 };
 
 const popoverStyle: React.CSSProperties = {
-  padding: 14,
-  zIndex: 100,
+  padding: 12,
+  zIndex: 1000000,
   display: 'flex',
   flexDirection: 'column',
-  gap: 10,
+  gap: 8,
   boxShadow: 'var(--shadow-lg)',
+  background: 'var(--bg-primary)',
+  backdropFilter: 'none',
+  WebkitBackdropFilter: 'none',
 };
 
 const popoverTitleStyle: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 12,
   fontWeight: 700,
   color: 'var(--text-primary)',
 };
 
 const popoverInputStyle: React.CSSProperties = {
   width: '100%',
-  fontSize: 13,
-  padding: '8px 10px',
+  fontSize: 12,
+  padding: '7px 10px',
 };
 
 const popoverButtonStyle: React.CSSProperties = {
-  padding: '6px 10px',
-  fontSize: 12,
+  padding: '5px 9px',
+  fontSize: 11,
 };
 
 const popoverPrimaryButtonStyle: React.CSSProperties = {
-  padding: '6px 10px',
-  fontSize: 12,
+  padding: '5px 9px',
+  fontSize: 11,
   borderRadius: 'var(--radius-sm)',
 };

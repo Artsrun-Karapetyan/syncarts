@@ -9,6 +9,7 @@ import { EnvironmentManager } from '../environment/EnvironmentManager';
 import { InviteModal } from '../workspace/InviteModal';
 import { JoinWorkspaceModal } from '../workspace/JoinWorkspaceModal';
 import { Select } from '../ui/Select';
+import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 
 export function TopBar() {
   const { activeWorkspaceId, environments, globalVariables, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment } = useWorkspace();
@@ -18,6 +19,7 @@ export function TopBar() {
   const [isEnvQuickLookOpen, setIsEnvQuickLookOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const envQuickLookRef = useRef<HTMLDivElement>(null);
   const showingGlobals = activeEnvironmentId === 'globals';
   const quickLookName = showingGlobals ? 'Globals' : activeEnvironment ? activeEnvironment.name : 'No Environment';
@@ -36,6 +38,27 @@ export function TopBar() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isEnvQuickLookOpen]);
+
+  useEffect(() => {
+    const currentWindow = getCurrentWindow();
+    let unlisten: (() => void) | undefined;
+    let isMounted = true;
+
+    void currentWindow.isFullscreen().then((value) => {
+      if (isMounted) setIsFullscreen(value);
+    });
+
+    void currentWindow.onResized(async () => {
+      setIsFullscreen(await currentWindow.isFullscreen());
+    }).then((dispose) => {
+      unlisten = dispose;
+    });
+
+    return () => {
+      isMounted = false;
+      unlisten?.();
+    };
+  }, []);
 
   const isMac = navigator.userAgent.includes('Mac');
   const handleWindowDrag = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -61,13 +84,15 @@ export function TopBar() {
         alignItems: 'center',
         gap: 18,
         padding: '0 24px',
-        paddingLeft: isMac ? 80 : 24,
+        paddingLeft: isMac && !isFullscreen ? 80 : 24,
         flexShrink: 0,
         position: 'relative',
         zIndex: 100,
       }}
     >
-      <div />
+      <div style={{ display: 'flex', alignItems: 'center', minWidth: 300, flexShrink: 0 }}>
+        <WorkspaceSwitcher mode="topbar" />
+      </div>
 
       <div
         data-tauri-drag-region
@@ -145,9 +170,10 @@ export function TopBar() {
             )}
           </div>
           
-          <div style={{ width: 180 }}>
+          <div style={{ width: 144 }}>
             <Select
               variant="pill"
+              compact
               value={activeEnvironmentId || 'none'}
               onChange={(val) => {
                 if (val === 'none') setActiveEnvironmentId(null);

@@ -16,9 +16,11 @@ interface SelectProps {
   className?: string;
   style?: React.CSSProperties;
   variant?: 'default' | 'ghost' | 'pill';
+  endAdornment?: React.ReactNode;
+  compact?: boolean;
 }
 
-export function Select({ value, options, onChange, disabled, className = '', style, variant = 'default' }: SelectProps) {
+export function Select({ value, options, onChange, disabled, className = '', style, variant = 'default', endAdornment, compact = false }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -83,10 +85,11 @@ export function Select({ value, options, onChange, disabled, className = '', sty
           background: variant === 'ghost' ? (isOpen ? 'var(--bg-tertiary)' : 'transparent') : variant === 'pill' ? 'var(--bg-primary)' : (isOpen ? 'rgba(0, 0, 0, 0.6)' : undefined),
           border: variant === 'ghost' ? 'none' : variant === 'pill' ? `1px solid ${isOpen ? 'var(--border-highlight)' : 'var(--border-color)'}` : undefined,
           borderColor: variant === 'ghost' ? 'transparent' : variant === 'pill' ? (isOpen ? 'var(--border-highlight)' : 'var(--border-color)') : (isOpen ? 'var(--border-highlight)' : undefined),
-          padding: variant === 'ghost' ? '6px 12px' : variant === 'pill' ? '0 16px' : undefined,
-          height: variant === 'pill' ? 46 : undefined,
+          padding: variant === 'ghost' ? '6px 12px' : variant === 'pill' ? (compact ? '0 12px' : '0 16px') : undefined,
+          paddingRight: variant === 'pill' && endAdornment ? (compact ? 74 : 82) : undefined,
+          height: variant === 'pill' ? (compact ? 38 : 46) : undefined,
           borderRadius: variant === 'ghost' ? '8px' : variant === 'pill' ? '9999px' : undefined,
-          fontSize: variant === 'ghost' ? '14px' : variant === 'pill' ? '13px' : undefined,
+          fontSize: variant === 'ghost' ? '14px' : variant === 'pill' ? (compact ? '12px' : '13px') : undefined,
           fontWeight: variant === 'ghost' ? 600 : variant === 'pill' ? 600 : undefined,
           color: 'var(--text-primary)',
           outline: 'none',
@@ -111,7 +114,7 @@ export function Select({ value, options, onChange, disabled, className = '', sty
                 flexShrink: 0,
                 border: '1px solid rgba(99, 102, 241, 0.34)',
                 borderRadius: 999,
-                padding: '2px 10px',
+                padding: '2px 8px',
                 background: 'rgba(99, 102, 241, 0.12)',
                 color: 'var(--text-secondary)',
                 fontSize: 10,
@@ -122,9 +125,28 @@ export function Select({ value, options, onChange, disabled, className = '', sty
               {selectedOption.badge}
             </span>
           )}
-          <ChevronDown size={variant === 'pill' ? 14 : 16} style={{ opacity: 0.6, transition: 'transform var(--transition-fast)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+          <ChevronDown size={variant === 'pill' ? (compact ? 13 : 14) : 16} style={{ opacity: 0.6, transition: 'transform var(--transition-fast)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
         </span>
       </button>
+
+      {endAdornment && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            right: variant === 'pill' ? (compact ? 34 : 38) : 10,
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            zIndex: 2,
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {endAdornment}
+        </div>
+      )}
 
       {isOpen && createPortal(
         <div
