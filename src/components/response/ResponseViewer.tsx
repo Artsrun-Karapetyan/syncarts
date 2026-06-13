@@ -10,6 +10,7 @@ import { ResponsePanelHeader } from './ResponsePanelHeader';
 import { ResponseTestResults } from './ResponseTestResults';
 import { detectResponseLanguage, type ResponseLanguage } from './responseLanguage';
 import type { BodyFormat, ResponseTab } from './responseTypes';
+import type { ResponseJsonThemeId } from './responseJsonThemes';
 
 import './ResponseViewer.css';
 import '../request/RequestTabs.css';
@@ -22,6 +23,7 @@ export function ResponseViewer() {
   const [language, setLanguage] = useState<ResponseLanguage | 'auto'>('auto');
   const [jsonCollapsed, setJsonCollapsed] = useState<number | false>(false);
   const [wrapLines, setWrapLines] = useState(false);
+  const [jsonTheme, setJsonTheme] = useState<ResponseJsonThemeId>('syncarts');
 
   const contentType = (response?.headers?.['content-type'] || response?.headers?.['Content-Type'] || '').toLowerCase();
   const isImage = contentType.startsWith('image/');
@@ -99,9 +101,11 @@ export function ResponseViewer() {
                 hasJsonBody={!!parsedBody && effectiveLanguage === 'json'}
                 jsonCollapsed={jsonCollapsed}
                 searchText={response.body || ''}
+                jsonTheme={jsonTheme}
                 wrapLines={wrapLines}
                 onBodyFormatChange={setBodyFormat}
                 onJsonCollapsedChange={setJsonCollapsed}
+                onJsonThemeChange={setJsonTheme}
                 onLanguageChange={setLanguage}
                 onWrapLinesChange={setWrapLines}
               />
@@ -112,6 +116,7 @@ export function ResponseViewer() {
               isBinary={isBinary}
               isImage={isImage}
               jsonCollapsed={jsonCollapsed}
+              jsonTheme={jsonTheme}
               parsedBody={parsedBody}
               response={response}
               wrapLines={wrapLines}

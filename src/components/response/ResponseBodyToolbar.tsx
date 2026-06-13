@@ -4,6 +4,8 @@ import { Braces, ChevronDown, ChevronUp, Maximize2, Minimize2, Play, Search, Wra
 import { Select } from '../ui/Select';
 import type { ResponseLanguage } from './responseLanguage';
 import type { BodyFormat } from './responseTypes';
+import type { ResponseJsonThemeId } from './responseJsonThemes';
+import { responseJsonThemeOptions } from './responseJsonThemes';
 
 interface ResponseBodyToolbarProps {
   bodyFormat: BodyFormat;
@@ -12,8 +14,10 @@ interface ResponseBodyToolbarProps {
   jsonCollapsed: number | false;
   searchText: string;
   wrapLines: boolean;
+  jsonTheme: ResponseJsonThemeId;
   onBodyFormatChange: (format: BodyFormat) => void;
   onJsonCollapsedChange: (collapsed: number | false | ((prev: number | false) => number | false)) => void;
+  onJsonThemeChange: (theme: ResponseJsonThemeId) => void;
   onLanguageChange: (language: ResponseLanguage) => void;
   onWrapLinesChange: (wrapLines: boolean | ((prev: boolean) => boolean)) => void;
 }
@@ -26,8 +30,10 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
     jsonCollapsed,
     searchText,
     wrapLines,
+    jsonTheme,
     onBodyFormatChange,
     onJsonCollapsedChange,
+    onJsonThemeChange,
     onLanguageChange,
     onWrapLinesChange
   } = props;
@@ -114,6 +120,13 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
 
         {hasJsonBody && bodyFormat === 'pretty' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Select
+              value={jsonTheme}
+              options={responseJsonThemeOptions}
+              onChange={(val) => onJsonThemeChange(val as ResponseJsonThemeId)}
+              variant="ghost"
+              style={{ minWidth: 104 }}
+            />
             <button className={toolButtonClass(wrapLines)} onClick={() => onWrapLinesChange(prev => !prev)}>
               <WrapText size={11} />
               {wrapLines ? 'Unwrap Lines' : 'Wrap Lines'}

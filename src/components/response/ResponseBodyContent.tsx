@@ -1,11 +1,11 @@
 import JsonView from '@uiw/react-json-view';
-import { darkTheme } from '@uiw/react-json-view/dark';
 import CodeEditor from '@uiw/react-textarea-code-editor';
 
 import type { HttpResponse } from '../../contexts/WorkspaceContext';
 import { JsonUrlString } from './JsonUrlString';
 import type { ResponseLanguage } from './responseLanguage';
 import type { BodyFormat } from './responseTypes';
+import { responseJsonThemes, type ResponseJsonThemeId } from './responseJsonThemes';
 
 interface ResponseBodyContentProps {
   bodyFormat: BodyFormat;
@@ -13,6 +13,7 @@ interface ResponseBodyContentProps {
   isBinary: boolean;
   isImage: boolean;
   jsonCollapsed: number | false;
+  jsonTheme: ResponseJsonThemeId;
   parsedBody: unknown;
   response: HttpResponse;
   wrapLines: boolean;
@@ -26,6 +27,7 @@ export function ResponseBodyContent(props: ResponseBodyContentProps) {
     isBinary,
     isImage,
     jsonCollapsed,
+    jsonTheme,
     parsedBody,
     response,
     wrapLines,
@@ -50,7 +52,7 @@ export function ResponseBodyContent(props: ResponseBodyContentProps) {
         <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }} className={`json-view-container ${wrapLines ? 'wrap-lines' : ''}`}>
           <JsonView
             value={parsedBody}
-            style={jsonThemeStyles}
+            style={responseJsonThemes[jsonTheme]}
             displayDataTypes={false}
             displayObjectSize={false}
             enableClipboard={false}
@@ -81,23 +83,3 @@ export function ResponseBodyContent(props: ResponseBodyContentProps) {
     </div>
   );
 }
-
-const jsonThemeStyles = {
-  ...darkTheme,
-  '--w-rjv-background-color': 'transparent',
-  '--w-rjv-color': 'var(--text-primary)',
-  '--w-rjv-key-string': 'var(--accent-primary)',
-  '--w-rjv-key-number': 'var(--accent-primary)',
-  '--w-rjv-colon-color': 'var(--text-tertiary)',
-  '--w-rjv-type-string-color': 'var(--status-get)',
-  '--w-rjv-type-int-color': 'var(--status-put)',
-  '--w-rjv-type-float-color': 'var(--status-put)',
-  '--w-rjv-type-boolean-color': 'var(--status-delete)',
-  '--w-rjv-type-null-color': 'var(--text-tertiary)',
-  '--w-rjv-line-color': 'var(--border-color)',
-  '--w-rjv-arrow-color': 'var(--text-tertiary)',
-  '--w-rjv-info-color': 'var(--text-tertiary)',
-  '--w-rjv-edit-color': 'var(--accent-primary)',
-  '--w-rjv-update-color': 'var(--accent-primary)',
-  '--w-rjv-copied-color': 'var(--accent-primary)',
-} as React.CSSProperties;
