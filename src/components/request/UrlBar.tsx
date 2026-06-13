@@ -96,9 +96,10 @@ export function UrlBar() {
           data-has-value={!!value}
           data-value={value}
           data-source="Path variable"
-          style={{ color: value ? 'var(--accent-primary)' : 'var(--status-delete)' }}
+          style={{ color: value ? 'var(--text-secondary)' : 'var(--status-delete)' }}
         >
-          :{key}
+          <span>:</span>
+          <span>{key}</span>
         </span>
       );
       lastIndex = tokenEnd;
@@ -115,27 +116,41 @@ export function UrlBar() {
         const varName = part.substring(2, part.length - 2);
         const resolved = resolveVariable(varName);
         const isDynamic = ['$guid', '$timestamp', '$isoTimestamp'].includes(varName);
-        const colors = resolved.hasValue || isDynamic 
-          ? getVariableColors(resolved.sourceType, isDynamic)
-          : { color: 'var(--status-delete)', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.55)' };
+        
+        if (resolved.hasValue || isDynamic) {
+            const colors = getVariableColors(resolved.sourceType, isDynamic);
+            return (
+              <span 
+                key={i} 
+                className="env-var-span"
+                data-kind="environment"
+                data-varname={varName}
+                data-exists={resolved.exists}
+                data-has-value={resolved.hasValue}
+                data-value={resolved.value || ''}
+                data-source={resolved.source}
+                data-source-type={resolved.sourceType}
+                style={{ color: colors.color }}
+              >
+                <span>{'{{'}</span>
+                <span>{varName}</span>
+                <span>{'}}'}</span>
+              </span>
+            );
+        }
 
         return (
-          <span 
-            key={i} 
+          <span
+            key={i}
             className="env-var-span"
             data-kind="environment"
             data-varname={varName}
-            data-exists={resolved.exists}
-            data-has-value={resolved.hasValue}
-            data-value={resolved.value || ''}
-            data-source={resolved.source}
-            data-source-type={resolved.sourceType}
-            style={{ 
-              color: colors.color,
-              background: colors.bg,
-              boxShadow: `inset 0 0 0 1px ${colors.border}`,
-              borderRadius: 6,
-            }}
+            data-exists={false}
+            data-has-value={false}
+            data-value=""
+            data-source=""
+            data-source-type=""
+            style={{ color: 'var(--status-delete)' }}
           >
             {part}
           </span>
