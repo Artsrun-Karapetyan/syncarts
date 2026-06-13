@@ -55,7 +55,7 @@ export function ResponseBodyContent(props: ResponseBodyContentProps) {
             displayObjectSize={false}
             enableClipboard={false}
             collapsed={jsonCollapsed}
-            shortenTextAfterLength={wrapLines ? 0 : 30}
+            shortenTextAfterLength={0}
           >
             <JsonUrlString />
           </JsonView>

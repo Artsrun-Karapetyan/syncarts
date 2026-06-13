@@ -224,8 +224,26 @@
   transform-origin: center;
 }
 
+.json-view-container {
+  min-width: max-content;
+}
+
+.json-view-container .w-rjv-line {
+  white-space: pre;
+}
+
+.json-view-container span {
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.json-view-container.wrap-lines {
+  min-width: 0;
+}
+
 .json-view-container.wrap-lines .w-rjv-line {
-  white-space: pre-wrap;
+  white-space: pre-wrap !important;
 }
 
 .json-view-container.wrap-lines span {
