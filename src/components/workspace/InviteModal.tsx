@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Copy, Check, Mail, Link as LinkIcon, Loader2, UserMinus, Users } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { isMemberWorkspace, isSharedWorkspace } from '../../contexts/workspace/sharing';
 import { useStoredUser } from '../../lib/session';
 import { Select } from '../ui/Select';
 
@@ -21,8 +22,7 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
   const [copied, setCopied] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
   const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<string[]>([]);
-  const isSharedWorkspace = (workspace: { ownerId?: string }) => !!workspace.ownerId && !!user?.id && workspace.ownerId !== user.id;
-  const visibleWorkspaces = workspaces.filter((workspace) => !isSharedWorkspace(workspace));
+  const visibleWorkspaces = workspaces.filter((workspace) => !isMemberWorkspace(workspace, user?.id));
   const activeWorkspace = workspaces.find((workspace) => workspace.id === workspaceId)
     || workspaces.find((workspace) => workspace.id === activeWorkspaceId);
   const selectedWorkspaces = visibleWorkspaces.filter((workspace) => selectedWorkspaceIds.includes(workspace.id));
@@ -34,7 +34,7 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
 
   useEffect(() => {
     if (!isOpen) return;
-    const availableWorkspaces = workspaces.filter((workspace) => !isSharedWorkspace(workspace));
+    const availableWorkspaces = workspaces.filter((workspace) => !isMemberWorkspace(workspace, user?.id));
     const preferredWorkspaceId = availableWorkspaces.some((workspace) => workspace.id === workspaceId)
       ? workspaceId
       : activeWorkspaceId;
@@ -84,6 +84,7 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
           environments: workspace.environments || []
         })),
       });
+      await reloadWorkspaces();
       setGeneratedLink(`syncarts://invite/${res.data.token}`);
       setStatusMsg('');
     } catch (err: any) {
@@ -239,7 +240,7 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{workspace.name}</span>
-                        {workspace.id !== localDefaultWorkspaceId && (
+                        {isSharedWorkspace(workspace) && (
                           <span
                             style={{
                               flexShrink: 0,

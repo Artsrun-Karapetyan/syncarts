@@ -80,6 +80,10 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     if (!overlayRef.current) return;
+    if (e.buttons !== 0) {
+      if (hoveredVar) scheduleHidePopover();
+      return;
+    }
     
     const spans = overlayRef.current.querySelectorAll('.env-var-span, .path-var-span');
     let found = false;

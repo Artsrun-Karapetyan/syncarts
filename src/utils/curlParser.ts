@@ -58,7 +58,7 @@ export function parseCurlCommand(curlCommand: string): Partial<TabData> | null {
   const parsedBody = parseBody(dataParts.join(''), headers);
 
   return {
-    url,
+    url: normalizeCurlUrl(url),
     method,
     headers: headers.length > 0 ? headers : [{ key: '', value: '' }],
     body: parsedBody.body,
@@ -230,6 +230,15 @@ function safeDecode(value: string) {
   } catch {
     return value;
   }
+}
+
+function normalizeCurlUrl(value: string) {
+  const queryStart = value.indexOf('?');
+  if (queryStart < 0) return value;
+
+  const baseUrl = value.slice(0, queryStart);
+  const query = value.slice(queryStart + 1).replace(/\\([\[\]])/g, '$1');
+  return `${baseUrl}?${query}`;
 }
 
 function isLikelyUrl(value: string) {

@@ -45,7 +45,7 @@ export function VariableTextarea(props: VariableTextareaProps) {
         {value ? renderVariableHighlight({ text: value, activeTab, collections, activeEnvironment, globalVariables }) : placeholder}
       </div>
       <textarea
-        className={className}
+        className={`${className} variable-input-proxy`}
         style={{
           ...style,
           position: 'relative',

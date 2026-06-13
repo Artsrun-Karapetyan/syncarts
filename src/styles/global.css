@@ -44,6 +44,12 @@ input, textarea, select {
   font-family: inherit;
 }
 
+.variable-input-proxy::selection {
+  background: rgba(88, 166, 255, 0.38);
+  color: var(--text-primary);
+  -webkit-text-fill-color: var(--text-primary);
+}
+
 /* Typography */
 .font-mono {
   font-family: 'JetBrains Mono', monospace;

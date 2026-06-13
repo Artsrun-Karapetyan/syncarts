@@ -20,6 +20,7 @@ interface WorkspaceSyncArgs {
   lastSyncedSignaturesRef: React.MutableRefObject<Record<string, string>>;
   localDefaultWorkspaceId: string;
   setWorkspaces: SetWorkspaces;
+  storageHydrated: boolean;
   syncingWorkspaceIdsRef: React.MutableRefObject<Set<string>>;
   userId: string;
   workspaces: Workspace[];
@@ -33,6 +34,7 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
     lastSyncedSignaturesRef,
     localDefaultWorkspaceId,
     setWorkspaces,
+    storageHydrated,
     syncingWorkspaceIdsRef,
     userId,
     workspaces
@@ -75,6 +77,8 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
   };
 
   useEffect(() => {
+    if (!storageHydrated) return;
+
     let isMounted = true;
     api.get('/workspaces').then((res: any) => {
       if (!isMounted) return;
@@ -104,10 +108,12 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
     });
 
     return () => { isMounted = false; };
-  }, [setWorkspaces]);
+  }, [setWorkspaces, storageHydrated]);
 
   useEffect(() => {
+    if (!storageHydrated) return;
     if (workspaces.length === 0) return;
+
     const timeoutId = setTimeout(() => {
       workspaces.forEach((workspace) => {
         if (deletedWorkspaceIdsRef.current.has(workspace.id)) return;
@@ -136,9 +142,11 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
     }, 2000);
 
     return () => clearTimeout(timeoutId);
-  }, [workspaces, activeWorkspaceId, userId]);
+  }, [workspaces, activeWorkspaceId, storageHydrated, userId]);
 
   useEffect(() => {
+    if (!storageHydrated) return;
+
     const intervalId = window.setInterval(() => {
       api.get('/workspaces').then((res: any) => {
         const remoteWorkspaces = (res.data || []).filter((remote: any) => !deletedWorkspaceIdsRef.current.has(remote.id));
@@ -161,7 +169,7 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
     }, 5000);
 
     return () => window.clearInterval(intervalId);
-  }, [setWorkspaces, userId]);
+  }, [setWorkspaces, storageHydrated, userId]);
 
   return { reloadWorkspaces };
 }

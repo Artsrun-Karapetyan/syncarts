@@ -19,26 +19,31 @@ import { useWorkspaceSync } from './useWorkspaceSync';
 
 export function useWorkspaceController(userId: string): WorkspaceContextState {
   const localDefaultWorkspaceId = `local-${userId}`;
-  const [workspaces, setWorkspaces] = useLocalStorage<Workspace[]>(
+  const [workspaces, setWorkspaces, workspacesHydrated] = useLocalStorage<Workspace[]>(
     `syncarts-workspaces-v3-${userId}`,
     createDefaultWorkspaces(userId, localDefaultWorkspaceId)
   );
-  const [activeWorkspaceId, setActiveWorkspaceId] = useLocalStorage<string>(
+  const [activeWorkspaceId, setActiveWorkspaceId, activeWorkspaceHydrated] = useLocalStorage<string>(
     `syncarts-active-workspace-v3-${userId}`,
     workspaces[0]?.id || localDefaultWorkspaceId
   );
-  const [tabsByWorkspace, setTabsByWorkspace] = useLocalStorage<Record<string, TabData[]>>(
+  const [tabsByWorkspace, setTabsByWorkspace, tabsHydrated] = useLocalStorage<Record<string, TabData[]>>(
     `syncarts-tabs-by-workspace-v3-${userId}`,
     createDefaultTabsByWorkspace(localDefaultWorkspaceId)
   );
-  const [activeTabIdByWorkspace, setActiveTabIdByWorkspace] = useLocalStorage<Record<string, string | null>>(
+  const [activeTabIdByWorkspace, setActiveTabIdByWorkspace, activeTabHydrated] = useLocalStorage<Record<string, string | null>>(
     `syncarts-active-tab-by-workspace-v3-${userId}`,
     createDefaultActiveTabByWorkspace(localDefaultWorkspaceId)
   );
-  const [activeEnvIdByWorkspace, setActiveEnvIdByWorkspace] = useLocalStorage<Record<string, string | null>>(
+  const [activeEnvIdByWorkspace, setActiveEnvIdByWorkspace, activeEnvHydrated] = useLocalStorage<Record<string, string | null>>(
     `syncarts-active-env-by-workspace-v3-${userId}`,
     createDefaultActiveEnvByWorkspace(localDefaultWorkspaceId)
   );
+  const storageHydrated = workspacesHydrated
+    && activeWorkspaceHydrated
+    && tabsHydrated
+    && activeTabHydrated
+    && activeEnvHydrated;
 
   const dirtyWorkspaceIdsRef = useRef<Set<string>>(new Set());
   const syncingWorkspaceIdsRef = useRef<Set<string>>(new Set());
@@ -49,6 +54,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
   useLegacyWorkspaceMigration({
     activeWorkspaceId,
     localDefaultWorkspaceId,
+    storageHydrated,
     setActiveEnvIdByWorkspace,
     setActiveTabIdByWorkspace,
     setActiveWorkspaceId,
@@ -59,6 +65,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
   });
 
   useEffect(() => {
+    if (!storageHydrated) return;
     if (workspaces.length > 0) return;
     const defaultWorkspace = createDefaultWorkspaces(userId, localDefaultWorkspaceId)[0];
 
@@ -83,6 +90,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     setActiveWorkspaceId,
     setTabsByWorkspace,
     setWorkspaces,
+    storageHydrated,
     tabsByWorkspace,
     userId,
     workspaces.length
@@ -165,6 +173,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     lastSyncedSignaturesRef,
     localDefaultWorkspaceId,
     setWorkspaces,
+    storageHydrated,
     syncingWorkspaceIdsRef,
     userId,
     workspaces

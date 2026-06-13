@@ -5,6 +5,7 @@ import { Settings2, Eye, LayoutGrid, UserPlus, LogIn, Trash2, Edit2 } from 'luci
 
 import { useStoredUser } from '../../lib/session';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { isMemberWorkspace, isSharedWorkspace } from '../../contexts/workspace/sharing';
 import { Select } from '../ui/Select';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { EnvironmentManager } from '../environment/EnvironmentManager';
@@ -26,7 +27,7 @@ export function TopBar() {
   const [isDeleteWorkspaceOpen, setIsDeleteWorkspaceOpen] = useState(false);
   const envQuickLookRef = useRef<HTMLDivElement>(null);
   const activeWorkspace = workspaces.find((workspace) => workspace.id === activeWorkspaceId);
-  const isMemberWorkspace = !!activeWorkspace?.ownerId && !!user?.id && activeWorkspace.ownerId !== user.id;
+  const isActiveMemberWorkspace = isMemberWorkspace(activeWorkspace, user?.id);
   const showingGlobals = activeEnvironmentId === 'globals';
   const quickLookName = showingGlobals ? 'Globals' : activeEnvironment ? activeEnvironment.name : 'No Environment';
   const quickLookVariables = showingGlobals ? globalVariables : activeEnvironment?.variables || [];
@@ -99,7 +100,7 @@ export function TopBar() {
                 ...workspaces.map((w) => ({
                   label: w.name,
                   value: w.id,
-                  badge: (w.ownerId && user?.id && w.ownerId !== user.id) ? 'Shared' : undefined,
+                  badge: isSharedWorkspace(w) ? 'Shared' : undefined,
                 })),
                 { label: '+ Create Workspace', value: 'new' },
               ]}
@@ -248,7 +249,7 @@ export function TopBar() {
           {activeWorkspace && workspaces.length > 1 && activeWorkspace.id !== localDefaultWorkspaceId && (
             <button
               className="tooltip-trigger"
-              data-tooltip={isMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
+              data-tooltip={isActiveMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
               style={{
                 width: 34,
                 height: 34,
@@ -443,13 +444,13 @@ export function TopBar() {
 
       <ConfirmModal
         isOpen={isDeleteWorkspaceOpen}
-        title={isMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
+        title={isActiveMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
         message={
-          isMemberWorkspace
+          isActiveMemberWorkspace
             ? `Leave "${activeWorkspace?.name}"? You will lose access until someone invites you again.`
             : `Delete "${activeWorkspace?.name}"? This removes the workspace and its collections for every member.`
         }
-        confirmText={isMemberWorkspace ? 'Leave' : 'Delete'}
+        confirmText={isActiveMemberWorkspace ? 'Leave' : 'Delete'}
         cancelText="Cancel"
         isDestructive
         onCancel={() => setIsDeleteWorkspaceOpen(false)}

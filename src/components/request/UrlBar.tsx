@@ -161,7 +161,7 @@ export function UrlBar() {
       {/* Actual Input */}
       <input 
         ref={inputRef}
-        className="url-input font-mono" 
+        className="url-input font-mono variable-input-proxy" 
         style={{ 
           position: 'absolute', 
           inset: 0,

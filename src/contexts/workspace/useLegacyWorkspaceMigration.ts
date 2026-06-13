@@ -7,6 +7,7 @@ type SetValue<T> = (value: T | ((val: T) => T)) => void;
 interface MigrationArgs {
   activeWorkspaceId: string;
   localDefaultWorkspaceId: string;
+  storageHydrated: boolean;
   userId: string;
   setActiveWorkspaceId: SetValue<string>;
   setActiveEnvIdByWorkspace: SetValue<Record<string, string | null>>;
@@ -25,11 +26,14 @@ export function useLegacyWorkspaceMigration(args: MigrationArgs) {
     setActiveTabIdByWorkspace,
     setTabsByWorkspace,
     setWorkspaces,
+    storageHydrated,
     userId,
     workspaces
   } = args;
 
   useEffect(() => {
+    if (!storageHydrated) return;
+
     setWorkspaces((prev) => {
       const normalized = normalizeLegacyWorkspaces(prev, localDefaultWorkspaceId, userId);
       if (normalized.length !== prev.length) return normalized;
@@ -74,12 +78,15 @@ export function useLegacyWorkspaceMigration(args: MigrationArgs) {
     setActiveWorkspaceId,
     setTabsByWorkspace,
     setWorkspaces,
+    storageHydrated,
     userId
   ]);
 
   useEffect(() => {
+    if (!storageHydrated) return;
+
     if (workspaces.length > 0 && !workspaces.some((workspace) => workspace.id === activeWorkspaceId)) {
       setActiveWorkspaceId(workspaces[0].id);
     }
-  }, [activeWorkspaceId, setActiveWorkspaceId, workspaces]);
+  }, [activeWorkspaceId, setActiveWorkspaceId, storageHydrated, workspaces]);
 }

@@ -33,7 +33,7 @@ export function ParamsEditor() {
 
     const parsed = queryString.split('&').map(pair => {
       const [k, v] = pair.split('=');
-      return { key: decodeURIComponent(k || ''), value: decodeURIComponent(v || '') };
+      return { key: decodeQueryPart(k || ''), value: decodeQueryPart(v || '') };
     });
 
     setParams(prev => {
@@ -214,4 +214,12 @@ function ParamSectionTitle({ title }: { title: string }) {
       <div style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center' }}>Bulk Edit</div>
     </div>
   );
+}
+
+function decodeQueryPart(value: string) {
+  try {
+    return decodeURIComponent(value).replace(/\\([\[\]])/g, '$1');
+  } catch {
+    return value.replace(/\\([\[\]])/g, '$1');
+  }
 }

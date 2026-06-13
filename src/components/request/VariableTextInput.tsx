@@ -44,7 +44,7 @@ export function VariableTextInput(props: VariableTextInputProps) {
         {value ? renderVariableHighlight({ text: value, activeTab, collections, activeEnvironment, globalVariables }) : placeholder}
       </div>
       <input
-        className={className}
+        className={`${className} variable-input-proxy`}
         style={{
           ...style,
           position: 'relative',
