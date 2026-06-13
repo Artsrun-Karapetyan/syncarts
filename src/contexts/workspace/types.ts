@@ -1,6 +1,7 @@
 export interface HeaderItem {
   key: string;
   value: string;
+  description?: string;
 }
 
 export interface HttpResponse {
@@ -27,6 +28,7 @@ export interface FormDataItem {
   id: string;
   key: string;
   value: string;
+  description?: string;
   enabled: boolean;
   type?: 'text' | 'file';
   files?: string[];
@@ -57,6 +59,7 @@ export interface TabData {
   bodyType?: BodyType;
   description?: string;
   pathVariables?: PathVariable[];
+  queryParamDescriptions?: Record<string, string>;
   preRequestScript?: string;
   testScript?: string;
   variables?: EnvironmentVariable[];
@@ -94,6 +97,7 @@ export interface SavedRequest {
   bodyType?: BodyType;
   description?: string;
   pathVariables?: PathVariable[];
+  queryParamDescriptions?: Record<string, string>;
   formData?: FormDataItem[];
   body: string;
   preRequestScript?: string;

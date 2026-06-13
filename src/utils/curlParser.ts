@@ -12,6 +12,7 @@ export function parseCurlCommand(curlCommand: string): Partial<TabData> | null {
 
   let url = '';
   let method = 'GET';
+  let hasExplicitMethod = false;
   const headers: HeaderItem[] = [];
   const dataParts: string[] = [];
 
@@ -21,25 +22,27 @@ export function parseCurlCommand(curlCommand: string): Partial<TabData> | null {
 
     if (arg === '-X' || arg === '--request') {
       method = next().toUpperCase();
+      hasExplicitMethod = true;
     } else if (arg.startsWith('-X') && arg.length > 2) {
       method = arg.slice(2).toUpperCase();
+      hasExplicitMethod = true;
     } else if (arg === '-H' || arg === '--header') {
       addHeader(headers, next());
     } else if (arg.startsWith('--header=')) {
       addHeader(headers, arg.slice('--header='.length));
     } else if (arg === '-d' || arg === '--data' || arg === '--data-raw' || arg === '--data-binary' || arg === '--data-ascii') {
       dataParts.push(next());
-      if (method === 'GET') method = 'POST';
+      if (!hasExplicitMethod && method === 'GET') method = 'POST';
     } else if (arg.startsWith('--data-raw=')) {
       dataParts.push(arg.slice('--data-raw='.length));
-      if (method === 'GET') method = 'POST';
+      if (!hasExplicitMethod && method === 'GET') method = 'POST';
     } else if (arg.startsWith('--data=')) {
       dataParts.push(arg.slice('--data='.length));
-      if (method === 'GET') method = 'POST';
+      if (!hasExplicitMethod && method === 'GET') method = 'POST';
     } else if (arg === '-F' || arg === '--form') {
       dataParts.push(formFlagToMultipartPart(next()));
       setHeaderIfMissing(headers, 'content-type', 'multipart/form-data; boundary=----SyncartsCurlFormBoundary');
-      if (method === 'GET') method = 'POST';
+      if (!hasExplicitMethod && method === 'GET') method = 'POST';
     } else if (arg === '-A' || arg === '--user-agent') {
       headers.push({ key: 'User-Agent', value: next() });
     } else if (arg === '-b' || arg === '--cookie') {
@@ -184,10 +187,10 @@ function parseMultipartPart(part: string): FormDataItem | null {
 
   const filename = disposition.match(/filename="([^"]*)"/)?.[1];
   if (filename !== undefined) {
-    return { id: crypto.randomUUID(), key: name, value: '', enabled: true, type: 'file', files: filename ? [filename] : [] };
+    return { id: crypto.randomUUID(), key: name, value: '', description: '', enabled: true, type: 'file', files: filename ? [filename] : [] };
   }
 
-  return { id: crypto.randomUUID(), key: name, value, enabled: true, type: 'text' };
+  return { id: crypto.randomUUID(), key: name, value, description: '', enabled: true, type: 'text' };
 }
 
 function parseUrlEncodedBody(body: string): FormDataItem[] {
@@ -197,6 +200,7 @@ function parseUrlEncodedBody(body: string): FormDataItem[] {
       id: crypto.randomUUID(),
       key: safeDecode(rawKey.replace(/\+/g, ' ')),
       value: safeDecode(rawValue.join('=').replace(/\+/g, ' ')),
+      description: '',
       enabled: true,
       type: 'text'
     };
@@ -205,7 +209,7 @@ function parseUrlEncodedBody(body: string): FormDataItem[] {
 
 function formFlagToMultipartPart(flag: string) {
   const [key, ...valueParts] = flag.split('=');
-  const value = valueParts.join('=');
+  const value = stripWrappingQuotes(valueParts.join('='));
   return [
     '------SyncartsCurlFormBoundary',
     `Content-Disposition: form-data; name="${key}"`,
@@ -214,6 +218,16 @@ function formFlagToMultipartPart(flag: string) {
     '------SyncartsCurlFormBoundary--',
     ''
   ].join('\r\n');
+}
+
+function stripWrappingQuotes(value: string) {
+  if (value.length < 2) return value;
+  const first = value[0];
+  const last = value[value.length - 1];
+  if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+    return value.slice(1, -1);
+  }
+  return value;
 }
 
 function getHeader(headers: HeaderItem[], key: string) {
@@ -242,5 +256,5 @@ function normalizeCurlUrl(value: string) {
 }
 
 function isLikelyUrl(value: string) {
-  return /^https?:\/\//i.test(value);
+  return /^https?:\/\//i.test(value) || value.startsWith('/') || value.startsWith('{{');
 }

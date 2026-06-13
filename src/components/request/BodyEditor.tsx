@@ -244,15 +244,16 @@ export function BodyEditor() {
 
       {(currentBodyType === 'form-data' || currentBodyType === 'x-www-form-urlencoded') && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          <div style={{ display: 'flex', fontWeight: 600, fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', paddingBottom: 8, borderBottom: '1px solid var(--border-color)', marginBottom: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr 1fr 40px', gap: 12, alignItems: 'center', fontWeight: 600, fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', paddingBottom: 8, borderBottom: '1px solid var(--border-color)', marginBottom: 8 }}>
             <div style={{ width: 40, textAlign: 'center' }}></div>
-            <div style={{ flex: 1 }}>Key</div>
-            <div style={{ flex: 1 }}>Value</div>
+            <div>Key</div>
+            <div>Value</div>
+            <div>Description</div>
             <div style={{ width: 40 }}></div>
           </div>
 
           {(activeTab?.formData || []).map(item => (
-            <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr 1fr 40px', alignItems: 'center', gap: 12, marginBottom: 8 }}>
               <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
                 <button
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: item.enabled ? 'var(--accent-primary)' : 'var(--text-tertiary)' }}
@@ -261,7 +262,7 @@ export function BodyEditor() {
                   {item.enabled ? <CheckSquare size={16} /> : <Square size={16} />}
                 </button>
               </div>
-              <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: 0 }}>
                 <VariableTextInput
                   className="input"
                   style={{ width: '100%', fontSize: 13, background: 'transparent', paddingRight: currentBodyType === 'form-data' ? 60 : undefined }}
@@ -270,7 +271,7 @@ export function BodyEditor() {
                   onChange={(value) => handleUpdateFormData(item.id, { key: value })}
                 />
                 {currentBodyType === 'form-data' && (
-                  <div style={{ position: 'absolute', right: 4, display: 'flex', alignItems: 'center' }}>
+                  <div style={{ position: 'absolute', right: 4, zIndex: 5, display: 'flex', alignItems: 'center' }}>
                     <Select
                       value={item.type || 'text'}
                       options={[
@@ -284,7 +285,7 @@ export function BodyEditor() {
                   </div>
                 )}
               </div>
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
                 {item.type === 'file' ? (
                   <FileValueEditor item={item} handleUpdateFormData={handleUpdateFormData} />
                 ) : (
@@ -297,6 +298,13 @@ export function BodyEditor() {
                   />
                 )}
               </div>
+              <VariableTextInput
+                className="input"
+                style={{ width: '100%', fontSize: 13, background: 'transparent' }}
+                placeholder="Description"
+                value={item.description || ''}
+                onChange={(description) => handleUpdateFormData(item.id, { description })}
+              />
               <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
                 <button
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}

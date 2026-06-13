@@ -6,9 +6,9 @@ export function HeadersEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
   const headers = activeTab?.headers || [];
 
-  const updateHeader = (index: number, key: string, value: string) => {
+  const updateHeader = (index: number, updates: Partial<(typeof headers)[number]>) => {
     const newHeaders = [...headers];
-    newHeaders[index] = { key, value };
+    newHeaders[index] = { ...newHeaders[index], ...updates };
     updateActiveTab({ headers: newHeaders });
   };
 
@@ -25,21 +25,29 @@ export function HeadersEditor() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {headers.map((header, idx) => (
-        <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 32px', gap: 8, alignItems: 'center' }}>
           <VariableTextInput
             className="input font-mono"
-            style={{ flex: 1, fontSize: 13, padding: '8px 12px' }}
+            style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
             placeholder="Key (e.g. Authorization)"
             value={header.key}
-            onChange={(value) => updateHeader(idx, value, header.value)}
+            onChange={(value) => updateHeader(idx, { key: value })}
             disabled={!activeTab}
           />
           <VariableTextInput
             className="input font-mono"
-            style={{ flex: 1, fontSize: 13, padding: '8px 12px' }}
+            style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
             placeholder="Value"
             value={header.value}
-            onChange={(value) => updateHeader(idx, header.key, value)}
+            onChange={(value) => updateHeader(idx, { value })}
+            disabled={!activeTab}
+          />
+          <VariableTextInput
+            className="input"
+            style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+            placeholder="Description"
+            value={header.description || ''}
+            onChange={(value) => updateHeader(idx, { description: value })}
             disabled={!activeTab}
           />
           <button

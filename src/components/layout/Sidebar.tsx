@@ -34,6 +34,7 @@ interface SidebarItemProps {
   expandedFolders: Record<string, boolean>;
   setExpandedFolders: Dispatch<SetStateAction<Record<string, boolean>>>;
   highlightedRequestId: string | null;
+  highlightedFolderId: string | null;
 }
 
 function SidebarItem({
@@ -49,11 +50,13 @@ function SidebarItem({
   expandedFolders,
   setExpandedFolders,
   highlightedRequestId,
+  highlightedFolderId,
 }: SidebarItemProps) {
   const [isExamplesOpen, setIsExamplesOpen] = useState(false);
   const { openFolderTab, openExampleTab, openRequestTab } = useWorkspace();
 
   const paddingLeft = `8px`;
+  const isFolderHighlighted = item.type === 'folder' && highlightedFolderId === item.id;
 
   if (item.type === 'request') {
     return (
@@ -233,7 +236,9 @@ function SidebarItem({
           alignItems: 'center',
           gap: 6,
           fontSize: 13,
-          color: 'var(--text-secondary)',
+          color: isFolderHighlighted ? 'var(--text-primary)' : 'var(--text-secondary)',
+          background: isFolderHighlighted ? 'var(--bg-tertiary)' : 'transparent',
+          boxShadow: isFolderHighlighted ? 'inset 0 0 0 1px var(--accent-primary)' : 'none',
           padding: '3px 8px',
           paddingLeft,
           borderRadius: 6,
@@ -252,8 +257,8 @@ function SidebarItem({
           e.currentTarget.style.color = 'var(--text-primary)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'transparent';
-          e.currentTarget.style.color = 'var(--text-secondary)';
+          e.currentTarget.style.background = isFolderHighlighted ? 'var(--bg-tertiary)' : 'transparent';
+          e.currentTarget.style.color = isFolderHighlighted ? 'var(--text-primary)' : 'var(--text-secondary)';
         }}
       >
         <div
@@ -324,6 +329,7 @@ function SidebarItem({
               expandedFolders={expandedFolders}
               setExpandedFolders={setExpandedFolders}
               highlightedRequestId={highlightedRequestId}
+              highlightedFolderId={highlightedFolderId}
             />
           ))}
         </div>
@@ -374,6 +380,8 @@ export function Sidebar() {
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [highlightedRequestId, setHighlightedRequestId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const highlightedCollectionId = activeTab?.type === 'collection' ? activeTab.collectionId || null : null;
+  const highlightedFolderId = activeTab?.type === 'folder' ? activeTab.folderId || null : null;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -459,6 +467,15 @@ export function Sidebar() {
       highlightRequest(savedRequestId);
     } else {
       setHighlightedRequestId(null);
+    }
+
+    if (activeTab?.type === 'collection' && activeTab.collectionId) {
+      setExpandedCollections((prev) => ({ ...prev, [activeTab.collectionId!]: true }));
+    }
+
+    if (activeTab?.type === 'folder' && activeTab.collectionId && activeTab.folderId) {
+      setExpandedCollections((prev) => ({ ...prev, [activeTab.collectionId!]: true }));
+      setExpandedFolders((prev) => ({ ...prev, [activeTab.folderId!]: true }));
     }
   }, [activeTab, collections, resolveTabSavedRequestId]);
 
@@ -788,6 +805,7 @@ export function Sidebar() {
                 fontWeight: 600,
                 padding: '6px 10px',
                 background: 'var(--bg-tertiary)',
+                boxShadow: highlightedCollectionId === col.id ? 'inset 0 0 0 1px var(--accent-primary)' : 'none',
                 borderRadius: 6,
                 cursor: 'pointer',
                 transition: 'all var(--transition-fast)',
@@ -925,7 +943,7 @@ export function Sidebar() {
               </div>
             </div>
             {expandedCollections[col.id] && (
-              <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 10, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 22, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {col.items.map(item => (
                   <SidebarItem
                     key={item.id}
@@ -941,6 +959,7 @@ export function Sidebar() {
                     expandedFolders={expandedFolders}
                     setExpandedFolders={setExpandedFolders}
                     highlightedRequestId={highlightedRequestId}
+                    highlightedFolderId={highlightedFolderId}
                   />
                 ))}
               </div>

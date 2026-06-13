@@ -6,8 +6,9 @@ import { VariableTextInput } from './VariableTextInput';
 
 export function ParamsEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
-  const [params, setParams] = useState<{key: string, value: string}[]>([{ key: '', value: '' }]);
+  const [params, setParams] = useState<{key: string, value: string, description?: string}[]>([{ key: '', value: '', description: '' }]);
   const pathVariables = activeTab?.pathVariables || [];
+  const queryParamDescriptions = activeTab?.queryParamDescriptions || {};
 
   useEffect(() => {
     if (!activeTab) return;
@@ -25,38 +26,39 @@ export function ParamsEditor() {
     if (!queryString) {
       setParams(prev => {
         // Only wipe if there are valid params that shouldn't exist anymore
-        if (prev.some(p => p.key || p.value)) return [{ key: '', value: '' }];
-        return prev.length ? prev : [{ key: '', value: '' }];
+        if (prev.some(p => p.key || p.value || p.description)) return [{ key: '', value: '', description: '' }];
+        return prev.length ? prev : [{ key: '', value: '', description: '' }];
       });
       return;
     }
 
     const parsed = queryString.split('&').map(pair => {
       const [k, v] = pair.split('=');
-      return { key: decodeQueryPart(k || ''), value: decodeQueryPart(v || '') };
+      const key = decodeQueryPart(k || '');
+      return { key, value: decodeQueryPart(v || ''), description: queryParamDescriptions[key] || '' };
     });
 
     setParams(prev => {
       // Keep any trailing empty rows the user added
-      const trailingEmptyCount = prev.slice().reverse().findIndex(p => p.key || p.value);
+      const trailingEmptyCount = prev.slice().reverse().findIndex(p => p.key || p.value || p.description);
       const emptyCount = trailingEmptyCount === -1 ? prev.length : trailingEmptyCount;
-      const emptyRows = Array(emptyCount).fill({ key: '', value: '' });
+      const emptyRows = Array(emptyCount).fill({ key: '', value: '', description: '' });
       
       const newParams = [...parsed, ...emptyRows];
       return newParams.length ? newParams : [{ key: '', value: '' }];
     });
-  }, [activeTab?.url]);
+  }, [activeTab?.url, activeTab?.queryParamDescriptions]);
 
-  // Sync from local state to URL
-  const syncUrl = (newParams: { key: string; value: string }[]) => {
+  const syncUrl = (newParams: { key: string; value: string; description?: string }[]) => {
     setParams(newParams); // Optimistic UI update
     if (!activeTab) return;
     
     const baseUrl = activeTab.url.split('?')[0] || '';
     const validParams = newParams.filter(p => p.key || p.value);
+    const descriptions = Object.fromEntries(newParams.filter(p => p.key && p.description).map(p => [p.key, p.description || '']));
     
     if (validParams.length === 0) {
-      updateActiveTab({ url: baseUrl });
+      updateActiveTab({ url: baseUrl, queryParamDescriptions: descriptions });
       return;
     }
 
@@ -64,17 +66,17 @@ export function ParamsEditor() {
       `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`
     );
     
-    updateActiveTab({ url: `${baseUrl}?${queryParts.join('&')}` });
+    updateActiveTab({ url: `${baseUrl}?${queryParts.join('&')}`, queryParamDescriptions: descriptions });
   };
 
-  const updateParam = (index: number, key: string, value: string) => {
+  const updateParam = (index: number, updates: Partial<{ key: string; value: string; description: string }>) => {
     const newParams = [...params];
-    newParams[index] = { key, value };
+    newParams[index] = { ...newParams[index], ...updates };
     syncUrl(newParams);
   };
 
   const addParam = () => {
-    setParams(prev => [...prev, { key: '', value: '' }]);
+    setParams(prev => [...prev, { key: '', value: '', description: '' }]);
   };
 
   const removeParam = (index: number) => {
@@ -96,21 +98,29 @@ export function ParamsEditor() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <ParamSectionTitle title="Query Params" />
       {params.map((param, idx) => (
-        <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 32px', gap: 8, alignItems: 'center' }}>
           <VariableTextInput
             className="input font-mono"
-            style={{ flex: 1, fontSize: 13, padding: '8px 12px' }}
+            style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
             placeholder="Key"
             value={param.key}
-            onChange={(value) => updateParam(idx, value, param.value)}
+            onChange={(value) => updateParam(idx, { key: value })}
             disabled={!activeTab}
           />
           <VariableTextInput
             className="input font-mono"
-            style={{ flex: 1, fontSize: 13, padding: '8px 12px' }}
+            style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
             placeholder="Value"
             value={param.value}
-            onChange={(value) => updateParam(idx, param.key, value)}
+            onChange={(value) => updateParam(idx, { value })}
+            disabled={!activeTab}
+          />
+          <VariableTextInput
+            className="input"
+            style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+            placeholder="Description"
+            value={param.description || ''}
+            onChange={(value) => updateParam(idx, { description: value })}
             disabled={!activeTab}
           />
           <button

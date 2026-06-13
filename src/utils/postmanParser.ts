@@ -90,7 +90,8 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
       if (Array.isArray(req.header) && req.header.length > 0) {
         headers = req.header.map((h: any) => ({
           key: h.key || '',
-          value: h.value || ''
+          value: h.value || '',
+          description: typeof h.description === 'string' ? h.description : ''
         }));
         if (headers[headers.length - 1].key !== '' || headers[headers.length - 1].value !== '') {
           headers.push({ key: '', value: '' });
@@ -113,6 +114,7 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
                 id: crypto.randomUUID(),
                 key: f.key || '',
                 value: f.value || '',
+                description: typeof f.description === 'string' ? f.description : '',
                 type: f.type === 'file' ? 'file' : 'text',
                 enabled: f.disabled !== true
               }));
@@ -124,6 +126,7 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
                 id: crypto.randomUUID(),
                 key: f.key || '',
                 value: f.value || '',
+                description: typeof f.description === 'string' ? f.description : '',
                 type: 'text',
                 enabled: f.disabled !== true
               }));
@@ -280,6 +283,7 @@ export function exportToPostmanCollection(collection: Collection): string {
           header: cleanHeaders.map(h => ({
             key: h.key,
             value: h.value,
+            description: h.description || undefined,
             type: 'text'
           })),
           body: {
