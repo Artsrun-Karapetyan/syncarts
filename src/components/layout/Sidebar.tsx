@@ -1,361 +1,65 @@
-import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
-import { createPortal } from 'react-dom';
-import { Folder, FolderPlus, FilePlus2, FileText, ChevronRight, ChevronDown, MoreHorizontal, Trash2, Download, Edit2, ListOrdered, ArrowDownAZ, GitFork } from 'lucide-react';
-
-import { useWorkspace, Folder as IFolder, SavedRequest } from '../../contexts/WorkspaceContext';
-import { ConfirmModal } from '../ui/ConfirmModal';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { api } from '../../lib/api';
-import { exportToPostmanCollection } from '../../utils/postmanParser';
-import { ImportModal } from '../workspace/ImportModal';
-import { CreateMergeRequestModal } from '../workspace/CreateMergeRequestModal';
-import { GitPullRequest } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 
-interface CtxMenuState {
-  x: number;
-  y: number;
-  collectionId: string;
-  itemId: string | null;
-  itemType: 'collection' | 'folder' | 'request' | 'example';
-  itemName?: string;
-  requestId?: string;
-}
-
-interface SidebarItemProps {
-  item: IFolder | SavedRequest;
-  collectionId: string;
-  parentFolderId: string | null;
-  onContextMenu: (e: React.MouseEvent, itemId: string, type: 'folder' | 'request' | 'example', itemName: string, requestId?: string) => void;
-  renamingId: string | null;
-  setRenamingId: (id: string | null) => void;
-  renameValue: string;
-  setRenameValue: (val: string) => void;
-  handleRenameSubmit: () => void;
-  expandedFolders: Record<string, boolean>;
-  setExpandedFolders: Dispatch<SetStateAction<Record<string, boolean>>>;
-  highlightedRequestId: string | null;
-  highlightedFolderId: string | null;
-}
-
-function SidebarItem({
-  item,
-  collectionId,
-  parentFolderId,
-  onContextMenu,
-  renamingId,
-  setRenamingId,
-  renameValue,
-  setRenameValue,
-  handleRenameSubmit,
-  expandedFolders,
-  setExpandedFolders,
-  highlightedRequestId,
-  highlightedFolderId,
-}: SidebarItemProps) {
-  const [isExamplesOpen, setIsExamplesOpen] = useState(false);
-  const { openFolderTab, openExampleTab, openRequestTab } = useWorkspace();
-
-  const paddingLeft = `8px`;
-  const isFolderHighlighted = item.type === 'folder' && highlightedFolderId === item.id;
-
-  if (item.type === 'request') {
-    return (
-      <>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          fontSize: 13,
-          color: highlightedRequestId === item.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-          background: highlightedRequestId === item.id ? 'var(--bg-tertiary)' : 'transparent',
-          boxShadow: highlightedRequestId === item.id ? 'inset 0 0 0 1px var(--accent-primary)' : 'none',
-          padding: '3px 8px',
-          paddingLeft,
-          borderRadius: 6,
-          cursor: 'pointer',
-          transition: 'all 0.2s ease-out',
-        }}
-        onClick={() => openRequestTab(collectionId, parentFolderId, item.id)}
-        onContextMenu={(e) => onContextMenu(e, item.id, 'request', item.name)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--bg-tertiary)';
-          e.currentTarget.style.color = 'var(--text-primary)';
-          e.currentTarget.style.transform = 'translateX(2px)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = highlightedRequestId === item.id ? 'var(--bg-tertiary)' : 'transparent';
-          e.currentTarget.style.color = highlightedRequestId === item.id ? 'var(--text-primary)' : 'var(--text-secondary)';
-          e.currentTarget.style.transform = 'translateX(0)';
-        }}
-      >
-        <div 
-          onClick={(e) => {
-            if (item.examples && item.examples.length > 0) {
-              e.stopPropagation();
-              setIsExamplesOpen(!isExamplesOpen);
-            }
-          }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 14,
-            height: 14,
-            cursor: item.examples && item.examples.length > 0 ? 'pointer' : 'default',
-            color: 'var(--text-tertiary)'
-          }}
-        >
-          {item.examples && item.examples.length > 0 ? (
-            isExamplesOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-          ) : null}
-        </div>
-        <span
-          className="font-mono"
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            flexShrink: 0,
-            width: 40,
-            color: `var(--status-${item.method.toLowerCase()})`,
-          }}
-        >
-          {item.method}
-        </span>
-        {renamingId === item.id ? (
-          <input
-            autoFocus
-            className="input"
-            style={{ fontSize: 13, flex: 1, padding: '2px 6px', margin: '-2px -6px' }}
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleRenameSubmit();
-              if (e.key === 'Escape') setRenamingId(null);
-            }}
-            onBlur={() => handleRenameSubmit()}
-            onClick={(e) => e.stopPropagation()}
-          />
-        ) : (
-          <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {item.name}
-          </span>
-        )}
-        <div
-          style={{
-            opacity: 0,
-            width: 22,
-            height: 22,
-            borderRadius: 5,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-tertiary)',
-            transition: 'all var(--transition-fast)',
-            flexShrink: 0,
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onContextMenu(e, item.id, 'request', item.name);
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
-        >
-          <MoreHorizontal size={13} />
-        </div>
-      </div>
-      {isExamplesOpen && item.examples && item.examples.length > 0 && (
-        <div>
-          {item.examples.map((example) => (
-            <div
-              key={example.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 12,
-                color: 'var(--text-tertiary)',
-                padding: '3px 8px',
-                paddingLeft: `28px`,
-                borderRadius: 6,
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-              }}
-              onClick={() => openExampleTab(collectionId, example.id)}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onContextMenu(e, example.id, 'example', example.name, item.id);
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--bg-tertiary)';
-                e.currentTarget.style.color = 'var(--text-secondary)';
-                e.currentTarget.style.transform = 'translateX(2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--text-tertiary)';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }}
-            >
-              <FileText size={13} style={{ opacity: 0.3 }} />
-              {renamingId === example.id ? (
-                <input
-                  autoFocus
-                  className="input"
-                  style={{ fontSize: 13, flex: 1, padding: '2px 6px', margin: '-2px -6px' }}
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleRenameSubmit();
-                    if (e.key === 'Escape') setRenamingId(null);
-                  }}
-                  onBlur={() => handleRenameSubmit()}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {example.name}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-      </>
-    );
-  }
-
-  return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          fontSize: 13,
-          color: isFolderHighlighted ? 'var(--text-primary)' : 'var(--text-secondary)',
-          background: isFolderHighlighted ? 'var(--bg-tertiary)' : 'transparent',
-          boxShadow: isFolderHighlighted ? 'inset 0 0 0 1px var(--accent-primary)' : 'none',
-          padding: '3px 8px',
-          paddingLeft,
-          borderRadius: 6,
-          cursor: 'pointer',
-          transition: 'all var(--transition-fast)',
-        }}
-        onClick={() => {
-          if (!expandedFolders[item.id]) {
-            setExpandedFolders((prev) => ({ ...prev, [item.id]: true }));
-          }
-          openFolderTab(collectionId, item.id);
-        }}
-        onContextMenu={(e) => onContextMenu(e, item.id, 'folder', item.name)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--bg-tertiary)';
-          e.currentTarget.style.color = 'var(--text-primary)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = isFolderHighlighted ? 'var(--bg-tertiary)' : 'transparent';
-          e.currentTarget.style.color = isFolderHighlighted ? 'var(--text-primary)' : 'var(--text-secondary)';
-        }}
-      >
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpandedFolders((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
-          }}
-          style={{ display: 'flex', alignItems: 'center', padding: 2, margin: -2, borderRadius: 4 }}
-          className="hover-bg-secondary"
-        >
-          {expandedFolders[item.id] ? <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6 }} /> : <ChevronRight size={14} style={{ flexShrink: 0, opacity: 0.6 }} />}
-        </div>
-        <Folder size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-        {renamingId === item.id ? (
-          <input
-            autoFocus
-            className="input"
-            style={{ fontSize: 13, flex: 1, padding: '2px 6px', margin: '-2px -6px' }}
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleRenameSubmit();
-              if (e.key === 'Escape') setRenamingId(null);
-            }}
-            onBlur={() => handleRenameSubmit()}
-            onClick={(e) => e.stopPropagation()}
-          />
-        ) : (
-          <span style={{ whiteSpace: 'nowrap', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
-        )}
-        <div
-          style={{
-            opacity: 0,
-            width: 22,
-            height: 22,
-            borderRadius: 5,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-tertiary)',
-            transition: 'all var(--transition-fast)',
-            flexShrink: 0,
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onContextMenu(e, item.id, 'folder', item.name);
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
-        >
-          <MoreHorizontal size={13} />
-        </div>
-      </div>
-      {expandedFolders[item.id] && (
-        <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 14, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {item.items.map(subItem => (
-            <SidebarItem 
-              key={subItem.id} 
-              item={subItem} 
-              collectionId={collectionId} 
-              parentFolderId={item.id}
-              onContextMenu={onContextMenu} 
-              renamingId={renamingId}
-              setRenamingId={setRenamingId}
-              renameValue={renameValue}
-              setRenameValue={setRenameValue}
-              handleRenameSubmit={handleRenameSubmit}
-              expandedFolders={expandedFolders}
-              setExpandedFolders={setExpandedFolders}
-              highlightedRequestId={highlightedRequestId}
-              highlightedFolderId={highlightedFolderId}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { api } from '../../lib/api';
+import { exportToPostmanCollection } from '../../utils/postmanParser';
+import { SidebarCollections } from './sidebar/SidebarCollections';
+import { SidebarContextMenu } from './sidebar/SidebarContextMenu';
+import { SidebarDialogs } from './sidebar/SidebarDialogs';
+import { SidebarToolbar } from './sidebar/SidebarToolbar';
+import type { CtxMenuState, DeleteTarget, MergeRequestTarget, SidebarItemType } from './sidebar/types';
+import { filterCollections, findFolder, findRequest, findRequestPath, renameMatchingItem } from './sidebar/utils';
 
 export function Sidebar() {
-  const { 
-    collections, addCollection, deleteCollection, deleteItem, addFolder, createBlankRequestInFolder,
-    openCollectionTab, addTab,
-    renameItem, sortItems, deleteExample, addExample, activeTab, resolveTabSavedRequestId, forkCollection, activeWorkspaceId
+  const {
+    collections,
+    addCollection,
+    deleteCollection,
+    deleteItem,
+    addFolder,
+    createBlankRequestInFolder,
+    openCollectionTab,
+    addTab,
+    renameItem,
+    sortItems,
+    deleteExample,
+    addExample,
+    activeTab,
+    resolveTabSavedRequestId,
+    forkCollection,
+    activeWorkspaceId,
   } = useWorkspace();
   const navigate = useNavigate();
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
   const [isAdding, setIsAdding] = useState(false);
   const [newColName, setNewColName] = useState('');
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
   const [expandedCollections, setExpandedCollections] = useState<Record<string, boolean>>({});
   const [newFolderName, setNewFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'collection' | 'item' | 'example', collectionId?: string, requestId?: string } | null>(null);
-  const [mergeRequestTarget, setMergeRequestTarget] = useState<{ sourceCollectionId: string, targetWorkspaceId: string, targetCollectionId: string } | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [mergeRequestTarget, setMergeRequestTarget] = useState<MergeRequestTarget | null>(null);
   const [openMrCount, setOpenMrCount] = useState(0);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [collectionSearch, setCollectionSearch] = useState('');
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  const [highlightedRequestId, setHighlightedRequestId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Poll for open MRs
+  const highlightedCollectionId = activeTab?.type === 'collection' ? activeTab.collectionId || null : null;
+  const highlightedFolderId = activeTab?.type === 'folder' ? activeTab.folderId || null : null;
+  const filteredCollections = filterCollections(collections, collectionSearch);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
   useEffect(() => {
     const fetchMrs = async () => {
       try {
@@ -367,24 +71,9 @@ export function Sidebar() {
       }
     };
     fetchMrs();
-    const interval = setInterval(fetchMrs, 15000); // Poll every 15s
+    const interval = setInterval(fetchMrs, 15000);
     return () => clearInterval(interval);
   }, [activeWorkspaceId]);
-
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
-  const [highlightedRequestId, setHighlightedRequestId] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const highlightedCollectionId = activeTab?.type === 'collection' ? activeTab.collectionId || null : null;
-  const highlightedFolderId = activeTab?.type === 'folder' ? activeTab.folderId || null : null;
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
-  };
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -401,15 +90,11 @@ export function Sidebar() {
       const next = { ...current };
 
       for (const collection of collections) {
-        if (next[collection.id] === undefined) {
-          next[collection.id] = true;
-        }
+        if (next[collection.id] === undefined) next[collection.id] = true;
       }
 
       for (const key of Object.keys(next)) {
-        if (!collections.some((collection) => collection.id === key)) {
-          delete next[key];
-        }
+        if (!collections.some((collection) => collection.id === key)) delete next[key];
       }
 
       return next;
@@ -419,35 +104,14 @@ export function Sidebar() {
   const highlightRequest = (savedRequestId?: string) => {
     if (!savedRequestId) return;
 
-    let requestPath: { collectionId: string; folderIds: string[] } | null = null;
-
-    for (const col of collections) {
-      const walk = (items: (IFolder | SavedRequest)[], folderIds: string[]): boolean => {
-        for (const item of items) {
-          if (item.type === 'request' && item.id === savedRequestId) {
-            requestPath = { collectionId: col.id, folderIds };
-            return true;
-          }
-          if (item.type === 'folder' && walk(item.items, [...folderIds, item.id])) {
-            return true;
-          }
-        }
-        return false;
-      };
-
-      if (walk(col.items, [])) break;
-    }
-
+    const requestPath = findRequestPath(collections, savedRequestId);
     if (!requestPath) return;
 
-    setExpandedCollections((prev) => ({
-      ...prev,
-      [requestPath!.collectionId]: true,
-    }));
+    setExpandedCollections((prev) => ({ ...prev, [requestPath.collectionId]: true }));
     setExpandedFolders((prev) => {
       const next = { ...prev };
       let changed = false;
-      for (const folderId of requestPath!.folderIds) {
+      for (const folderId of requestPath.folderIds) {
         if (!next[folderId]) {
           next[folderId] = true;
           changed = true;
@@ -455,17 +119,13 @@ export function Sidebar() {
       }
       return changed ? next : prev;
     });
-
     setHighlightedRequestId(savedRequestId);
   };
 
   useEffect(() => {
     const savedRequestId = resolveTabSavedRequestId(activeTab);
-    if (savedRequestId) {
-      highlightRequest(savedRequestId);
-    } else {
-      setHighlightedRequestId(null);
-    }
+    if (savedRequestId) highlightRequest(savedRequestId);
+    else setHighlightedRequestId(null);
 
     if (activeTab?.type === 'collection' && activeTab.collectionId) {
       setExpandedCollections((prev) => ({ ...prev, [activeTab.collectionId!]: true }));
@@ -487,136 +147,35 @@ export function Sidebar() {
   }, [collections]);
 
   const handleAddCollection = () => {
-    if (newColName.trim()) {
-      addCollection(newColName.trim());
-      setNewColName('');
-      setIsAdding(false);
-    }
+    if (!newColName.trim()) return;
+    addCollection(newColName.trim());
+    setNewColName('');
+    setIsAdding(false);
   };
 
-
   const handleExportCollection = async (collectionId: string) => {
-    const collection = collections.find(c => c.id === collectionId);
+    const collection = collections.find((item) => item.id === collectionId);
     if (!collection) return;
-
-    try {
-      const { save } = await import('@tauri-apps/plugin-dialog');
-      const filePath = await save({
-        defaultPath: `${collection.name || 'collection'}.postman_collection.json`,
-        filters: [{ name: 'Postman Collection', extensions: ['json'] }]
-      });
-
-      if (!filePath) return;
-
-      const jsonStr = exportToPostmanCollection(collection);
-      
-      await invoke('save_response_body', {
-        path: filePath,
-        body: jsonStr,
-      });
-    } catch (err) {
-      console.error('Failed to export collection:', err);
-      alert('Failed to export collection.');
-    }
+    await exportCollectionFile(collection.name || 'collection', collection);
   };
 
   const handleExportFolder = async (collectionId: string, folderId: string) => {
-    const collection = collections.find(c => c.id === collectionId);
+    const collection = collections.find((item) => item.id === collectionId);
     if (!collection) return;
-    
-    // Find the folder recursively
-    const findFolder = (items: (IFolder | SavedRequest)[]): IFolder | undefined => {
-      for (const item of items) {
-        if (item.id === folderId && item.type === 'folder') return item as IFolder;
-        if (item.type === 'folder') {
-          const found = findFolder(item.items);
-          if (found) return found;
-        }
-      }
-      return undefined;
-    };
-    
-    const folder = findFolder(collection.items);
+    const folder = findFolder(collection.items, folderId);
     if (!folder) return;
-
-    try {
-      const { save } = await import('@tauri-apps/plugin-dialog');
-      const filePath = await save({
-        defaultPath: `${folder.name || 'folder'}.postman_collection.json`,
-        filters: [{ name: 'Postman Collection', extensions: ['json'] }]
-      });
-
-      if (!filePath) return;
-
-      // Wrap folder in a pseudo-collection
-      const pseudoCollection = {
-        ...collection,
-        name: folder.name,
-        description: folder.description || '',
-        items: [folder]
-      };
-
-      const jsonStr = exportToPostmanCollection(pseudoCollection);
-      
-      await invoke('save_response_body', {
-        path: filePath,
-        body: jsonStr,
-      });
-    } catch (err) {
-      console.error('Failed to export folder:', err);
-      alert('Failed to export folder.');
-    }
+    await exportCollectionFile(folder.name || 'folder', { ...collection, name: folder.name, description: folder.description || '', items: [folder] });
   };
 
   const handleExportRequest = async (collectionId: string, requestId: string) => {
-    const collection = collections.find(c => c.id === collectionId);
+    const collection = collections.find((item) => item.id === collectionId);
     if (!collection) return;
-    
-    // Find the request recursively
-    const findRequest = (items: (IFolder | SavedRequest)[]): SavedRequest | undefined => {
-      for (const item of items) {
-        if (item.id === requestId && item.type === 'request') return item as SavedRequest;
-        if (item.type === 'folder') {
-          const found = findRequest(item.items);
-          if (found) return found;
-        }
-      }
-      return undefined;
-    };
-    
-    const request = findRequest(collection.items);
+    const request = findRequest(collection.items, requestId);
     if (!request) return;
-
-    try {
-      const { save } = await import('@tauri-apps/plugin-dialog');
-      const filePath = await save({
-        defaultPath: `${request.name || 'request'}.postman_collection.json`,
-        filters: [{ name: 'Postman Collection', extensions: ['json'] }]
-      });
-
-      if (!filePath) return;
-
-      // Wrap request in a pseudo-collection
-      const pseudoCollection = {
-        ...collection,
-        name: request.name,
-        description: request.description || '',
-        items: [request]
-      };
-
-      const jsonStr = exportToPostmanCollection(pseudoCollection);
-      
-      await invoke('save_response_body', {
-        path: filePath,
-        body: jsonStr,
-      });
-    } catch (err) {
-      console.error('Failed to export request:', err);
-      alert('Failed to export request.');
-    }
+    await exportCollectionFile(request.name || 'request', { ...collection, name: request.name, description: request.description || '', items: [request] });
   };
 
-  const handleContextMenu = (e: React.MouseEvent, collectionId: string, itemId: string | null, itemType: 'collection' | 'folder' | 'request' | 'example', itemName?: string, requestId?: string) => {
+  const handleContextMenu = (e: React.MouseEvent, collectionId: string, itemId: string | null, itemType: SidebarItemType, itemName?: string, requestId?: string) => {
     e.preventDefault();
     e.stopPropagation();
     setCtxMenu({ x: e.clientX, y: e.clientY, collectionId, itemId, itemType, itemName, requestId });
@@ -629,8 +188,7 @@ export function Sidebar() {
 
   const handleFolderSubmit = () => {
     if (!ctxMenu || !newFolderName.trim()) return;
-    const folderId = ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null;
-    addFolder(ctxMenu.collectionId, folderId, newFolderName.trim());
+    addFolder(ctxMenu.collectionId, ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null, newFolderName.trim());
     setNewFolderName('');
     setIsCreatingFolder(false);
     setCtxMenu(null);
@@ -638,1024 +196,124 @@ export function Sidebar() {
 
   const handleCreateRequest = () => {
     if (!ctxMenu) return;
-    const folderId = ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null;
-    createBlankRequestInFolder(ctxMenu.collectionId, folderId);
+    createBlankRequestInFolder(ctxMenu.collectionId, ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null);
     setCtxMenu(null);
   };
 
   const handleRenameSubmit = () => {
     if (renamingId && renameValue.trim()) {
-      // Find collection id from context or anywhere?
-      // Actually we need collectionId for renameItem. We can store the renaming target explicitly or assume it from state.
-      // Wait, we don't have collectionId easily here if we just use renamingId.
-      // But renamingId is set via context menu, so we can use ctxMenu.collectionId? No, ctxMenu is null while renaming.
-      // We can just find it by traversing collections.
-      for (const col of collections) {
-        if (col.id === renamingId) {
-          renameItem(col.id, renamingId, renameValue.trim());
-          break;
-        }
-        let found = false;
-        const findInItems = (items: any[]) => {
-          for (const item of items) {
-            if (item.id === renamingId) {
-              renameItem(col.id, renamingId, renameValue.trim());
-              found = true;
-              break;
-            }
-            if (item.examples?.some((e: any) => e.id === renamingId)) {
-              renameItem(col.id, renamingId, renameValue.trim());
-              found = true;
-              break;
-            }
-            if (item.type === 'folder') findInItems(item.items);
-          }
-        };
-        findInItems(col.items);
-        if (found) break;
-      }
+      renameMatchingItem(collections, renamingId, renameValue.trim(), renameItem);
     }
     setRenamingId(null);
   };
 
+  const handleConfirmDelete = () => {
+    if (deleteTarget?.type === 'collection') deleteCollection(deleteTarget.id);
+    if (deleteTarget?.type === 'example' && deleteTarget.collectionId && deleteTarget.requestId) deleteExample(deleteTarget.collectionId, deleteTarget.requestId, deleteTarget.id);
+    if (deleteTarget?.type === 'item' && deleteTarget.collectionId) deleteItem(deleteTarget.collectionId, deleteTarget.id);
+    setDeleteTarget(null);
+  };
 
+  const exportCollectionFile = async (defaultName: string, collection: Parameters<typeof exportToPostmanCollection>[0]) => {
+    try {
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const filePath = await save({
+        defaultPath: `${defaultName}.postman_collection.json`,
+        filters: [{ name: 'Postman Collection', extensions: ['json'] }],
+      });
 
-  const countItems = (items: (IFolder | SavedRequest)[]): number => {
-    return items.reduce((acc, item) => {
-      if (item.type === 'folder') return acc + countItems(item.items);
-      return acc + 1;
-    }, 0);
+      if (!filePath) return;
+
+      await invoke('save_response_body', {
+        path: filePath,
+        body: exportToPostmanCollection(collection),
+      });
+    } catch (err) {
+      console.error('Failed to export collection:', err);
+      alert('Failed to export collection.');
+    }
   };
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        background: 'var(--bg-secondary)',
-        padding: 16,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 20,
-        position: 'relative',
-      }}
-    >
-      {/* Collections */}
+    <div style={{ width: '100%', height: '100%', background: 'var(--bg-secondary)', padding: 16, display: 'flex', flexDirection: 'column', gap: 20, position: 'relative' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, overflow: 'auto', minHeight: 0, paddingRight: 4 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Collections</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div
-              className="tooltip-trigger"
-              data-tooltip="Merge Requests"
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: 6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: openMrCount > 0 ? '#00f0ff' : 'var(--text-tertiary)',
-                background: openMrCount > 0 ? 'rgba(0, 240, 255, 0.1)' : 'transparent',
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-                position: 'relative'
-              }}
-              onClick={() => navigate({ to: '/merge-requests' })}
-              onMouseEnter={(e) => {
-                if (openMrCount === 0) {
-                  e.currentTarget.style.background = 'var(--bg-tertiary)';
-                  e.currentTarget.style.color = '#b000ff';
-                } else {
-                  e.currentTarget.style.background = 'rgba(0, 240, 255, 0.2)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (openMrCount === 0) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-tertiary)';
-                } else {
-                  e.currentTarget.style.background = 'rgba(0, 240, 255, 0.1)';
-                }
-              }}
-            >
-              <GitPullRequest size={14} />
-              {openMrCount > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: -2,
-                  right: -2,
-                  background: '#ff0055',
-                  color: '#fff',
-                  fontSize: 10,
-                  fontWeight: 900,
-                  width: 16,
-                  height: 16,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '2px solid var(--bg-primary)',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }}>
-                  {openMrCount > 9 ? '9+' : openMrCount}
-                </div>
-              )}
-            </div>
-            <div
-              className="tooltip-trigger"
-              data-tooltip="Import (or drop file anywhere)"
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: 6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--text-tertiary)',
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-              }}
-              onClick={() => setIsImportModalOpen(true)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--bg-tertiary)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--text-tertiary)';
-              }}
-            >
-              <Download size={14} />
-            </div>
-            <div
-              className="tooltip-trigger"
-              data-tooltip="New Request"
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: 6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--text-tertiary)',
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-              }}
-              onClick={() => {
-                addTab();
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--bg-tertiary)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--text-tertiary)';
-              }}
-            >
-              <FilePlus2 size={14} />
-            </div>
-            <div
-              className="tooltip-trigger"
-              data-tooltip="New Collection"
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: 6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--text-tertiary)',
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-              }}
-              onClick={() => {
-                setNewColName('');
-                setIsAdding(true);
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--bg-tertiary)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--text-tertiary)';
-              }}
-            >
-              <FolderPlus size={14} />
-            </div>
-          </div>
-        </div>
-
-        <div style={{ minWidth: 'max-content', paddingRight: 8, paddingBottom: 8 }}>
-          {isAdding && (
-            <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-              <input
-                autoFocus
-                className="input"
-                style={{ fontSize: 13, flex: 1, padding: '6px 10px' }}
-                placeholder="Collection name"
-                value={newColName}
-                onChange={(e) => setNewColName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddCollection()}
-                onBlur={() => {
-                  setTimeout(() => {
-                    if (newColName.trim()) handleAddCollection();
-                    else setIsAdding(false);
-                  }, 100);
-                }}
-              />
-            </div>
-          )}
-
-          {collections.map(col => (
-          <div key={col.id} style={{ display: 'flex', flexDirection: 'column', marginBottom: 8 }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 13,
-                color: 'var(--text-primary)',
-                fontWeight: 600,
-                padding: '6px 10px',
-                background: 'var(--bg-tertiary)',
-                boxShadow: highlightedCollectionId === col.id ? 'inset 0 0 0 1px var(--accent-primary)' : 'none',
-                borderRadius: 6,
-                cursor: 'pointer',
-                transition: 'all var(--transition-fast)',
-              }}
-              onClick={() => {
-                if (!expandedCollections[col.id]) {
-                  setExpandedCollections(prev => ({ ...prev, [col.id]: true }));
-                }
-                openCollectionTab(col.id);
-              }}
-              onContextMenu={(e) => handleContextMenu(e, col.id, null, 'collection', col.name)}
-            >
-              <button
-                type="button"
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--text-tertiary)',
-                  flexShrink: 0,
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'color var(--transition-fast)',
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandedCollections(prev => ({ ...prev, [col.id]: !prev[col.id] }));
-                }}
-                aria-label={expandedCollections[col.id] ? 'Collapse collection' : 'Expand collection'}
-              >
-                {expandedCollections[col.id] ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-              </button>
-              <Folder size={13} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-              {renamingId === col.id ? (
-                <input
-                  autoFocus
-                  className="input"
-                  style={{ fontSize: 13, flex: 1, padding: '2px 6px', margin: '-2px -6px' }}
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleRenameSubmit();
-                    if (e.key === 'Escape') setRenamingId(null);
-                  }}
-                  onBlur={() => handleRenameSubmit()}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, overflow: 'hidden' }}>
-                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{col.name}</span>
-                  {col.fork && (
-                    <span
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 800,
-                        color: '#000',
-                        background: 'linear-gradient(135deg, #00f0ff 0%, #00b8ff 100%)',
-                        borderRadius: 4,
-                        padding: '1px 5px',
-                        flexShrink: 0,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        boxShadow: '0 2px 8px rgba(0, 240, 255, 0.25)'
-                      }}
-                      title="This is a forked collection"
-                    >
-                      Fork
-                    </span>
-                  )}
-                </div>
-              )}
-              {/* Item count badge */}
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: 'var(--text-tertiary)',
-                  background: 'var(--bg-secondary)',
-                  borderRadius: 8,
-                  padding: '1px 7px',
-                  flexShrink: 0,
-                }}
-              >
-                {countItems(col.items)}
-              </span>
-              <div
-                style={{
-                  opacity: 0,
-                  width: 22,
-                  height: 22,
-                  borderRadius: 5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--status-delete)',
-                  transition: 'all var(--transition-fast)',
-                  flexShrink: 0,
-                  marginRight: 4,
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteTarget({ id: col.id, type: 'collection' });
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--status-delete-bg)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
-                title="Delete Collection"
-              >
-                <Trash2 size={13} />
-              </div>
-              <div
-                style={{
-                  opacity: 0,
-                  width: 22,
-                  height: 22,
-                  borderRadius: 5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--text-tertiary)',
-                  transition: 'all var(--transition-fast)',
-                  flexShrink: 0,
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleContextMenu(e, col.id, col.id, 'collection', col.name); // passing col.id as itemId for rename
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.background = 'transparent'; }}
-              >
-                <MoreHorizontal size={13} />
-              </div>
-            </div>
-            {expandedCollections[col.id] && (
-              <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 22, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 0 }}>
-                {col.items.map(item => (
-                  <SidebarItem
-                    key={item.id}
-                    item={item}
-                    collectionId={col.id}
-                    parentFolderId={null}
-                    onContextMenu={(e, itemId, type, itemName, requestId) => handleContextMenu(e, col.id, itemId, type, itemName, requestId)}
-                    renamingId={renamingId}
-                    setRenamingId={setRenamingId}
-                    renameValue={renameValue}
-                    setRenameValue={setRenameValue}
-                    handleRenameSubmit={handleRenameSubmit}
-                    expandedFolders={expandedFolders}
-                    setExpandedFolders={setExpandedFolders}
-                    highlightedRequestId={highlightedRequestId}
-                    highlightedFolderId={highlightedFolderId}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-
-        {collections.length === 0 && !isAdding && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 32, color: 'var(--text-tertiary)' }}>
-            <FolderPlus size={28} style={{ opacity: 0.4 }} />
-            <div style={{ fontSize: 12, textAlign: 'center', lineHeight: 1.5 }}>
-              No collections yet.<br />Click <strong>+</strong> to create one.
-            </div>
-          </div>
-        )}
-        </div>
+        <SidebarToolbar
+          openMrCount={openMrCount}
+          onMergeRequests={() => navigate({ to: '/merge-requests' })}
+          onImport={() => setIsImportModalOpen(true)}
+          onNewRequest={() => addTab()}
+          onNewCollection={() => {
+            setNewColName('');
+            setIsAdding(true);
+          }}
+        />
+        <SidebarCollections
+          collections={collections}
+          filteredCollections={filteredCollections}
+          isAdding={isAdding}
+          newColName={newColName}
+          collectionSearch={collectionSearch}
+          expandedCollections={expandedCollections}
+          expandedFolders={expandedFolders}
+          renamingId={renamingId}
+          renameValue={renameValue}
+          highlightedCollectionId={highlightedCollectionId}
+          highlightedRequestId={highlightedRequestId}
+          highlightedFolderId={highlightedFolderId}
+          setIsAdding={setIsAdding}
+          setNewColName={setNewColName}
+          setCollectionSearch={setCollectionSearch}
+          setExpandedCollections={setExpandedCollections}
+          setExpandedFolders={setExpandedFolders}
+          setRenamingId={setRenamingId}
+          setRenameValue={setRenameValue}
+          setDeleteTarget={setDeleteTarget}
+          handleAddCollection={handleAddCollection}
+          handleRenameSubmit={handleRenameSubmit}
+          handleContextMenu={handleContextMenu}
+          openCollectionTab={openCollectionTab}
+        />
       </div>
 
-      {/* Context Menu */}
       {ctxMenu && (
-        createPortal(
-          <div
-            ref={menuRef}
-            className="animate-fade-in"
-            style={{
-              position: 'fixed',
-              zIndex: 99999,
-              border: '1px solid var(--border-highlight)',
-              borderRadius: 'var(--radius-md)',
-              boxShadow: 'var(--shadow-md)',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              top: `${ctxMenu.y}px`,
-              left: `${ctxMenu.x}px`,
-              minWidth: 200,
-              background: 'rgba(15, 23, 42, 0.97)',
-              backdropFilter: 'blur(20px)',
-              padding: 4,
-            }}
-          >
-            {/* RENAME ACTION */}
-            {ctxMenu.itemId && (
-              <button
-                type="button"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                  color: 'var(--text-primary)',
-                  background: 'transparent',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  transition: 'background var(--transition-fast)',
-                  textAlign: 'left',
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setRenameValue(ctxMenu.itemName || '');
-                  setRenamingId(ctxMenu.itemId);
-                  setCtxMenu(null);
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-              >
-                <span
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 7,
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--text-secondary)',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Edit2 size={13} />
-                </span>
-                <span style={{ fontWeight: 500 }}>Rename</span>
-              </button>
-            )}
-
-            {ctxMenu.itemType === 'request' && (
-              <>
-                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
-                <button
-                  type="button"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '10px 12px',
-                    fontSize: 13,
-                    color: 'var(--text-primary)',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    transition: 'background var(--transition-fast)',
-                    textAlign: 'left',
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (ctxMenu.itemId && activeTab?.response) {
-                      addExample(ctxMenu.collectionId, ctxMenu.itemId, 'Example Response');
-                    } else if (ctxMenu.itemId) {
-                      addExample(ctxMenu.collectionId, ctxMenu.itemId, 'New Example');
-                    }
-                    setCtxMenu(null);
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <span
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 7,
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-secondary)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <FileText size={13} />
-                  </span>
-                  <span style={{ fontWeight: 500 }}>Add example</span>
-                </button>
-              </>
-            )}
-
-            {ctxMenu.itemType !== 'request' && ctxMenu.itemType !== 'example' && (
-              <>
-                <button
-                  type="button"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                gap: 10,
-                padding: '10px 12px',
-                fontSize: 13,
-                color: 'var(--text-primary)',
-                background: 'transparent',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'pointer',
-                transition: 'background var(--transition-fast)',
-                textAlign: 'left',
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleCreateFolder();
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-            >
-              <span
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 7,
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--accent-primary)',
-                  flexShrink: 0,
-                }}
-              >
-                <FolderPlus size={13} />
-              </span>
-              <span style={{ fontWeight: 500 }}>New folder</span>
-            </button>
-            {isCreatingFolder && (
-              <div style={{ padding: '6px 12px' }}>
-                <input
-                  autoFocus
-                  className="input"
-                  style={{ width: '100%', fontSize: 13, padding: '6px 10px' }}
-                  placeholder="Folder name"
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleFolderSubmit();
-                    if (e.key === 'Escape') { setIsCreatingFolder(false); setCtxMenu(null); }
-                  }}
-                  onBlur={() => {
-                    setTimeout(() => {
-                      if (newFolderName.trim()) handleFolderSubmit();
-                      else { setIsCreatingFolder(false); setCtxMenu(null); }
-                    }, 100);
-                  }}
-                />
-              </div>
-            )}
-            <button
-              type="button"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '10px 12px',
-                fontSize: 13,
-                color: 'var(--text-primary)',
-                background: 'transparent',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'pointer',
-                transition: 'background var(--transition-fast)',
-                textAlign: 'left',
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleCreateRequest();
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-            >
-              <span
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 7,
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--accent-primary)',
-                  flexShrink: 0,
-                }}
-              >
-                <FilePlus2 size={13} />
-              </span>
-              <span style={{ fontWeight: 500 }}>New request</span>
-            </button>
-            </>
-            )}
-
-            {(ctxMenu.itemType === 'collection' || ctxMenu.itemType === 'folder' || ctxMenu.itemType === 'request') && (
-              <>
-                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
-                <button
-                  type="button"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '10px 12px',
-                    fontSize: 13,
-                    color: 'var(--text-primary)',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    transition: 'background var(--transition-fast)',
-                    textAlign: 'left',
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (ctxMenu.itemType === 'collection') {
-                      handleExportCollection(ctxMenu.collectionId);
-                    } else if (ctxMenu.itemType === 'folder' && ctxMenu.itemId) {
-                      handleExportFolder(ctxMenu.collectionId, ctxMenu.itemId);
-                    } else if (ctxMenu.itemType === 'request' && ctxMenu.itemId) {
-                      handleExportRequest(ctxMenu.collectionId, ctxMenu.itemId);
-                    }
-                    setCtxMenu(null);
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <span
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 7,
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-secondary)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Download size={13} />
-                  </span>
-                  <span style={{ fontWeight: 500 }}>Export {ctxMenu.itemType}</span>
-                </button>
-              </>
-            )}
-
-            {ctxMenu.itemType === 'collection' && (
-              <>
-                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
-                <button
-                  type="button"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '10px 12px',
-                    fontSize: 13,
-                    color: 'var(--text-primary)',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    transition: 'background var(--transition-fast)',
-                    textAlign: 'left',
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    forkCollection(ctxMenu.collectionId);
-                    setCtxMenu(null);
-                    showToast('Fork created in "My Workspace"');
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <span
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 7,
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--accent-primary)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <GitFork size={13} />
-                  </span>
-                  <span style={{ fontWeight: 500 }}>Fork collection</span>
-                </button>
-                {collections.find(c => c.id === ctxMenu.collectionId)?.fork && (
-                  <>
-                    <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
-                    <button
-                      type="button"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        padding: '10px 12px',
-                        fontSize: 13,
-                        color: 'var(--text-primary)',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        transition: 'background var(--transition-fast)',
-                        textAlign: 'left',
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const col = collections.find(c => c.id === ctxMenu.collectionId);
-                        if (col?.fork) {
-                          setMergeRequestTarget({
-                            sourceCollectionId: col.id,
-                            targetWorkspaceId: col.fork.originalWorkspaceId,
-                            targetCollectionId: col.fork.originalCollectionId
-                          });
-                        }
-                        setCtxMenu(null);
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                    >
-                      <span
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: 7,
-                          background: 'var(--bg-secondary)',
-                          border: '1px solid var(--border-color)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#b000ff',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <GitPullRequest size={13} />
-                      </span>
-                      <span style={{ fontWeight: 500 }}>Create Merge Request</span>
-                    </button>
-                  </>
-                )}
-              </>
-            )}
-
-            {(ctxMenu.itemType === 'collection' || ctxMenu.itemType === 'folder') && (
-              <>
-                <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
-                <button
-                  type="button"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '10px 12px',
-                    fontSize: 13,
-                    color: 'var(--text-primary)',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    transition: 'background var(--transition-fast)',
-                    textAlign: 'left',
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    sortItems(ctxMenu.collectionId, ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null, 'default');
-                    setCtxMenu(null);
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <span
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 7,
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-secondary)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <ListOrdered size={13} />
-                  </span>
-                  <span style={{ fontWeight: 500 }}>Sort (Folders first)</span>
-                </button>
-                <button
-                  type="button"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '10px 12px',
-                    fontSize: 13,
-                    color: 'var(--text-primary)',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    transition: 'background var(--transition-fast)',
-                    textAlign: 'left',
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    sortItems(ctxMenu.collectionId, ctxMenu.itemType === 'folder' ? ctxMenu.itemId : null, 'az');
-                    setCtxMenu(null);
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <span
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 7,
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-secondary)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <ArrowDownAZ size={13} />
-                  </span>
-                  <span style={{ fontWeight: 500 }}>Sort (A to Z)</span>
-                </button>
-              </>
-            )}
-
-            <div style={{ height: 1, background: 'var(--border-color)', margin: '4px 0' }} />
-            <button
-              type="button"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '10px 12px',
-                fontSize: 13,
-                color: 'var(--status-delete)',
-                background: 'transparent',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'pointer',
-                transition: 'background var(--transition-fast)',
-                textAlign: 'left',
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (ctxMenu.itemType === 'collection') {
-                  setDeleteTarget({ id: ctxMenu.collectionId, type: 'collection' });
-                } else if (ctxMenu.itemType === 'example' && ctxMenu.itemId && ctxMenu.requestId) {
-                  setDeleteTarget({ id: ctxMenu.itemId, type: 'example', collectionId: ctxMenu.collectionId, requestId: ctxMenu.requestId });
-                } else if (ctxMenu.itemId) {
-                  setDeleteTarget({ id: ctxMenu.itemId, type: 'item', collectionId: ctxMenu.collectionId });
-                }
-                setCtxMenu(null);
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--status-delete-bg)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-            >
-              <span
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 7,
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--status-delete)',
-                  flexShrink: 0,
-                }}
-              >
-                <Trash2 size={13} />
-              </span>
-              <span style={{ fontWeight: 500 }}>Delete {ctxMenu.itemType}</span>
-            </button>
-          </div>,
-          document.body
-        )
+        <SidebarContextMenu
+          ctxMenu={ctxMenu}
+          menuRef={menuRef}
+          collections={collections}
+          activeHasResponse={!!activeTab?.response}
+          isCreatingFolder={isCreatingFolder}
+          newFolderName={newFolderName}
+          setCtxMenu={setCtxMenu}
+          setRenamingId={setRenamingId}
+          setRenameValue={setRenameValue}
+          setDeleteTarget={setDeleteTarget}
+          setMergeRequestTarget={setMergeRequestTarget}
+          setIsCreatingFolder={setIsCreatingFolder}
+          setNewFolderName={setNewFolderName}
+          handleCreateFolder={handleCreateFolder}
+          handleFolderSubmit={handleFolderSubmit}
+          handleCreateRequest={handleCreateRequest}
+          handleExportCollection={handleExportCollection}
+          handleExportFolder={handleExportFolder}
+          handleExportRequest={handleExportRequest}
+          addExample={addExample}
+          forkCollection={forkCollection}
+          sortItems={sortItems}
+          showToast={showToast}
+        />
       )}
 
-      <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
-
-      <ConfirmModal
-        isOpen={deleteTarget !== null}
-        title={deleteTarget?.type === 'collection' ? "Delete Collection" : deleteTarget?.type === 'example' ? "Delete Example" : "Delete Item"}
-        message={`Are you sure you want to delete this ${deleteTarget?.type}? ${deleteTarget?.type === 'collection' || deleteTarget?.type === 'item' ? 'All contents inside it will be permanently lost.' : ''} This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        isDestructive={true}
-        onConfirm={() => {
-          if (deleteTarget) {
-            if (deleteTarget.type === 'collection') {
-              deleteCollection(deleteTarget.id);
-            } else if (deleteTarget.type === 'example' && deleteTarget.collectionId && deleteTarget.requestId) {
-              deleteExample(deleteTarget.collectionId, deleteTarget.requestId, deleteTarget.id);
-            } else if (deleteTarget.type === 'item' && deleteTarget.collectionId) {
-              deleteItem(deleteTarget.collectionId, deleteTarget.id);
-            }
-          }
-          setDeleteTarget(null);
-        }}
-        onCancel={() => setDeleteTarget(null)}
+      <SidebarDialogs
+        isImportModalOpen={isImportModalOpen}
+        deleteTarget={deleteTarget}
+        mergeRequestTarget={mergeRequestTarget}
+        toastMessage={toastMessage}
+        onCloseImport={() => setIsImportModalOpen(false)}
+        onCancelDelete={() => setDeleteTarget(null)}
+        onConfirmDelete={handleConfirmDelete}
+        onCloseMergeRequest={() => setMergeRequestTarget(null)}
+        onMergeRequestSuccess={() => showToast('Merge Request created successfully!')}
       />
-
-      <CreateMergeRequestModal
-        isOpen={!!mergeRequestTarget}
-        onClose={() => setMergeRequestTarget(null)}
-        sourceCollectionId={mergeRequestTarget?.sourceCollectionId || ''}
-        targetWorkspaceId={mergeRequestTarget?.targetWorkspaceId || ''}
-        targetCollectionId={mergeRequestTarget?.targetCollectionId || ''}
-        onSuccess={() => {
-          showToast('Merge Request created successfully!');
-        }}
-      />
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div style={{
-          position: 'absolute',
-          bottom: 24,
-          left: 16,
-          right: 16,
-          background: 'var(--status-success-bg)',
-          color: 'var(--status-success)',
-          border: '1px solid var(--status-success)',
-          padding: '12px 16px',
-          borderRadius: 8,
-          fontSize: 13,
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          boxShadow: 'var(--shadow-lg)',
-          zIndex: 99999,
-          animation: 'fade-in 0.3s ease-out'
-        }}>
-          <GitFork size={16} />
-          {toastMessage}
-        </div>
-      )}
     </div>
   );
 }

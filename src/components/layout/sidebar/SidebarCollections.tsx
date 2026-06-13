@@ -1,0 +1,48 @@
+import type { Dispatch, SetStateAction } from 'react';
+
+import type { Collection } from '../../../contexts/WorkspaceContext';
+import { CollectionRow } from './CollectionRow';
+import { CollectionSearchInput } from './CollectionSearchInput';
+import { EmptyCollections } from './EmptyCollections';
+import { NewCollectionInput } from './NewCollectionInput';
+import type { DeleteTarget, SidebarItemType } from './types';
+
+export interface SidebarCollectionsProps {
+  collections: Collection[];
+  filteredCollections: Collection[];
+  isAdding: boolean;
+  newColName: string;
+  collectionSearch: string;
+  expandedCollections: Record<string, boolean>;
+  expandedFolders: Record<string, boolean>;
+  renamingId: string | null;
+  renameValue: string;
+  highlightedCollectionId: string | null;
+  highlightedRequestId: string | null;
+  highlightedFolderId: string | null;
+  setIsAdding: (value: boolean) => void;
+  setNewColName: (value: string) => void;
+  setCollectionSearch: (value: string) => void;
+  setExpandedCollections: Dispatch<SetStateAction<Record<string, boolean>>>;
+  setExpandedFolders: Dispatch<SetStateAction<Record<string, boolean>>>;
+  setRenamingId: (value: string | null) => void;
+  setRenameValue: (value: string) => void;
+  setDeleteTarget: (value: DeleteTarget | null) => void;
+  handleAddCollection: () => void;
+  handleRenameSubmit: () => void;
+  handleContextMenu: (e: React.MouseEvent, collectionId: string, itemId: string | null, itemType: SidebarItemType, itemName?: string, requestId?: string) => void;
+  openCollectionTab: (collectionId: string) => void;
+}
+
+export function SidebarCollections(props: SidebarCollectionsProps) {
+  return (
+    <div style={{ minWidth: 'max-content', paddingRight: 8, paddingBottom: 8 }}>
+      {props.isAdding && <NewCollectionInput newColName={props.newColName} setNewColName={props.setNewColName} handleAddCollection={props.handleAddCollection} setIsAdding={props.setIsAdding} />}
+      <CollectionSearchInput value={props.collectionSearch} onChange={props.setCollectionSearch} />
+      {props.filteredCollections.map((collection) => (
+        <CollectionRow key={collection.id} collection={collection} {...props} />
+      ))}
+      {props.collections.length === 0 && !props.isAdding && <EmptyCollections />}
+    </div>
+  );
+}
