@@ -138,7 +138,7 @@ export function UrlBar() {
 
 
   return (
-    <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', height: 38, overflow: 'hidden', borderRadius: 9999 }}>
+    <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', height: 34, overflow: 'hidden', borderRadius: 9999 }}>
       {/* Overlay for highlighting */}
       <div 
         ref={overlayRef}
@@ -152,7 +152,7 @@ export function UrlBar() {
           overflow: 'hidden',
           whiteSpace: 'pre',
           zIndex: 1,
-          lineHeight: '38px',
+          lineHeight: '34px',
         }}
         aria-hidden="true"
       >
@@ -170,7 +170,7 @@ export function UrlBar() {
           caretColor: 'var(--text-primary)',
           background: 'transparent',
           zIndex: 2,
-          lineHeight: '38px',
+          lineHeight: '34px',
         }}
         value={url}
         onBlur={autocomplete.handleBlur}

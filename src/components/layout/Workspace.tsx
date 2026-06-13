@@ -182,9 +182,9 @@ export function Workspace() {
       ) : (activeTab.type === 'request' || activeTab.type === 'example' || !activeTab.type) ? (
         <>
           {/* Header & URL Bar */}
-          <div style={{ padding: '16px 16px 0 16px', flexShrink: 0, position: 'relative', zIndex: 50 }}>
+          <div style={{ padding: '12px 16px 0 16px', flexShrink: 0, position: 'relative', zIndex: 50 }}>
             {/* Top Row: Name and Save */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingLeft: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, paddingLeft: 4 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, position: 'relative' }}>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', maxWidth: 400, width: '100%' }}>
                   <input
@@ -222,42 +222,65 @@ export function Workspace() {
                 </div>
               </div>
 
-              {activeTab?.type !== 'example' && (
-                <div style={{ display: 'flex', borderRadius: 6, background: 'var(--bg-tertiary)', overflow: 'hidden', height: 32, border: '1px solid var(--border-color)' }}>
-                  <button
-                    ref={saveBtnRef}
-                    className="btn"
-                    style={{
-                      fontSize: 13,
-                      padding: '0 16px',
-                      height: '100%',
-                      fontWeight: 600,
-                      border: 'none',
-                      borderRadius: 0,
-                      background: 'transparent'
-                    }}
-                    onClick={() => {
-                      handleDirectSave();
-                    }}
-                  >
-                    Save
-                  </button>
-                  <div style={{ width: 1, background: 'var(--border-color)', margin: '4px 0' }} />
-                  <button
-                    className="btn"
-                    style={{
-                      padding: '0 8px',
-                      height: '100%',
-                      border: 'none',
-                      borderRadius: 0,
-                      background: 'transparent'
-                    }}
-                    onClick={() => setShowSaveDialog((current) => !current)}
-                  >
-                    <ChevronDown size={14} />
-                  </button>
-                </div>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  className="btn"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    fontSize: 12,
+                    padding: '0 12px',
+                    borderRadius: 6,
+                    height: 28,
+                    fontWeight: 600,
+                    background: 'transparent',
+                    border: '1px solid var(--border-color)',
+                  }}
+                  onClick={toggleSplitDirection}
+                  title={splitDirection === 'horizontal' ? 'Stack request and response' : 'Show request and response side by side'}
+                >
+                  {splitDirection === 'horizontal' ? 'Stack Layout' : 'Split Layout'}
+                </button>
+
+                {activeTab?.type !== 'example' && (
+                  <div style={{ display: 'flex', borderRadius: 6, background: 'var(--bg-tertiary)', overflow: 'hidden', height: 28, border: '1px solid var(--border-color)' }}>
+                    <button
+                      ref={saveBtnRef}
+                      className="btn"
+                      style={{
+                        fontSize: 12,
+                        padding: '0 16px',
+                        height: '100%',
+                        fontWeight: 600,
+                        border: 'none',
+                        borderRadius: 0,
+                        background: 'transparent'
+                      }}
+                      onClick={() => {
+                        handleDirectSave();
+                      }}
+                    >
+                      Save
+                    </button>
+                    <div style={{ width: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+                    <button
+                      className="btn"
+                      style={{
+                        padding: '0 8px',
+                        height: '100%',
+                        border: 'none',
+                        borderRadius: 0,
+                        background: 'transparent'
+                      }}
+                      onClick={() => setShowSaveDialog((current) => !current)}
+                    >
+                      <ChevronDown size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Bottom Row: URL Bar */}
@@ -284,7 +307,7 @@ export function Workspace() {
                     fontSize: 13,
                     padding: '0 16px',
                     borderRadius: 9999,
-                    height: 38,
+                    height: 34,
                     fontWeight: 700,
                   }}
                   onClick={() => setShowCodeModal(true)}
@@ -294,24 +317,6 @@ export function Workspace() {
                   Code
                 </button>
               )}
-              <button
-                className="btn"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  fontSize: 13,
-                  padding: '0 14px',
-                  borderRadius: 9999,
-                  height: 38,
-                  fontWeight: 700,
-                }}
-                onClick={toggleSplitDirection}
-                title={splitDirection === 'horizontal' ? 'Stack request and response' : 'Show request and response side by side'}
-              >
-                {splitDirection === 'horizontal' ? 'Stack' : 'Split'}
-              </button>
               <div style={{ position: 'relative', display: 'flex' }}>
                 <button
                   className={activeTab?.type === 'example' ? "btn" : "btn-success"}
@@ -323,7 +328,7 @@ export function Workspace() {
                     fontSize: 13,
                     padding: '0 20px 0 24px',
                     borderRadius: '9999px 0 0 9999px',
-                    height: 38,
+                    height: 34,
                     fontWeight: 700,
                     letterSpacing: '0.03em',
                     border: 'none',
@@ -358,8 +363,8 @@ export function Workspace() {
                   <button
                     className="btn-success"
                     style={{
-                      width: 38,
-                      height: 38,
+                      width: 34,
+                      height: 34,
                       borderRadius: '0 9999px 9999px 0',
                       borderLeft: '1px solid rgba(255, 255, 255, 0.24)',
                       display: 'inline-flex',
