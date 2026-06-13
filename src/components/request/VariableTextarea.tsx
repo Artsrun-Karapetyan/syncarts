@@ -88,6 +88,7 @@ export function VariableTextarea(props: VariableTextareaProps) {
           hoveredVar={hover.hoveredVar}
           popoverRef={hover.popoverRef}
           onSave={hover.handleAddVar}
+          onSaveCollection={hover.handleAddCollectionVar}
           onMouseEnter={hover.clearHideTimeout}
           onMouseLeave={hover.handleMouseLeave}
           onOpenCollectionVariables={hover.openCollectionVariables}

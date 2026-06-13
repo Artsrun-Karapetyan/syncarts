@@ -2,6 +2,24 @@ import type { Environment, EnvironmentVariable } from '../../contexts/WorkspaceC
 import { resolveScopedVariable } from './variableResolution';
 import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
 
+function getVariableColors(sourceType: string | undefined, isDynamic: boolean) {
+  if (isDynamic || sourceType === 'Dynamic') {
+    return { color: '#ffb3d9', bg: 'rgba(255, 179, 217, 0.12)', border: 'rgba(255, 179, 217, 0.5)' };
+  }
+  switch (sourceType) {
+    case 'Environment':
+      return { color: '#8ff0b5', bg: 'rgba(143, 240, 181, 0.12)', border: 'rgba(143, 240, 181, 0.5)' };
+    case 'Collection':
+      return { color: '#fff0a8', bg: 'rgba(255, 240, 168, 0.12)', border: 'rgba(255, 240, 168, 0.5)' };
+    case 'Folder':
+      return { color: '#e2b3ff', bg: 'rgba(226, 179, 255, 0.12)', border: 'rgba(226, 179, 255, 0.5)' };
+    case 'Globals':
+      return { color: '#9dccff', bg: 'rgba(157, 204, 255, 0.12)', border: 'rgba(157, 204, 255, 0.5)' };
+    default:
+      return { color: 'var(--accent-primary)', bg: 'rgba(88, 166, 255, 0.12)', border: 'rgba(88, 166, 255, 0.5)' };
+  }
+}
+
 export function renderVariableHighlight(args: {
   text: string;
   activeTab: any;
@@ -22,6 +40,23 @@ export function renderVariableHighlight(args: {
     const resolved = resolveScopedVariable({ ancestors, activeEnvironment, globalVariables, varName });
     const isDynamic = ['$guid', '$timestamp', '$isoTimestamp'].includes(varName);
 
+    let styles = {
+      color: 'var(--status-delete)',
+      background: 'rgba(239, 68, 68, 0.12)',
+      boxShadow: 'inset 0 0 0 1px rgba(239, 68, 68, 0.55)',
+      borderRadius: 6,
+    };
+
+    if (resolved.hasValue || isDynamic) {
+      const colors = getVariableColors(resolved.sourceType, isDynamic);
+      styles = {
+        color: colors.color,
+        background: colors.bg,
+        boxShadow: `inset 0 0 0 1px ${colors.border}`,
+        borderRadius: 6,
+      };
+    }
+
     return (
       <span
         key={index}
@@ -32,12 +67,7 @@ export function renderVariableHighlight(args: {
         data-has-value={resolved.hasValue}
         data-value={resolved.value || ''}
         data-source={resolved.source}
-        style={{
-          color: resolved.hasValue || isDynamic ? 'var(--accent-primary)' : 'var(--status-delete)',
-          background: resolved.hasValue || isDynamic ? 'rgba(88, 166, 255, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-          boxShadow: `inset 0 0 0 1px ${resolved.hasValue || isDynamic ? 'rgba(88, 166, 255, 0.5)' : 'rgba(239, 68, 68, 0.55)'}`,
-          borderRadius: 6,
-        }}
+        style={styles}
       >
         {part}
       </span>

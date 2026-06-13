@@ -17,6 +17,7 @@ interface UrlVariablePopoverProps {
   hoveredVar: HoveredUrlVariable;
   popoverRef: RefObject<HTMLDivElement | null>;
   onSave: (name: string, value: string) => void;
+  onSaveCollection?: (name: string, value: string) => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onOpenCollectionVariables: () => void;
@@ -30,6 +31,7 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
     hoveredVar,
     popoverRef,
     onSave,
+    onSaveCollection,
     onMouseEnter,
     onMouseLeave,
     onOpenCollectionVariables,
@@ -83,16 +85,30 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
           }}
         />
         {!isDynamic && (
-          <button
-            className="btn"
-            style={{ width: '100%', justifyContent: 'center' }}
-            onClick={() => {
-              const input = document.getElementById(inputId) as HTMLInputElement;
-              onSave(hoveredVar.name, input?.value || '');
-            }}
-          >
-            <Plus size={14} /> {hoveredVar.exists ? 'Update' : 'Add'} {isPathVariable ? 'Path' : variableTargetLabel} Variable
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <button
+              className="btn"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => {
+                const input = document.getElementById(inputId) as HTMLInputElement;
+                onSave(hoveredVar.name, input?.value || '');
+              }}
+            >
+              <Plus size={14} /> {hoveredVar.exists ? 'Update' : 'Add'} {isPathVariable ? 'Path' : variableTargetLabel} Variable
+            </button>
+            {variableTargetLabel === 'Folder' && onSaveCollection && (
+              <button
+                className="btn"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => {
+                  const input = document.getElementById(inputId) as HTMLInputElement;
+                  onSaveCollection(hoveredVar.name, input?.value || '');
+                }}
+              >
+                <Plus size={14} /> {hoveredVar.exists ? 'Update' : 'Add'} Collection Variable
+              </button>
+            )}
+          </div>
         )}
       </div>
       <button

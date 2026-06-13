@@ -147,6 +147,16 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
     setHoveredVar(null);
   };
 
+  const handleAddCollectionVar = (varName: string, value: string) => {
+    if (activeTab?.collectionId) {
+      const collection = collections.find(c => c.id === activeTab.collectionId);
+      if (collection) {
+        updateCollection(collection.id, { variables: upsertActiveVariableValue(collection.variables || [], varName, value) });
+      }
+      setHoveredVar(null);
+    }
+  };
+
   const openCollectionVariables = () => {
     if (!closestAncestor || !activeTab?.collectionId) return;
     setHoveredVar(null);
@@ -170,6 +180,7 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
     handleMouseMove,
     handleMouseLeave,
     handleAddVar,
+    handleAddCollectionVar,
     clearHideTimeout,
     openCollectionVariables,
     openPathVariables
