@@ -12,8 +12,13 @@ export function isSharedWorkspace(
 }
 
 export function isMemberWorkspace(
-  workspace: Pick<Workspace, "ownerId"> | undefined,
+  workspace: Pick<Workspace, "ownerId" | "members"> | undefined,
   userId: string | undefined,
 ) {
-  return !!workspace?.ownerId && !!userId && workspace.ownerId !== userId;
+  return (
+    !!workspace?.ownerId &&
+    !!userId &&
+    workspace.ownerId !== userId &&
+    (workspace.members?.some((member) => member.userId === userId) ?? false)
+  );
 }
