@@ -13,13 +13,17 @@ export function GlobalContextMenu() {
       const target = e.target as HTMLElement;
       
       let textToCopy = '';
+      const selection = window.getSelection()?.toString();
 
-      // Check if it's an input or textarea
-      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+      if (selection && selection.trim().length > 0) {
+        textToCopy = selection;
+      } else if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
         textToCopy = target.value;
       } else {
-        // Otherwise grab innerText or textContent
-        textToCopy = target.innerText || target.textContent || '';
+        const copyableContainer = target.closest('.monaco-editor, pre, code, .response-raw-body, .path-var-span, .env-var-span');
+        if (copyableContainer) {
+          textToCopy = (copyableContainer as HTMLElement).innerText || copyableContainer.textContent || '';
+        }
       }
 
       textToCopy = textToCopy.trim();
