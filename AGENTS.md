@@ -15,3 +15,4 @@ Code Structure:
 - Move hooks out of component files into separate hook modules.
 - Split large context/provider files into small hooks, helpers, and type modules by responsibility.
 - If a file contains separable logic, extract it into dedicated helpers, hooks, UI components, types, or data modules so the code stays readable, clean, and easy to maintain.
+- Keep related files grouped in clear folders and subfolders by feature/responsibility; do not leave many unrelated components, hooks, helpers, tests, or types in one flat directory.
