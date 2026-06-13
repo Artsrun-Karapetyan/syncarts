@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, CheckSquare, Square } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { VariableTextInput } from './VariableTextInput';
 
@@ -23,36 +23,38 @@ export function HeadersEditor() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, paddingTop: 1, paddingLeft: 1 }}>
       {headers.map((header, idx) => (
         <div
           key={idx}
           style={{
             display: 'grid',
-            gridTemplateColumns: 'auto 1fr 1fr 1fr 32px',
-            gap: 8,
+            gridTemplateColumns: '40px 1fr 1fr 1fr 40px',
+            gap: 0,
             alignItems: 'center',
             opacity: header.enabled === false ? 0.45 : 1,
           }}
         >
-          <input
-            type="checkbox"
-            checked={header.enabled !== false}
-            onChange={(e) => updateHeader(idx, { enabled: e.target.checked })}
-            style={{ width: 16, height: 16, accentColor: 'var(--accent-primary)', cursor: 'pointer', margin: 0 }}
-            title={header.enabled === false ? 'Enable header' : 'Disable header'}
-          />
+          <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
+            <button
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: header.enabled !== false ? 'var(--accent-primary)' : 'var(--text-tertiary)' }}
+              onClick={() => updateHeader(idx, { enabled: header.enabled === false })}
+              title={header.enabled === false ? 'Enable header' : 'Disable header'}
+            >
+              {header.enabled !== false ? <CheckSquare size={16} /> : <Square size={16} />}
+            </button>
+          </div>
           <VariableTextInput
-            className="input font-mono"
-            style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+            className="input"
+            style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
             placeholder="Key (e.g. Authorization)"
             value={header.key}
             onChange={(value) => updateHeader(idx, { key: value })}
             disabled={!activeTab}
           />
           <VariableTextInput
-            className="input font-mono"
-            style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+            className="input"
+            style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
             placeholder="Value"
             value={header.value}
             onChange={(value) => updateHeader(idx, { value })}
@@ -60,29 +62,24 @@ export function HeadersEditor() {
           />
           <VariableTextInput
             className="input"
-            style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+            style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
             placeholder="Description"
             value={header.description || ''}
             onChange={(value) => updateHeader(idx, { description: value })}
             disabled={!activeTab}
           />
-          <button
-            type="button"
-            style={{
-              padding: 6,
-              color: 'var(--status-delete)',
-              borderRadius: 'var(--radius-sm)',
-              transition: 'all var(--transition-fast)',
-              opacity: activeTab ? 0.6 : 0.3,
-              cursor: activeTab ? 'pointer' : 'not-allowed',
-            }}
-            onClick={() => { if (activeTab) removeHeader(idx); }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--status-delete-bg)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.background = 'transparent'; }}
-            title="Remove Header"
-          >
-            <Trash2 size={15} />
-          </button>
+          <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
+            <button
+              type="button"
+              style={{ background: 'none', border: 'none', cursor: activeTab ? 'pointer' : 'not-allowed', color: 'var(--text-tertiary)', opacity: activeTab ? 1 : 0.3 }}
+              onClick={() => { if (activeTab) removeHeader(idx); }}
+              onMouseEnter={(e) => { if (activeTab) e.currentTarget.style.color = 'var(--status-delete)'; }}
+              onMouseLeave={(e) => { if (activeTab) e.currentTarget.style.color = 'var(--text-tertiary)'; }}
+              title="Remove Header"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
       ))}
 

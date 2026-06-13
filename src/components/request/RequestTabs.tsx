@@ -98,9 +98,7 @@ export function RequestTabs() {
               <span className="tab-badge">{paramsCount}</span>
             )}
             {tab.id === 'body' && bodyBadge}
-            {tab.id === 'auth' && hasAuth && (
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-primary)', marginLeft: 6 }} />
-            )}
+
           </button>
         ))}
       </div>

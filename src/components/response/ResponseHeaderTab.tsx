@@ -15,7 +15,6 @@ export function ResponseHeaderTab(props: ResponseHeaderTabProps) {
       type="button"
       className={`tab-button ${activeTab === id ? 'active' : ''}`}
       onClick={() => onChange(id)}
-      style={{ padding: '6px 14px', fontSize: 12 }}
     >
       {label}
       {badge !== undefined && <span className="tab-badge">{badge}</span>}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, CheckSquare, Square } from 'lucide-react';
 import { PathVariable, QueryParamItem, useWorkspace } from '../../contexts/WorkspaceContext';
 import { syncPathVariablesWithUrl } from '../../utils/pathVariables';
 import { VariableTextInput } from './VariableTextInput';
@@ -73,37 +73,39 @@ export function ParamsEditor() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0, paddingTop: 1, paddingLeft: 1 }}>
         <ParamSectionTitle title="Query Params" />
         {params.map((param, idx) => (
           <div
             key={idx}
             style={{
               display: 'grid',
-              gridTemplateColumns: 'auto 1fr 1fr 1fr 32px',
-              gap: 8,
+              gridTemplateColumns: '40px 1fr 1fr 1fr 40px',
+              gap: 0,
               alignItems: 'center',
               opacity: param.enabled === false ? 0.45 : 1,
             }}
           >
-            <input
-              type="checkbox"
-              checked={param.enabled !== false}
-              onChange={(e) => updateParam(idx, { enabled: e.target.checked })}
-              style={{ width: 16, height: 16, accentColor: 'var(--accent-primary)', cursor: 'pointer', margin: 0 }}
-              title={param.enabled === false ? 'Enable param' : 'Disable param'}
-            />
+            <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
+              <button
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: param.enabled !== false ? 'var(--accent-primary)' : 'var(--text-tertiary)' }}
+                onClick={() => updateParam(idx, { enabled: param.enabled === false })}
+                title={param.enabled === false ? 'Enable param' : 'Disable param'}
+              >
+                {param.enabled !== false ? <CheckSquare size={16} /> : <Square size={16} />}
+              </button>
+            </div>
             <VariableTextInput
-              className="input font-mono"
-              style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+              className="input"
+              style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
               placeholder="Key"
               value={param.key}
               onChange={(value) => updateParam(idx, { key: value })}
               disabled={!activeTab}
             />
             <VariableTextInput
-              className="input font-mono"
-              style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+              className="input"
+              style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
               placeholder="Value"
               value={param.value}
               onChange={(value) => updateParam(idx, { value })}
@@ -111,29 +113,24 @@ export function ParamsEditor() {
             />
             <VariableTextInput
               className="input"
-              style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
+              style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
               placeholder="Description"
               value={param.description || ''}
               onChange={(value) => updateParam(idx, { description: value })}
               disabled={!activeTab}
             />
-            <button
-              type="button"
-              style={{
-                padding: 6,
-                color: 'var(--status-delete)',
-                borderRadius: 'var(--radius-sm)',
-                transition: 'all var(--transition-fast)',
-                opacity: activeTab ? 0.6 : 0.3,
-                cursor: activeTab ? 'pointer' : 'not-allowed',
-              }}
-              onClick={() => { if (activeTab) removeParam(idx); }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'var(--status-delete-bg)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.background = 'transparent'; }}
-              title="Remove Param"
-            >
-              <Trash2 size={15} />
-            </button>
+            <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
+              <button
+                type="button"
+                style={{ background: 'none', border: 'none', cursor: activeTab ? 'pointer' : 'not-allowed', color: 'var(--text-tertiary)', opacity: activeTab ? 1 : 0.3 }}
+                onClick={() => { if (activeTab) removeParam(idx); }}
+                onMouseEnter={(e) => { if (activeTab) e.currentTarget.style.color = 'var(--status-delete)'; }}
+                onMouseLeave={(e) => { if (activeTab) e.currentTarget.style.color = 'var(--text-tertiary)'; }}
+                title="Remove Param"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ))}
 
@@ -174,19 +171,20 @@ export function ParamsEditor() {
       </div>
 
       {pathVariables.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0, paddingTop: 1, paddingLeft: 1 }}>
           <ParamSectionTitle title="Path Variables" />
           {pathVariables.map((variable) => (
-            <div key={variable.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 32px', gap: 8, alignItems: 'center' }}>
+            <div key={variable.id} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr 1fr 40px', gap: 0, alignItems: 'center' }}>
+              <div style={{ width: 40 }} />
               <input
-                className="input font-mono"
-                style={{ fontSize: 13, padding: '8px 12px', color: 'var(--text-secondary)' }}
+                className="input"
+                style={{ width: '100%', fontSize: 13, background: 'transparent', color: 'var(--text-secondary)', borderRadius: 0, margin: '-1px 0 0 -1px' }}
                 value={variable.key}
                 disabled
               />
               <VariableTextInput
-                className="input font-mono"
-                style={{ fontSize: 13, padding: '8px 12px' }}
+                className="input"
+                style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
                 placeholder="Value"
                 value={variable.value}
                 onChange={(value) => updatePathVariable(variable.id, { value })}
@@ -194,13 +192,15 @@ export function ParamsEditor() {
               />
               <VariableTextInput
                 className="input"
-                style={{ fontSize: 13, padding: '8px 12px' }}
+                style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
                 placeholder="Description"
                 value={variable.description || ''}
                 onChange={(value) => updatePathVariable(variable.id, { description: value })}
                 disabled={!activeTab}
               />
-              <span style={{ color: 'var(--text-tertiary)', textAlign: 'center' }}>...</span>
+              <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
+                <span style={{ color: 'var(--text-tertiary)', textAlign: 'center' }}>...</span>
+              </div>
             </div>
           ))}
         </div>
@@ -211,14 +211,7 @@ export function ParamsEditor() {
 
 function ParamSectionTitle({ title }: { title: string }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr 1fr 32px', gap: 8, alignItems: 'center' }}>
-      <div />
-      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-tertiary)' }}>Key</div>
-      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-tertiary)' }}>Value</div>
-      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-tertiary)' }}>Description</div>
-      <div />
-      <div style={{ gridColumn: '1 / -1', marginTop: 2, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>{title}</div>
-    </div>
+    <div style={{ marginBottom: 8, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>{title}</div>
   );
 }
 

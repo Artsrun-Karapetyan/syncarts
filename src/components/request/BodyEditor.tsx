@@ -56,6 +56,8 @@ function FileValueEditor({ item, handleUpdateFormData }: { item: FormDataItem; h
           display: 'flex',
           alignItems: 'center',
           padding: '0 8px',
+          borderRadius: 0,
+          margin: '-1px 0 0 -1px',
         }}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -243,17 +245,11 @@ export function BodyEditor() {
       )}
 
       {(currentBodyType === 'form-data' || currentBodyType === 'x-www-form-urlencoded') && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr 1fr 40px', gap: 12, alignItems: 'center', fontWeight: 600, fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', paddingBottom: 8, borderBottom: '1px solid var(--border-color)', marginBottom: 8 }}>
-            <div style={{ width: 40, textAlign: 'center' }}></div>
-            <div>Key</div>
-            <div>Value</div>
-            <div>Description</div>
-            <div style={{ width: 40 }}></div>
-          </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', paddingTop: 1, paddingLeft: 1 }}>
+
 
           {(activeTab?.formData || []).map(item => (
-            <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr 1fr 40px', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr 1fr 40px', alignItems: 'center', gap: 0, marginBottom: 0, opacity: item.enabled === false ? 0.45 : 1 }}>
               <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
                 <button
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: item.enabled ? 'var(--accent-primary)' : 'var(--text-tertiary)' }}
@@ -265,7 +261,7 @@ export function BodyEditor() {
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: 0 }}>
                 <VariableTextInput
                   className="input"
-                  style={{ width: '100%', fontSize: 13, background: 'transparent', paddingRight: currentBodyType === 'form-data' ? 60 : undefined }}
+                  style={{ width: '100%', fontSize: 13, background: 'transparent', paddingRight: currentBodyType === 'form-data' ? 60 : undefined, borderRadius: 0, margin: '-1px 0 0 -1px' }}
                   placeholder="Key"
                   value={item.key}
                   onChange={(value) => handleUpdateFormData(item.id, { key: value })}
@@ -291,7 +287,7 @@ export function BodyEditor() {
                 ) : (
                   <VariableTextInput
                     className="input"
-                    style={{ width: '100%', fontSize: 13, background: 'transparent' }}
+                    style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
                     placeholder="Value"
                     value={item.value}
                     onChange={(value) => handleUpdateFormData(item.id, { value })}
@@ -300,7 +296,7 @@ export function BodyEditor() {
               </div>
               <VariableTextInput
                 className="input"
-                style={{ width: '100%', fontSize: 13, background: 'transparent' }}
+                style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
                 placeholder="Description"
                 value={item.description || ''}
                 onChange={(description) => handleUpdateFormData(item.id, { description })}

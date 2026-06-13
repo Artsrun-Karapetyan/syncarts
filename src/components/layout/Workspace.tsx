@@ -450,7 +450,6 @@ export function Workspace() {
         <PanelGroup key={splitDirection} direction={splitDirection}>
           {/* Request panel with tabs */}
           <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingRight: splitDirection === 'horizontal' ? 8 : 0, paddingBottom: splitDirection === 'vertical' ? 8 : 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>Request</div>
             <div
               className="glass-panel"
               style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}
@@ -463,9 +462,6 @@ export function Workspace() {
 
           {/* Response panel */}
           <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingLeft: splitDirection === 'horizontal' ? 8 : 0, paddingTop: splitDirection === 'vertical' ? 8 : 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>
-              {activeTab?.type === 'example' ? 'Example Response' : 'Response'}
-            </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <ResponseViewer />
             </div>
