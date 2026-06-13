@@ -108,9 +108,7 @@ function SidebarItem({
         >
           {item.examples && item.examples.length > 0 ? (
             isExamplesOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-          ) : (
-            <FileText size={14} style={{ opacity: 0.45 }} />
-          )}
+          ) : null}
         </div>
         <span
           className="font-mono"

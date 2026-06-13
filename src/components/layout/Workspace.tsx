@@ -296,7 +296,6 @@ export function Workspace() {
             >
               <MethodSelector />
               <UrlBar />
-              {activeTab?.type !== 'example' && (
                 <button
                   className="btn"
                   style={{
@@ -316,10 +315,9 @@ export function Workspace() {
                   <Code2 size={14} />
                   Code
                 </button>
-              )}
               <div style={{ position: 'relative', display: 'flex' }}>
                 <button
-                  className={activeTab?.type === 'example' ? "btn" : "btn-success"}
+                  className="btn-success"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -332,22 +330,16 @@ export function Workspace() {
                     fontWeight: 700,
                     letterSpacing: '0.03em',
                     border: 'none',
-                    cursor: isMutating && activeTab?.type !== 'example' ? 'not-allowed' : 'pointer',
-                    opacity: isMutating && activeTab?.type !== 'example' ? 0.7 : 1,
+                    cursor: isMutating ? 'not-allowed' : 'pointer',
+                    opacity: isMutating ? 0.7 : 1,
                     transition: 'all var(--transition-fast)',
                   }}
                   onClick={() => {
-                    if (activeTab?.type === 'example') {
-                      // Just visually save for now or trigger a toast
-                    } else {
-                      void sendRequest();
-                    }
+                    void sendRequest();
                   }}
-                  disabled={isMutating && activeTab?.type !== 'example'}
+                  disabled={isMutating}
                 >
-                  {activeTab?.type === 'example' ? (
-                    'Save Example'
-                  ) : isMutating ? (
+                  {isMutating ? (
                     <>
                       <Loader2 size={14} className="animate-spin" />
                       Sending…
@@ -359,7 +351,6 @@ export function Workspace() {
                     </>
                   )}
                 </button>
-                {activeTab?.type !== 'example' && (
                   <button
                     className="btn-success"
                     style={{
@@ -379,8 +370,7 @@ export function Workspace() {
                   >
                     <ChevronDown size={15} />
                   </button>
-                )}
-                {showSendMenu && activeTab?.type !== 'example' && (
+                {showSendMenu && (
                   <div
                     ref={sendMenuRef}
                     className="animate-fade-in"
