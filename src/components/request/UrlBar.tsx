@@ -3,6 +3,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { parseCurlCommand } from '../../utils/curlParser';
 import { syncPathVariablesWithUrl } from '../../utils/pathVariables';
 import { resolveScopedVariable } from './variableResolution';
+import { getVariableColors } from './variableHighlight';
 import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
 import { UrlVariablePopover } from './UrlVariablePopover';
 import { VariableAutocompletePopover } from './VariableAutocompletePopover';
@@ -113,6 +114,11 @@ export function UrlBar() {
       if (part.startsWith('{{') && part.endsWith('}}')) {
         const varName = part.substring(2, part.length - 2);
         const resolved = resolveVariable(varName);
+        const isDynamic = ['$guid', '$timestamp', '$isoTimestamp'].includes(varName);
+        const colors = resolved.hasValue || isDynamic 
+          ? getVariableColors(resolved.sourceType, isDynamic)
+          : { color: 'var(--status-delete)', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.55)' };
+
         return (
           <span 
             key={i} 
@@ -123,8 +129,12 @@ export function UrlBar() {
             data-has-value={resolved.hasValue}
             data-value={resolved.value || ''}
             data-source={resolved.source}
+            data-source-type={resolved.sourceType}
             style={{ 
-              color: resolved.hasValue ? 'var(--accent-primary)' : 'var(--status-delete)',
+              color: colors.color,
+              background: colors.bg,
+              boxShadow: `inset 0 0 0 1px ${colors.border}`,
+              borderRadius: 6,
             }}
           >
             {part}

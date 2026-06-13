@@ -1,6 +1,8 @@
 import { RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus } from 'lucide-react';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { interpolateVariables } from '../../contexts/workspace/requestHelpers';
 
 type HoveredUrlVariable = {
   kind: 'environment' | 'path';
@@ -11,6 +13,7 @@ type HoveredUrlVariable = {
   hasValue: boolean;
   value?: string;
   source?: string;
+  sourceType?: string;
 };
 
 interface UrlVariablePopoverProps {
@@ -43,6 +46,15 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
   const isPathVariable = hoveredVar.kind === 'path';
   const isDynamic = hoveredVar.source === 'Dynamic';
 
+  const { activeEnvironment, activeTab, collections, globalVariables } = useWorkspace();
+  const resolvedValue = hoveredVar.value ? interpolateVariables({
+    activeEnvironment,
+    activeTab,
+    collections,
+    globalVariables,
+    text: hoveredVar.value
+  }) : '';
+
   return createPortal(
     <div
       ref={popoverRef}
@@ -67,9 +79,11 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
       <div style={{ padding: '14px 16px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <input
           key={inputId}
+          type="text"
           id={inputId}
           className="input"
           style={{ 
+            width: '100%',
             fontSize: 13, 
             padding: '8px 10px', 
             height: 36,
@@ -84,6 +98,11 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
             if (!isDynamic && e.key === 'Enter') onSave(hoveredVar.name, e.currentTarget.value);
           }}
         />
+        {hoveredVar.value && resolvedValue && resolvedValue !== hoveredVar.value && (
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', wordBreak: 'break-all', marginTop: -2 }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Resolved:</span> {resolvedValue}
+          </div>
+        )}
         {!isDynamic && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <button
@@ -134,16 +153,33 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
             width: 20, 
             height: 20, 
             borderRadius: 5, 
-            background: isDynamic ? 'var(--accent-primary)' : (isPathVariable ? 'var(--bg-secondary)' : '#9b7200'), 
-            color: isDynamic ? '#fff' : (isPathVariable ? 'var(--text-secondary)' : '#fff0a8'), 
+            background: isDynamic ? 'var(--accent-primary)' : 
+                       (isPathVariable ? 'var(--bg-secondary)' : 
+                       (hoveredVar.sourceType === 'Folder' ? '#e2b3ff30' : 
+                       (hoveredVar.sourceType === 'Collection' ? '#fff0a830' : 
+                       (hoveredVar.sourceType === 'Environment' ? '#8ff0b530' : 
+                       (hoveredVar.sourceType === 'Globals' ? '#9dccff30' : '#9b7200'))))), 
+            color: isDynamic ? '#fff' : 
+                  (isPathVariable ? 'var(--text-secondary)' : 
+                  (hoveredVar.sourceType === 'Folder' ? '#e2b3ff' : 
+                  (hoveredVar.sourceType === 'Collection' ? '#fff0a8' : 
+                  (hoveredVar.sourceType === 'Environment' ? '#8ff0b5' : 
+                  (hoveredVar.sourceType === 'Globals' ? '#9dccff' : '#fff0a8'))))), 
             display: 'inline-flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
             fontWeight: 700 
           }}>
-            {isDynamic ? 'G' : (isPathVariable ? ':' : 'C')}
+            {isDynamic ? 'G' : 
+            (isPathVariable ? ':' : 
+            (hoveredVar.sourceType === 'Folder' ? 'F' : 
+            (hoveredVar.sourceType === 'Collection' ? 'C' : 
+            (hoveredVar.sourceType === 'Environment' ? 'E' : 
+            (hoveredVar.sourceType === 'Globals' ? 'G' : 'C')))))}
           </span>
-          {isDynamic ? 'Dynamic variable' : (isPathVariable ? 'Path variable' : 'Collection')}
+          {isDynamic ? 'Dynamic variable' : 
+          (isPathVariable ? 'Path variable' : 
+          (hoveredVar.sourceType || 'Collection'))}
         </span>
         <span>{isDynamic ? 'Auto-generated' : 'Variables in request ->'}</span>
       </button>

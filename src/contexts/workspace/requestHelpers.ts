@@ -45,41 +45,65 @@ export function interpolateVariables(args: {
   const { activeEnvironment, activeTab, collections, globalVariables, text } = args;
   if (!text) return text;
 
-  let result = text;
-  const activeVars = activeEnvironment ? activeEnvironment.variables.filter(v => v.enabled && v.key) : [];
-  for (const v of activeVars) {
-    result = result.split(`{{${v.key}}}`).join(v.value);
-  }
-
   const ancestors = getRequestAncestors(activeTab, collections);
   
-  const matches = result.match(/\{\{([^}]+)\}\}/g);
-  if (matches) {
-    for (const match of matches) {
-      const key = match.slice(2, -2);
-      const dynamicValue = resolveDynamicVariable(key);
-      if (dynamicValue !== null) {
-        result = result.split(match).join(dynamicValue);
-        continue;
-      }
-
-      let foundInAncestor = false;
-      for (let i = ancestors.length - 1; i >= 0; i--) {
-        const ancestorVar = ancestors[i].variables?.find((v: any) => v.key === key && v.enabled);
-        if (ancestorVar) {
-          result = result.split(match).join(ancestorVar.value);
-          foundInAncestor = true;
-          break;
-        }
-      }
-      if (foundInAncestor) continue;
-
-      const globalVar = globalVariables.find(v => v.key === key && v.enabled);
-      if (globalVar) result = result.split(match).join(globalVar.value);
+  const lookupQueue: { source: string, vars: EnvironmentVariable[] }[] = [];
+  
+  if (activeEnvironment) {
+    lookupQueue.push({ source: 'env', vars: activeEnvironment.variables });
+  }
+  
+  for (let i = ancestors.length - 1; i >= 0; i--) {
+    if (ancestors[i].variables) {
+      lookupQueue.push({ source: `ancestor_${i}`, vars: ancestors[i].variables! });
     }
   }
+  
+  if (globalVariables) {
+    lookupQueue.push({ source: 'global', vars: globalVariables });
+  }
 
-  return result;
+  function resolveKey(key: string, skipSources: Set<string> = new Set()): string | null {
+    const dynamicValue = resolveDynamicVariable(key);
+    if (dynamicValue !== null) return dynamicValue;
+
+    for (const scope of lookupQueue) {
+      if (skipSources.has(scope.source)) continue;
+      
+      const v = scope.vars.find(v => v.key === key && v.enabled);
+      if (v) {
+        const nextSkip = new Set(skipSources);
+        nextSkip.add(scope.source);
+        return interpolateString(v.value, nextSkip);
+      }
+    }
+    return null;
+  }
+
+  function interpolateString(str: string, skipSources: Set<string>): string {
+    if (!str) return str;
+    let result = str;
+    let iterations = 0;
+    let previousResult = '';
+    
+    while (result !== previousResult && iterations < 5) {
+      previousResult = result;
+      const matches = result.match(/\{\{([^}]+)\}\}/g);
+      if (matches) {
+        for (const match of matches) {
+          const key = match.slice(2, -2);
+          const resolved = resolveKey(key, skipSources);
+          if (resolved !== null) {
+            result = result.split(match).join(resolved);
+          }
+        }
+      }
+      iterations++;
+    }
+    return result;
+  }
+
+  return interpolateString(text, new Set());
 }
 
 

@@ -13,6 +13,7 @@ export type HoveredUrlVariable = {
   hasValue: boolean;
   value?: string;
   source?: string;
+  sourceType?: string;
 };
 
 export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
@@ -100,10 +101,11 @@ export function useVariableHover(overlayRef: RefObject<HTMLElement | null>) {
         const hasValue = span.getAttribute('data-has-value') === 'true';
         const value = span.getAttribute('data-value') || '';
         const source = span.getAttribute('data-source') || '';
+        const sourceType = span.getAttribute('data-source-type') || '';
         
         if (hoveredVar?.name !== varName || hoveredVar?.kind !== kind || hoveredVar?.hasValue !== hasValue) {
           clearHideTimeout();
-          setHoveredVar({ kind, name: varName, x: rect.left, y: rect.bottom + 4, exists, hasValue, value, source });
+          setHoveredVar({ kind, name: varName, x: rect.left, y: rect.bottom + 4, exists, hasValue, value, source, sourceType });
         }
         break;
       }

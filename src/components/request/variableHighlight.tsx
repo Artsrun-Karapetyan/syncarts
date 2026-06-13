@@ -2,7 +2,7 @@ import type { Environment, EnvironmentVariable } from '../../contexts/WorkspaceC
 import { resolveScopedVariable } from './variableResolution';
 import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
 
-function getVariableColors(sourceType: string | undefined, isDynamic: boolean) {
+export function getVariableColors(sourceType: string | undefined, isDynamic: boolean) {
   if (isDynamic || sourceType === 'Dynamic') {
     return { color: '#ffb3d9', bg: 'rgba(255, 179, 217, 0.12)', border: 'rgba(255, 179, 217, 0.5)' };
   }
@@ -67,6 +67,7 @@ export function renderVariableHighlight(args: {
         data-has-value={resolved.hasValue}
         data-value={resolved.value || ''}
         data-source={resolved.source}
+        data-source-type={resolved.sourceType}
         style={styles}
       >
         {part}

@@ -57,7 +57,6 @@ export function RequestTabs() {
   const paramsCount = getParamsCount();
 
   // Calculate auth state
-  const hasAuth = activeRequest?.headers.some(h => h.key.toLowerCase() === 'authorization' && h.value.startsWith('Bearer ')) ?? false;
 
   // Calculate body state
   let bodyBadge: React.ReactNode = null;
