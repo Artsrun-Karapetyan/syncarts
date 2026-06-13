@@ -10,6 +10,7 @@ import { exportToPostmanCollection } from '../../utils/postmanParser';
 import { ImportModal } from '../workspace/ImportModal';
 import { CreateMergeRequestModal } from '../workspace/CreateMergeRequestModal';
 import { GitPullRequest } from 'lucide-react';
+import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 
 interface CtxMenuState {
   x: number;
@@ -358,7 +359,6 @@ export function Sidebar() {
 
   // Poll for open MRs
   useEffect(() => {
-    if (!activeWorkspaceId) return;
     const fetchMrs = async () => {
       try {
         const res = await api.get(`/merge-requests/workspace/${activeWorkspaceId}`);
@@ -623,6 +623,8 @@ export function Sidebar() {
           <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.5 }}>API Client</div>
         </div>
       </div>
+
+      <WorkspaceSwitcher />
 
       {/* Collections */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, overflow: 'auto', minHeight: 0, paddingRight: 4 }}>

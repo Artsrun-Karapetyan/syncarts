@@ -7,9 +7,10 @@ import { Select } from '../ui/Select';
 interface SaveDialogProps {
   onClose: () => void;
   anchorRef: React.RefObject<HTMLButtonElement | null>;
+  onSaved?: () => void;
 }
 
-export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
+export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
   const { activeTab, collections, saveRequest, updateActiveTab, rememberTabSnapshot } = useWorkspace();
   const [requestName, setRequestName] = useState(activeTab?.name === 'Untitled Request' ? '' : activeTab?.name || '');
   
@@ -130,6 +131,7 @@ export function SaveDialog({ onClose, anchorRef }: SaveDialogProps) {
       folderId: folderId || undefined,
       savedRequestId: reqId,
     });
+    onSaved?.();
     onClose();
   };
 

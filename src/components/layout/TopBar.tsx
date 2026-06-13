@@ -1,38 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useNavigate } from '@tanstack/react-router';
-import { Settings2, Eye, LayoutGrid, UserPlus, LogIn, Trash2, Edit2 } from 'lucide-react';
+import { Settings2, Eye, LayoutGrid, UserPlus, LogIn } from 'lucide-react';
 
 import { useStoredUser } from '../../lib/session';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { isMemberWorkspace, isSharedWorkspace } from '../../contexts/workspace/sharing';
-import { Select } from '../ui/Select';
-import { ConfirmModal } from '../ui/ConfirmModal';
 import { EnvironmentManager } from '../environment/EnvironmentManager';
 import { InviteModal } from '../workspace/InviteModal';
 import { JoinWorkspaceModal } from '../workspace/JoinWorkspaceModal';
+import { Select } from '../ui/Select';
 
 export function TopBar() {
-  const { workspaces, activeWorkspaceId, switchWorkspace, createWorkspace, removeWorkspace, renameWorkspace, environments, globalVariables, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment, localDefaultWorkspaceId } = useWorkspace();
+  const { activeWorkspaceId, environments, globalVariables, activeEnvironmentId, setActiveEnvironmentId, activeEnvironment } = useWorkspace();
   const navigate = useNavigate();
   const user = useStoredUser();
-  const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
-  const [newWorkspaceName, setNewWorkspaceName] = useState('');
-  const [isRenamingWorkspace, setIsRenamingWorkspace] = useState(false);
-  const [renameWorkspaceName, setRenameWorkspaceName] = useState('');
   const [isEnvManagerOpen, setIsEnvManagerOpen] = useState(false);
   const [isEnvQuickLookOpen, setIsEnvQuickLookOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
-  const [isDeleteWorkspaceOpen, setIsDeleteWorkspaceOpen] = useState(false);
   const envQuickLookRef = useRef<HTMLDivElement>(null);
-  const activeWorkspace = workspaces.find((workspace) => workspace.id === activeWorkspaceId);
-  const isActiveMemberWorkspace = isMemberWorkspace(activeWorkspace, user?.id);
   const showingGlobals = activeEnvironmentId === 'globals';
   const quickLookName = showingGlobals ? 'Globals' : activeEnvironment ? activeEnvironment.name : 'No Environment';
   const quickLookVariables = showingGlobals ? globalVariables : activeEnvironment?.variables || [];
-
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (envQuickLookRef.current && !envQuickLookRef.current.contains(event.target as Node)) {
@@ -78,197 +67,7 @@ export function TopBar() {
         zIndex: 100,
       }}
     >
-      {/* Workspace Selector */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Workspace
-        </div>
-        <div style={{ width: 288, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
-            <Select
-              variant="pill"
-              value={activeWorkspaceId}
-              onChange={(val) => {
-                if (val === 'new') {
-                  setIsCreatingWorkspace(true);
-                  setNewWorkspaceName('');
-                } else {
-                  switchWorkspace(val);
-                }
-              }}
-              options={[
-                ...workspaces.map((w) => ({
-                  label: w.name,
-                  value: w.id,
-                  badge: isSharedWorkspace(w) ? 'Shared' : undefined,
-                })),
-                { label: '+ Create Workspace', value: 'new' },
-              ]}
-            />
-            {isCreatingWorkspace && (
-              <div
-                className="glass-panel"
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  left: 0,
-                  width: 320,
-                  padding: 16,
-                  zIndex: 100,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                  boxShadow: 'var(--shadow-lg)',
-                }}
-              >
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Create New Workspace</div>
-                <input
-                  autoFocus
-                  className="input"
-                  style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
-                  placeholder="Workspace Name"
-                  value={newWorkspaceName}
-                  onChange={(e) => setNewWorkspaceName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
-                      setIsCreatingWorkspace(false);
-                      setNewWorkspaceName('');
-                    }
-                    if (e.key === 'Escape') {
-                      setIsCreatingWorkspace(false);
-                      setNewWorkspaceName('');
-                    }
-                  }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                  <button
-                    className="btn"
-                    style={{ padding: '6px 12px', fontSize: 12 }}
-                    onClick={() => {
-                      setIsCreatingWorkspace(false);
-                      setNewWorkspaceName('');
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    style={{ padding: '6px 12px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
-                    onClick={() => {
-                      if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
-                      setIsCreatingWorkspace(false);
-                      setNewWorkspaceName('');
-                    }}
-                  >
-                    Create
-                  </button>
-                </div>
-              </div>
-            )}
-            {isRenamingWorkspace && activeWorkspace && (
-              <div
-                className="glass-panel"
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  left: 0,
-                  width: 320,
-                  padding: 16,
-                  zIndex: 100,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                  boxShadow: 'var(--shadow-lg)',
-                }}
-              >
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Rename Workspace</div>
-                <input
-                  autoFocus
-                  className="input"
-                  style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}
-                  placeholder="Workspace Name"
-                  value={renameWorkspaceName}
-                  onChange={(e) => setRenameWorkspaceName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      if (renameWorkspaceName.trim()) renameWorkspace(activeWorkspace.id, renameWorkspaceName.trim());
-                      setIsRenamingWorkspace(false);
-                    }
-                    if (e.key === 'Escape') {
-                      setIsRenamingWorkspace(false);
-                    }
-                  }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                  <button
-                    className="btn"
-                    style={{ padding: '6px 12px', fontSize: 12 }}
-                    onClick={() => setIsRenamingWorkspace(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    style={{ padding: '6px 12px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
-                    onClick={() => {
-                      if (renameWorkspaceName.trim()) renameWorkspace(activeWorkspace.id, renameWorkspaceName.trim());
-                      setIsRenamingWorkspace(false);
-                    }}
-                  >
-                    Rename
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          {activeWorkspace && activeWorkspace.id !== localDefaultWorkspaceId && (
-            <button
-              className="tooltip-trigger"
-              data-tooltip="Rename Workspace"
-              style={{
-                width: 34,
-                height: 34,
-                flexShrink: 0,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 10,
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-tertiary)',
-                background: 'var(--bg-primary)',
-              }}
-              onClick={() => {
-                setRenameWorkspaceName(activeWorkspace.name);
-                setIsRenamingWorkspace(true);
-              }}
-            >
-              <Edit2 size={15} />
-            </button>
-          )}
-          {activeWorkspace && workspaces.length > 1 && activeWorkspace.id !== localDefaultWorkspaceId && (
-            <button
-              className="tooltip-trigger"
-              data-tooltip={isActiveMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
-              style={{
-                width: 34,
-                height: 34,
-                flexShrink: 0,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 10,
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-tertiary)',
-                background: 'var(--bg-primary)',
-              }}
-              onClick={() => setIsDeleteWorkspaceOpen(true)}
-            >
-              <Trash2 size={15} />
-            </button>
-          )}
-        </div>
-      </div>
+      <div />
 
       <div
         data-tauri-drag-region
@@ -440,24 +239,6 @@ export function TopBar() {
       <JoinWorkspaceModal
         isOpen={isJoinOpen}
         onClose={() => setIsJoinOpen(false)}
-      />
-
-      <ConfirmModal
-        isOpen={isDeleteWorkspaceOpen}
-        title={isActiveMemberWorkspace ? 'Leave Workspace' : 'Delete Workspace'}
-        message={
-          isActiveMemberWorkspace
-            ? `Leave "${activeWorkspace?.name}"? You will lose access until someone invites you again.`
-            : `Delete "${activeWorkspace?.name}"? This removes the workspace and its collections for every member.`
-        }
-        confirmText={isActiveMemberWorkspace ? 'Leave' : 'Delete'}
-        cancelText="Cancel"
-        isDestructive
-        onCancel={() => setIsDeleteWorkspaceOpen(false)}
-        onConfirm={() => {
-          if (!activeWorkspace) return;
-          void removeWorkspace(activeWorkspace.id).finally(() => setIsDeleteWorkspaceOpen(false));
-        }}
       />
     </div>
   );

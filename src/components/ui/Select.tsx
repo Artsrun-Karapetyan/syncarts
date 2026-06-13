@@ -101,15 +101,17 @@ export function Select({ value, options, onChange, disabled, className = '', sty
           if (variant === 'pill' && !isOpen) e.currentTarget.style.borderColor = 'var(--border-color)';
         }}
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOption?.label}</span>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>
+          {selectedOption?.label}
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           {selectedOption?.badge && (
             <span
               style={{
                 flexShrink: 0,
                 border: '1px solid rgba(99, 102, 241, 0.34)',
                 borderRadius: 999,
-                padding: '2px 7px',
+                padding: '2px 10px',
                 background: 'rgba(99, 102, 241, 0.12)',
                 color: 'var(--text-secondary)',
                 fontSize: 10,
@@ -120,8 +122,8 @@ export function Select({ value, options, onChange, disabled, className = '', sty
               {selectedOption.badge}
             </span>
           )}
+          <ChevronDown size={variant === 'pill' ? 14 : 16} style={{ opacity: 0.6, transition: 'transform var(--transition-fast)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
         </span>
-        <ChevronDown size={variant === 'pill' ? 14 : 16} style={{ opacity: 0.6, transition: 'transform var(--transition-fast)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
       </button>
 
       {isOpen && createPortal(

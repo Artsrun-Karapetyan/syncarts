@@ -263,7 +263,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     tabActions.addTab({ ...newReq, id: crypto.randomUUID(), savedRequestId: newReqId, collectionId, folderId: folderId || undefined, response: null });
   };
 
-  useKeyboardShortcuts(activeTabId, tabActions.closeTab);
+  useKeyboardShortcuts();
 
   return {
     workspaces,

@@ -13,10 +13,27 @@ import { RequestCodeModal } from '../request/RequestCodeModal';
 import { CollectionFolderTabs } from './CollectionFolderTabs';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import type { HttpResponse } from '../../contexts/workspace/types';
+import { UnsavedChangesModal } from '../ui/UnsavedChangesModal';
 
 export function Workspace() {
-  const { sendRequest, isMutating, activeTab, collections, updateActiveTab, saveActiveRequestInPlace, addTab } = useWorkspace();
+  const {
+    sendRequest,
+    isMutating,
+    activeTab,
+    tabs,
+    collections,
+    updateActiveTab,
+    saveActiveRequestInPlace,
+    saveRequestTabInPlace,
+    addTab,
+    closeTab,
+    setActiveTabId,
+    isTabDirty,
+  } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [pendingCloseTabId, setPendingCloseTabId] = useState<string | null>(null);
+  const [isCloseSaveFlow, setIsCloseSaveFlow] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showSendMenu, setShowSendMenu] = useState(false);
   const [preferredSplitDirection, setPreferredSplitDirection] = useState<'horizontal' | 'vertical'>(() => {
@@ -33,8 +50,58 @@ export function Workspace() {
     }
   };
 
+  const requestCloseTab = (tabId: string) => {
+    const tab = tabs.find((item) => item.id === tabId);
+    if (!tab || !isTabDirty(tab)) {
+      closeTab(tabId);
+      return;
+    }
+
+    setPendingCloseTabId(tabId);
+    setShowCloseDialog(true);
+  };
+
+  const closePendingTab = () => {
+    if (!pendingCloseTabId) return;
+    closeTab(pendingCloseTabId);
+    setPendingCloseTabId(null);
+    setShowCloseDialog(false);
+    setShowSaveDialog(false);
+    setIsCloseSaveFlow(false);
+  };
+
+  const discardPendingTab = () => {
+    closePendingTab();
+  };
+
+  const savePendingTab = () => {
+    if (!pendingCloseTabId) return;
+    const tab = tabs.find((item) => item.id === pendingCloseTabId);
+    if (!tab) {
+      closePendingTab();
+      return;
+    }
+
+    if (saveRequestTabInPlace(tab)) {
+      closePendingTab();
+      return;
+    }
+
+    setActiveTabId(tab.id);
+    setShowCloseDialog(false);
+    setIsCloseSaveFlow(true);
+    setShowSaveDialog(true);
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'w') {
+        e.preventDefault();
+        if (activeTab?.id) {
+          requestCloseTab(activeTab.id);
+        }
+        return;
+      }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         
@@ -51,7 +118,7 @@ export function Workspace() {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, collections]);
+  }, [activeTab, collections, requestCloseTab]);
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 1100px)');
@@ -100,7 +167,7 @@ export function Workspace() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Tabs */}
-      <TabsBar />
+      <TabsBar onRequestCloseTab={requestCloseTab} />
 
       {!activeTab ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
@@ -341,8 +408,36 @@ export function Workspace() {
               </div>
             </div>
 
-            {showSaveDialog && <SaveDialog onClose={() => setShowSaveDialog(false)} anchorRef={saveBtnRef} />}
+            {showSaveDialog && (
+              <SaveDialog
+                onClose={() => {
+                  setShowSaveDialog(false);
+                  if (isCloseSaveFlow) {
+                    setShowCloseDialog(true);
+                  }
+                }}
+                onSaved={() => {
+                  if (pendingCloseTabId) {
+                    closeTab(pendingCloseTabId);
+                    setPendingCloseTabId(null);
+                  }
+                  setShowCloseDialog(false);
+                  setIsCloseSaveFlow(false);
+                }}
+                anchorRef={saveBtnRef}
+              />
+            )}
             {showCodeModal && <RequestCodeModal onClose={() => setShowCodeModal(false)} />}
+            <UnsavedChangesModal
+              isOpen={showCloseDialog}
+              requestName={tabs.find((tab) => tab.id === pendingCloseTabId)?.name || 'This request'}
+              onSave={savePendingTab}
+              onDiscard={discardPendingTab}
+              onCancel={() => {
+                setShowCloseDialog(false);
+                setPendingCloseTabId(null);
+              }}
+            />
           </div>
 
           {/* Main Content — Request + Response */}

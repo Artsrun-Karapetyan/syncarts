@@ -253,15 +253,22 @@ export function useTabActions(args: TabActionsArgs) {
 
   const saveActiveRequestInPlace = () => {
     if (!activeTab || (activeTab.type && activeTab.type !== 'request')) return false;
-    const savedRequestId = resolveTabSavedRequestId(activeTab);
+    return saveRequestTabInPlace(activeTab);
+  };
+
+  const saveRequestTabInPlace = (tab: TabData) => {
+    if (!tab || (tab.type && tab.type !== 'request')) return false;
+    const savedRequestId = resolveTabSavedRequestId(tab);
     if (!savedRequestId) return false;
     const saved = findSavedRequestById(savedRequestId);
     if (!saved) return false;
 
-    const updatedRequest = buildSavedRequestFromTab(activeTab, savedRequestId, saved.request);
-    rememberTabSnapshot(activeTab.id, updatedRequest);
+    const updatedRequest = buildSavedRequestFromTab(tab, savedRequestId, saved.request);
+    rememberTabSnapshot(tab.id, updatedRequest);
     saveRequest(saved.collectionId, saved.folderId, updatedRequest);
-    syncTabWithSavedRequest(updatedRequest, saved.collectionId, saved.folderId, savedRequestId);
+    if (activeTab?.id === tab.id) {
+      syncTabWithSavedRequest(updatedRequest, saved.collectionId, saved.folderId, savedRequestId);
+    }
     return true;
   };
 
@@ -314,6 +321,7 @@ export function useTabActions(args: TabActionsArgs) {
     rememberTabSnapshot,
     resolveTabSavedRequestId,
     saveActiveRequestInPlace,
+    saveRequestTabInPlace,
     setActiveTabId,
     updateActiveTab,
     updateCurrentTabs

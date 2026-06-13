@@ -2,8 +2,12 @@ import { useEffect, useRef } from 'react';
 import { X, Plus } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
-export function TabsBar() {
-  const { tabs, activeTabId, activeTab, setActiveTabId, closeTab, addTab, isTabDirty, resolveTabSavedRequestId } = useWorkspace();
+interface TabsBarProps {
+  onRequestCloseTab: (tabId: string) => void;
+}
+
+export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
+  const { tabs, activeTabId, activeTab, setActiveTabId, addTab, isTabDirty, resolveTabSavedRequestId } = useWorkspace();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -142,7 +146,7 @@ export function TabsBar() {
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        closeTab(tab.id);
+                        onRequestCloseTab(tab.id);
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'var(--status-delete-bg)';

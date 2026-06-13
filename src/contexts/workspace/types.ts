@@ -222,6 +222,7 @@ export interface WorkspaceContextState extends TabActions, CollectionActions, En
   resolveTabSavedRequestId: (tab?: TabData) => string | undefined;
   isTabDirty: (tab?: TabData) => boolean;
   saveActiveRequestInPlace: () => boolean;
+  saveRequestTabInPlace: (tab: TabData) => boolean;
   addCollection: (name: string) => void;
   forkCollection: (collectionId: string) => void;
   updateCollection: (id: string, data: Partial<Collection>) => void;
