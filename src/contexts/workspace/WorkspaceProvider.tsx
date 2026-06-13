@@ -1,8 +1,15 @@
-import type { ReactNode } from 'react';
-import { WorkspaceContext } from './context';
-import { useWorkspaceController } from './useWorkspaceController';
+import type { ReactNode } from "react";
 
-export function WorkspaceProvider({ children, userId }: { children: ReactNode; userId: string }) {
+import { WorkspaceContext } from "./context";
+import { useWorkspaceController } from "./useWorkspaceController";
+
+export function WorkspaceProvider({
+  children,
+  userId,
+}: {
+  children: ReactNode;
+  userId: string;
+}) {
   const value = useWorkspaceController(userId);
 
   return (

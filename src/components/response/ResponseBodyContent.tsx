@@ -1,11 +1,14 @@
-import JsonView from '@uiw/react-json-view';
-import CodeEditor from '@uiw/react-textarea-code-editor';
+import JsonView from "@uiw/react-json-view";
+import CodeEditor from "@uiw/react-textarea-code-editor";
 
-import type { HttpResponse } from '../../contexts/WorkspaceContext';
-import { JsonUrlString } from './JsonUrlString';
-import type { ResponseLanguage } from './responseLanguage';
-import type { BodyFormat } from './responseTypes';
-import { responseJsonThemes, type ResponseJsonThemeId } from './responseJsonThemes';
+import type { HttpResponse } from "../../contexts/WorkspaceContext";
+import { JsonUrlString } from "./JsonUrlString";
+import {
+  type ResponseJsonThemeId,
+  responseJsonThemes,
+} from "./responseJsonThemes";
+import type { ResponseLanguage } from "./responseLanguage";
+import type { BodyFormat } from "./responseTypes";
 
 interface ResponseBodyContentProps {
   bodyFormat: BodyFormat;
@@ -31,25 +34,49 @@ export function ResponseBodyContent(props: ResponseBodyContentProps) {
     parsedBody,
     response,
     wrapLines,
-    onJsonClick
+    onJsonClick,
   } = props;
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', padding: isBinary ? 0 : 20 }} onClick={onJsonClick}>
+    <div
+      style={{ flex: 1, overflow: "auto", padding: isBinary ? 0 : 20 }}
+      onClick={onJsonClick}
+    >
       {isBinary ? (
         <div className="response-binary-preview">
           {isImage ? (
-            <img src={response.body} alt="Response Image" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+            <img
+              src={response.body}
+              alt="Response Image"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+              }}
+            />
           ) : (
-            <iframe src={response.body} style={{ width: '100%', height: '100%', border: 'none' }} />
+            <iframe
+              src={response.body}
+              style={{ width: "100%", height: "100%", border: "none" }}
+            />
           )}
         </div>
-      ) : bodyFormat === 'preview' ? (
+      ) : bodyFormat === "preview" ? (
         <div className="response-html-preview">
-          <iframe srcDoc={response.body} style={{ width: '100%', height: '100%', border: 'none' }} title="Preview" sandbox="allow-scripts allow-same-origin" />
+          <iframe
+            srcDoc={response.body}
+            style={{ width: "100%", height: "100%", border: "none" }}
+            title="Preview"
+            sandbox="allow-scripts allow-same-origin"
+          />
         </div>
-      ) : parsedBody && effectiveLanguage === 'json' && bodyFormat === 'pretty' ? (
-        <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }} className={`json-view-container ${wrapLines ? 'wrap-lines' : ''}`}>
+      ) : parsedBody &&
+        effectiveLanguage === "json" &&
+        bodyFormat === "pretty" ? (
+        <div
+          style={{ fontSize: 13, fontFamily: "var(--font-mono)" }}
+          className={`json-view-container ${wrapLines ? "wrap-lines" : ""}`}
+        >
           <JsonView
             value={parsedBody}
             style={responseJsonThemes[jsonTheme]}
@@ -62,8 +89,8 @@ export function ResponseBodyContent(props: ResponseBodyContentProps) {
             <JsonUrlString />
           </JsonView>
         </div>
-      ) : bodyFormat === 'pretty' && response.body ? (
-        <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)' }}>
+      ) : bodyFormat === "pretty" && response.body ? (
+        <div style={{ fontSize: 13, fontFamily: "var(--font-mono)" }}>
           <CodeEditor
             value={response.body}
             language={effectiveLanguage}
@@ -72,8 +99,8 @@ export function ResponseBodyContent(props: ResponseBodyContentProps) {
             padding={15}
             style={{
               fontSize: 13,
-              backgroundColor: 'transparent',
-              fontFamily: 'var(--font-mono)',
+              backgroundColor: "transparent",
+              fontFamily: "var(--font-mono)",
             }}
           />
         </div>

@@ -1,10 +1,13 @@
-import { ChevronDown, ChevronRight, Folder } from 'lucide-react';
+import { ChevronDown, ChevronRight, Folder } from "lucide-react";
 
-import { useWorkspace, type Folder as IFolder } from '../../../contexts/WorkspaceContext';
-import { RenameableName } from './RenameableName';
-import { SidebarItem, type SidebarItemProps } from './SidebarItem';
-import { SidebarItemMoreButton } from './SidebarItemMoreButton';
-import { itemRowStyle } from './sidebarItemStyles';
+import {
+  type Folder as IFolder,
+  useWorkspace,
+} from "../../../contexts/WorkspaceContext";
+import { RenameableName } from "./RenameableName";
+import { SidebarItem, type SidebarItemProps } from "./SidebarItem";
+import { SidebarItemMoreButton } from "./SidebarItemMoreButton";
+import { itemRowStyle } from "./sidebarItemStyles";
 
 export function FolderSidebarItem({
   item,
@@ -19,7 +22,7 @@ export function FolderSidebarItem({
   setExpandedFolders,
   highlightedRequestId,
   highlightedFolderId,
-  searchQuery = '',
+  searchQuery = "",
 }: SidebarItemProps & { item: IFolder }) {
   const { openFolderTab } = useWorkspace();
   const isHighlighted = highlightedFolderId === item.id;
@@ -30,35 +33,88 @@ export function FolderSidebarItem({
       <div
         style={itemRowStyle(isHighlighted)}
         onClick={() => {
-          if (!expandedFolders[item.id]) setExpandedFolders((prev) => ({ ...prev, [item.id]: true }));
+          if (!expandedFolders[item.id])
+            setExpandedFolders((prev) => ({ ...prev, [item.id]: true }));
           openFolderTab(collectionId, item.id);
         }}
-        onContextMenu={(e) => onContextMenu(e, item.id, 'folder', item.name)}
+        onContextMenu={(event) =>
+          onContextMenu({
+            event,
+            itemId: item.id,
+            type: "folder",
+            itemName: item.name,
+          })
+        }
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--bg-tertiary)';
-          e.currentTarget.style.color = 'var(--text-primary)';
+          e.currentTarget.style.background = "var(--bg-tertiary)";
+          e.currentTarget.style.color = "var(--text-primary)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = isHighlighted ? 'var(--bg-tertiary)' : 'transparent';
-          e.currentTarget.style.color = isHighlighted ? 'var(--text-primary)' : 'var(--text-secondary)';
+          e.currentTarget.style.background = isHighlighted
+            ? "var(--bg-tertiary)"
+            : "transparent";
+          e.currentTarget.style.color = isHighlighted
+            ? "var(--text-primary)"
+            : "var(--text-secondary)";
         }}
       >
         <div
           onClick={(e) => {
             e.stopPropagation();
-            setExpandedFolders((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
+            setExpandedFolders((prev) => ({
+              ...prev,
+              [item.id]: !prev[item.id],
+            }));
           }}
-          style={{ display: 'flex', alignItems: 'center', padding: 2, margin: -2, borderRadius: 4 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: 2,
+            margin: -2,
+            borderRadius: 4,
+          }}
           className="hover-bg-secondary"
         >
-          {isExpanded ? <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6 }} /> : <ChevronRight size={14} style={{ flexShrink: 0, opacity: 0.6 }} />}
+          {isExpanded ? (
+            <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6 }} />
+          ) : (
+            <ChevronRight size={14} style={{ flexShrink: 0, opacity: 0.6 }} />
+          )}
         </div>
-        <Folder size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-        <RenameableName isRenaming={renamingId === item.id} value={renameValue} setValue={setRenameValue} onSubmit={handleRenameSubmit} onCancel={() => setRenamingId(null)} name={item.name} />
-        <SidebarItemMoreButton onClick={(e) => onContextMenu(e, item.id, 'folder', item.name)} />
+        <Folder
+          size={14}
+          style={{ color: "var(--accent-primary)", flexShrink: 0 }}
+        />
+        <RenameableName
+          isRenaming={renamingId === item.id}
+          value={renameValue}
+          setValue={setRenameValue}
+          onSubmit={handleRenameSubmit}
+          onCancel={() => setRenamingId(null)}
+          name={item.name}
+        />
+        <SidebarItemMoreButton
+          onClick={(event) =>
+            onContextMenu({
+              event,
+              itemId: item.id,
+              type: "folder",
+              itemName: item.name,
+            })
+          }
+        />
       </div>
       {expandedFolders[item.id] && (
-        <div style={{ borderLeft: '1px solid var(--border-color)', marginLeft: 14, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 0 }}>
+        <div
+          style={{
+            borderLeft: "1px solid var(--border-color)",
+            marginLeft: 14,
+            marginTop: 2,
+            display: "flex",
+            flexDirection: "column",
+            gap: 0,
+          }}
+        >
           {item.items.map((subItem) => (
             <SidebarItem
               key={subItem.id}

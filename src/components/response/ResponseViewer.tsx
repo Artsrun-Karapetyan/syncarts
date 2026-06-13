@@ -1,33 +1,41 @@
-import { useEffect, useMemo, useState } from 'react';
+import "./ResponseViewer.css";
+import "../request/RequestTabs.css";
 
-import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { ResponseBodyContent } from './ResponseBodyContent';
-import { ResponseBodyToolbar } from './ResponseBodyToolbar';
-import { ResponseEmptyState } from './ResponseEmptyState';
-import { ResponseHeadersList } from './ResponseHeadersList';
-import { ResponseLoadingState } from './ResponseLoadingState';
-import { ResponsePanelHeader } from './ResponsePanelHeader';
-import { ResponseTestResults } from './ResponseTestResults';
-import { detectResponseLanguage, type ResponseLanguage } from './responseLanguage';
-import type { BodyFormat, ResponseTab } from './responseTypes';
-import type { ResponseJsonThemeId } from './responseJsonThemes';
+import { useEffect, useMemo, useState } from "react";
 
-import './ResponseViewer.css';
-import '../request/RequestTabs.css';
+import { useWorkspace } from "../../contexts/WorkspaceContext";
+import { cleanClickedUrl } from "./cleanClickedUrl";
+import { ResponseBodyContent } from "./ResponseBodyContent";
+import { ResponseBodyToolbar } from "./ResponseBodyToolbar";
+import { ResponseEmptyState } from "./ResponseEmptyState";
+import { ResponseHeadersList } from "./ResponseHeadersList";
+import type { ResponseJsonThemeId } from "./responseJsonThemes";
+import {
+  detectResponseLanguage,
+  type ResponseLanguage,
+} from "./responseLanguage";
+import { ResponseLoadingState } from "./ResponseLoadingState";
+import { ResponsePanelHeader } from "./ResponsePanelHeader";
+import { ResponseTestResults } from "./ResponseTestResults";
+import type { BodyFormat, ResponseTab } from "./responseTypes";
 
 export function ResponseViewer() {
   const { activeTab, addTab, error, isMutating } = useWorkspace();
   const response = activeTab?.response;
-  const [viewTab, setViewTab] = useState<ResponseTab>('body');
-  const [bodyFormat, setBodyFormat] = useState<BodyFormat>('pretty');
-  const [language, setLanguage] = useState<ResponseLanguage | 'auto'>('auto');
+  const [viewTab, setViewTab] = useState<ResponseTab>("body");
+  const [bodyFormat, setBodyFormat] = useState<BodyFormat>("pretty");
+  const [language, setLanguage] = useState<ResponseLanguage | "auto">("auto");
   const [jsonCollapsed, setJsonCollapsed] = useState<number | false>(false);
   const [wrapLines, setWrapLines] = useState(false);
-  const [jsonTheme, setJsonTheme] = useState<ResponseJsonThemeId>('syncarts');
+  const [jsonTheme, setJsonTheme] = useState<ResponseJsonThemeId>("syncarts");
 
-  const contentType = (response?.headers?.['content-type'] || response?.headers?.['Content-Type'] || '').toLowerCase();
-  const isImage = contentType.startsWith('image/');
-  const isPdf = contentType.startsWith('application/pdf');
+  const contentType = (
+    response?.headers?.["content-type"] ||
+    response?.headers?.["Content-Type"] ||
+    ""
+  ).toLowerCase();
+  const isImage = contentType.startsWith("image/");
+  const isPdf = contentType.startsWith("application/pdf");
   const isBinary = isImage || isPdf;
 
   const parsedBody = useMemo(() => {
@@ -41,40 +49,47 @@ export function ResponseViewer() {
 
   const detectedLanguage = useMemo(
     () => detectResponseLanguage(contentType, response?.body, !!parsedBody),
-    [contentType, response?.body, parsedBody]
+    [contentType, response?.body, parsedBody],
   );
-  const effectiveLanguage: ResponseLanguage = language === 'auto' ? detectedLanguage : language;
-  const responseHeaderEntries = response?.headers ? Object.entries(response.headers) : [];
+  const effectiveLanguage: ResponseLanguage =
+    language === "auto" ? detectedLanguage : language;
+  const responseHeaderEntries = response?.headers
+    ? Object.entries(response.headers)
+    : [];
 
   useEffect(() => {
     if (!response) return;
     setLanguage(detectedLanguage);
-    setBodyFormat(detectedLanguage === 'html' ? 'preview' : 'pretty');
+    setBodyFormat(detectedLanguage === "html" ? "preview" : "pretty");
     setJsonCollapsed(false);
   }, [response?.body, response?.status, response?.time_ms, detectedLanguage]);
 
   const handleJsonClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
-    const linkTarget = target.closest<HTMLElement>('[data-url]');
+    const linkTarget = target.closest<HTMLElement>("[data-url]");
     const clickedText = linkTarget?.dataset.url || target.innerText;
-    if (target.tagName !== 'SPAN' || (!clickedText.includes('http://') && !clickedText.includes('https://'))) return;
+    if (
+      target.tagName !== "SPAN" ||
+      (!clickedText.includes("http://") && !clickedText.includes("https://"))
+    )
+      return;
 
     const url = cleanClickedUrl(clickedText);
-    if (!url.startsWith('http')) return;
+    if (!url.startsWith("http")) return;
 
     if (event.metaKey || event.ctrlKey) {
-      import('@tauri-apps/plugin-opener').then((opener) => opener.openUrl(url));
+      import("@tauri-apps/plugin-opener").then((opener) => opener.openUrl(url));
       return;
     }
 
     addTab({
       id: crypto.randomUUID(),
-      name: url.split('/').pop() || 'New Request',
-      method: 'GET',
+      name: url.split("/").pop() || "New Request",
+      method: "GET",
       url,
-      bodyType: 'none',
+      bodyType: "none",
       headers: [],
-      authType: 'none'
+      authType: "none",
     });
   };
 
@@ -90,17 +105,28 @@ export function ResponseViewer() {
 
       <div className="response-viewer-content">
         {isMutating && <ResponseLoadingState />}
-        {!isMutating && !!error && <div style={{ padding: 24 }}><div className="response-error-box">{String(error)}</div></div>}
+        {!isMutating && !!error && (
+          <div style={{ padding: 24 }}>
+            <div className="response-error-box">{String(error)}</div>
+          </div>
+        )}
 
-        {!isMutating && !error && response && viewTab === 'body' && (
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        {!isMutating && !error && response && viewTab === "body" && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              flex: 1,
+              minHeight: 0,
+            }}
+          >
             {!isBinary && (
               <ResponseBodyToolbar
                 bodyFormat={bodyFormat}
                 effectiveLanguage={effectiveLanguage}
-                hasJsonBody={!!parsedBody && effectiveLanguage === 'json'}
+                hasJsonBody={!!parsedBody && effectiveLanguage === "json"}
                 jsonCollapsed={jsonCollapsed}
-                searchText={response.body || ''}
+                searchText={response.body || ""}
                 jsonTheme={jsonTheme}
                 wrapLines={wrapLines}
                 onBodyFormatChange={setBodyFormat}
@@ -125,18 +151,17 @@ export function ResponseViewer() {
           </div>
         )}
 
-        {!isMutating && !error && response && viewTab === 'headers' && <ResponseHeadersList headers={responseHeaderEntries} />}
-        {viewTab === 'test-results' && <ResponseTestResults testResults={activeTab?.testResults} consoleLogs={activeTab?.consoleLogs} />}
+        {!isMutating && !error && response && viewTab === "headers" && (
+          <ResponseHeadersList headers={responseHeaderEntries} />
+        )}
+        {viewTab === "test-results" && (
+          <ResponseTestResults
+            testResults={activeTab?.testResults}
+            consoleLogs={activeTab?.consoleLogs}
+          />
+        )}
         {!isMutating && !error && !response && <ResponseEmptyState />}
       </div>
     </div>
   );
-}
-
-function cleanClickedUrl(text: string) {
-  let url = text.trim();
-  if (url.startsWith('"')) url = url.slice(1);
-  if (url.endsWith('"')) url = url.slice(0, -1);
-  if (url.endsWith('",')) url = url.slice(0, -2);
-  return url;
 }

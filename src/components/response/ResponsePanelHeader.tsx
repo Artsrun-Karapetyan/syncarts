@@ -1,8 +1,9 @@
-import { Clock, Zap } from 'lucide-react';
+import { Clock, Zap } from "lucide-react";
 
-import type { HttpResponse, TestResult } from '../../contexts/WorkspaceContext';
-import { ResponseHeaderTab } from './ResponseHeaderTab';
-import type { ResponseTab } from './responseTypes';
+import type { HttpResponse, TestResult } from "../../contexts/WorkspaceContext";
+import { ResponseHeaderTab } from "./ResponseHeaderTab";
+import { formatStatusText, getStatusClass } from "./responsePanelHeaderHelpers";
+import type { ResponseTab } from "./responseTypes";
 
 interface ResponsePanelHeaderProps {
   viewTab: ResponseTab;
@@ -13,28 +14,50 @@ interface ResponsePanelHeaderProps {
 }
 
 export function ResponsePanelHeader(props: ResponsePanelHeaderProps) {
-  const { viewTab, onViewTabChange, response, responseHeaderCount, testResults } = props;
+  const {
+    viewTab,
+    onViewTabChange,
+    response,
+    responseHeaderCount,
+    testResults,
+  } = props;
 
   return (
     <div className="response-panel-header">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <ResponseHeaderTab id="body" label="Body" activeTab={viewTab} onChange={onViewTabChange} />
-        <ResponseHeaderTab id="headers" label="Headers" activeTab={viewTab} onChange={onViewTabChange} badge={responseHeaderCount || undefined} />
+      <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <ResponseHeaderTab
+          id="body"
+          label="Body"
+          activeTab={viewTab}
+          onChange={onViewTabChange}
+        />
+        <ResponseHeaderTab
+          id="headers"
+          label="Headers"
+          activeTab={viewTab}
+          onChange={onViewTabChange}
+          badge={responseHeaderCount || undefined}
+        />
         <ResponseHeaderTab
           id="test-results"
           label="Test Results"
           activeTab={viewTab}
           onChange={onViewTabChange}
-          badge={testResults?.length ? `${testResults.filter(t => t.passed).length}/${testResults.length}` : undefined}
+          badge={
+            testResults?.length
+              ? `${testResults.filter((t) => t.passed).length}/${testResults.length}`
+              : undefined
+          }
         />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {response ? (
           <>
             <span className={`status-pill ${getStatusClass(response.status)}`}>
               <Zap size={11} />
-              {response.status} {formatStatusText(response.status, response.status_text)}
+              {response.status}{" "}
+              {formatStatusText(response.status, response.status_text)}
             </span>
             <span className="font-mono response-time">
               <Clock size={11} style={{ opacity: 0.6 }} />
@@ -42,20 +65,14 @@ export function ResponsePanelHeader(props: ResponsePanelHeaderProps) {
             </span>
           </>
         ) : (
-          <span className="font-mono" style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>- no response</span>
+          <span
+            className="font-mono"
+            style={{ fontSize: 11, color: "var(--text-tertiary)" }}
+          >
+            - no response
+          </span>
         )}
       </div>
     </div>
   );
-}
-
-function getStatusClass(status: number) {
-  if (status >= 200 && status < 300) return 'success';
-  if (status >= 300 && status < 400) return 'redirect';
-  return 'error';
-}
-
-function formatStatusText(status: number, text: string) {
-  const statusStr = status.toString();
-  return text.startsWith(statusStr) ? text.substring(statusStr.length).trim() : text;
 }

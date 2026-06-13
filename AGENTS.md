@@ -10,5 +10,7 @@ Prioritize Facts: Minimize text, maximize value. If a question can be answered i
 
 Code Structure:
 - Keep files at 350 lines or fewer.
-- Keep one component or class per file.
+- Keep one component, class, hook, helper, or standalone function per file.
+- Move helper functions out of component files into separate helper modules.
+- Move hooks out of component files into separate hook modules.
 - Split large context/provider files into small hooks, helpers, and type modules by responsibility.

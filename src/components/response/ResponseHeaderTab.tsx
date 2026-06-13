@@ -1,4 +1,4 @@
-import type { ResponseTab } from './responseTypes';
+import type { ResponseTab } from "./responseTypes";
 
 interface ResponseHeaderTabProps {
   id: ResponseTab;
@@ -13,7 +13,7 @@ export function ResponseHeaderTab(props: ResponseHeaderTabProps) {
   return (
     <button
       type="button"
-      className={`tab-button ${activeTab === id ? 'active' : ''}`}
+      className={`tab-button ${activeTab === id ? "active" : ""}`}
       onClick={() => onChange(id)}
     >
       {label}

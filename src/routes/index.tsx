@@ -1,11 +1,11 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useEffect } from 'react';
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 
-import { AppShell } from '../components/layout/AppShell';
-import { Workspace } from '../components/layout/Workspace';
-import { getAuthToken } from '../lib/auth';
+import { AppShell } from "../components/layout/AppShell";
+import { Workspace } from "../components/layout/Workspace";
+import { getAuthToken } from "../lib/auth";
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   component: Index,
 });
 
@@ -15,7 +15,7 @@ function Index() {
 
   useEffect(() => {
     if (!token) {
-      void navigate({ to: '/login' });
+      void navigate({ to: "/login" });
     }
   }, [navigate, token]);
 

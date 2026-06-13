@@ -1,7 +1,18 @@
-import { Controller, Post, Get, Patch, Body, Param, UseGuards, Request, Inject } from '@nestjs/common';
-import { MergeRequestService } from './merge-request.service.js';
-import { AuthGuard } from '../auth/auth.guard.js';
-import { z } from 'zod';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Request,
+  UseGuards,
+} from "@nestjs/common";
+import { z } from "zod";
+
+import { AuthGuard } from "../auth/auth.guard.js";
+import { MergeRequestService } from "./merge-request.service.js";
 
 const CreateMRSchema = z.object({
   title: z.string().min(1),
@@ -13,10 +24,13 @@ const CreateMRSchema = z.object({
   data: z.any().optional(),
 });
 
-@Controller('merge-requests')
+@Controller("merge-requests")
 @UseGuards(AuthGuard)
 export class MergeRequestController {
-  constructor(@Inject(MergeRequestService) private readonly mrService: MergeRequestService) {}
+  constructor(
+    @Inject(MergeRequestService)
+    private readonly mrService: MergeRequestService,
+  ) {}
 
   @Post()
   async create(@Request() req: any, @Body() body: any) {
@@ -27,23 +41,31 @@ export class MergeRequestController {
     });
   }
 
-  @Get('workspace/:workspaceId')
-  async findByWorkspace(@Param('workspaceId') workspaceId: string) {
+  @Get("workspace/:workspaceId")
+  async findByWorkspace(@Param("workspaceId") workspaceId: string) {
     return this.mrService.getMergeRequestsForWorkspace(workspaceId);
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
+  @Get(":id")
+  async findOne(@Param("id") id: string) {
     return this.mrService.getMergeRequestById(id);
   }
 
-  @Patch(':id/status')
-  async updateStatus(@Request() req: any, @Param('id') id: string, @Body() body: any) {
-    return this.mrService.updateMergeRequestStatus(id, body.status, req.authUser.id);
+  @Patch(":id/status")
+  async updateStatus(
+    @Request() req: any,
+    @Param("id") id: string,
+    @Body() body: any,
+  ) {
+    return this.mrService.updateMergeRequestStatus(
+      id,
+      body.status,
+      req.authUser.id,
+    );
   }
 
-  @Get(':id/source-collection')
-  async getSourceCollection(@Request() req: any, @Param('id') id: string) {
-    return this.mrService.getSourceCollection(id, req.authUser.id);
+  @Get(":id/source-collection")
+  async getSourceCollection(@Param("id") id: string) {
+    return this.mrService.getSourceCollection(id);
   }
 }

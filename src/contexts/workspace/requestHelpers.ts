@@ -1,9 +1,19 @@
-import { resolveDynamicVariable } from '../../components/request/variableResolution';
-import type { Collection, Environment, EnvironmentVariable, Folder, SavedRequest, TabData } from './types';
+import { resolveDynamicVariable } from "../../components/request/variableResolution";
+import type {
+  Collection,
+  Environment,
+  EnvironmentVariable,
+  Folder,
+  SavedRequest,
+  TabData,
+} from "./types";
 
-export function getRequestAncestors(activeTab: TabData | undefined, collections: Collection[]): (Collection | Folder)[] {
+export function getRequestAncestors(
+  activeTab: TabData | undefined,
+  collections: Collection[],
+): (Collection | Folder)[] {
   if (!activeTab || !activeTab.collectionId) return [];
-  const col = collections.find(c => c.id === activeTab.collectionId);
+  const col = collections.find((c) => c.id === activeTab.collectionId);
   if (!col) return [];
 
   const ancestors: (Collection | Folder)[] = [col];
@@ -14,18 +24,21 @@ export function getRequestAncestors(activeTab: TabData | undefined, collections:
   return ancestors;
 }
 
-export function resolveRequestAuth(activeTab: TabData | undefined, collections: Collection[]) {
-  let authType = activeTab?.authType || 'inherit';
-  let bearerToken = activeTab?.bearerToken || '';
+export function resolveRequestAuth(
+  activeTab: TabData | undefined,
+  collections: Collection[],
+) {
+  let authType = activeTab?.authType || "inherit";
+  let bearerToken = activeTab?.bearerToken || "";
   let inheritedFrom: Collection | Folder | null = null;
 
-  if (authType === 'inherit' && activeTab) {
+  if (authType === "inherit" && activeTab) {
     const ancestors = getRequestAncestors(activeTab, collections);
     for (let i = ancestors.length - 1; i >= 0; i--) {
       const ancestor = ancestors[i];
-      if (ancestor.authType && ancestor.authType !== 'inherit') {
+      if (ancestor.authType && ancestor.authType !== "inherit") {
         authType = ancestor.authType;
-        bearerToken = ancestor.bearerToken || '';
+        bearerToken = ancestor.bearerToken || "";
         inheritedFrom = ancestor;
         break;
       }
@@ -42,35 +55,42 @@ export function interpolateVariables(args: {
   globalVariables: EnvironmentVariable[];
   text: string;
 }) {
-  const { activeEnvironment, activeTab, collections, globalVariables, text } = args;
+  const { activeEnvironment, activeTab, collections, globalVariables, text } =
+    args;
   if (!text) return text;
 
   const ancestors = getRequestAncestors(activeTab, collections);
-  
-  const lookupQueue: { source: string, vars: EnvironmentVariable[] }[] = [];
-  
+
+  const lookupQueue: { source: string; vars: EnvironmentVariable[] }[] = [];
+
   if (activeEnvironment) {
-    lookupQueue.push({ source: 'env', vars: activeEnvironment.variables });
-  }
-  
-  for (let i = ancestors.length - 1; i >= 0; i--) {
-    if (ancestors[i].variables) {
-      lookupQueue.push({ source: `ancestor_${i}`, vars: ancestors[i].variables! });
-    }
-  }
-  
-  if (globalVariables) {
-    lookupQueue.push({ source: 'global', vars: globalVariables });
+    lookupQueue.push({ source: "env", vars: activeEnvironment.variables });
   }
 
-  function resolveKey(key: string, skipSources: Set<string> = new Set()): string | null {
+  for (let i = ancestors.length - 1; i >= 0; i--) {
+    if (ancestors[i].variables) {
+      lookupQueue.push({
+        source: `ancestor_${i}`,
+        vars: ancestors[i].variables!,
+      });
+    }
+  }
+
+  if (globalVariables) {
+    lookupQueue.push({ source: "global", vars: globalVariables });
+  }
+
+  function resolveKey(
+    key: string,
+    skipSources: Set<string> = new Set(),
+  ): string | null {
     const dynamicValue = resolveDynamicVariable(key);
     if (dynamicValue !== null) return dynamicValue;
 
     for (const scope of lookupQueue) {
       if (skipSources.has(scope.source)) continue;
-      
-      const v = scope.vars.find(v => v.key === key && v.enabled);
+
+      const v = scope.vars.find((v) => v.key === key && v.enabled);
       if (v) {
         const nextSkip = new Set(skipSources);
         nextSkip.add(scope.source);
@@ -84,8 +104,8 @@ export function interpolateVariables(args: {
     if (!str) return str;
     let result = str;
     let iterations = 0;
-    let previousResult = '';
-    
+    let previousResult = "";
+
     while (result !== previousResult && iterations < 5) {
       previousResult = result;
       const matches = result.match(/\{\{([^}]+)\}\}/g);
@@ -106,10 +126,12 @@ export function interpolateVariables(args: {
   return interpolateString(text, new Set());
 }
 
-
-function getFolderPath(items: (Folder | SavedRequest)[], targetId: string): Folder[] | null {
+function getFolderPath(
+  items: (Folder | SavedRequest)[],
+  targetId: string,
+): Folder[] | null {
   for (const item of items) {
-    if (item.type === 'folder') {
+    if (item.type === "folder") {
       if (item.id === targetId) return [item];
       const subPath = getFolderPath(item.items, targetId);
       if (subPath) return [item, ...subPath];

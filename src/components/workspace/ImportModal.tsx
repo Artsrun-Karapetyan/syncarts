@@ -1,10 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { X, CheckCircle2, AlertCircle } from 'lucide-react';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { importPostmanCollection, importPostmanEnvironment } from '../../utils/postmanParser';
-import { parseCurlCommand } from '../../utils/curlParser';
-import { ImportDuplicatePrompt, type DuplicateImportItem } from './ImportDuplicatePrompt';
-import { ImportDropZone } from './ImportDropZone';
+import { AlertCircle, CheckCircle2, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+
+import { useWorkspace } from "../../contexts/WorkspaceContext";
+import { parseCurlCommand } from "../../utils/curlParser";
+import {
+  importPostmanCollection,
+  importPostmanEnvironment,
+} from "../../utils/postmanParser";
+import { ImportDropZone } from "./ImportDropZone";
+import {
+  type DuplicateImportItem,
+  ImportDuplicatePrompt,
+} from "./ImportDuplicatePrompt";
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -12,18 +19,30 @@ interface ImportModalProps {
   initialFile?: File | null;
 }
 
-type ImportStatus = 'idle' | 'success' | 'error';
+type ImportStatus = "idle" | "success" | "error";
 
-export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) {
-  const { addTab, importCollection, updateCollection, createEnvironment, collections, environments } = useWorkspace();
-  const [inputText, setInputText] = useState('');
+export function ImportModal({
+  isOpen,
+  onClose,
+  initialFile,
+}: ImportModalProps) {
+  const {
+    addTab,
+    importCollection,
+    updateCollection,
+    createEnvironment,
+    collections,
+    environments,
+  } = useWorkspace();
+  const [inputText, setInputText] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const [status, setStatus] = useState<ImportStatus>('idle');
-  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<ImportStatus>("idle");
+  const [message, setMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
 
-  const [duplicateItem, setDuplicateItem] = useState<DuplicateImportItem | null>(null);
+  const [duplicateItem, setDuplicateItem] =
+    useState<DuplicateImportItem | null>(null);
 
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -36,9 +55,9 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
   if (!isOpen) return null;
 
   const handleClose = () => {
-    setInputText('');
-    setStatus('idle');
-    setMessage('');
+    setInputText("");
+    setStatus("idle");
+    setMessage("");
     setDuplicateItem(null);
     dragCounter.current = 0;
     setIsDragging(false);
@@ -51,13 +70,13 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
       const trimmed = content.trim();
 
       // 1. Try cURL
-      if (trimmed.toLowerCase().startsWith('curl ')) {
+      if (trimmed.toLowerCase().startsWith("curl ")) {
         const parsedCurl = parseCurlCommand(trimmed);
         if (parsedCurl) {
           addTab({
             ...parsedCurl,
-            name: 'Imported cURL',
-            bodyType: parsedCurl.body ? 'raw' : 'none',
+            name: "Imported cURL",
+            bodyType: parsedCurl.body ? "raw" : "none",
           });
           handleClose();
           return;
@@ -65,17 +84,20 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
       }
 
       // 2. Try JSON
-      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
         const data = JSON.parse(trimmed);
 
         // Check if it's an Environment
-        if (data._postman_variable_scope === 'environment' || (data.name && Array.isArray(data.values))) {
+        if (
+          data._postman_variable_scope === "environment" ||
+          (data.name && Array.isArray(data.values))
+        ) {
           const envData = importPostmanEnvironment(trimmed);
-          const envName = envData.name || 'Imported Environment';
-          
-          if (environments.some(e => e.name === envName)) {
+          const envName = envData.name || "Imported Environment";
+
+          if (environments.some((e) => e.name === envName)) {
             setDuplicateItem({
-              type: 'environment',
+              type: "environment",
               data: envData,
               originalName: envName,
               proposedName: `${envName} (Copy)`,
@@ -91,14 +113,16 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
         // Check if it's a Collection
         if (data.info && data.info.name) {
           const collectionData = importPostmanCollection(trimmed);
-          const existingCollection = collections.find(c => c.name === collectionData.name);
+          const existingCollection = collections.find(
+            (c) => c.name === collectionData.name,
+          );
           if (existingCollection) {
             setDuplicateItem({
-              type: 'collection',
+              type: "collection",
               data: collectionData,
               originalName: collectionData.name,
               proposedName: `${collectionData.name} (Copy)`,
-              existingId: existingCollection.id
+              existingId: existingCollection.id,
             });
             return;
           }
@@ -109,11 +133,13 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
         }
       }
 
-      throw new Error('Unrecognized format. Please provide valid cURL or Postman JSON.');
+      throw new Error(
+        "Unrecognized format. Please provide valid cURL or Postman JSON.",
+      );
     } catch (err: any) {
-      console.error('Import failed:', err);
-      setStatus('error');
-      setMessage(err.message || 'Failed to import data.');
+      console.error("Import failed:", err);
+      setStatus("error");
+      setMessage(err.message || "Failed to import data.");
     } finally {
       setIsProcessing(false);
     }
@@ -121,19 +147,30 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
 
   const handleConfirmDuplicate = () => {
     if (!duplicateItem) return;
-    
-    if (duplicateItem.type === 'collection') {
-      const newData = { ...duplicateItem.data, name: duplicateItem.proposedName };
+
+    if (duplicateItem.type === "collection") {
+      const newData = {
+        ...duplicateItem.data,
+        name: duplicateItem.proposedName,
+      };
       importCollection(newData);
     } else {
-      createEnvironment(duplicateItem.proposedName, duplicateItem.data.variables);
+      createEnvironment(
+        duplicateItem.proposedName,
+        duplicateItem.data.variables,
+      );
     }
-    
+
     handleClose();
   };
 
   const handleReplaceDuplicate = () => {
-    if (!duplicateItem || duplicateItem.type !== 'collection' || !duplicateItem.existingId) return;
+    if (
+      !duplicateItem ||
+      duplicateItem.type !== "collection" ||
+      !duplicateItem.existingId
+    )
+      return;
     updateCollection(duplicateItem.existingId, duplicateItem.data);
     handleClose();
   };
@@ -174,7 +211,7 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
     e.stopPropagation();
     setIsDragging(false);
     dragCounter.current = 0;
-    
+
     const file = e.dataTransfer.files?.[0];
     if (file) {
       readFile(file);
@@ -208,52 +245,69 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         inset: 0,
         zIndex: 200,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         padding: 24,
       }}
     >
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           inset: 0,
-          background: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(4px)',
+          background: "rgba(0, 0, 0, 0.6)",
+          backdropFilter: "blur(4px)",
         }}
         onClick={handleClose}
       />
-      
+
       <div
         className="glass-panel animate-scale-in"
         style={{
-          position: 'relative',
-          width: '100%',
+          position: "relative",
+          width: "100%",
           maxWidth: 600,
-          background: 'var(--bg-primary)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-xl)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
+          background: "var(--bg-primary)",
+          border: "1px solid var(--border-color)",
+          borderRadius: "var(--radius-lg)",
+          boxShadow: "var(--shadow-xl)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Import</h2>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "16px 20px",
+            borderBottom: "1px solid var(--border-color)",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+              margin: 0,
+            }}
+          >
+            Import
+          </h2>
           <button
             className="tooltip-trigger"
             data-tooltip="Close"
             onClick={handleClose}
             style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-tertiary)',
-              cursor: 'pointer',
-              display: 'flex',
+              background: "transparent",
+              border: "none",
+              color: "var(--text-tertiary)",
+              cursor: "pointer",
+              display: "flex",
               padding: 4,
             }}
           >
@@ -261,8 +315,14 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
           </button>
         </div>
 
-        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          
+        <div
+          style={{
+            padding: 24,
+            display: "flex",
+            flexDirection: "column",
+            gap: 20,
+          }}
+        >
           {duplicateItem ? (
             <ImportDuplicatePrompt
               duplicateItem={duplicateItem}
@@ -273,45 +333,72 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
             />
           ) : (
             <>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--text-secondary)",
+                  }}
+                >
                   Paste cURL or Raw JSON
                 </label>
                 <textarea
                   className="input"
                   style={{
-                    width: '100%',
+                    width: "100%",
                     height: 120,
                     padding: 12,
                     fontSize: 13,
-                    fontFamily: 'monospace',
-                    resize: 'none',
-                    borderRadius: 'var(--radius-md)',
+                    fontFamily: "monospace",
+                    resize: "none",
+                    borderRadius: "var(--radius-md)",
                   }}
                   placeholder="Paste cURL command, Postman Collection, or Environment JSON..."
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                       handlePasteOrSubmit();
                     }
                   }}
                 />
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
                   <button
                     className="btn btn-primary"
                     onClick={handlePasteOrSubmit}
                     disabled={!inputText.trim() || isProcessing}
                   >
-                    {isProcessing ? 'Importing...' : 'Import Json'}
+                    {isProcessing ? "Importing..." : "Import Json"}
                   </button>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
-                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase' }}>OR</div>
-                <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    background: "var(--border-color)",
+                  }}
+                />
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-tertiary)",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  OR
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    background: "var(--border-color)",
+                  }}
+                />
               </div>
 
               <ImportDropZone
@@ -325,27 +412,36 @@ export function ImportModal({ isOpen, onClose, initialFile }: ImportModalProps) 
                 onFileSelect={handleFileSelect}
               />
 
-              {status !== 'idle' && (
+              {status !== "idle" && (
                 <div
                   style={{
-                    padding: '12px 16px',
-                    borderRadius: 'var(--radius-md)',
-                    display: 'flex',
-                    alignItems: 'center',
+                    padding: "12px 16px",
+                    borderRadius: "var(--radius-md)",
+                    display: "flex",
+                    alignItems: "center",
                     gap: 10,
                     fontSize: 13,
                     fontWeight: 500,
-                    background: status === 'success' ? 'var(--status-get-bg)' : 'var(--status-delete-bg)',
-                    color: status === 'success' ? 'var(--status-get)' : 'var(--status-delete)',
+                    background:
+                      status === "success"
+                        ? "var(--status-get-bg)"
+                        : "var(--status-delete-bg)",
+                    color:
+                      status === "success"
+                        ? "var(--status-get)"
+                        : "var(--status-delete)",
                   }}
                 >
-                  {status === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  {status === "success" ? (
+                    <CheckCircle2 size={16} />
+                  ) : (
+                    <AlertCircle size={16} />
+                  )}
                   {message}
                 </div>
               )}
             </>
           )}
-
         </div>
       </div>
     </div>

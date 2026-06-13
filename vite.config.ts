@@ -1,6 +1,6 @@
-import { defineConfig } from "vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
-import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import { defineConfig } from "vite";
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
@@ -11,9 +11,9 @@ export default defineConfig(async () => ({
     tanstackRouter(),
     react({
       babel: {
-        plugins: [['babel-plugin-react-compiler', { target: '19' }]],
+        plugins: [["babel-plugin-react-compiler", { target: "19" }]],
       },
-    })
+    }),
   ],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

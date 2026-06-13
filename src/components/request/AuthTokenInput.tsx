@@ -1,6 +1,7 @@
-import type { MutableRefObject, ReactNode, RefObject, MouseEvent } from 'react';
-import { VariableAutocompletePopover } from './VariableAutocompletePopover';
-import { useVariableAutocomplete } from './useVariableAutocomplete';
+import type { MouseEvent, MutableRefObject, ReactNode, RefObject } from "react";
+
+import { useVariableAutocomplete } from "./useVariableAutocomplete";
+import { VariableAutocompletePopover } from "./VariableAutocompletePopover";
 
 export interface HoveredVariable {
   name: string;
@@ -25,42 +26,83 @@ interface AuthTokenInputProps {
 }
 
 export function AuthTokenInput(props: AuthTokenInputProps) {
-  const { disabled, hideTimeout, hoveredVar, label, overlayRef, renderHighlighted, setHoveredVar, token, onChange } = props;
+  const {
+    disabled,
+    hideTimeout,
+    hoveredVar,
+    label,
+    overlayRef,
+    renderHighlighted,
+    setHoveredVar,
+    token,
+    onChange,
+  } = props;
   const autocomplete = useVariableAutocomplete({ value: token, onChange });
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
     if (!overlayRef.current) return;
 
-    const spans = overlayRef.current.querySelectorAll('.env-var-span');
+    const spans = overlayRef.current.querySelectorAll(".env-var-span");
     let found = false;
 
     for (let i = 0; i < spans.length; i++) {
       const span = spans[i] as HTMLSpanElement;
       const rect = span.getBoundingClientRect();
-      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+      if (
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+      ) {
         found = true;
-        const varName = span.getAttribute('data-varname') || '';
-        const exists = span.getAttribute('data-exists') === 'true';
-        const hasValue = span.getAttribute('data-has-value') === 'true';
-        const value = span.getAttribute('data-value') || '';
-        const source = span.getAttribute('data-source') || undefined;
+        const varName = span.getAttribute("data-varname") || "";
+        const exists = span.getAttribute("data-exists") === "true";
+        const hasValue = span.getAttribute("data-has-value") === "true";
+        const value = span.getAttribute("data-value") || "";
+        const source = span.getAttribute("data-source") || undefined;
 
-        if (hoveredVar?.name !== varName || hoveredVar?.value !== value || hoveredVar?.hasValue !== hasValue) {
+        if (
+          hoveredVar?.name !== varName ||
+          hoveredVar?.value !== value ||
+          hoveredVar?.hasValue !== hasValue
+        ) {
           clearTimeout(hideTimeout.current);
-          setHoveredVar({ name: varName, x: rect.left, y: rect.bottom + 4, exists, hasValue, value, source });
+          setHoveredVar({
+            name: varName,
+            x: rect.left,
+            y: rect.bottom + 4,
+            exists,
+            hasValue,
+            value,
+            source,
+          });
         }
         break;
       }
     }
 
-    if (!found && hoveredVar) hideTimeout.current = setTimeout(() => setHoveredVar(null), 150);
+    if (!found && hoveredVar)
+      hideTimeout.current = setTimeout(() => setHoveredVar(null), 150);
   };
 
   return (
     <>
-      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</label>
+      <label
+        style={{
+          fontSize: 12,
+          fontWeight: 600,
+          color: "var(--text-secondary)",
+        }}
+      >
+        {label}
+      </label>
       <div
-        style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}
+        style={{
+          position: "relative",
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+        }}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => {
           hideTimeout.current = setTimeout(() => setHoveredVar(null), 150);
@@ -70,33 +112,33 @@ export function AuthTokenInput(props: AuthTokenInputProps) {
           ref={overlayRef}
           className="input font-mono"
           style={{
-            position: 'absolute',
+            position: "absolute",
             inset: 0,
-            pointerEvents: 'none',
-            color: token ? 'var(--text-primary)' : 'var(--text-tertiary)',
+            pointerEvents: "none",
+            color: token ? "var(--text-primary)" : "var(--text-tertiary)",
             opacity: token ? 1 : 0.6,
-            overflow: 'hidden',
-            whiteSpace: 'pre',
+            overflow: "hidden",
+            whiteSpace: "pre",
             zIndex: 1,
             fontSize: 13,
-            padding: '10px 14px'
+            padding: "10px 14px",
           }}
           aria-hidden="true"
         >
-          {token ? renderHighlighted() : 'e.g. eyJhbGciOiJIUzI1NiIsInR5cCI6...'}
+          {token ? renderHighlighted() : "e.g. eyJhbGciOiJIUzI1NiIsInR5cCI6..."}
         </div>
 
         <input
           className="input font-mono"
           style={{
-            width: '100%',
+            width: "100%",
             fontSize: 13,
-            padding: '10px 14px',
-            color: 'transparent',
-            caretColor: 'var(--text-primary)',
-            background: 'transparent',
+            padding: "10px 14px",
+            color: "transparent",
+            caretColor: "var(--text-primary)",
+            background: "transparent",
             zIndex: 2,
-            cursor: disabled ? 'default' : 'text',
+            cursor: disabled ? "default" : "text",
           }}
           value={token}
           onBlur={autocomplete.handleBlur}
@@ -116,7 +158,8 @@ export function AuthTokenInput(props: AuthTokenInputProps) {
             if (!disabled) autocomplete.handleKeyUp(event);
           }}
           onScroll={(e) => {
-            if (overlayRef.current) overlayRef.current.scrollLeft = e.currentTarget.scrollLeft;
+            if (overlayRef.current)
+              overlayRef.current.scrollLeft = e.currentTarget.scrollLeft;
           }}
           readOnly={disabled}
           aria-disabled={disabled}
@@ -128,7 +171,12 @@ export function AuthTokenInput(props: AuthTokenInputProps) {
             suggestions={autocomplete.suggestions}
             x={autocomplete.autocompleteState.x}
             y={autocomplete.autocompleteState.y}
-            onSelect={suggestion => autocomplete.insertSuggestion(suggestion, document.activeElement as HTMLInputElement)}
+            onSelect={(suggestion) =>
+              autocomplete.insertSuggestion(
+                suggestion,
+                document.activeElement as HTMLInputElement,
+              )
+            }
           />
         )}
       </div>

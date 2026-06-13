@@ -1,6 +1,6 @@
-import { invoke } from '@tauri-apps/api/core';
-import { createContext, ReactNode, useContext, useState } from 'react';
-import useSWRMutation from 'swr/mutation';
+import { invoke } from "@tauri-apps/api/core";
+import { createContext, ReactNode, useContext, useState } from "react";
+import useSWRMutation from "swr/mutation";
 
 export interface HeaderItem {
   key: string;
@@ -30,17 +30,23 @@ interface RequestContextState {
   sendRequest: () => Promise<void>;
 }
 
-const RequestContext = createContext<RequestContextState | undefined>(undefined);
+const RequestContext = createContext<RequestContextState | undefined>(
+  undefined,
+);
 
 export function RequestProvider({ children }: { children: ReactNode }) {
-  const [url, setUrl] = useState('https://jsonplaceholder.typicode.com/todos/1');
-  const [method, setMethod] = useState('GET');
-  const [headers, setHeaders] = useState<HeaderItem[]>([{ key: '', value: '' }]);
-  const [body, setBody] = useState('');
+  const [url, setUrl] = useState(
+    "https://jsonplaceholder.typicode.com/todos/1",
+  );
+  const [method, setMethod] = useState("GET");
+  const [headers, setHeaders] = useState<HeaderItem[]>([
+    { key: "", value: "" },
+  ]);
+  const [body, setBody] = useState("");
   const [response, setResponse] = useState<HttpResponse | null>(null);
 
   const { trigger, isMutating, error } = useSWRMutation(
-    'api-request',
+    "api-request",
     async () => {
       const headerMap: Record<string, string> = {};
       headers.forEach((h) => {
@@ -51,12 +57,14 @@ export function RequestProvider({ children }: { children: ReactNode }) {
         url,
         method,
         headers: headerMap,
-        body: body.trim() === '' ? null : body,
+        body: body.trim() === "" ? null : body,
       };
 
-      const res: HttpResponse = await invoke('make_request', { request: reqPayload });
+      const res: HttpResponse = await invoke("make_request", {
+        request: reqPayload,
+      });
       return res;
-    }
+    },
   );
 
   const sendRequest = async () => {
@@ -92,6 +100,7 @@ export function RequestProvider({ children }: { children: ReactNode }) {
 
 export function useRequest() {
   const context = useContext(RequestContext);
-  if (!context) throw new Error('useRequest must be used within RequestProvider');
+  if (!context)
+    throw new Error("useRequest must be used within RequestProvider");
   return context;
 }

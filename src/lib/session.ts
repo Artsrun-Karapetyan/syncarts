@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-const AUTH_USER_KEY = 'syncarts_auth_user';
-const AUTH_SESSION_CHANGED_EVENT = 'syncarts:auth-session-changed';
+const AUTH_USER_KEY = "syncarts_auth_user";
+const AUTH_SESSION_CHANGED_EVENT = "syncarts:auth-session-changed";
 
 export type StoredAuthUser = {
   id: string;

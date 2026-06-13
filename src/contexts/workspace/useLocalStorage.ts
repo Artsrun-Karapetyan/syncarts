@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
-const INDEXED_DB_NAME = 'syncarts-client-storage';
-const INDEXED_DB_STORE = 'values';
-const INDEXED_DB_MARKER = '__syncarts_indexeddb__';
+const INDEXED_DB_NAME = "syncarts-client-storage";
+const INDEXED_DB_STORE = "values";
+const INDEXED_DB_MARKER = "__syncarts_indexeddb__";
 const LOCAL_STORAGE_MAX_CHARS = 1_000_000;
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
@@ -17,7 +17,9 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
-      return item && item !== INDEXED_DB_MARKER ? JSON.parse(item) : initialValue;
+      return item && item !== INDEXED_DB_MARKER
+        ? JSON.parse(item)
+        : initialValue;
     } catch {
       return initialValue;
     }
@@ -39,7 +41,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         setStoredValue(JSON.parse(item));
       })
       .catch((error) => {
-        console.error('Failed to load large local value', error);
+        console.error("Failed to load large local value", error);
       })
       .finally(() => {
         if (isMounted) setIsHydrated(true);
@@ -50,15 +52,18 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     };
   }, [key]);
 
-  const setValue = useCallback((value: T | ((val: T) => T)) => {
-    setStoredValue(prev => {
-      const valueToStore = value instanceof Function ? value(prev) : value;
-      void persistValue(key, valueToStore).catch((error) => {
-        console.error('Failed to persist local value', error);
+  const setValue = useCallback(
+    (value: T | ((val: T) => T)) => {
+      setStoredValue((prev) => {
+        const valueToStore = value instanceof Function ? value(prev) : value;
+        void persistValue(key, valueToStore).catch((error) => {
+          console.error("Failed to persist local value", error);
+        });
+        return valueToStore;
       });
-      return valueToStore;
-    });
-  }, [key]);
+    },
+    [key],
+  );
 
   return [storedValue, setValue, isHydrated] as const;
 }
@@ -88,15 +93,19 @@ async function persistIndexedDbValue(key: string, serialized: string) {
     window.localStorage.removeItem(key);
     window.localStorage.setItem(key, INDEXED_DB_MARKER);
   } catch (error) {
-    console.error('Saved large local value, but failed to write localStorage marker', error);
+    console.error(
+      "Saved large local value, but failed to write localStorage marker",
+      error,
+    );
   }
 }
 
 function isQuotaExceededError(error: unknown) {
-  return error instanceof DOMException && (
-    error.name === 'QuotaExceededError'
-    || error.name === 'NS_ERROR_DOM_QUOTA_REACHED'
-    || error.message.includes('quota')
+  return (
+    error instanceof DOMException &&
+    (error.name === "QuotaExceededError" ||
+      error.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+      error.message.includes("quota"))
   );
 }
 
@@ -116,10 +125,11 @@ async function readIndexedDbValue(key: string) {
   const db = await openStorageDb();
 
   return new Promise<string | null>((resolve, reject) => {
-    const transaction = db.transaction(INDEXED_DB_STORE, 'readonly');
+    const transaction = db.transaction(INDEXED_DB_STORE, "readonly");
     const request = transaction.objectStore(INDEXED_DB_STORE).get(key);
 
-    request.onsuccess = () => resolve(typeof request.result === 'string' ? request.result : null);
+    request.onsuccess = () =>
+      resolve(typeof request.result === "string" ? request.result : null);
     request.onerror = () => reject(request.error);
     transaction.oncomplete = () => db.close();
     transaction.onerror = () => {
@@ -133,7 +143,7 @@ async function writeIndexedDbValue(key: string, value: string) {
   const db = await openStorageDb();
 
   return new Promise<void>((resolve, reject) => {
-    const transaction = db.transaction(INDEXED_DB_STORE, 'readwrite');
+    const transaction = db.transaction(INDEXED_DB_STORE, "readwrite");
     transaction.objectStore(INDEXED_DB_STORE).put(value, key);
 
     transaction.oncomplete = () => {

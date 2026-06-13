@@ -1,70 +1,84 @@
-import type { Collection, TabData } from './types';
+import type { Collection, TabData } from "./types";
 
 export const DEFAULT_COLLECTIONS: Collection[] = [
   {
-    id: 'col-1',
-    name: 'JSONPlaceholder API',
+    id: "col-1",
+    name: "JSONPlaceholder API",
     items: [
       {
-        type: 'folder',
-        id: 'folder-1',
-        name: 'Posts',
+        type: "folder",
+        id: "folder-1",
+        name: "Posts",
         items: [
           {
-            type: 'request',
-            id: 'req-1',
-            name: 'Get All Posts',
-            method: 'GET',
-            url: 'https://jsonplaceholder.typicode.com/posts',
+            type: "request",
+            id: "req-1",
+            name: "Get All Posts",
+            method: "GET",
+            url: "https://jsonplaceholder.typicode.com/posts",
             headers: [],
-            bodyType: 'none',
+            bodyType: "none",
             queryParams: [],
             formData: [],
-            body: ''
+            body: "",
           },
           {
-            type: 'request',
-            id: 'req-2',
-            name: 'Create Post',
-            method: 'POST',
-            url: 'https://jsonplaceholder.typicode.com/posts',
-            headers: [{ key: 'Content-type', value: 'application/json; charset=UTF-8', enabled: true }],
-            bodyType: 'raw',
+            type: "request",
+            id: "req-2",
+            name: "Create Post",
+            method: "POST",
+            url: "https://jsonplaceholder.typicode.com/posts",
+            headers: [
+              {
+                key: "Content-type",
+                value: "application/json; charset=UTF-8",
+                enabled: true,
+              },
+            ],
+            bodyType: "raw",
             queryParams: [],
             formData: [],
-            body: '{\n  "title": "foo",\n  "body": "bar",\n  "userId": 1\n}'
-          }
-        ]
+            body: '{\n  "title": "foo",\n  "body": "bar",\n  "userId": 1\n}',
+          },
+        ],
       },
       {
-        type: 'request',
-        id: 'req-3',
-        name: 'Get Users',
-        method: 'GET',
-        url: 'https://jsonplaceholder.typicode.com/users',
+        type: "request",
+        id: "req-3",
+        name: "Get Users",
+        method: "GET",
+        url: "https://jsonplaceholder.typicode.com/users",
         headers: [],
-        bodyType: 'none',
+        bodyType: "none",
         queryParams: [],
         formData: [],
-        body: ''
-      }
-    ]
-  }
+        body: "",
+      },
+    ],
+  },
 ];
 
 export function createEmptyRequestTab(): TabData {
   return {
     id: crypto.randomUUID(),
-    name: 'Untitled Request',
-    method: 'GET',
-    url: '',
-    headers: [{ key: '', value: '', enabled: true }],
-    authType: 'inherit',
-    bodyType: 'raw',
+    name: "Untitled Request",
+    method: "GET",
+    url: "",
+    headers: [{ key: "", value: "", enabled: true }],
+    authType: "inherit",
+    bodyType: "raw",
     pathVariables: [],
     queryParams: [],
-    formData: [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }],
-    body: '',
-    response: null
+    formData: [
+      {
+        id: crypto.randomUUID(),
+        key: "",
+        value: "",
+        enabled: true,
+        type: "text",
+      },
+    ],
+    body: "",
+    response: null,
   };
 }

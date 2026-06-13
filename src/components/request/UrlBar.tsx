@@ -1,18 +1,20 @@
-import { useEffect, useRef } from 'react';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { parseCurlCommand } from '../../utils/curlParser';
-import { syncPathVariablesWithUrl } from '../../utils/pathVariables';
-import { resolveScopedVariable } from './variableResolution';
-import { getVariableColors } from './variableHighlight';
-import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
-import { UrlVariablePopover } from './UrlVariablePopover';
-import { VariableAutocompletePopover } from './VariableAutocompletePopover';
-import { useVariableAutocomplete } from './useVariableAutocomplete';
-import { useVariableHover } from './useVariableHover';
+import "./UrlBar.css";
 
-import './UrlBar.css';
+import { useEffect, useRef } from "react";
 
-const AUTO_REQUEST_NAMES = new Set(['Untitled Request', 'New Request']);
+import { getRequestAncestors } from "../../contexts/workspace/requestHelpers";
+import { useWorkspace } from "../../contexts/WorkspaceContext";
+import { parseCurlCommand } from "../../utils/curlParser";
+import { syncPathVariablesWithUrl } from "../../utils/pathVariables";
+import { parseQueryParamsFromUrl } from "./urlQueryParams";
+import { UrlVariablePopover } from "./UrlVariablePopover";
+import { useVariableAutocomplete } from "./useVariableAutocomplete";
+import { useVariableHover } from "./useVariableHover";
+import { VariableAutocompletePopover } from "./VariableAutocompletePopover";
+import { getVariableColors } from "./variableHighlight";
+import { resolveScopedVariable } from "./variableResolution";
+
+const AUTO_REQUEST_NAMES = new Set(["Untitled Request", "New Request"]);
 const PATH_VARIABLE_REGEX = /(^|\/):([A-Za-z_][A-Za-z0-9_]*)/g;
 
 export function UrlBar() {
@@ -22,54 +24,74 @@ export function UrlBar() {
     sendRequest,
     activeEnvironment,
     collections,
-    globalVariables
+    globalVariables,
   } = useWorkspace();
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const text = e.clipboardData.getData('text');
-    if (text.trim().toLowerCase().startsWith('curl ')) {
+    const text = e.clipboardData.getData("text");
+    if (text.trim().toLowerCase().startsWith("curl ")) {
       const parsed = parseCurlCommand(text);
       if (parsed) {
         e.preventDefault(); // Prevent pasting just the curl string into the URL
-        updateActiveTab({ ...parsed, queryParams: parseQueryParamsFromUrl(parsed.url || '', parsed.queryParamDescriptions || {}) });
+        updateActiveTab({
+          ...parsed,
+          queryParams: parseQueryParamsFromUrl(
+            parsed.url || "",
+            parsed.queryParamDescriptions || {},
+          ),
+        });
       }
     }
   };
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const url = activeTab?.url || '';
-  
+  const url = activeTab?.url || "";
+
   const hover = useVariableHover(overlayRef);
   const resolveVariable = (varName: string) => {
     const ancestors = getRequestAncestors(activeTab, collections);
-    return resolveScopedVariable({ ancestors, activeEnvironment, globalVariables, varName });
+    return resolveScopedVariable({
+      ancestors,
+      activeEnvironment,
+      globalVariables,
+      varName,
+    });
   };
   const updateUrlValue = (newUrl: string) => {
     const updates: any = {
       url: newUrl,
-      pathVariables: syncPathVariablesWithUrl(newUrl, activeTab?.pathVariables || []),
-      queryParams: parseQueryParamsFromUrl(newUrl, activeTab?.queryParamDescriptions || {})
+      pathVariables: syncPathVariablesWithUrl(
+        newUrl,
+        activeTab?.pathVariables || [],
+      ),
+      queryParams: parseQueryParamsFromUrl(
+        newUrl,
+        activeTab?.queryParamDescriptions || {},
+      ),
     };
-    if (!activeTab?.name || AUTO_REQUEST_NAMES.has(activeTab.name) || activeTab.name === activeTab.url) {
+    if (
+      !activeTab?.name ||
+      AUTO_REQUEST_NAMES.has(activeTab.name) ||
+      activeTab.name === activeTab.url
+    ) {
       updates.name = newUrl;
     }
     updateActiveTab(updates);
   };
-  const autocomplete = useVariableAutocomplete({ value: url, onChange: updateUrlValue });
-
-
+  const autocomplete = useVariableAutocomplete({
+    value: url,
+    onChange: updateUrlValue,
+  });
 
   useEffect(() => {
     // Auto-focus URL bar when a new/empty request is opened
-    if (activeTab && activeTab.url === '') {
+    if (activeTab && activeTab.url === "") {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 50);
     }
   }, [activeTab?.id]);
-
-
 
   const renderPathVariables = (part: string, baseKey: string) => {
     const nodes: React.ReactNode[] = [];
@@ -82,10 +104,17 @@ export function UrlBar() {
       const key = match[2];
       const tokenStart = match.index + prefix.length;
       const tokenEnd = tokenStart + key.length + 1;
-      const variable = activeTab?.pathVariables?.find((item) => item.key === key);
-      const value = variable?.value || '';
+      const variable = activeTab?.pathVariables?.find(
+        (item) => item.key === key,
+      );
+      const value = variable?.value || "";
 
-      if (tokenStart > lastIndex) nodes.push(<span key={`${baseKey}-t-${lastIndex}`}>{part.slice(lastIndex, tokenStart)}</span>);
+      if (tokenStart > lastIndex)
+        nodes.push(
+          <span key={`${baseKey}-t-${lastIndex}`}>
+            {part.slice(lastIndex, tokenStart)}
+          </span>,
+        );
       nodes.push(
         <span
           key={`${baseKey}-p-${tokenStart}`}
@@ -96,47 +125,52 @@ export function UrlBar() {
           data-has-value={!!value}
           data-value={value}
           data-source="Path variable"
-          style={{ color: value ? 'var(--text-secondary)' : 'var(--status-delete)' }}
+          style={{
+            color: value ? "var(--text-secondary)" : "var(--status-delete)",
+          }}
         >
           <span>:</span>
           <span>{key}</span>
-        </span>
+        </span>,
       );
       lastIndex = tokenEnd;
     }
 
-    if (lastIndex < part.length) nodes.push(<span key={`${baseKey}-t-end`}>{part.slice(lastIndex)}</span>);
+    if (lastIndex < part.length)
+      nodes.push(<span key={`${baseKey}-t-end`}>{part.slice(lastIndex)}</span>);
     return nodes;
   };
 
   const renderHighlighted = () => {
     const parts = url.split(/(\{\{[^}]*\}\})/g);
     return parts.map((part, i) => {
-      if (part.startsWith('{{') && part.endsWith('}}')) {
+      if (part.startsWith("{{") && part.endsWith("}}")) {
         const varName = part.substring(2, part.length - 2);
         const resolved = resolveVariable(varName);
-        const isDynamic = ['$guid', '$timestamp', '$isoTimestamp'].includes(varName);
-        
+        const isDynamic = ["$guid", "$timestamp", "$isoTimestamp"].includes(
+          varName,
+        );
+
         if (resolved.hasValue || isDynamic) {
-            const colors = getVariableColors(resolved.sourceType, isDynamic);
-            return (
-              <span 
-                key={i} 
-                className="env-var-span"
-                data-kind="environment"
-                data-varname={varName}
-                data-exists={resolved.exists}
-                data-has-value={resolved.hasValue}
-                data-value={resolved.value || ''}
-                data-source={resolved.source}
-                data-source-type={resolved.sourceType}
-                style={{ color: colors.color }}
-              >
-                <span>{'{{'}</span>
-                <span>{varName}</span>
-                <span>{'}}'}</span>
-              </span>
-            );
+          const colors = getVariableColors(resolved.sourceType, isDynamic);
+          return (
+            <span
+              key={i}
+              className="env-var-span"
+              data-kind="environment"
+              data-varname={varName}
+              data-exists={resolved.exists}
+              data-has-value={resolved.hasValue}
+              data-value={resolved.value || ""}
+              data-source={resolved.source}
+              data-source-type={resolved.sourceType}
+              style={{ color: colors.color }}
+            >
+              <span>{"{{"}</span>
+              <span>{varName}</span>
+              <span>{"}}"}</span>
+            </span>
+          );
         }
 
         return (
@@ -150,7 +184,7 @@ export function UrlBar() {
             data-value=""
             data-source=""
             data-source-type=""
-            style={{ color: 'var(--status-delete)' }}
+            style={{ color: "var(--status-delete)" }}
           >
             {part}
           </span>
@@ -160,42 +194,52 @@ export function UrlBar() {
     });
   };
 
-
-
   return (
-    <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', height: 34, overflow: 'hidden', borderRadius: 9999 }}>
+    <div
+      style={{
+        flex: 1,
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        height: 34,
+        overflow: "hidden",
+        borderRadius: 9999,
+      }}
+    >
       {/* Overlay for highlighting */}
-      <div 
+      <div
         ref={overlayRef}
-        className="url-input font-mono" 
-        style={{ 
-          position: 'absolute', 
-          inset: 0, 
-          pointerEvents: 'none', 
-          color: url ? 'var(--text-primary)' : 'var(--text-tertiary)',
+        className="url-input font-mono"
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          color: url ? "var(--text-primary)" : "var(--text-tertiary)",
           opacity: url ? 1 : 0.6,
-          overflow: 'hidden',
-          whiteSpace: 'pre',
+          overflow: "hidden",
+          whiteSpace: "pre",
           zIndex: 1,
-          lineHeight: '34px',
+          lineHeight: "34px",
         }}
         aria-hidden="true"
       >
-        {url ? renderHighlighted() : "https://api.example.com/v1/users (or paste cURL)"}
+        {url
+          ? renderHighlighted()
+          : "https://api.example.com/v1/users (or paste cURL)"}
       </div>
 
       {/* Actual Input */}
-      <input 
+      <input
         ref={inputRef}
-        className="url-input font-mono variable-input-proxy" 
-        style={{ 
-          position: 'absolute', 
+        className="url-input font-mono variable-input-proxy"
+        style={{
+          position: "absolute",
           inset: 0,
-          color: 'transparent',
-          caretColor: 'var(--text-primary)',
-          background: 'transparent',
+          color: "transparent",
+          caretColor: "var(--text-primary)",
+          background: "transparent",
           zIndex: 2,
-          lineHeight: '34px',
+          lineHeight: "34px",
         }}
         value={url}
         onBlur={autocomplete.handleBlur}
@@ -211,10 +255,10 @@ export function UrlBar() {
         onMouseLeave={hover.handleMouseLeave}
         onKeyDown={(e) => {
           if (autocomplete.handleKeyDown(e)) return;
-          if (e.key === 'Enter' && url) {
+          if (e.key === "Enter" && url) {
             sendRequest();
           }
-          if (e.key === 'Escape') {
+          if (e.key === "Escape") {
             hover.clearHideTimeout();
           }
         }}
@@ -235,7 +279,15 @@ export function UrlBar() {
           onOpenCollectionVariables={hover.openCollectionVariables}
           onOpenPathVariables={hover.openPathVariables}
           canOpenCollectionVariables={!!hover.closestAncestor}
-          variableTargetLabel={hover.closestAncestor && 'type' in hover.closestAncestor && hover.closestAncestor.type === 'folder' ? 'Folder' : (hover.closestAncestor ? 'Collection' : 'Environment')}
+          variableTargetLabel={
+            hover.closestAncestor &&
+            "type" in hover.closestAncestor &&
+            hover.closestAncestor.type === "folder"
+              ? "Folder"
+              : hover.closestAncestor
+                ? "Collection"
+                : "Environment"
+          }
         />
       )}
       {autocomplete.autocompleteState && (
@@ -244,33 +296,11 @@ export function UrlBar() {
           suggestions={autocomplete.suggestions}
           x={autocomplete.autocompleteState.x}
           y={autocomplete.autocompleteState.y}
-          onSelect={suggestion => autocomplete.insertSuggestion(suggestion, inputRef.current)}
+          onSelect={(suggestion) =>
+            autocomplete.insertSuggestion(suggestion, inputRef.current)
+          }
         />
       )}
     </div>
   );
-}
-
-function parseQueryParamsFromUrl(url: string, descriptions: Record<string, string>) {
-  const [, queryString] = url.split('?');
-  if (!queryString) return [];
-
-  return queryString.split('&').filter(Boolean).map((pair) => {
-    const [k, ...rest] = pair.split('=');
-    const key = decodeQueryPart(k || '');
-    return {
-      key,
-      value: decodeQueryPart(rest.join('=') || ''),
-      description: descriptions[key] || '',
-      enabled: true,
-    };
-  });
-}
-
-function decodeQueryPart(value: string) {
-  try {
-    return decodeURIComponent(value.replace(/\+/g, ' '));
-  } catch {
-    return value;
-  }
 }

@@ -1,11 +1,12 @@
-import { RefObject } from 'react';
-import { createPortal } from 'react-dom';
-import { Plus } from 'lucide-react';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { interpolateVariables } from '../../contexts/workspace/requestHelpers';
+import { Plus } from "lucide-react";
+import { RefObject } from "react";
+import { createPortal } from "react-dom";
+
+import { interpolateVariables } from "../../contexts/workspace/requestHelpers";
+import { useWorkspace } from "../../contexts/WorkspaceContext";
 
 type HoveredUrlVariable = {
-  kind: 'environment' | 'path';
+  kind: "environment" | "path";
   name: string;
   x: number;
   y: number;
@@ -40,91 +41,118 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
     onOpenCollectionVariables,
     onOpenPathVariables,
     canOpenCollectionVariables,
-    variableTargetLabel
+    variableTargetLabel,
   } = props;
   const inputId = `url-var-input-${hoveredVar.kind}-${hoveredVar.name}`;
-  const isPathVariable = hoveredVar.kind === 'path';
-  const isDynamic = hoveredVar.source === 'Dynamic';
+  const isPathVariable = hoveredVar.kind === "path";
+  const isDynamic = hoveredVar.source === "Dynamic";
 
-  const { activeEnvironment, activeTab, collections, globalVariables } = useWorkspace();
-  const resolvedValue = hoveredVar.value ? interpolateVariables({
-    activeEnvironment,
-    activeTab,
-    collections,
-    globalVariables,
-    text: hoveredVar.value
-  }) : '';
+  const { activeEnvironment, activeTab, collections, globalVariables } =
+    useWorkspace();
+  const resolvedValue = hoveredVar.value
+    ? interpolateVariables({
+        activeEnvironment,
+        activeTab,
+        collections,
+        globalVariables,
+        text: hoveredVar.value,
+      })
+    : "";
 
   return createPortal(
     <div
       ref={popoverRef}
       style={{
-        position: 'fixed',
+        position: "fixed",
         left: hoveredVar.x,
         top: hoveredVar.y,
-        background: 'var(--bg-tertiary)',
-        border: '1px solid var(--border-color)',
-        borderRadius: 'var(--radius-sm)',
+        background: "var(--bg-tertiary)",
+        border: "1px solid var(--border-color)",
+        borderRadius: "var(--radius-sm)",
         padding: 0,
         zIndex: 999999,
-        boxShadow: 'var(--shadow-lg)',
+        boxShadow: "var(--shadow-lg)",
         minWidth: 340,
-        overflow: 'hidden',
+        overflow: "hidden",
         fontSize: 13,
-        color: 'var(--text-primary)'
+        color: "var(--text-primary)",
       }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div style={{ padding: '14px 16px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div
+        style={{
+          padding: "14px 16px 10px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
         <input
           key={inputId}
           type="text"
           id={inputId}
           className="input"
-          style={{ 
-            width: '100%',
-            fontSize: 13, 
-            padding: '8px 10px', 
+          style={{
+            width: "100%",
+            fontSize: 13,
+            padding: "8px 10px",
             height: 36,
             opacity: isDynamic ? 0.8 : 1,
-            cursor: isDynamic ? 'not-allowed' : 'text'
+            cursor: isDynamic ? "not-allowed" : "text",
           }}
-          defaultValue={hoveredVar.value || ''}
+          defaultValue={hoveredVar.value || ""}
           placeholder="Enter value"
           autoFocus={!isDynamic}
           disabled={isDynamic}
           onKeyDown={(e) => {
-            if (!isDynamic && e.key === 'Enter') onSave(hoveredVar.name, e.currentTarget.value);
+            if (!isDynamic && e.key === "Enter")
+              onSave(hoveredVar.name, e.currentTarget.value);
           }}
         />
-        {hoveredVar.value && resolvedValue && resolvedValue !== hoveredVar.value && (
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', wordBreak: 'break-all', marginTop: -2 }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Resolved:</span> {resolvedValue}
-          </div>
-        )}
-        {!isDynamic && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <button
-              className="btn"
-              style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => {
-                const input = document.getElementById(inputId) as HTMLInputElement;
-                onSave(hoveredVar.name, input?.value || '');
+        {hoveredVar.value &&
+          resolvedValue &&
+          resolvedValue !== hoveredVar.value && (
+            <div
+              style={{
+                fontSize: 12,
+                color: "var(--text-tertiary)",
+                wordBreak: "break-all",
+                marginTop: -2,
               }}
             >
-              <Plus size={14} /> {hoveredVar.exists ? 'Update' : 'Add'} {isPathVariable ? 'Path' : variableTargetLabel} Variable
+              <span style={{ color: "var(--text-secondary)" }}>Resolved:</span>{" "}
+              {resolvedValue}
+            </div>
+          )}
+        {!isDynamic && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <button
+              className="btn"
+              style={{ width: "100%", justifyContent: "center" }}
+              onClick={() => {
+                const input = document.getElementById(
+                  inputId,
+                ) as HTMLInputElement;
+                onSave(hoveredVar.name, input?.value || "");
+              }}
+            >
+              <Plus size={14} /> {hoveredVar.exists ? "Update" : "Add"}{" "}
+              {isPathVariable ? "Path" : variableTargetLabel} Variable
             </button>
-            {variableTargetLabel === 'Folder' && onSaveCollection && (
+            {variableTargetLabel === "Folder" && onSaveCollection && (
               <button
                 className="btn"
-                style={{ width: '100%', justifyContent: 'center' }}
+                style={{ width: "100%", justifyContent: "center" }}
                 onClick={() => {
-                  const input = document.getElementById(inputId) as HTMLInputElement;
-                  onSaveCollection(hoveredVar.name, input?.value || '');
+                  const input = document.getElementById(
+                    inputId,
+                  ) as HTMLInputElement;
+                  onSaveCollection(hoveredVar.name, input?.value || "");
                 }}
               >
-                <Plus size={14} /> {hoveredVar.exists ? 'Update' : 'Add'} Collection Variable
+                <Plus size={14} /> {hoveredVar.exists ? "Update" : "Add"}{" "}
+                Collection Variable
               </button>
             )}
           </div>
@@ -132,58 +160,93 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
       </div>
       <button
         type="button"
-        onClick={isDynamic ? undefined : (isPathVariable ? onOpenPathVariables : onOpenCollectionVariables)}
+        onClick={
+          isDynamic
+            ? undefined
+            : isPathVariable
+              ? onOpenPathVariables
+              : onOpenCollectionVariables
+        }
         disabled={isDynamic || (!isPathVariable && !canOpenCollectionVariables)}
         style={{
-          width: '100%',
+          width: "100%",
           border: 0,
-          borderTop: '1px solid var(--border-color)',
-          background: 'transparent',
-          color: 'var(--text-secondary)',
-          padding: '10px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          cursor: isDynamic ? 'default' : (isPathVariable || canOpenCollectionVariables ? 'pointer' : 'default'),
-          fontSize: 13
+          borderTop: "1px solid var(--border-color)",
+          background: "transparent",
+          color: "var(--text-secondary)",
+          padding: "10px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          cursor: isDynamic
+            ? "default"
+            : isPathVariable || canOpenCollectionVariables
+              ? "pointer"
+              : "default",
+          fontSize: 13,
         }}
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ 
-            width: 20, 
-            height: 20, 
-            borderRadius: 5, 
-            background: isDynamic ? 'var(--accent-primary)' : 
-                       (isPathVariable ? 'var(--bg-secondary)' : 
-                       (hoveredVar.sourceType === 'Folder' ? '#e2b3ff30' : 
-                       (hoveredVar.sourceType === 'Collection' ? '#fff0a830' : 
-                       (hoveredVar.sourceType === 'Environment' ? '#8ff0b530' : 
-                       (hoveredVar.sourceType === 'Globals' ? '#9dccff30' : '#9b7200'))))), 
-            color: isDynamic ? '#fff' : 
-                  (isPathVariable ? 'var(--text-secondary)' : 
-                  (hoveredVar.sourceType === 'Folder' ? '#e2b3ff' : 
-                  (hoveredVar.sourceType === 'Collection' ? '#fff0a8' : 
-                  (hoveredVar.sourceType === 'Environment' ? '#8ff0b5' : 
-                  (hoveredVar.sourceType === 'Globals' ? '#9dccff' : '#fff0a8'))))), 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            fontWeight: 700 
-          }}>
-            {isDynamic ? 'G' : 
-            (isPathVariable ? ':' : 
-            (hoveredVar.sourceType === 'Folder' ? 'F' : 
-            (hoveredVar.sourceType === 'Collection' ? 'C' : 
-            (hoveredVar.sourceType === 'Environment' ? 'E' : 
-            (hoveredVar.sourceType === 'Globals' ? 'G' : 'C')))))}
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 5,
+              background: isDynamic
+                ? "var(--accent-primary)"
+                : isPathVariable
+                  ? "var(--bg-secondary)"
+                  : hoveredVar.sourceType === "Folder"
+                    ? "#e2b3ff30"
+                    : hoveredVar.sourceType === "Collection"
+                      ? "#fff0a830"
+                      : hoveredVar.sourceType === "Environment"
+                        ? "#8ff0b530"
+                        : hoveredVar.sourceType === "Globals"
+                          ? "#9dccff30"
+                          : "#9b7200",
+              color: isDynamic
+                ? "#fff"
+                : isPathVariable
+                  ? "var(--text-secondary)"
+                  : hoveredVar.sourceType === "Folder"
+                    ? "#e2b3ff"
+                    : hoveredVar.sourceType === "Collection"
+                      ? "#fff0a8"
+                      : hoveredVar.sourceType === "Environment"
+                        ? "#8ff0b5"
+                        : hoveredVar.sourceType === "Globals"
+                          ? "#9dccff"
+                          : "#fff0a8",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 700,
+            }}
+          >
+            {isDynamic
+              ? "G"
+              : isPathVariable
+                ? ":"
+                : hoveredVar.sourceType === "Folder"
+                  ? "F"
+                  : hoveredVar.sourceType === "Collection"
+                    ? "C"
+                    : hoveredVar.sourceType === "Environment"
+                      ? "E"
+                      : hoveredVar.sourceType === "Globals"
+                        ? "G"
+                        : "C"}
           </span>
-          {isDynamic ? 'Dynamic variable' : 
-          (isPathVariable ? 'Path variable' : 
-          (hoveredVar.sourceType || 'Collection'))}
+          {isDynamic
+            ? "Dynamic variable"
+            : isPathVariable
+              ? "Path variable"
+              : hoveredVar.sourceType || "Collection"}
         </span>
-        <span>{isDynamic ? 'Auto-generated' : 'Variables in request ->'}</span>
+        <span>{isDynamic ? "Auto-generated" : "Variables in request ->"}</span>
       </button>
     </div>,
-    document.body
+    document.body,
   );
 }

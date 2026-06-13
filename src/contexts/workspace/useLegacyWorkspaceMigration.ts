@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
-import { normalizeLegacyWorkspaces } from './syncHelpers';
-import type { TabData, Workspace } from './types';
+import { useEffect } from "react";
+
+import { normalizeLegacyWorkspaces } from "./syncHelpers";
+import type { TabData, Workspace } from "./types";
 
 type SetValue<T> = (value: T | ((val: T) => T)) => void;
 
@@ -28,24 +29,29 @@ export function useLegacyWorkspaceMigration(args: MigrationArgs) {
     setWorkspaces,
     storageHydrated,
     userId,
-    workspaces
+    workspaces,
   } = args;
 
   useEffect(() => {
     if (!storageHydrated) return;
 
     setWorkspaces((prev) => {
-      const normalized = normalizeLegacyWorkspaces(prev, localDefaultWorkspaceId, userId);
+      const normalized = normalizeLegacyWorkspaces(
+        prev,
+        localDefaultWorkspaceId,
+        userId,
+      );
       if (normalized.length !== prev.length) return normalized;
-      if (!prev.some((workspace) => workspace.id === 'default')) return prev;
+      if (!prev.some((workspace) => workspace.id === "default")) return prev;
       if (prev.some((workspace) => workspace.id === localDefaultWorkspaceId)) {
-        return prev.filter((workspace) => workspace.id !== 'default');
+        return prev.filter((workspace) => workspace.id !== "default");
       }
 
       return prev.map((workspace) =>
-        workspace.id === 'default' && (!workspace.ownerId || workspace.ownerId === userId)
+        workspace.id === "default" &&
+        (!workspace.ownerId || workspace.ownerId === userId)
           ? { ...workspace, id: localDefaultWorkspaceId }
-          : workspace
+          : workspace,
       );
     });
 
@@ -56,18 +62,26 @@ export function useLegacyWorkspaceMigration(args: MigrationArgs) {
     });
 
     setActiveTabIdByWorkspace((prev) => {
-      if (!Object.prototype.hasOwnProperty.call(prev, 'default') || prev[localDefaultWorkspaceId] !== undefined) return prev;
+      if (
+        !Object.prototype.hasOwnProperty.call(prev, "default") ||
+        prev[localDefaultWorkspaceId] !== undefined
+      )
+        return prev;
       const { default: defaultActiveTabId, ...rest } = prev;
       return { ...rest, [localDefaultWorkspaceId]: defaultActiveTabId };
     });
 
     setActiveEnvIdByWorkspace((prev) => {
-      if (!Object.prototype.hasOwnProperty.call(prev, 'default') || prev[localDefaultWorkspaceId] !== undefined) return prev;
+      if (
+        !Object.prototype.hasOwnProperty.call(prev, "default") ||
+        prev[localDefaultWorkspaceId] !== undefined
+      )
+        return prev;
       const { default: defaultActiveEnvId, ...rest } = prev;
       return { ...rest, [localDefaultWorkspaceId]: defaultActiveEnvId };
     });
 
-    if (activeWorkspaceId === 'default') {
+    if (activeWorkspaceId === "default") {
       setActiveWorkspaceId(localDefaultWorkspaceId);
     }
   }, [
@@ -79,13 +93,16 @@ export function useLegacyWorkspaceMigration(args: MigrationArgs) {
     setTabsByWorkspace,
     setWorkspaces,
     storageHydrated,
-    userId
+    userId,
   ]);
 
   useEffect(() => {
     if (!storageHydrated) return;
 
-    if (workspaces.length > 0 && !workspaces.some((workspace) => workspace.id === activeWorkspaceId)) {
+    if (
+      workspaces.length > 0 &&
+      !workspaces.some((workspace) => workspace.id === activeWorkspaceId)
+    ) {
       setActiveWorkspaceId(workspaces[0].id);
     }
   }, [activeWorkspaceId, setActiveWorkspaceId, storageHydrated, workspaces]);

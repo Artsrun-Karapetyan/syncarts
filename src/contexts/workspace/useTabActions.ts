@@ -1,6 +1,19 @@
-import { useEffect } from 'react';
-import { buildSavedRequestFromTab, findSavedRequestByIdInCollections, requestSnapshot } from './tabHelpers';
-import type { Collection, Folder, SavedExample, SavedRequest, SavedRequestLocation, TabData, Workspace } from './types';
+import { useEffect } from "react";
+
+import {
+  buildSavedRequestFromTab,
+  findSavedRequestByIdInCollections,
+  requestSnapshot,
+} from "./tabHelpers";
+import type {
+  Collection,
+  Folder,
+  SavedExample,
+  SavedRequest,
+  SavedRequestLocation,
+  TabData,
+  Workspace,
+} from "./types";
 
 interface TabActionsArgs {
   activeTab: TabData | undefined;
@@ -10,11 +23,29 @@ interface TabActionsArgs {
   currentTabs: TabData[];
   currentWorkspace: Workspace | undefined;
   lastSavedTabSnapshotsRef: React.MutableRefObject<Record<string, string>>;
-  saveRequest: (collectionId: string, folderId: string | null, request: SavedRequest) => void;
-  setActiveTabIdByWorkspace: (value: Record<string, string | null> | ((prev: Record<string, string | null>) => Record<string, string | null>)) => void;
-  setTabsByWorkspace: (value: Record<string, TabData[]> | ((prev: Record<string, TabData[]>) => Record<string, TabData[]>)) => void;
+  saveRequest: (
+    collectionId: string,
+    folderId: string | null,
+    request: SavedRequest,
+  ) => void;
+  setActiveTabIdByWorkspace: (
+    value:
+      | Record<string, string | null>
+      | ((
+          prev: Record<string, string | null>,
+        ) => Record<string, string | null>),
+  ) => void;
+  setTabsByWorkspace: (
+    value:
+      | Record<string, TabData[]>
+      | ((prev: Record<string, TabData[]>) => Record<string, TabData[]>),
+  ) => void;
   updateCollection: (id: string, data: Partial<Collection>) => void;
-  updateFolder: (collectionId: string, folderId: string, data: Partial<Folder>) => void;
+  updateFolder: (
+    collectionId: string,
+    folderId: string,
+    data: Partial<Folder>,
+  ) => void;
 }
 
 export function useTabActions(args: TabActionsArgs) {
@@ -30,20 +61,26 @@ export function useTabActions(args: TabActionsArgs) {
     setActiveTabIdByWorkspace,
     setTabsByWorkspace,
     updateCollection,
-    updateFolder
+    updateFolder,
   } = args;
 
   const updateCurrentTabs = (updater: (prev: TabData[]) => TabData[]) => {
-    setTabsByWorkspace(prev => ({ ...prev, [activeWorkspaceId]: updater(prev[activeWorkspaceId] || []) }));
+    setTabsByWorkspace((prev) => ({
+      ...prev,
+      [activeWorkspaceId]: updater(prev[activeWorkspaceId] || []),
+    }));
   };
 
-  const findSavedRequestById = (requestId?: string): SavedRequestLocation | null => {
+  const findSavedRequestById = (
+    requestId?: string,
+  ): SavedRequestLocation | null => {
     return findSavedRequestByIdInCollections(collections, requestId);
   };
 
   const resolveTabSavedRequestId = (tab?: TabData) => {
-    if (!tab || (tab.type && tab.type !== 'request')) return undefined;
-    if (tab.savedRequestId && findSavedRequestById(tab.savedRequestId)) return tab.savedRequestId;
+    if (!tab || (tab.type && tab.type !== "request")) return undefined;
+    if (tab.savedRequestId && findSavedRequestById(tab.savedRequestId))
+      return tab.savedRequestId;
     if (findSavedRequestById(tab.id)) return tab.id;
     return undefined;
   };
@@ -53,8 +90,9 @@ export function useTabActions(args: TabActionsArgs) {
   };
 
   const isTabDirty = (tab?: TabData) => {
-    if (!tab || (tab.type && tab.type !== 'request')) return false;
-    if (lastSavedTabSnapshotsRef.current[tab.id] === requestSnapshot(tab)) return false;
+    if (!tab || (tab.type && tab.type !== "request")) return false;
+    if (lastSavedTabSnapshotsRef.current[tab.id] === requestSnapshot(tab))
+      return false;
     const savedRequestId = resolveTabSavedRequestId(tab);
     if (!savedRequestId) return true;
     const saved = findSavedRequestById(savedRequestId);
@@ -65,20 +103,38 @@ export function useTabActions(args: TabActionsArgs) {
   const updateActiveTab = (data: Partial<TabData>) => {
     if (!activeTabId) return;
     let currentTab: TabData | undefined;
-    updateCurrentTabs(prev => prev.map(t => {
-      if (t.id !== activeTabId) return t;
-      const updated = { ...t, ...data };
-      currentTab = updated;
-      return updated;
-    }));
+    updateCurrentTabs((prev) =>
+      prev.map((t) => {
+        if (t.id !== activeTabId) return t;
+        const updated = { ...t, ...data };
+        currentTab = updated;
+        return updated;
+      }),
+    );
 
     const { collectionView, ...persistableData } = data;
     void collectionView;
 
-    if (currentTab && currentTab.type === 'collection' && currentTab.collectionId) {
-      updateCollection(currentTab.collectionId, persistableData as Partial<Collection>);
-    } else if (currentTab && currentTab.type === 'folder' && currentTab.collectionId && currentTab.folderId) {
-      updateFolder(currentTab.collectionId, currentTab.folderId, persistableData as Partial<Folder>);
+    if (
+      currentTab &&
+      currentTab.type === "collection" &&
+      currentTab.collectionId
+    ) {
+      updateCollection(
+        currentTab.collectionId,
+        persistableData as Partial<Collection>,
+      );
+    } else if (
+      currentTab &&
+      currentTab.type === "folder" &&
+      currentTab.collectionId &&
+      currentTab.folderId
+    ) {
+      updateFolder(
+        currentTab.collectionId,
+        currentTab.folderId,
+        persistableData as Partial<Folder>,
+      );
     }
   };
 
@@ -86,7 +142,7 @@ export function useTabActions(args: TabActionsArgs) {
     request: SavedRequest,
     collectionId: string,
     folderId: string | null,
-    savedRequestId = request.id
+    savedRequestId = request.id,
   ) => {
     updateActiveTab({
       name: request.name,
@@ -111,32 +167,43 @@ export function useTabActions(args: TabActionsArgs) {
   };
 
   const setActiveTabId = (id: string) => {
-    setActiveTabIdByWorkspace(prev => ({ ...prev, [activeWorkspaceId]: id }));
+    setActiveTabIdByWorkspace((prev) => ({ ...prev, [activeWorkspaceId]: id }));
   };
 
   const addTab = (data?: Partial<TabData> & { savedRequestId?: string }) => {
-    const isReq = !data?.type || data.type === 'request';
+    const isReq = !data?.type || data.type === "request";
     const newTab: TabData = {
       id: crypto.randomUUID(),
-      type: data?.type || 'request',
-      name: data?.name || 'Untitled Request',
-      method: isReq ? 'GET' : '',
-      url: isReq ? '' : '',
-      headers: isReq ? [{ key: '', value: '', enabled: true }] : [],
-      bodyType: isReq ? 'raw' : undefined,
+      type: data?.type || "request",
+      name: data?.name || "Untitled Request",
+      method: isReq ? "GET" : "",
+      url: isReq ? "" : "",
+      headers: isReq ? [{ key: "", value: "", enabled: true }] : [],
+      bodyType: isReq ? "raw" : undefined,
       queryParams: isReq ? [] : undefined,
-      formData: isReq ? [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }] : undefined,
+      formData: isReq
+        ? [
+            {
+              id: crypto.randomUUID(),
+              key: "",
+              value: "",
+              enabled: true,
+              type: "text",
+            },
+          ]
+        : undefined,
       pathVariables: isReq ? [] : undefined,
-      body: isReq ? '' : '',
-      description: '',
-      preRequestScript: '',
-      testScript: '',
+      body: isReq ? "" : "",
+      description: "",
+      preRequestScript: "",
+      testScript: "",
       response: null,
-      ...data
+      ...data,
     };
-    if (!newTab.savedRequestId && data?.id && data.id !== newTab.id) newTab.savedRequestId = data.id;
+    if (!newTab.savedRequestId && data?.id && data.id !== newTab.id)
+      newTab.savedRequestId = data.id;
     if (newTab.savedRequestId) rememberTabSnapshot(newTab.id, newTab);
-    updateCurrentTabs(prev => [...prev, newTab]);
+    updateCurrentTabs((prev) => [...prev, newTab]);
     setActiveTabId(newTab.id);
   };
 
@@ -144,33 +211,47 @@ export function useTabActions(args: TabActionsArgs) {
     let closedIdWasActive = false;
     let newTabsToSet: TabData[] = [];
 
-    updateCurrentTabs(prev => {
-      const newTabs = prev.filter(t => t.id !== id);
+    updateCurrentTabs((prev) => {
+      const newTabs = prev.filter((t) => t.id !== id);
       closedIdWasActive = activeTabId === id;
       newTabsToSet = newTabs;
       return newTabs;
     });
 
     if (closedIdWasActive) {
-      setActiveTabIdByWorkspace(prev => ({
+      setActiveTabIdByWorkspace((prev) => ({
         ...prev,
-        [activeWorkspaceId]: newTabsToSet.length > 0 ? newTabsToSet[newTabsToSet.length - 1].id : null
+        [activeWorkspaceId]:
+          newTabsToSet.length > 0
+            ? newTabsToSet[newTabsToSet.length - 1].id
+            : null,
       }));
     }
     delete lastSavedTabSnapshotsRef.current[id];
   };
 
-  const openCollectionTab = (collectionId: string, view: TabData['collectionView'] = 'overview') => {
-    const col = currentWorkspace?.collections.find(c => c.id === collectionId);
+  const openCollectionTab = (
+    collectionId: string,
+    view: TabData["collectionView"] = "overview",
+  ) => {
+    const col = currentWorkspace?.collections.find(
+      (c) => c.id === collectionId,
+    );
     if (!col) return;
-    const existing = currentTabs.find(t => t.type === 'collection' && t.collectionId === collectionId);
+    const existing = currentTabs.find(
+      (t) => t.type === "collection" && t.collectionId === collectionId,
+    );
     if (existing) {
-      updateCurrentTabs(prev => prev.map(tab => tab.id === existing.id ? { ...tab, collectionView: view } : tab));
+      updateCurrentTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === existing.id ? { ...tab, collectionView: view } : tab,
+        ),
+      );
       return setActiveTabId(existing.id);
     }
 
     addTab({
-      type: 'collection',
+      type: "collection",
       name: col.name,
       collectionId,
       collectionView: view,
@@ -184,15 +265,19 @@ export function useTabActions(args: TabActionsArgs) {
   };
 
   const openFolderTab = (collectionId: string, folderId: string) => {
-    const col = currentWorkspace?.collections.find(c => c.id === collectionId);
+    const col = currentWorkspace?.collections.find(
+      (c) => c.id === collectionId,
+    );
     if (!col) return;
     const folder = findFolder(col.items, folderId);
     if (!folder) return;
-    const existing = currentTabs.find(t => t.type === 'folder' && t.folderId === folderId);
+    const existing = currentTabs.find(
+      (t) => t.type === "folder" && t.folderId === folderId,
+    );
     if (existing) return setActiveTabId(existing.id);
 
     addTab({
-      type: 'folder',
+      type: "folder",
       name: folder.name,
       collectionId,
       folderId,
@@ -204,10 +289,18 @@ export function useTabActions(args: TabActionsArgs) {
     });
   };
 
-  const openRequestTab = (collectionId: string, folderId: string | null, requestId: string) => {
+  const openRequestTab = (
+    collectionId: string,
+    folderId: string | null,
+    requestId: string,
+  ) => {
     const saved = findSavedRequestById(requestId);
     if (!saved) return;
-    const existing = currentTabs.find(t => (t.type === 'request' || !t.type) && (t.savedRequestId === requestId || t.id === requestId));
+    const existing = currentTabs.find(
+      (t) =>
+        (t.type === "request" || !t.type) &&
+        (t.savedRequestId === requestId || t.id === requestId),
+    );
     if (existing) return setActiveTabId(existing.id);
 
     const tabId = crypto.randomUUID();
@@ -217,57 +310,74 @@ export function useTabActions(args: TabActionsArgs) {
       savedRequestId: requestId,
       collectionId,
       folderId: folderId || undefined,
-      response: null
+      response: null,
     });
   };
 
   const openExampleTab = (collectionId: string, exampleId: string) => {
-    const col = currentWorkspace?.collections.find(c => c.id === collectionId);
+    const col = currentWorkspace?.collections.find(
+      (c) => c.id === collectionId,
+    );
     if (!col) return;
     const example = findExample(col.items, exampleId);
     if (!example) return;
-    const existing = currentTabs.find(t => t.type === 'example' && t.exampleId === exampleId);
+    const existing = currentTabs.find(
+      (t) => t.type === "example" && t.exampleId === exampleId,
+    );
     if (existing) return setActiveTabId(existing.id);
 
     addTab({
-      type: 'example',
+      type: "example",
       name: example.name,
       collectionId,
       exampleId,
-      method: example.originalRequest?.method || 'GET',
-      url: example.originalRequest?.url || '',
+      method: example.originalRequest?.method || "GET",
+      url: example.originalRequest?.url || "",
       pathVariables: example.originalRequest?.pathVariables,
-      body: example.originalRequest?.body || '',
-      bodyType: example.originalRequest?.bodyType || 'none',
+      body: example.originalRequest?.body || "",
+      bodyType: example.originalRequest?.bodyType || "none",
       formData: example.originalRequest?.formData,
       headers: example.originalRequest?.headers || [],
       response: {
         status: example.code,
         status_text: example.status,
-        headers: example.headers.reduce((acc, h) => ({ ...acc, [h.key]: h.value }), {}),
+        headers: example.headers.reduce(
+          (acc, h) => ({ ...acc, [h.key]: h.value }),
+          {},
+        ),
         body: example.body,
-        time_ms: 0
-      }
+        time_ms: 0,
+      },
     });
   };
 
   const saveActiveRequestInPlace = () => {
-    if (!activeTab || (activeTab.type && activeTab.type !== 'request')) return false;
+    if (!activeTab || (activeTab.type && activeTab.type !== "request"))
+      return false;
     return saveRequestTabInPlace(activeTab);
   };
 
   const saveRequestTabInPlace = (tab: TabData) => {
-    if (!tab || (tab.type && tab.type !== 'request')) return false;
+    if (!tab || (tab.type && tab.type !== "request")) return false;
     const savedRequestId = resolveTabSavedRequestId(tab);
     if (!savedRequestId) return false;
     const saved = findSavedRequestById(savedRequestId);
     if (!saved) return false;
 
-    const updatedRequest = buildSavedRequestFromTab(tab, savedRequestId, saved.request);
+    const updatedRequest = buildSavedRequestFromTab(
+      tab,
+      savedRequestId,
+      saved.request,
+    );
     rememberTabSnapshot(tab.id, updatedRequest);
     saveRequest(saved.collectionId, saved.folderId, updatedRequest);
     if (activeTab?.id === tab.id) {
-      syncTabWithSavedRequest(updatedRequest, saved.collectionId, saved.folderId, savedRequestId);
+      syncTabWithSavedRequest(
+        updatedRequest,
+        saved.collectionId,
+        saved.folderId,
+        savedRequestId,
+      );
     }
     return true;
   };
@@ -276,13 +386,14 @@ export function useTabActions(args: TabActionsArgs) {
     if (currentTabs.length === 0) return;
     let changed = false;
     const normalizedTabs = currentTabs.map((tab) => {
-      if (tab.type && tab.type !== 'request') return tab;
+      if (tab.type && tab.type !== "request") return tab;
       const requestId = tab.savedRequestId || tab.id;
       const saved = findSavedRequestById(requestId);
       if (!saved) return tab;
       const savedSnapshot = requestSnapshot(saved.request);
       const tabSnapshot = requestSnapshot(tab);
-      const baselineSnapshot = lastSavedTabSnapshotsRef.current[tab.id] || tabSnapshot;
+      const baselineSnapshot =
+        lastSavedTabSnapshotsRef.current[tab.id] || tabSnapshot;
       lastSavedTabSnapshotsRef.current[tab.id] = baselineSnapshot;
 
       if (tabSnapshot !== baselineSnapshot) return tab;
@@ -294,19 +405,22 @@ export function useTabActions(args: TabActionsArgs) {
         ...tab,
         ...saved.request,
         id: tab.id,
-        type: 'request' as const,
+        type: "request" as const,
         savedRequestId: requestId,
         collectionId: saved.collectionId,
         folderId: saved.folderId || undefined,
         pathVariables: saved.request.pathVariables,
         response: tab.response,
         testResults: tab.testResults,
-        consoleLogs: tab.consoleLogs
+        consoleLogs: tab.consoleLogs,
       };
     });
 
     if (!changed) return;
-    setTabsByWorkspace(prev => ({ ...prev, [activeWorkspaceId]: normalizedTabs }));
+    setTabsByWorkspace((prev) => ({
+      ...prev,
+      [activeWorkspaceId]: normalizedTabs,
+    }));
   }, [activeWorkspaceId, collections, currentTabs, setTabsByWorkspace]);
 
   return {
@@ -324,13 +438,16 @@ export function useTabActions(args: TabActionsArgs) {
     saveRequestTabInPlace,
     setActiveTabId,
     updateActiveTab,
-    updateCurrentTabs
+    updateCurrentTabs,
   };
 }
 
-function findFolder(items: (Folder | SavedRequest)[], folderId: string): Folder | null {
+function findFolder(
+  items: (Folder | SavedRequest)[],
+  folderId: string,
+): Folder | null {
   for (const item of items) {
-    if (item.type === 'folder') {
+    if (item.type === "folder") {
       if (item.id === folderId) return item;
       const found = findFolder(item.items, folderId);
       if (found) return found;
@@ -339,9 +456,12 @@ function findFolder(items: (Folder | SavedRequest)[], folderId: string): Folder 
   return null;
 }
 
-function findExample(items: (Folder | SavedRequest)[], exampleId: string): SavedExample | null {
+function findExample(
+  items: (Folder | SavedRequest)[],
+  exampleId: string,
+): SavedExample | null {
   for (const item of items) {
-    if (item.type === 'folder') {
+    if (item.type === "folder") {
       const found = findExample(item.items, exampleId);
       if (found) return found;
     } else if (item.examples) {

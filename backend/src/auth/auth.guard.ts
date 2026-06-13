@@ -1,15 +1,16 @@
-import { createHash } from 'node:crypto';
+import { createHash } from "node:crypto";
 
-import { PrismaService } from '../prisma/prisma.service.js';
-import { IS_PUBLIC_KEY } from '../common/public.decorator.js';
 import {
   CanActivate,
   ExecutionContext,
   Inject,
   Injectable,
   UnauthorizedException,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+
+import { IS_PUBLIC_KEY } from "../common/public.decorator.js";
+import { PrismaService } from "../prisma/prisma.service.js";
 
 type AuthedRequest = {
   headers: {
@@ -43,16 +44,16 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<AuthedRequest>();
-    const authHeader = request.headers.authorization ?? '';
-    const token = authHeader.startsWith('Bearer ')
+    const authHeader = request.headers.authorization ?? "";
+    const token = authHeader.startsWith("Bearer ")
       ? authHeader.slice(7).trim()
-      : '';
+      : "";
 
     if (!token) {
-      throw new UnauthorizedException('Missing auth token');
+      throw new UnauthorizedException("Missing auth token");
     }
 
-    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const tokenHash = createHash("sha256").update(token).digest("hex");
     const session = await this.prisma.session.findUnique({
       where: { tokenHash },
       include: { user: true },
@@ -62,7 +63,7 @@ export class AuthGuard implements CanActivate {
       if (session) {
         await this.prisma.session.delete({ where: { tokenHash } });
       }
-      throw new UnauthorizedException('Session expired');
+      throw new UnauthorizedException("Session expired");
     }
 
     request.authToken = token;

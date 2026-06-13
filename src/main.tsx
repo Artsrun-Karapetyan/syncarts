@@ -1,20 +1,21 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { RouterProvider, createRouter } from '@tanstack/react-router';
-import { invoke } from '@tauri-apps/api/core';
 import "./styles/global.css";
 
+import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { invoke } from "@tauri-apps/api/core";
+import React from "react";
+import ReactDOM from "react-dom/client";
+
 // Import the generated route tree
-import { routeTree } from './routeTree.gen';
+import { routeTree } from "./routeTree.gen";
 
 const disableTextAutoCorrection = () => {
   const selector = 'input, textarea, [contenteditable="true"]';
   const apply = (root: ParentNode) => {
     root.querySelectorAll<HTMLElement>(selector).forEach((element) => {
-      element.setAttribute('autocapitalize', 'off');
-      element.setAttribute('autocorrect', 'off');
-      element.setAttribute('autocomplete', 'off');
-      element.setAttribute('spellcheck', 'false');
+      element.setAttribute("autocapitalize", "off");
+      element.setAttribute("autocorrect", "off");
+      element.setAttribute("autocomplete", "off");
+      element.setAttribute("spellcheck", "false");
     });
   };
 
@@ -25,10 +26,10 @@ const disableTextAutoCorrection = () => {
       mutation.addedNodes.forEach((node) => {
         if (!(node instanceof HTMLElement)) return;
         if (node.matches(selector)) {
-          node.setAttribute('autocapitalize', 'off');
-          node.setAttribute('autocorrect', 'off');
-          node.setAttribute('autocomplete', 'off');
-          node.setAttribute('spellcheck', 'false');
+          node.setAttribute("autocapitalize", "off");
+          node.setAttribute("autocorrect", "off");
+          node.setAttribute("autocomplete", "off");
+          node.setAttribute("spellcheck", "false");
         }
         apply(node);
       });
@@ -41,16 +42,16 @@ const disableTextAutoCorrection = () => {
 disableTextAutoCorrection();
 
 if (import.meta.env.PROD) {
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
 }
 
 // Create a new router instance
 const router = createRouter({ routeTree });
 
 // Register the router instance for type safety
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface Register {
-    router: typeof router
+    router: typeof router;
   }
 }
 
@@ -62,10 +63,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 
 window.requestAnimationFrame(() => {
   window.requestAnimationFrame(() => {
-    void invoke('show_main_window').catch(() => undefined);
+    void invoke("show_main_window").catch(() => undefined);
 
-    const bootScreen = document.getElementById('boot-screen');
-    bootScreen?.classList.add('boot-hidden');
+    const bootScreen = document.getElementById("boot-screen");
+    bootScreen?.classList.add("boot-hidden");
     window.setTimeout(() => bootScreen?.remove(), 220);
   });
 });

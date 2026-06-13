@@ -1,4 +1,4 @@
-import type { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from "lucide-react";
 
 interface ToolbarButtonProps {
   tooltip: string;
@@ -16,10 +16,10 @@ export function ToolbarButton({
   icon: Icon,
   onClick,
   children,
-  color = 'var(--text-tertiary)',
-  background = 'transparent',
-  hoverColor = 'var(--text-primary)',
-  hoverBackground = 'var(--bg-tertiary)',
+  color = "var(--text-tertiary)",
+  background = "transparent",
+  hoverColor = "var(--text-primary)",
+  hoverBackground = "var(--bg-tertiary)",
 }: ToolbarButtonProps) {
   return (
     <div
@@ -29,14 +29,14 @@ export function ToolbarButton({
         width: 26,
         height: 26,
         borderRadius: 6,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         color,
         background,
-        cursor: 'pointer',
-        transition: 'all var(--transition-fast)',
-        position: 'relative',
+        cursor: "pointer",
+        transition: "all var(--transition-fast)",
+        position: "relative",
       }}
       onClick={onClick}
       onMouseEnter={(e) => {

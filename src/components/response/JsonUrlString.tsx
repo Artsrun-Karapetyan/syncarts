@@ -1,19 +1,29 @@
-import JsonView from '@uiw/react-json-view';
+import JsonView from "@uiw/react-json-view";
+
+import { getShortcutLabel } from "./jsonShortcut";
 
 const URL_PATTERN = /^https?:\/\/\S+$/i;
 
 export function JsonUrlString() {
   return (
     <JsonView.String
-      render={({ children, className, ...reset }: any, { type, value }: any) => {
-        if (type !== 'value' || typeof value !== 'string' || !URL_PATTERN.test(value)) return undefined;
+      render={(
+        { children, className, ...reset }: any,
+        { type, value }: any,
+      ) => {
+        if (
+          type !== "value" ||
+          typeof value !== "string" ||
+          !URL_PATTERN.test(value)
+        )
+          return undefined;
 
         return (
           <>
             <span className="w-rjv-quotes">"</span>
             <span
               {...reset}
-              className={`${className || ''} response-json-link`}
+              className={`${className || ""} response-json-link`}
               data-url={value}
               data-tooltip={`Follow link (${getShortcutLabel()} + click)`}
               title={`Follow link (${getShortcutLabel()} + click)`}
@@ -26,9 +36,4 @@ export function JsonUrlString() {
       }}
     />
   );
-}
-
-function getShortcutLabel() {
-  if (typeof navigator === 'undefined') return 'cmd/ctrl';
-  return /Mac|iPhone|iPad|iPod/i.test(navigator.platform) ? 'cmd' : 'ctrl';
 }

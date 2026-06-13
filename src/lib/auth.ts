@@ -1,4 +1,4 @@
-const AUTH_TOKEN_KEY = 'syncarts_auth_token';
+const AUTH_TOKEN_KEY = "syncarts_auth_token";
 
 export function getAuthToken() {
   return window.localStorage.getItem(AUTH_TOKEN_KEY);

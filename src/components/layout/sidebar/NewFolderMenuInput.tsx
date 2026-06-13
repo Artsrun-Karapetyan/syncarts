@@ -1,4 +1,4 @@
-import type { CtxMenuState } from './types';
+import type { CtxMenuState } from "./types";
 
 interface NewFolderMenuInputProps {
   newFolderName: string;
@@ -8,19 +8,25 @@ interface NewFolderMenuInputProps {
   setCtxMenu: (value: CtxMenuState | null) => void;
 }
 
-export function NewFolderMenuInput({ newFolderName, setNewFolderName, handleFolderSubmit, setIsCreatingFolder, setCtxMenu }: NewFolderMenuInputProps) {
+export function NewFolderMenuInput({
+  newFolderName,
+  setNewFolderName,
+  handleFolderSubmit,
+  setIsCreatingFolder,
+  setCtxMenu,
+}: NewFolderMenuInputProps) {
   return (
-    <div style={{ padding: '6px 12px' }}>
+    <div style={{ padding: "6px 12px" }}>
       <input
         autoFocus
         className="input"
-        style={{ width: '100%', fontSize: 13, padding: '6px 10px' }}
+        style={{ width: "100%", fontSize: 13, padding: "6px 10px" }}
         placeholder="Folder name"
         value={newFolderName}
         onChange={(e) => setNewFolderName(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') handleFolderSubmit();
-          if (e.key === 'Escape') {
+          if (e.key === "Enter") handleFolderSubmit();
+          if (e.key === "Escape") {
             setIsCreatingFolder(false);
             setCtxMenu(null);
           }

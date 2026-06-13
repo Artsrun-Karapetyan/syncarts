@@ -1,49 +1,67 @@
-import { useEffect, useRef } from 'react';
-import { api } from '../../lib/api';
+import { useEffect, useRef } from "react";
+
+import { api } from "../../lib/api";
 import {
   createDefaultActiveEnvByWorkspace,
   createDefaultActiveTabByWorkspace,
   createDefaultTabsByWorkspace,
-  createDefaultWorkspaces
-} from './initializers';
-import { canSyncWorkspace, getSyncSignature, getWorkspaceSyncPayload } from './syncHelpers';
-import type { SavedRequest, TabData, Workspace, WorkspaceContextState } from './types';
-import { useCollectionActions } from './useCollectionActions';
-import { useEnvironmentActions } from './useEnvironmentActions';
-import { useKeyboardShortcuts } from './useKeyboardShortcuts';
-import { useLegacyWorkspaceMigration } from './useLegacyWorkspaceMigration';
-import { useLocalStorage } from './useLocalStorage';
-import { useRequestSender } from './useRequestSender';
-import { useTabActions } from './useTabActions';
-import { useWorkspaceSync } from './useWorkspaceSync';
+  createDefaultWorkspaces,
+} from "./initializers";
+import {
+  canSyncWorkspace,
+  getSyncSignature,
+  getWorkspaceSyncPayload,
+} from "./syncHelpers";
+import type {
+  SavedRequest,
+  TabData,
+  Workspace,
+  WorkspaceContextState,
+} from "./types";
+import { useCollectionActions } from "./useCollectionActions";
+import { useEnvironmentActions } from "./useEnvironmentActions";
+import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
+import { useLegacyWorkspaceMigration } from "./useLegacyWorkspaceMigration";
+import { useLocalStorage } from "./useLocalStorage";
+import { useRequestSender } from "./useRequestSender";
+import { useTabActions } from "./useTabActions";
+import { useWorkspaceSync } from "./useWorkspaceSync";
 
 export function useWorkspaceController(userId: string): WorkspaceContextState {
   const localDefaultWorkspaceId = `local-${userId}`;
-  const [workspaces, setWorkspaces, workspacesHydrated] = useLocalStorage<Workspace[]>(
+  const [workspaces, setWorkspaces, workspacesHydrated] = useLocalStorage<
+    Workspace[]
+  >(
     `syncarts-workspaces-v3-${userId}`,
-    createDefaultWorkspaces(userId, localDefaultWorkspaceId)
+    createDefaultWorkspaces(userId, localDefaultWorkspaceId),
   );
-  const [activeWorkspaceId, setActiveWorkspaceId, activeWorkspaceHydrated] = useLocalStorage<string>(
-    `syncarts-active-workspace-v3-${userId}`,
-    workspaces[0]?.id || localDefaultWorkspaceId
-  );
-  const [tabsByWorkspace, setTabsByWorkspace, tabsHydrated] = useLocalStorage<Record<string, TabData[]>>(
+  const [activeWorkspaceId, setActiveWorkspaceId, activeWorkspaceHydrated] =
+    useLocalStorage<string>(
+      `syncarts-active-workspace-v3-${userId}`,
+      workspaces[0]?.id || localDefaultWorkspaceId,
+    );
+  const [tabsByWorkspace, setTabsByWorkspace, tabsHydrated] = useLocalStorage<
+    Record<string, TabData[]>
+  >(
     `syncarts-tabs-by-workspace-v3-${userId}`,
-    createDefaultTabsByWorkspace(localDefaultWorkspaceId)
+    createDefaultTabsByWorkspace(localDefaultWorkspaceId),
   );
-  const [activeTabIdByWorkspace, setActiveTabIdByWorkspace, activeTabHydrated] = useLocalStorage<Record<string, string | null>>(
-    `syncarts-active-tab-by-workspace-v3-${userId}`,
-    createDefaultActiveTabByWorkspace(localDefaultWorkspaceId)
-  );
-  const [activeEnvIdByWorkspace, setActiveEnvIdByWorkspace, activeEnvHydrated] = useLocalStorage<Record<string, string | null>>(
-    `syncarts-active-env-by-workspace-v3-${userId}`,
-    createDefaultActiveEnvByWorkspace(localDefaultWorkspaceId)
-  );
-  const storageHydrated = workspacesHydrated
-    && activeWorkspaceHydrated
-    && tabsHydrated
-    && activeTabHydrated
-    && activeEnvHydrated;
+  const [activeTabIdByWorkspace, setActiveTabIdByWorkspace, activeTabHydrated] =
+    useLocalStorage<Record<string, string | null>>(
+      `syncarts-active-tab-by-workspace-v3-${userId}`,
+      createDefaultActiveTabByWorkspace(localDefaultWorkspaceId),
+    );
+  const [activeEnvIdByWorkspace, setActiveEnvIdByWorkspace, activeEnvHydrated] =
+    useLocalStorage<Record<string, string | null>>(
+      `syncarts-active-env-by-workspace-v3-${userId}`,
+      createDefaultActiveEnvByWorkspace(localDefaultWorkspaceId),
+    );
+  const storageHydrated =
+    workspacesHydrated &&
+    activeWorkspaceHydrated &&
+    tabsHydrated &&
+    activeTabHydrated &&
+    activeEnvHydrated;
 
   const dirtyWorkspaceIdsRef = useRef<Set<string>>(new Set());
   const syncingWorkspaceIdsRef = useRef<Set<string>>(new Set());
@@ -61,27 +79,30 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     setTabsByWorkspace,
     setWorkspaces,
     userId,
-    workspaces
+    workspaces,
   });
 
   useEffect(() => {
     if (!storageHydrated) return;
     if (workspaces.length > 0) return;
-    const defaultWorkspace = createDefaultWorkspaces(userId, localDefaultWorkspaceId)[0];
+    const defaultWorkspace = createDefaultWorkspaces(
+      userId,
+      localDefaultWorkspaceId,
+    )[0];
 
     setWorkspaces([defaultWorkspace]);
     setActiveWorkspaceId(defaultWorkspace.id);
-    setTabsByWorkspace(prev => ({
+    setTabsByWorkspace((prev) => ({
       ...prev,
-      [defaultWorkspace.id]: prev[defaultWorkspace.id] || []
+      [defaultWorkspace.id]: prev[defaultWorkspace.id] || [],
     }));
-    setActiveTabIdByWorkspace(prev => ({
+    setActiveTabIdByWorkspace((prev) => ({
       ...prev,
-      [defaultWorkspace.id]: prev[defaultWorkspace.id] || null
+      [defaultWorkspace.id]: prev[defaultWorkspace.id] || null,
     }));
-    setActiveEnvIdByWorkspace(prev => ({
+    setActiveEnvIdByWorkspace((prev) => ({
       ...prev,
-      [defaultWorkspace.id]: prev[defaultWorkspace.id] || null
+      [defaultWorkspace.id]: prev[defaultWorkspace.id] || null,
     }));
   }, [
     localDefaultWorkspaceId,
@@ -93,29 +114,47 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     storageHydrated,
     tabsByWorkspace,
     userId,
-    workspaces.length
+    workspaces.length,
   ]);
 
-  const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId) || workspaces[0];
-  const currentWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
+  const activeWorkspace =
+    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
+  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const collections = activeWorkspace?.collections || [];
   const environments = activeWorkspace?.environments || [];
   const activeEnvironmentId = activeEnvIdByWorkspace[activeWorkspaceId] || null;
-  const activeEnvironment = environments.find(e => e.id === activeEnvironmentId);
+  const activeEnvironment = environments.find(
+    (e) => e.id === activeEnvironmentId,
+  );
   const globalVariables = currentWorkspace?.globalVariables || [];
   const currentTabs = tabsByWorkspace[activeWorkspaceId] || [];
-  const activeTabId = activeTabIdByWorkspace[activeWorkspaceId] || (currentTabs.length > 0 ? currentTabs[0].id : null);
-  const activeTab = currentTabs.find(t => t.id === activeTabId) || currentTabs[0];
+  const activeTabId =
+    activeTabIdByWorkspace[activeWorkspaceId] ||
+    (currentTabs.length > 0 ? currentTabs[0].id : null);
+  const activeTab =
+    currentTabs.find((t) => t.id === activeTabId) || currentTabs[0];
 
   const updateWorkspaces = (updater: (prev: Workspace[]) => Workspace[]) => {
     setWorkspaces((prev) => {
       const next = updater(prev);
-      const before = prev.find((workspace) => workspace.id === activeWorkspaceId);
-      const after = next.find((workspace) => workspace.id === activeWorkspaceId);
-      const beforeSignature = getSyncSignature(getWorkspaceSyncPayload(before || after!));
-      const afterSignature = after ? getSyncSignature(getWorkspaceSyncPayload(after)) : beforeSignature;
+      const before = prev.find(
+        (workspace) => workspace.id === activeWorkspaceId,
+      );
+      const after = next.find(
+        (workspace) => workspace.id === activeWorkspaceId,
+      );
+      const beforeSignature = getSyncSignature(
+        getWorkspaceSyncPayload(before || after!),
+      );
+      const afterSignature = after
+        ? getSyncSignature(getWorkspaceSyncPayload(after))
+        : beforeSignature;
 
-      if (after && canSyncWorkspace(after, userId) && beforeSignature !== afterSignature) {
+      if (
+        after &&
+        canSyncWorkspace(after, userId) &&
+        beforeSignature !== afterSignature
+      ) {
         dirtyWorkspaceIdsRef.current.add(after.id);
       }
 
@@ -127,7 +166,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     activeEnvironmentId,
     activeWorkspaceId,
     setActiveEnvIdByWorkspace,
-    updateWorkspaces
+    updateWorkspaces,
   });
 
   const collectionActions = useCollectionActions({
@@ -135,7 +174,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     activeWorkspaceId,
     localDefaultWorkspaceId,
     setTabsByWorkspace,
-    updateWorkspaces
+    updateWorkspaces,
   });
 
   const tabActions = useTabActions({
@@ -150,7 +189,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     setActiveTabIdByWorkspace,
     setTabsByWorkspace,
     updateCollection: collectionActions.updateCollection,
-    updateFolder: collectionActions.updateFolder
+    updateFolder: collectionActions.updateFolder,
   });
 
   const requestSender = useRequestSender({
@@ -163,7 +202,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     updateActiveTab: tabActions.updateActiveTab,
     updateCollection: collectionActions.updateCollection,
     updateEnvironment: environmentActions.updateEnvironment,
-    updateGlobalVariables: environmentActions.updateGlobalVariables
+    updateGlobalVariables: environmentActions.updateGlobalVariables,
   });
 
   const { reloadWorkspaces } = useWorkspaceSync({
@@ -176,16 +215,23 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     storageHydrated,
     syncingWorkspaceIdsRef,
     userId,
-    workspaces
+    workspaces,
   });
 
-  const createWorkspace = (name: string, collections: any[] = [], environments: any[] = []) => {
+  const createWorkspace = (
+    name: string,
+    collections: any[] = [],
+    environments: any[] = [],
+  ) => {
     const newWsId = crypto.randomUUID();
     dirtyWorkspaceIdsRef.current.add(newWsId);
-    setWorkspaces(prev => [...prev, { id: newWsId, name, collections, environments }]);
-    setTabsByWorkspace(prev => ({ ...prev, [newWsId]: [] }));
-    setActiveTabIdByWorkspace(prev => ({ ...prev, [newWsId]: null }));
-    setActiveEnvIdByWorkspace(prev => ({ ...prev, [newWsId]: null }));
+    setWorkspaces((prev) => [
+      ...prev,
+      { id: newWsId, name, collections, environments },
+    ]);
+    setTabsByWorkspace((prev) => ({ ...prev, [newWsId]: [] }));
+    setActiveTabIdByWorkspace((prev) => ({ ...prev, [newWsId]: null }));
+    setActiveEnvIdByWorkspace((prev) => ({ ...prev, [newWsId]: null }));
     setActiveWorkspaceId(newWsId);
     return newWsId;
   };
@@ -196,32 +242,36 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
 
   const renameWorkspace = (id: string, newName: string) => {
     if (id === localDefaultWorkspaceId) {
-      throw new Error('Cannot rename your default workspace.');
+      throw new Error("Cannot rename your default workspace.");
     }
     dirtyWorkspaceIdsRef.current.add(id);
-    setWorkspaces(prev => prev.map(w => w.id === id ? { ...w, name: newName } : w));
+    setWorkspaces((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, name: newName } : w)),
+    );
   };
 
   const removeWorkspace = async (id: string) => {
     if (id === localDefaultWorkspaceId) {
-      throw new Error('Cannot delete your default workspace.');
+      throw new Error("Cannot delete your default workspace.");
     }
-    console.log('[SYNC] removeWorkspace called for id:', id);
-    const nextWorkspaceId = workspaces.find((workspace) => workspace.id !== id)?.id || localDefaultWorkspaceId;
+    console.log("[SYNC] removeWorkspace called for id:", id);
+    const nextWorkspaceId =
+      workspaces.find((workspace) => workspace.id !== id)?.id ||
+      localDefaultWorkspaceId;
     deletedWorkspaceIdsRef.current.add(id);
     dirtyWorkspaceIdsRef.current.delete(id);
     syncingWorkspaceIdsRef.current.delete(id);
     delete lastSyncedSignaturesRef.current[id];
 
     try {
-      console.log('[SYNC] Sending DELETE to backend for id:', id);
+      console.log("[SYNC] Sending DELETE to backend for id:", id);
       await api.delete(`/workspaces/${id}`).catch((err) => {
         if (err.response?.status !== 404) throw err;
-        console.log('[SYNC] DELETE returned 404, ignored');
+        console.log("[SYNC] DELETE returned 404, ignored");
       });
-      console.log('[SYNC] DELETE successful or ignored 404');
+      console.log("[SYNC] DELETE successful or ignored 404");
     } catch (err) {
-      console.error('[SYNC] DELETE failed:', err);
+      console.error("[SYNC] DELETE failed:", err);
       deletedWorkspaceIdsRef.current.delete(id);
       throw err;
     }
@@ -229,7 +279,15 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     setWorkspaces((prev) => {
       const next = prev.filter((workspace) => workspace.id !== id);
       if (next.length > 0) return next;
-      return [{ id: localDefaultWorkspaceId, name: 'My Workspace', ownerId: userId, collections: [], environments: [] }];
+      return [
+        {
+          id: localDefaultWorkspaceId,
+          name: "My Workspace",
+          ownerId: userId,
+          collections: [],
+          environments: [],
+        },
+      ];
     });
     setTabsByWorkspace((prev) => {
       const { [id]: _removedTabs, ...rest } = prev;
@@ -247,20 +305,30 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     if (activeWorkspaceId === id) setActiveWorkspaceId(nextWorkspaceId);
   };
 
-  const createBlankRequestInFolder = (collectionId: string, folderId: string | null) => {
+  const createBlankRequestInFolder = (
+    collectionId: string,
+    folderId: string | null,
+  ) => {
     const newReqId = crypto.randomUUID();
     const newReq: SavedRequest = {
-      type: 'request',
+      type: "request",
       id: newReqId,
-      name: 'New Request',
-      method: 'GET',
-      url: '',
-      headers: [{ key: '', value: '', enabled: true }],
+      name: "New Request",
+      method: "GET",
+      url: "",
+      headers: [{ key: "", value: "", enabled: true }],
       queryParams: [],
-      body: ''
+      body: "",
     };
     collectionActions.saveRequest(collectionId, folderId, newReq);
-    tabActions.addTab({ ...newReq, id: crypto.randomUUID(), savedRequestId: newReqId, collectionId, folderId: folderId || undefined, response: null });
+    tabActions.addTab({
+      ...newReq,
+      id: crypto.randomUUID(),
+      savedRequestId: newReqId,
+      collectionId,
+      folderId: folderId || undefined,
+      response: null,
+    });
   };
 
   useKeyboardShortcuts();

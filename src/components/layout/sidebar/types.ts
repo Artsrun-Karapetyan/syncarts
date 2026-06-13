@@ -1,6 +1,6 @@
-import type { RefObject } from 'react';
+import type { RefObject } from "react";
 
-export type SidebarItemType = 'collection' | 'folder' | 'request' | 'example';
+export type SidebarItemType = "collection" | "folder" | "request" | "example";
 
 export interface CtxMenuState {
   x: number;
@@ -14,7 +14,7 @@ export interface CtxMenuState {
 
 export interface DeleteTarget {
   id: string;
-  type: 'collection' | 'item' | 'example';
+  type: "collection" | "item" | "example";
   collectionId?: string;
   requestId?: string;
 }
@@ -25,12 +25,25 @@ export interface MergeRequestTarget {
   targetCollectionId: string;
 }
 
+export interface ContextMenuRequest {
+  event: React.MouseEvent;
+  collectionId: string;
+  itemId: string | null;
+  itemType: SidebarItemType;
+  itemName?: string;
+  requestId?: string;
+}
+
+export interface SidebarItemContextMenuRequest {
+  event: React.MouseEvent;
+  itemId: string;
+  type: "folder" | "request" | "example";
+  itemName: string;
+  requestId?: string;
+}
+
 export type SidebarItemContextMenuHandler = (
-  e: React.MouseEvent,
-  itemId: string,
-  type: 'folder' | 'request' | 'example',
-  itemName: string,
-  requestId?: string
+  request: SidebarItemContextMenuRequest,
 ) => void;
 
 export type MenuRef = RefObject<HTMLDivElement | null>;

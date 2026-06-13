@@ -3,18 +3,29 @@ import {
   randomBytes,
   scryptSync,
   timingSafeEqual,
-} from 'node:crypto';
+} from "node:crypto";
 
-import { PrismaService } from '../prisma/prisma.service.js';
-import { BadRequestException, ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { z } from 'zod';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { z } from "zod";
+
+import { PrismaService } from "../prisma/prisma.service.js";
 
 const registerSchema = z.object({
   email: z
     .string()
     .email()
     .transform((value) => value.trim().toLowerCase()),
-  name: z.string().min(2).max(120).transform((value) => value.trim()),
+  name: z
+    .string()
+    .min(2)
+    .max(120)
+    .transform((value) => value.trim()),
   password: z.string().min(8).max(128),
 });
 
@@ -51,7 +62,7 @@ export class AuthService {
       where: { email: parsed.data.email },
     });
     if (existing) {
-      throw new ConflictException('Email is already registered');
+      throw new ConflictException("Email is already registered");
     }
 
     const password = hashPassword(parsed.data.password);
@@ -86,7 +97,7 @@ export class AuthService {
       where: { email: parsed.data.email },
     });
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException("Invalid email or password");
     }
 
     const verified = verifyPassword(
@@ -95,7 +106,7 @@ export class AuthService {
       user.passwordSalt,
     );
     if (!verified) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException("Invalid email or password");
     }
 
     const session = await createSession(this.prisma, user.id);
@@ -107,7 +118,7 @@ export class AuthService {
 
   async logout(token: string) {
     if (!token) {
-      throw new BadRequestException('Missing auth token');
+      throw new BadRequestException("Missing auth token");
     }
 
     const tokenHash = hashToken(token);
@@ -129,9 +140,7 @@ export class AuthService {
       where: { id: user.id },
       data: {
         name:
-          parsed.data.name === undefined
-            ? undefined
-            : parsed.data.name.trim(),
+          parsed.data.name === undefined ? undefined : parsed.data.name.trim(),
       },
     });
 
@@ -154,10 +163,10 @@ function toUser(user: {
 }
 
 function createSession(
-  database: Pick<PrismaService, 'session'>,
+  database: Pick<PrismaService, "session">,
   userId: string,
 ): Promise<{ token: string }> {
-  const token = randomBytes(32).toString('base64url');
+  const token = randomBytes(32).toString("base64url");
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
 
@@ -173,8 +182,8 @@ function createSession(
 }
 
 function hashPassword(password: string): { salt: string; hash: string } {
-  const salt = randomBytes(16).toString('hex');
-  const hash = scryptSync(password, salt, 64).toString('hex');
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
   return { salt, hash };
 }
 
@@ -184,10 +193,10 @@ function verifyPassword(
   passwordSalt: string,
 ): boolean {
   const hash = scryptSync(password, passwordSalt, 64);
-  const expected = Buffer.from(passwordHash, 'hex');
+  const expected = Buffer.from(passwordHash, "hex");
   return expected.length === hash.length && timingSafeEqual(expected, hash);
 }
 
 function hashToken(token: string): string {
-  return createHash('sha256').update(token).digest('hex');
+  return createHash("sha256").update(token).digest("hex");
 }

@@ -1,6 +1,6 @@
-import { useState, useRef, useLayoutEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from "lucide-react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface SelectOption {
   value: string;
@@ -15,12 +15,22 @@ interface SelectProps {
   disabled?: boolean;
   className?: string;
   style?: React.CSSProperties;
-  variant?: 'default' | 'ghost' | 'pill';
+  variant?: "default" | "ghost" | "pill";
   endAdornment?: React.ReactNode;
   compact?: boolean;
 }
 
-export function Select({ value, options, onChange, disabled, className = '', style, variant = 'default', endAdornment, compact = false }: SelectProps) {
+export function Select({
+  value,
+  options,
+  onChange,
+  disabled,
+  className = "",
+  style,
+  variant = "default",
+  endAdornment,
+  compact = false,
+}: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -36,87 +46,156 @@ export function Select({ value, options, onChange, disabled, className = '', sty
       setDropdownPos({
         top: rect.bottom + 4,
         left: rect.left,
-        width: rect.width
+        width: rect.width,
       });
     };
 
     updatePosition();
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
 
     const handleOutsideClick = (e: MouseEvent) => {
       if (
-        containerRef.current && !containerRef.current.contains(e.target as Node) &&
-        dropdownRef.current && !dropdownRef.current.contains(e.target as Node)
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
       ) {
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener("mousedown", handleOutsideClick);
 
     return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-      document.removeEventListener('mousedown', handleOutsideClick);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, [isOpen]);
 
-  const selectedOption = options.find(o => o.value === value) || options[0];
+  const selectedOption = options.find((o) => o.value === value) || options[0];
 
   return (
-    <div 
-      ref={containerRef} 
-      className={`select-container ${className}`} 
-      style={{ position: 'relative', ...style }}
+    <div
+      ref={containerRef}
+      className={`select-container ${className}`}
+      style={{ position: "relative", ...style }}
     >
       <button
         ref={btnRef}
         type="button"
-        className={variant === 'default' ? 'input' : ''}
+        className={variant === "default" ? "input" : ""}
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          textAlign: 'left',
-          background: variant === 'ghost' ? (isOpen ? 'var(--bg-tertiary)' : 'transparent') : variant === 'pill' ? 'var(--bg-primary)' : (isOpen ? 'rgba(0, 0, 0, 0.6)' : undefined),
-          border: variant === 'ghost' ? 'none' : variant === 'pill' ? `1px solid ${isOpen ? 'var(--border-highlight)' : 'var(--border-color)'}` : undefined,
-          borderColor: variant === 'ghost' ? 'transparent' : variant === 'pill' ? (isOpen ? 'var(--border-highlight)' : 'var(--border-color)') : (isOpen ? 'var(--border-highlight)' : undefined),
-          padding: variant === 'ghost' ? '6px 12px' : variant === 'pill' ? (compact ? '0 12px' : '0 16px') : undefined,
-          paddingRight: variant === 'pill' && endAdornment ? (compact ? 74 : 82) : undefined,
-          height: variant === 'pill' ? (compact ? 38 : 46) : undefined,
-          borderRadius: variant === 'ghost' ? '8px' : variant === 'pill' ? '9999px' : undefined,
-          fontSize: variant === 'ghost' ? '14px' : variant === 'pill' ? (compact ? '12px' : '13px') : undefined,
-          fontWeight: variant === 'ghost' ? 600 : variant === 'pill' ? 600 : undefined,
-          color: 'var(--text-primary)',
-          outline: 'none',
-          transition: 'all var(--transition-fast)',
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          cursor: disabled ? "not-allowed" : "pointer",
+          textAlign: "left",
+          background:
+            variant === "ghost"
+              ? isOpen
+                ? "var(--bg-tertiary)"
+                : "transparent"
+              : variant === "pill"
+                ? "var(--bg-primary)"
+                : isOpen
+                  ? "rgba(0, 0, 0, 0.6)"
+                  : undefined,
+          border:
+            variant === "ghost"
+              ? "none"
+              : variant === "pill"
+                ? `1px solid ${isOpen ? "var(--border-highlight)" : "var(--border-color)"}`
+                : undefined,
+          borderColor:
+            variant === "ghost"
+              ? "transparent"
+              : variant === "pill"
+                ? isOpen
+                  ? "var(--border-highlight)"
+                  : "var(--border-color)"
+                : isOpen
+                  ? "var(--border-highlight)"
+                  : undefined,
+          padding:
+            variant === "ghost"
+              ? "6px 12px"
+              : variant === "pill"
+                ? compact
+                  ? "0 12px"
+                  : "0 16px"
+                : undefined,
+          paddingRight:
+            variant === "pill" && endAdornment
+              ? compact
+                ? 74
+                : 82
+              : undefined,
+          height: variant === "pill" ? (compact ? 38 : 46) : undefined,
+          borderRadius:
+            variant === "ghost"
+              ? "8px"
+              : variant === "pill"
+                ? "9999px"
+                : undefined,
+          fontSize:
+            variant === "ghost"
+              ? "14px"
+              : variant === "pill"
+                ? compact
+                  ? "12px"
+                  : "13px"
+                : undefined,
+          fontWeight:
+            variant === "ghost" ? 600 : variant === "pill" ? 600 : undefined,
+          color: "var(--text-primary)",
+          outline: "none",
+          transition: "all var(--transition-fast)",
         }}
         onMouseEnter={(e) => {
-          if (variant === 'ghost' && !isOpen) e.currentTarget.style.background = 'var(--bg-tertiary)';
-          if (variant === 'pill') e.currentTarget.style.borderColor = 'var(--border-highlight)';
+          if (variant === "ghost" && !isOpen)
+            e.currentTarget.style.background = "var(--bg-tertiary)";
+          if (variant === "pill")
+            e.currentTarget.style.borderColor = "var(--border-highlight)";
         }}
         onMouseLeave={(e) => {
-          if (variant === 'ghost' && !isOpen) e.currentTarget.style.background = 'transparent';
-          if (variant === 'pill' && !isOpen) e.currentTarget.style.borderColor = 'var(--border-color)';
+          if (variant === "ghost" && !isOpen)
+            e.currentTarget.style.background = "transparent";
+          if (variant === "pill" && !isOpen)
+            e.currentTarget.style.borderColor = "var(--border-color)";
         }}
       >
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>
+        <span
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            flex: 1,
+            textAlign: "left",
+          }}
+        >
           {selectedOption?.label}
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexShrink: 0,
+          }}
+        >
           {selectedOption?.badge && (
             <span
               style={{
                 flexShrink: 0,
-                border: '1px solid rgba(99, 102, 241, 0.34)',
+                border: "1px solid rgba(99, 102, 241, 0.34)",
                 borderRadius: 999,
-                padding: '2px 8px',
-                background: 'rgba(99, 102, 241, 0.12)',
-                color: 'var(--text-secondary)',
+                padding: "2px 8px",
+                background: "rgba(99, 102, 241, 0.12)",
+                color: "var(--text-secondary)",
                 fontSize: 10,
                 fontWeight: 700,
                 lineHeight: 1,
@@ -125,19 +204,26 @@ export function Select({ value, options, onChange, disabled, className = '', sty
               {selectedOption.badge}
             </span>
           )}
-          <ChevronDown size={variant === 'pill' ? (compact ? 13 : 14) : 16} style={{ opacity: 0.6, transition: 'transform var(--transition-fast)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+          <ChevronDown
+            size={variant === "pill" ? (compact ? 13 : 14) : 16}
+            style={{
+              opacity: 0.6,
+              transition: "transform var(--transition-fast)",
+              transform: isOpen ? "rotate(180deg)" : "rotate(0)",
+            }}
+          />
         </span>
       </button>
 
       {endAdornment && (
         <div
           style={{
-            position: 'absolute',
-            top: '50%',
-            right: variant === 'pill' ? (compact ? 34 : 38) : 10,
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            alignItems: 'center',
+            position: "absolute",
+            top: "50%",
+            right: variant === "pill" ? (compact ? 34 : 38) : 10,
+            transform: "translateY(-50%)",
+            display: "flex",
+            alignItems: "center",
             gap: 4,
             zIndex: 2,
           }}
@@ -148,71 +234,96 @@ export function Select({ value, options, onChange, disabled, className = '', sty
         </div>
       )}
 
-      {isOpen && createPortal(
-        <div
-          ref={dropdownRef}
-          className="syncarts-select-dropdown animate-fade-in"
-          style={{
-            position: 'fixed',
-            top: `${dropdownPos.top}px`,
-            left: `${dropdownPos.left}px`,
-            width: `${dropdownPos.width}px`,
-            zIndex: 9999,
-            background: 'rgba(15, 15, 15, 0.98)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid var(--border-highlight)',
-            borderRadius: 'var(--radius-sm)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-            overflow: 'hidden',
-          }}
-        >
-          {options.map((option) => (
-            <div
-              key={option.value}
-              style={{
-                padding: '8px 12px',
-                fontSize: 13,
-                color: option.value === value ? 'var(--accent-primary)' : 'var(--text-primary)',
-                background: option.value === value ? 'var(--bg-tertiary)' : 'transparent',
-                cursor: 'pointer',
-                transition: 'background var(--transition-fast)',
-              }}
-              onClick={() => {
-                onChange(option.value);
-                setIsOpen(false);
-              }}
-              onMouseEnter={(e) => {
-                if (option.value !== value) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-              }}
-              onMouseLeave={(e) => {
-                if (option.value !== value) e.currentTarget.style.background = 'transparent';
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option.label}</span>
-                {option.badge && (
+      {isOpen &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            className="syncarts-select-dropdown animate-fade-in"
+            style={{
+              position: "fixed",
+              top: `${dropdownPos.top}px`,
+              left: `${dropdownPos.left}px`,
+              width: `${dropdownPos.width}px`,
+              zIndex: 9999,
+              background: "rgba(15, 15, 15, 0.98)",
+              backdropFilter: "blur(16px)",
+              border: "1px solid var(--border-highlight)",
+              borderRadius: "var(--radius-sm)",
+              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+              overflow: "hidden",
+            }}
+          >
+            {options.map((option) => (
+              <div
+                key={option.value}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: 13,
+                  color:
+                    option.value === value
+                      ? "var(--accent-primary)"
+                      : "var(--text-primary)",
+                  background:
+                    option.value === value
+                      ? "var(--bg-tertiary)"
+                      : "transparent",
+                  cursor: "pointer",
+                  transition: "background var(--transition-fast)",
+                }}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                onMouseEnter={(e) => {
+                  if (option.value !== value)
+                    e.currentTarget.style.background =
+                      "rgba(255, 255, 255, 0.08)";
+                }}
+                onMouseLeave={(e) => {
+                  if (option.value !== value)
+                    e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
+                  }}
+                >
                   <span
                     style={{
-                      flexShrink: 0,
-                      border: '1px solid rgba(99, 102, 241, 0.34)',
-                      borderRadius: 999,
-                      padding: '2px 7px',
-                      background: 'rgba(99, 102, 241, 0.12)',
-                      color: 'var(--text-secondary)',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      lineHeight: 1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    {option.badge}
+                    {option.label}
                   </span>
-                )}
+                  {option.badge && (
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        border: "1px solid rgba(99, 102, 241, 0.34)",
+                        borderRadius: 999,
+                        padding: "2px 7px",
+                        background: "rgba(99, 102, 241, 0.12)",
+                        color: "var(--text-secondary)",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        lineHeight: 1,
+                      }}
+                    >
+                      {option.badge}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>,
-        document.body
-      )}
+            ))}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

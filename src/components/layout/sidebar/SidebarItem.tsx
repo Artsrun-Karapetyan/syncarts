@@ -1,9 +1,12 @@
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from "react";
 
-import type { Folder as IFolder, SavedRequest } from '../../../contexts/WorkspaceContext';
-import { FolderSidebarItem } from './FolderSidebarItem';
-import { RequestSidebarItem } from './RequestSidebarItem';
-import type { SidebarItemContextMenuHandler } from './types';
+import type {
+  Folder as IFolder,
+  SavedRequest,
+} from "../../../contexts/WorkspaceContext";
+import { FolderSidebarItem } from "./FolderSidebarItem";
+import { RequestSidebarItem } from "./RequestSidebarItem";
+import type { SidebarItemContextMenuHandler } from "./types";
 
 export interface SidebarItemProps {
   item: IFolder | SavedRequest;
@@ -23,6 +26,7 @@ export interface SidebarItemProps {
 }
 
 export function SidebarItem(props: SidebarItemProps) {
-  if (props.item.type === 'request') return <RequestSidebarItem {...props} item={props.item} />;
+  if (props.item.type === "request")
+    return <RequestSidebarItem {...props} item={props.item} />;
   return <FolderSidebarItem {...props} item={props.item} />;
 }

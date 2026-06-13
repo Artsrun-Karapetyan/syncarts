@@ -1,8 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
-import { useWorkspace, SavedRequest } from '../../contexts/WorkspaceContext';
-import { Select } from '../ui/Select';
+import { SavedRequest, useWorkspace } from "../../contexts/WorkspaceContext";
+import { Select } from "../ui/Select";
 
 interface SaveDialogProps {
   onClose: () => void;
@@ -11,19 +11,33 @@ interface SaveDialogProps {
 }
 
 export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
-  const { activeTab, collections, saveRequest, updateActiveTab, rememberTabSnapshot } = useWorkspace();
-  const [requestName, setRequestName] = useState(activeTab?.name === 'Untitled Request' ? '' : activeTab?.name || '');
-  
+  const {
+    activeTab,
+    collections,
+    saveRequest,
+    updateActiveTab,
+    rememberTabSnapshot,
+  } = useWorkspace();
+  const [requestName, setRequestName] = useState(
+    activeTab?.name === "Untitled Request" ? "" : activeTab?.name || "",
+  );
+
   // Build flattened options for collections and folders
   const destinationOptions: { value: string; label: string }[] = [];
-  collections.forEach(col => {
-    destinationOptions.push({ value: `col:${col.id}`, label: `📁 ${col.name}` });
-    
+  collections.forEach((col) => {
+    destinationOptions.push({
+      value: `col:${col.id}`,
+      label: `📁 ${col.name}`,
+    });
+
     const addFolders = (items: any[], depth: number) => {
-      items.forEach(item => {
-        if (item.type === 'folder') {
-          const prefix = '↳ '.padStart(depth * 3 + 2, '\u00A0');
-          destinationOptions.push({ value: `fol:${col.id}:${item.id}`, label: `${prefix}📂 ${item.name}` });
+      items.forEach((item) => {
+        if (item.type === "folder") {
+          const prefix = "↳ ".padStart(depth * 3 + 2, "\u00A0");
+          destinationOptions.push({
+            value: `fol:${col.id}:${item.id}`,
+            label: `${prefix}📂 ${item.name}`,
+          });
           addFolders(item.items, depth + 1);
         }
       });
@@ -32,18 +46,21 @@ export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
   });
 
   // Find existing location
-  let defaultDest = destinationOptions.length > 0 ? destinationOptions[0].value : '';
+  let defaultDest =
+    destinationOptions.length > 0 ? destinationOptions[0].value : "";
   if (activeTab?.savedRequestId) {
     let found = false;
     for (const col of collections) {
       const search = (items: any[], parentFolderId: string | null) => {
         for (const item of items) {
-          if (item.type === 'request' && item.id === activeTab.savedRequestId) {
-            defaultDest = parentFolderId ? `fol:${col.id}:${parentFolderId}` : `col:${col.id}`;
+          if (item.type === "request" && item.id === activeTab.savedRequestId) {
+            defaultDest = parentFolderId
+              ? `fol:${col.id}:${parentFolderId}`
+              : `col:${col.id}`;
             found = true;
             return;
           }
-          if (item.type === 'folder') {
+          if (item.type === "folder") {
             search(item.items, item.id);
             if (found) return;
           }
@@ -70,12 +87,13 @@ export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       if (panelRef.current?.contains(event.target as Node)) return;
-      if ((event.target as Element).closest?.('.syncarts-select-dropdown')) return;
+      if ((event.target as Element).closest?.(".syncarts-select-dropdown"))
+        return;
       onClose();
     };
 
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [onClose]);
 
   if (!activeTab) return null;
@@ -83,22 +101,22 @@ export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
   const handleSave = () => {
     if (!selectedDestination) return;
 
-    const destParts = selectedDestination.split(':');
+    const destParts = selectedDestination.split(":");
     const destType = destParts[0];
     const collectionId = destParts[1];
-    const folderId = destType === 'fol' ? destParts[2] : null;
+    const folderId = destType === "fol" ? destParts[2] : null;
 
-    const finalName = requestName.trim() || 'Untitled Request';
+    const finalName = requestName.trim() || "Untitled Request";
 
     // Always generate a new UUID for Save As / initial save to prevent overwriting/moving existing requests unintentionally
     const reqId = crypto.randomUUID();
 
     const req: SavedRequest = {
-      type: 'request',
+      type: "request",
       id: reqId,
       name: finalName,
-      method: activeTab.method || 'GET',
-      url: activeTab.url || '',
+      method: activeTab.method || "GET",
+      url: activeTab.url || "",
       headers: activeTab.headers || [],
       authType: activeTab.authType,
       bearerToken: activeTab.bearerToken,
@@ -108,7 +126,7 @@ export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
       description: activeTab.description,
       preRequestScript: activeTab.preRequestScript,
       testScript: activeTab.testScript,
-      body: activeTab.body || '',
+      body: activeTab.body || "",
     };
 
     rememberTabSnapshot(activeTab.id, req);
@@ -140,49 +158,81 @@ export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
       ref={panelRef}
       className="glass-panel animate-fade-in"
       style={{
-        position: 'fixed',
+        position: "fixed",
         zIndex: 100,
         top: pos.top,
         right: pos.right,
         width: 420,
         padding: 22,
-        background: 'rgba(12, 12, 12, 0.98)',
-        backdropFilter: 'blur(20px)',
-        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.55)',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--border-highlight)',
+        background: "rgba(12, 12, 12, 0.98)",
+        backdropFilter: "blur(20px)",
+        boxShadow: "0 24px 60px rgba(0, 0, 0, 0.55)",
+        borderRadius: "var(--radius-md)",
+        border: "1px solid var(--border-highlight)",
       }}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 18, letterSpacing: '-0.02em' }}>
+      <h2
+        style={{
+          fontSize: "1.15rem",
+          fontWeight: 700,
+          color: "var(--text-primary)",
+          marginBottom: 18,
+          letterSpacing: "-0.02em",
+        }}
+      >
         Save Request
       </h2>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>
+          <label
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--text-tertiary)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              display: "block",
+              marginBottom: 8,
+            }}
+          >
             Request name
           </label>
           <input
             autoFocus
             className="input"
-            style={{ width: '100%' }}
+            style={{ width: "100%" }}
             placeholder="e.g. Get All Users"
             value={requestName}
             onChange={(e) => setRequestName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSave();
+            }}
           />
         </div>
 
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>
+          <label
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--text-tertiary)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              display: "block",
+              marginBottom: 8,
+            }}
+          >
             Save to location
           </label>
           {destinationOptions.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--status-delete)' }}>Please create a collection in the sidebar first.</div>
+            <div style={{ fontSize: 13, color: "var(--status-delete)" }}>
+              Please create a collection in the sidebar first.
+            </div>
           ) : (
             <Select
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               value={selectedDestination}
               onChange={setSelectedDestination}
               options={destinationOptions}
@@ -191,17 +241,24 @@ export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          justifyContent: "flex-end",
+          marginTop: 22,
+        }}
+      >
         <button
           className="btn"
-          style={{ background: 'transparent', border: 'none' }}
+          style={{ background: "transparent", border: "none" }}
           onClick={onClose}
         >
           Cancel
         </button>
         <button
           className="btn btn-primary"
-          style={{ padding: '0.6rem 1.5rem' }}
+          style={{ padding: "0.6rem 1.5rem" }}
           onClick={handleSave}
           disabled={!selectedDestination}
         >
@@ -209,6 +266,6 @@ export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
         </button>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

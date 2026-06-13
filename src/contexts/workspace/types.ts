@@ -13,17 +13,17 @@ export interface HttpResponse {
   time_ms: number;
 }
 
-import type { useTabActions } from './useTabActions';
-import type { useCollectionActions } from './useCollectionActions';
-import type { useEnvironmentActions } from './useEnvironmentActions';
-import type { useRequestSender } from './useRequestSender';
+import type { useCollectionActions } from "./useCollectionActions";
+import type { useEnvironmentActions } from "./useEnvironmentActions";
+import type { useRequestSender } from "./useRequestSender";
+import type { useTabActions } from "./useTabActions";
 
 export type TabActions = ReturnType<typeof useTabActions>;
 export type CollectionActions = ReturnType<typeof useCollectionActions>;
 export type EnvironmentActions = ReturnType<typeof useEnvironmentActions>;
 export type RequestSenderActions = ReturnType<typeof useRequestSender>;
 
-export type BodyType = 'none' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
+export type BodyType = "none" | "form-data" | "x-www-form-urlencoded" | "raw";
 
 export interface FormDataItem {
   id: string;
@@ -31,7 +31,7 @@ export interface FormDataItem {
   value: string;
   description?: string;
   enabled: boolean;
-  type?: 'text' | 'file';
+  type?: "text" | "file";
   files?: string[];
 }
 
@@ -57,12 +57,12 @@ export interface TestResult {
 
 export interface TabData {
   id: string;
-  type?: 'request' | 'collection' | 'folder' | 'example';
+  type?: "request" | "collection" | "folder" | "example";
   name: string;
   method: string;
   url: string;
   headers: HeaderItem[];
-  authType?: 'inherit' | 'none' | 'bearer';
+  authType?: "inherit" | "none" | "bearer";
   bearerToken?: string;
   bodyType?: BodyType;
   description?: string;
@@ -81,7 +81,12 @@ export interface TabData {
   collectionId?: string;
   folderId?: string;
   exampleId?: string;
-  collectionView?: 'overview' | 'authorization' | 'scripts' | 'variables' | 'runs';
+  collectionView?:
+    | "overview"
+    | "authorization"
+    | "scripts"
+    | "variables"
+    | "runs";
 }
 
 export interface SavedExample {
@@ -95,13 +100,13 @@ export interface SavedExample {
 }
 
 export interface SavedRequest {
-  type: 'request';
+  type: "request";
   id: string;
   name: string;
   method: string;
   url: string;
   headers: HeaderItem[];
-  authType?: 'inherit' | 'none' | 'bearer';
+  authType?: "inherit" | "none" | "bearer";
   bearerToken?: string;
   bodyType?: BodyType;
   description?: string;
@@ -116,11 +121,11 @@ export interface SavedRequest {
 }
 
 export interface Folder {
-  type: 'folder';
+  type: "folder";
   id: string;
   name: string;
   items: (Folder | SavedRequest)[];
-  authType?: 'inherit' | 'none' | 'bearer';
+  authType?: "inherit" | "none" | "bearer";
   bearerToken?: string;
   description?: string;
   preRequestScript?: string;
@@ -138,7 +143,7 @@ export interface Collection {
   id: string;
   name: string;
   items: (Folder | SavedRequest)[];
-  authType?: 'inherit' | 'none' | 'bearer';
+  authType?: "inherit" | "none" | "bearer";
   bearerToken?: string;
   description?: string;
   preRequestScript?: string;
@@ -187,11 +192,20 @@ export interface SavedRequestLocation {
   request: SavedRequest;
 }
 
-export interface WorkspaceContextState extends TabActions, CollectionActions, EnvironmentActions, RequestSenderActions {
+export interface WorkspaceContextState
+  extends
+    TabActions,
+    CollectionActions,
+    EnvironmentActions,
+    RequestSenderActions {
   workspaces: Workspace[];
   activeWorkspaceId: string;
   localDefaultWorkspaceId: string;
-  createWorkspace: (name: string, collections?: any[], environments?: any[]) => string;
+  createWorkspace: (
+    name: string,
+    collections?: any[],
+    environments?: any[],
+  ) => string;
   switchWorkspace: (id: string) => void;
   renameWorkspace: (id: string, newName: string) => void;
   removeWorkspace: (id: string) => Promise<void>;
@@ -200,7 +214,10 @@ export interface WorkspaceContextState extends TabActions, CollectionActions, En
   activeEnvironmentId: string | null;
   activeEnvironment: Environment | undefined;
   setActiveEnvironmentId: (id: string | null) => void;
-  createEnvironment: (name: string, variables?: EnvironmentVariable[]) => string;
+  createEnvironment: (
+    name: string,
+    variables?: EnvironmentVariable[],
+  ) => string;
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   deleteEnvironment: (id: string) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
@@ -212,9 +229,16 @@ export interface WorkspaceContextState extends TabActions, CollectionActions, En
   setActiveTabId: (id: string) => void;
   addTab: (data?: Partial<TabData> & { savedRequestId?: string }) => void;
   closeTab: (id: string) => void;
-  openCollectionTab: (collectionId: string, view?: TabData['collectionView']) => void;
+  openCollectionTab: (
+    collectionId: string,
+    view?: TabData["collectionView"],
+  ) => void;
   openFolderTab: (collectionId: string, folderId: string) => void;
-  openRequestTab: (collectionId: string, folderId: string | null, requestId: string) => void;
+  openRequestTab: (
+    collectionId: string,
+    folderId: string | null,
+    requestId: string,
+  ) => void;
   openExampleTab: (collectionId: string, exampleId: string) => void;
   updateActiveTab: (data: Partial<TabData>) => void;
   rememberTabSnapshot: (tabId: string, request: Partial<TabData>) => void;
@@ -228,16 +252,43 @@ export interface WorkspaceContextState extends TabActions, CollectionActions, En
   updateCollection: (id: string, data: Partial<Collection>) => void;
   deleteCollection: (id: string) => void;
   deleteItem: (collectionId: string, itemId: string) => void;
-  addFolder: (collectionId: string, parentFolderId: string | null, name: string) => void;
-  updateFolder: (collectionId: string, folderId: string, data: Partial<Folder>) => void;
-  saveRequest: (collectionId: string, folderId: string | null, request: SavedRequest) => void;
-  createBlankRequestInFolder: (collectionId: string, folderId: string | null) => void;
-  importCollection: (collectionData: Omit<Collection, 'id'>) => void;
+  addFolder: (
+    collectionId: string,
+    parentFolderId: string | null,
+    name: string,
+  ) => void;
+  updateFolder: (
+    collectionId: string,
+    folderId: string,
+    data: Partial<Folder>,
+  ) => void;
+  saveRequest: (
+    collectionId: string,
+    folderId: string | null,
+    request: SavedRequest,
+  ) => void;
+  createBlankRequestInFolder: (
+    collectionId: string,
+    folderId: string | null,
+  ) => void;
+  importCollection: (collectionData: Omit<Collection, "id">) => void;
   sendRequest: () => Promise<HttpResponse | undefined>;
   isMutating: boolean;
   error: unknown;
   renameItem: (collectionId: string, itemId: string, newName: string) => void;
-  addExample: (collectionId: string, requestId: string, exampleName: string) => void;
-  deleteExample: (collectionId: string, requestId: string, exampleId: string) => void;
-  sortItems: (collectionId: string, folderId: string | null, type: 'default' | 'az') => void;
+  addExample: (
+    collectionId: string,
+    requestId: string,
+    exampleName: string,
+  ) => void;
+  deleteExample: (
+    collectionId: string,
+    requestId: string,
+    exampleId: string,
+  ) => void;
+  sortItems: (
+    collectionId: string,
+    folderId: string | null,
+    type: "default" | "az",
+  ) => void;
 }

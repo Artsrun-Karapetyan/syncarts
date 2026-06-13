@@ -1,6 +1,6 @@
-import { Loader2 } from 'lucide-react';
+import "./ResponseLoadingState.css";
 
-import './ResponseLoadingState.css';
+import { Loader2 } from "lucide-react";
 
 export function ResponseLoadingState() {
   return (
@@ -11,9 +11,18 @@ export function ResponseLoadingState() {
       <div className="loading-state-text">Sending request…</div>
 
       <div className="loading-state-skeleton">
-        <div className="loading-state-skeleton-line animate-shimmer" style={{ width: '100%' }} />
-        <div className="loading-state-skeleton-line animate-shimmer" style={{ width: '80%', animationDelay: '0.15s' }} />
-        <div className="loading-state-skeleton-line animate-shimmer" style={{ width: '60%', animationDelay: '0.3s' }} />
+        <div
+          className="loading-state-skeleton-line animate-shimmer"
+          style={{ width: "100%" }}
+        />
+        <div
+          className="loading-state-skeleton-line animate-shimmer"
+          style={{ width: "80%", animationDelay: "0.15s" }}
+        />
+        <div
+          className="loading-state-skeleton-line animate-shimmer"
+          style={{ width: "60%", animationDelay: "0.3s" }}
+        />
       </div>
     </div>
   );

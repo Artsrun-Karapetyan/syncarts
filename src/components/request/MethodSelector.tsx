@@ -1,16 +1,17 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { ChevronDown, Circle } from 'lucide-react';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import "./MethodSelector.css";
 
-import './MethodSelector.css';
+import { ChevronDown, Circle } from "lucide-react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
-const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+import { useWorkspace } from "../../contexts/WorkspaceContext";
+
+const METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 
 export function MethodSelector() {
   const { activeTab, updateActiveTab } = useWorkspace();
-  const method = activeTab?.method || 'GET';
-  
+  const method = activeTab?.method || "GET";
+
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -32,31 +33,33 @@ export function MethodSelector() {
 
     updatePosition();
 
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
 
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
       if (
-        ref.current && !ref.current.contains(target) &&
-        dropdownRef.current && !dropdownRef.current.contains(target)
+        ref.current &&
+        !ref.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
       ) {
         setIsOpen(false);
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
 
   return (
     <div className="relative" ref={ref}>
-      <button 
+      <button
         ref={btnRef}
         type="button"
         className={`method-pill ${method.toLowerCase()}`}
@@ -64,38 +67,46 @@ export function MethodSelector() {
         disabled={!activeTab}
       >
         <span>{method}</span>
-        <ChevronDown size={14} style={{ opacity: 0.6, transition: 'transform 0.15s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
-      </button>
-      
-      {isOpen && createPortal(
-        <div 
-          ref={dropdownRef}
-          className="method-dropdown animate-fade-in"
+        <ChevronDown
+          size={14}
           style={{
-            position: 'fixed',
-            zIndex: 50,
-            top: `${dropdownPos.top}px`,
-            left: `${dropdownPos.left}px`,
+            opacity: 0.6,
+            transition: "transform 0.15s",
+            transform: isOpen ? "rotate(180deg)" : "rotate(0)",
           }}
-        >
-          {METHODS.map(m => (
-            <button
-              key={m}
-              type="button"
-              className={`method-dropdown-item ${method === m ? 'active' : ''}`}
-              style={{ color: `var(--status-${m.toLowerCase()})` }}
-              onClick={() => {
-                updateActiveTab({ method: m });
-                setIsOpen(false);
-              }}
-            >
-              <Circle size={8} fill="currentColor" />
-              {m}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
+        />
+      </button>
+
+      {isOpen &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            className="method-dropdown animate-fade-in"
+            style={{
+              position: "fixed",
+              zIndex: 50,
+              top: `${dropdownPos.top}px`,
+              left: `${dropdownPos.left}px`,
+            }}
+          >
+            {METHODS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={`method-dropdown-item ${method === m ? "active" : ""}`}
+                style={{ color: `var(--status-${m.toLowerCase()})` }}
+                onClick={() => {
+                  updateActiveTab({ method: m });
+                  setIsOpen(false);
+                }}
+              >
+                <Circle size={8} fill="currentColor" />
+                {m}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

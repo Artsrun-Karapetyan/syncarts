@@ -1,19 +1,25 @@
-import { useRef, useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { Send, Loader2, ChevronDown, Code2, Edit2, Download } from 'lucide-react';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import {
+  ChevronDown,
+  Code2,
+  Download,
+  Edit2,
+  Loader2,
+  Send,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
-import { MethodSelector } from '../request/MethodSelector';
-import { UrlBar } from '../request/UrlBar';
-import { RequestTabs } from '../request/RequestTabs';
-import { ResponseViewer } from '../response/ResponseViewer';
-import { TabsBar } from './TabsBar';
-import { SaveDialog } from '../request/SaveDialog';
-import { RequestCodeModal } from '../request/RequestCodeModal';
-import { CollectionFolderTabs } from './CollectionFolderTabs';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
-import type { HttpResponse } from '../../contexts/workspace/types';
-import { UnsavedChangesModal } from '../ui/UnsavedChangesModal';
+import { useWorkspace } from "../../contexts/WorkspaceContext";
+import { MethodSelector } from "../request/MethodSelector";
+import { RequestCodeModal } from "../request/RequestCodeModal";
+import { RequestTabs } from "../request/RequestTabs";
+import { SaveDialog } from "../request/SaveDialog";
+import { UrlBar } from "../request/UrlBar";
+import { ResponseViewer } from "../response/ResponseViewer";
+import { UnsavedChangesModal } from "../ui/UnsavedChangesModal";
+import { CollectionFolderTabs } from "./CollectionFolderTabs";
+import { saveResponseToFile } from "./responseFile";
+import { TabsBar } from "./TabsBar";
 
 export function Workspace() {
   const {
@@ -32,17 +38,24 @@ export function Workspace() {
   } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
-  const [pendingCloseTabId, setPendingCloseTabId] = useState<string | null>(null);
+  const [pendingCloseTabId, setPendingCloseTabId] = useState<string | null>(
+    null,
+  );
   const [isCloseSaveFlow, setIsCloseSaveFlow] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showSendMenu, setShowSendMenu] = useState(false);
-  const [preferredSplitDirection, setPreferredSplitDirection] = useState<'horizontal' | 'vertical'>(() => {
-    return window.localStorage.getItem('syncarts-request-response-split') === 'vertical' ? 'vertical' : 'horizontal';
+  const [preferredSplitDirection, setPreferredSplitDirection] = useState<
+    "horizontal" | "vertical"
+  >(() => {
+    return window.localStorage.getItem("syncarts-request-response-split") ===
+      "vertical"
+      ? "vertical"
+      : "horizontal";
   });
   const [isNarrowLayout, setIsNarrowLayout] = useState(false);
   const saveBtnRef = useRef<HTMLButtonElement>(null);
   const sendMenuRef = useRef<HTMLDivElement>(null);
-  const splitDirection = isNarrowLayout ? 'vertical' : preferredSplitDirection;
+  const splitDirection = isNarrowLayout ? "vertical" : preferredSplitDirection;
 
   const handleDirectSave = () => {
     if (!saveActiveRequestInPlace()) {
@@ -95,18 +108,18 @@ export function Workspace() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'w') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "w") {
         e.preventDefault();
         if (activeTab?.id) {
           requestCloseTab(activeTab.id);
         }
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        
+
         // If it's a request (not a folder/collection view)
-        if (!activeTab || activeTab.type === 'request') {
+        if (!activeTab || activeTab.type === "request") {
           if (e.shiftKey) {
             setShowSaveDialog(true);
           } else {
@@ -115,18 +128,18 @@ export function Workspace() {
         }
       }
     };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeTab, collections, requestCloseTab]);
 
   useEffect(() => {
-    const media = window.matchMedia('(max-width: 1100px)');
+    const media = window.matchMedia("(max-width: 1100px)");
     const updateLayout = () => setIsNarrowLayout(media.matches);
 
     updateLayout();
-    media.addEventListener('change', updateLayout);
-    return () => media.removeEventListener('change', updateLayout);
+    media.addEventListener("change", updateLayout);
+    return () => media.removeEventListener("change", updateLayout);
   }, []);
 
   useEffect(() => {
@@ -138,21 +151,21 @@ export function Workspace() {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setShowSendMenu(false);
+      if (event.key === "Escape") setShowSendMenu(false);
     };
 
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [showSendMenu]);
 
   const toggleSplitDirection = () => {
     setPreferredSplitDirection((current) => {
-      const next = current === 'horizontal' ? 'vertical' : 'horizontal';
-      window.localStorage.setItem('syncarts-request-response-split', next);
+      const next = current === "horizontal" ? "vertical" : "horizontal";
+      window.localStorage.setItem("syncarts-request-response-split", next);
       return next;
     });
   };
@@ -165,98 +178,198 @@ export function Workspace() {
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        overflow: "hidden",
+      }}
+    >
       {/* Tabs */}
       <TabsBar onRequestCloseTab={requestCloseTab} />
 
       {!activeTab ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>No request open</div>
-            <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Create a request or open one from a collection.</div>
-            <button className="btn" style={{ marginTop: 4 }} onClick={() => addTab()}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--text-secondary)",
+          }}
+        >
+          <div
+            style={{
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: "var(--text-primary)",
+              }}
+            >
+              No request open
+            </div>
+            <div style={{ fontSize: 13, color: "var(--text-tertiary)" }}>
+              Create a request or open one from a collection.
+            </div>
+            <button
+              className="btn"
+              style={{ marginTop: 4 }}
+              onClick={() => addTab()}
+            >
               New Request
             </button>
           </div>
         </div>
-      ) : (activeTab.type === 'request' || activeTab.type === 'example' || !activeTab.type) ? (
+      ) : activeTab.type === "request" ||
+        activeTab.type === "example" ||
+        !activeTab.type ? (
         <>
           {/* Header & URL Bar */}
-          <div style={{ padding: '12px 16px 0 16px', flexShrink: 0, position: 'relative', zIndex: 50 }}>
+          <div
+            style={{
+              padding: "12px 16px 0 16px",
+              flexShrink: 0,
+              position: "relative",
+              zIndex: 50,
+            }}
+          >
             {/* Top Row: Name and Save */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, paddingLeft: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, position: 'relative' }}>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', maxWidth: 400, width: '100%' }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 8,
+                paddingLeft: 4,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flex: 1,
+                  position: "relative",
+                }}
+              >
+                <div
+                  style={{
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    maxWidth: 400,
+                    width: "100%",
+                  }}
+                >
                   <input
                     style={{
                       fontSize: 15,
                       fontWeight: 600,
-                      background: 'transparent',
-                      border: '1px solid transparent',
+                      background: "transparent",
+                      border: "1px solid transparent",
                       borderRadius: 6,
-                      padding: '6px 32px 6px 10px',
-                      color: 'var(--text-primary)',
-                      outline: 'none',
-                      width: '100%',
-                      fontFamily: 'inherit',
-                      transition: 'all 0.2s',
+                      padding: "6px 32px 6px 10px",
+                      color: "var(--text-primary)",
+                      outline: "none",
+                      width: "100%",
+                      fontFamily: "inherit",
+                      transition: "all 0.2s",
                     }}
-                    value={activeTab?.name || ''}
+                    value={activeTab?.name || ""}
                     placeholder="Untitled Request"
                     onChange={(e) => updateActiveTab({ name: e.target.value })}
-                    onFocus={(e) => { e.currentTarget.style.background = 'var(--bg-tertiary)'; e.currentTarget.style.border = '1px solid var(--border-color)'; }}
-                    onBlur={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.border = '1px solid transparent'; }}
-                    onMouseEnter={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.background = 'var(--bg-secondary)'; }}
-                    onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.background = 'transparent'; }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.background = "var(--bg-tertiary)";
+                      e.currentTarget.style.border =
+                        "1px solid var(--border-color)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.border = "1px solid transparent";
+                    }}
+                    onMouseEnter={(e) => {
+                      if (document.activeElement !== e.currentTarget)
+                        e.currentTarget.style.background =
+                          "var(--bg-secondary)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (document.activeElement !== e.currentTarget)
+                        e.currentTarget.style.background = "transparent";
+                    }}
                   />
-                  <Edit2 
-                    size={12} 
-                    style={{ 
-                      position: 'absolute', 
-                      right: 12, 
-                      color: 'var(--text-tertiary)', 
-                      pointerEvents: 'none',
-                      opacity: activeTab?.name ? 0.5 : 0.8
-                    }} 
+                  <Edit2
+                    size={12}
+                    style={{
+                      position: "absolute",
+                      right: 12,
+                      color: "var(--text-tertiary)",
+                      pointerEvents: "none",
+                      opacity: activeTab?.name ? 0.5 : 0.8,
+                    }}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <button
                   className="btn"
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     gap: 6,
                     fontSize: 12,
-                    padding: '0 12px',
+                    padding: "0 12px",
                     borderRadius: 6,
                     height: 28,
                     fontWeight: 600,
-                    background: 'transparent',
-                    border: '1px solid var(--border-color)',
+                    background: "transparent",
+                    border: "1px solid var(--border-color)",
                   }}
                   onClick={toggleSplitDirection}
-                  title={splitDirection === 'horizontal' ? 'Stack request and response' : 'Show request and response side by side'}
+                  title={
+                    splitDirection === "horizontal"
+                      ? "Stack request and response"
+                      : "Show request and response side by side"
+                  }
                 >
-                  {splitDirection === 'horizontal' ? 'Stack Layout' : 'Split Layout'}
+                  {splitDirection === "horizontal"
+                    ? "Stack Layout"
+                    : "Split Layout"}
                 </button>
 
-                {activeTab?.type !== 'example' && (
-                  <div style={{ display: 'flex', borderRadius: 6, background: 'var(--bg-tertiary)', overflow: 'hidden', height: 28, border: '1px solid var(--border-color)' }}>
+                {activeTab?.type !== "example" && (
+                  <div
+                    style={{
+                      display: "flex",
+                      borderRadius: 6,
+                      background: "var(--bg-tertiary)",
+                      overflow: "hidden",
+                      height: 28,
+                      border: "1px solid var(--border-color)",
+                    }}
+                  >
                     <button
                       ref={saveBtnRef}
                       className="btn"
                       style={{
                         fontSize: 12,
-                        padding: '0 16px',
-                        height: '100%',
+                        padding: "0 16px",
+                        height: "100%",
                         fontWeight: 600,
-                        border: 'none',
+                        border: "none",
                         borderRadius: 0,
-                        background: 'transparent'
+                        background: "transparent",
                       }}
                       onClick={() => {
                         handleDirectSave();
@@ -264,15 +377,21 @@ export function Workspace() {
                     >
                       Save
                     </button>
-                    <div style={{ width: 1, background: 'var(--border-color)', margin: '4px 0' }} />
+                    <div
+                      style={{
+                        width: 1,
+                        background: "var(--border-color)",
+                        margin: "4px 0",
+                      }}
+                    />
                     <button
                       className="btn"
                       style={{
-                        padding: '0 8px',
-                        height: '100%',
-                        border: 'none',
+                        padding: "0 8px",
+                        height: "100%",
+                        border: "none",
                         borderRadius: 0,
-                        background: 'transparent'
+                        background: "transparent",
                       }}
                       onClick={() => setShowSaveDialog((current) => !current)}
                     >
@@ -288,51 +407,51 @@ export function Workspace() {
               className="glass-panel"
               style={{
                 padding: 6,
-                display: 'flex',
+                display: "flex",
                 gap: 6,
-                alignItems: 'center',
+                alignItems: "center",
                 borderRadius: 9999,
               }}
             >
               <MethodSelector />
               <UrlBar />
-                <button
-                  className="btn"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    fontSize: 13,
-                    padding: '0 16px',
-                    borderRadius: 9999,
-                    height: 34,
-                    fontWeight: 700,
-                  }}
-                  onClick={() => setShowCodeModal(true)}
-                  title="Generate cURL"
-                >
-                  <Code2 size={14} />
-                  Code
-                </button>
-              <div style={{ position: 'relative', display: 'flex' }}>
+              <button
+                className="btn"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  fontSize: 13,
+                  padding: "0 16px",
+                  borderRadius: 9999,
+                  height: 34,
+                  fontWeight: 700,
+                }}
+                onClick={() => setShowCodeModal(true)}
+                title="Generate cURL"
+              >
+                <Code2 size={14} />
+                Code
+              </button>
+              <div style={{ position: "relative", display: "flex" }}>
                 <button
                   className="btn-success"
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     gap: 8,
                     fontSize: 13,
-                    padding: '0 20px 0 24px',
-                    borderRadius: '9999px 0 0 9999px',
+                    padding: "0 20px 0 24px",
+                    borderRadius: "9999px 0 0 9999px",
                     height: 34,
                     fontWeight: 700,
-                    letterSpacing: '0.03em',
-                    border: 'none',
-                    cursor: isMutating ? 'not-allowed' : 'pointer',
+                    letterSpacing: "0.03em",
+                    border: "none",
+                    cursor: isMutating ? "not-allowed" : "pointer",
                     opacity: isMutating ? 0.7 : 1,
-                    transition: 'all var(--transition-fast)',
+                    transition: "all var(--transition-fast)",
                   }}
                   onClick={() => {
                     void sendRequest();
@@ -351,48 +470,54 @@ export function Workspace() {
                     </>
                   )}
                 </button>
-                  <button
-                    className="btn-success"
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: '0 9999px 9999px 0',
-                      borderLeft: '1px solid rgba(255, 255, 255, 0.24)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      opacity: isMutating ? 0.7 : 1,
-                      cursor: isMutating ? 'not-allowed' : 'pointer',
-                    }}
-                    disabled={isMutating}
-                    onClick={() => setShowSendMenu((current) => !current)}
-                    title="More send actions"
-                  >
-                    <ChevronDown size={15} />
-                  </button>
+                <button
+                  className="btn-success"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: "0 9999px 9999px 0",
+                    borderLeft: "1px solid rgba(255, 255, 255, 0.24)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: isMutating ? 0.7 : 1,
+                    cursor: isMutating ? "not-allowed" : "pointer",
+                  }}
+                  disabled={isMutating}
+                  onClick={() => setShowSendMenu((current) => !current)}
+                  title="More send actions"
+                >
+                  <ChevronDown size={15} />
+                </button>
                 {showSendMenu && (
                   <div
                     ref={sendMenuRef}
                     className="animate-fade-in"
                     style={{
-                      position: 'absolute',
+                      position: "absolute",
                       right: 0,
-                      top: 'calc(100% + 8px)',
+                      top: "calc(100% + 8px)",
                       width: 260,
                       zIndex: 1000,
                       padding: 8,
-                      display: 'flex',
-                      flexDirection: 'column',
+                      display: "flex",
+                      flexDirection: "column",
                       gap: 4,
-                      background: 'rgba(24, 24, 24, 0.98)',
-                      border: '1px solid var(--border-highlight)',
-                      borderRadius: 'var(--radius-md)',
-                      boxShadow: 'var(--shadow-lg)',
+                      background: "rgba(24, 24, 24, 0.98)",
+                      border: "1px solid var(--border-highlight)",
+                      borderRadius: "var(--radius-md)",
+                      boxShadow: "var(--shadow-lg)",
                     }}
                   >
                     <button
                       className="btn"
-                      style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '10px 12px', fontSize: 13 }}
+                      style={{
+                        justifyContent: "flex-start",
+                        border: "none",
+                        background: "transparent",
+                        padding: "10px 12px",
+                        fontSize: 13,
+                      }}
                       onClick={handleSendAndDownload}
                     >
                       <Download size={15} />
@@ -422,10 +547,15 @@ export function Workspace() {
                 anchorRef={saveBtnRef}
               />
             )}
-            {showCodeModal && <RequestCodeModal onClose={() => setShowCodeModal(false)} />}
+            {showCodeModal && (
+              <RequestCodeModal onClose={() => setShowCodeModal(false)} />
+            )}
             <UnsavedChangesModal
               isOpen={showCloseDialog}
-              requestName={tabs.find((tab) => tab.id === pendingCloseTabId)?.name || 'This request'}
+              requestName={
+                tabs.find((tab) => tab.id === pendingCloseTabId)?.name ||
+                "This request"
+              }
               onSave={savePendingTab}
               onDiscard={discardPendingTab}
               onCancel={() => {
@@ -436,90 +566,77 @@ export function Workspace() {
           </div>
 
           {/* Main Content — Request + Response */}
-      <div style={{ flex: 1, display: 'flex', gap: 0, padding: '12px 16px 16px', minHeight: 0 }}>
-        <PanelGroup key={splitDirection} direction={splitDirection}>
-          {/* Request panel with tabs */}
-          <Panel defaultSize={splitDirection === 'vertical' ? 40 : 50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingRight: splitDirection === 'horizontal' ? 8 : 0, paddingBottom: splitDirection === 'vertical' ? 8 : 0 }}>
-            <div
-              className="glass-panel"
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}
-            >
-              <RequestTabs />
-            </div>
-          </Panel>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              gap: 0,
+              padding: "12px 16px 16px",
+              minHeight: 0,
+            }}
+          >
+            <PanelGroup key={splitDirection} direction={splitDirection}>
+              {/* Request panel with tabs */}
+              <Panel
+                defaultSize={splitDirection === "vertical" ? 40 : 50}
+                minSize={20}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  overflow: "hidden",
+                  paddingRight: splitDirection === "horizontal" ? 8 : 0,
+                  paddingBottom: splitDirection === "vertical" ? 8 : 0,
+                }}
+              >
+                <div
+                  className="glass-panel"
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                    borderRadius: "var(--radius-md)",
+                  }}
+                >
+                  <RequestTabs />
+                </div>
+              </Panel>
 
-          <PanelResizeHandle className={`custom-resize-handle ${splitDirection === 'vertical' ? 'vertical' : ''}`} />
+              <PanelResizeHandle
+                className={`custom-resize-handle ${splitDirection === "vertical" ? "vertical" : ""}`}
+              />
 
-          {/* Response panel */}
-          <Panel defaultSize={splitDirection === 'vertical' ? 60 : 50} minSize={20} style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden', paddingLeft: splitDirection === 'horizontal' ? 8 : 0, paddingTop: splitDirection === 'vertical' ? 8 : 0 }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-              <ResponseViewer />
-            </div>
-          </Panel>
-        </PanelGroup>
-      </div>
-      </>
+              {/* Response panel */}
+              <Panel
+                defaultSize={splitDirection === "vertical" ? 60 : 50}
+                minSize={20}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  overflow: "hidden",
+                  paddingLeft: splitDirection === "horizontal" ? 8 : 0,
+                  paddingTop: splitDirection === "vertical" ? 8 : 0,
+                }}
+              >
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: 0,
+                  }}
+                >
+                  <ResponseViewer />
+                </div>
+              </Panel>
+            </PanelGroup>
+          </div>
+        </>
       ) : (
         <CollectionFolderTabs />
       )}
     </div>
   );
-}
-
-async function saveResponseToFile(response: HttpResponse) {
-  const { save } = await import('@tauri-apps/plugin-dialog');
-  const filePath = await save({
-    defaultPath: getResponseFileName(response),
-  });
-
-  if (!filePath) return;
-
-  await invoke('save_response_body', {
-    path: filePath,
-    body: response.body,
-  });
-}
-
-function getResponseFileName(response: HttpResponse) {
-  const contentDisposition = getHeader(response.headers, 'content-disposition');
-  const filename = contentDisposition?.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i)?.[1];
-  if (filename) return sanitizeFileName(safeDecodeURIComponent(filename.replace(/^"|"$/g, '')));
-
-  const extension = getExtensionFromContentType(getHeader(response.headers, 'content-type'));
-  return `response-${response.status || 'body'}${extension}`;
-}
-
-function getHeader(headers: Record<string, string>, key: string) {
-  const entry = Object.entries(headers).find(([headerKey]) => headerKey.toLowerCase() === key);
-  return entry?.[1] || '';
-}
-
-function getExtensionFromContentType(contentType: string) {
-  const normalized = contentType.split(';')[0].trim().toLowerCase();
-  const map: Record<string, string> = {
-    'application/json': '.json',
-    'application/pdf': '.pdf',
-    'application/zip': '.zip',
-    'text/csv': '.csv',
-    'text/html': '.html',
-    'text/plain': '.txt',
-    'image/jpeg': '.jpg',
-    'image/png': '.png',
-    'image/gif': '.gif',
-    'image/webp': '.webp',
-  };
-
-  return map[normalized] || '.txt';
-}
-
-function sanitizeFileName(value: string) {
-  return value.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_').trim() || 'response.txt';
-}
-
-function safeDecodeURIComponent(value: string) {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
 }

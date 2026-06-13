@@ -1,7 +1,16 @@
-import { Body, Controller, Get, Headers, Inject, Patch, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Inject,
+  Patch,
+  Post,
+  Req,
+} from "@nestjs/common";
 
-import { Public } from '../common/public.decorator.js';
-import { AuthService } from './auth.service.js';
+import { Public } from "../common/public.decorator.js";
+import { AuthService } from "./auth.service.js";
 
 type AuthedRequest = {
   authUser?: {
@@ -12,37 +21,37 @@ type AuthedRequest = {
   };
 };
 
-@Controller('auth')
+@Controller("auth")
 export class AuthController {
   constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
   @Public()
-  @Post('register')
+  @Post("register")
   register(@Body() body: unknown) {
     return this.authService.register(body);
   }
 
   @Public()
-  @Post('login')
+  @Post("login")
   login(@Body() body: unknown) {
     return this.authService.login(body);
   }
 
-  @Get('me')
+  @Get("me")
   me(@Req() request: AuthedRequest) {
     return this.authService.me(request.authUser!);
   }
 
-  @Patch('me')
+  @Patch("me")
   updateMe(@Req() request: AuthedRequest, @Body() body: unknown) {
     return this.authService.updateMe(request.authUser!, body);
   }
 
-  @Post('logout')
-  logout(@Headers('authorization') authorization: string | undefined) {
-    const token = authorization?.startsWith('Bearer ')
+  @Post("logout")
+  logout(@Headers("authorization") authorization: string | undefined) {
+    const token = authorization?.startsWith("Bearer ")
       ? authorization.slice(7).trim()
-      : '';
+      : "";
 
     return this.authService.logout(token);
   }

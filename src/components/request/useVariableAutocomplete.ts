@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from "react";
 
-import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { getVariableSuggestions } from './variableSuggestions';
-import type { VariableAutocompleteState, VariableSuggestion } from './variableAutocompleteTypes';
-import { getRequestAncestors } from '../../contexts/workspace/requestHelpers';
+import { getRequestAncestors } from "../../contexts/workspace/requestHelpers";
+import { useWorkspace } from "../../contexts/WorkspaceContext";
+import type {
+  VariableAutocompleteState,
+  VariableSuggestion,
+} from "./variableAutocompleteTypes";
+import { getVariableSuggestions } from "./variableSuggestions";
 
 type TextControl = HTMLInputElement | HTMLTextAreaElement;
 
@@ -14,18 +17,29 @@ interface UseVariableAutocompleteArgs {
 
 export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
   const { value, onChange } = args;
-  const { activeEnvironment, activeTab, collections, globalVariables } = useWorkspace();
+  const { activeEnvironment, activeTab, collections, globalVariables } =
+    useWorkspace();
   const [state, setState] = useState<VariableAutocompleteState | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const ancestors = useMemo(() => getRequestAncestors(activeTab, collections), [activeTab, collections]);
-  const suggestions = useMemo(() => getVariableSuggestions({
-    ancestors,
-    activeEnvironment,
-    globalVariables,
-    query: state?.query || ''
-  }), [ancestors, activeEnvironment, globalVariables, state?.query]);
+  const ancestors = useMemo(
+    () => getRequestAncestors(activeTab, collections),
+    [activeTab, collections],
+  );
+  const suggestions = useMemo(
+    () =>
+      getVariableSuggestions({
+        ancestors,
+        activeEnvironment,
+        globalVariables,
+        query: state?.query || "",
+      }),
+    [ancestors, activeEnvironment, globalVariables, state?.query],
+  );
 
-  const updateFromElement = (element: TextControl, nextValue = element.value) => {
+  const updateFromElement = (
+    element: TextControl,
+    nextValue = element.value,
+  ) => {
     const caretIndex = element.selectionStart ?? nextValue.length;
     const trigger = findVariableTrigger(nextValue, caretIndex);
     if (!trigger) {
@@ -39,7 +53,7 @@ export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
       y: point.y + 24,
       query: trigger.query,
       startIndex: trigger.startIndex,
-      caretIndex
+      caretIndex,
     });
     setActiveIndex(0);
   };
@@ -52,53 +66,58 @@ export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
   const handleKeyDown = (event: React.KeyboardEvent<TextControl>) => {
     if (!state || suggestions.length === 0) return false;
 
-    if (event.key === 'ArrowDown') {
+    if (event.key === "ArrowDown") {
       event.preventDefault();
       event.stopPropagation();
-      setActiveIndex(index => (index + 1) % suggestions.length);
+      setActiveIndex((index) => (index + 1) % suggestions.length);
       return true;
     }
-    if (event.key === 'ArrowUp') {
+    if (event.key === "ArrowUp") {
       event.preventDefault();
       event.stopPropagation();
-      setActiveIndex(index => (index - 1 + suggestions.length) % suggestions.length);
+      setActiveIndex(
+        (index) => (index - 1 + suggestions.length) % suggestions.length,
+      );
       return true;
     }
-    if (event.key === 'Enter' || event.key === 'Tab') {
+    if (event.key === "Enter" || event.key === "Tab") {
       event.preventDefault();
       event.stopPropagation();
       insertSuggestion(suggestions[activeIndex], event.currentTarget);
       return true;
     }
-    if (event.key === 'Escape') {
+    if (event.key === "Escape") {
       setState(null);
       return true;
     }
     return false;
   };
 
-  const insertSuggestion = (suggestion: VariableSuggestion, element?: TextControl | null) => {
+  const insertSuggestion = (
+    suggestion: VariableSuggestion,
+    element?: TextControl | null,
+  ) => {
     if (!state || !element) return;
     const insertion = `{{${suggestion.key}}}`;
     const replaceEndIndex = findVariableReplacementEnd(value, state.caretIndex);
     const nextValue = `${value.slice(0, state.startIndex)}${insertion}${value.slice(replaceEndIndex)}`;
     const caretPosition = state.startIndex + insertion.length;
-    
+
     element.focus();
     element.setSelectionRange(state.startIndex, replaceEndIndex);
-    
-    const success = document.execCommand('insertText', false, insertion);
-    
+
+    const success = document.execCommand("insertText", false, insertion);
+
     // Always call onChange to sync React state, because execCommand alone might not reliably trigger React's synthetic events
     onChange(nextValue);
-    
+
     if (!success) {
       window.requestAnimationFrame(() => {
         element.focus();
         element.setSelectionRange(caretPosition, caretPosition);
       });
     }
-    
+
     setState(null);
   };
 
@@ -107,11 +126,16 @@ export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
     autocompleteState: state,
     handleBlur: () => window.setTimeout(() => setState(null), 120),
     handleChange,
-    handleClick: (event: React.MouseEvent<TextControl>) => updateFromElement(event.currentTarget),
-    handleFocus: (event: React.FocusEvent<TextControl>) => updateFromElement(event.currentTarget),
+    handleClick: (event: React.MouseEvent<TextControl>) =>
+      updateFromElement(event.currentTarget),
+    handleFocus: (event: React.FocusEvent<TextControl>) =>
+      updateFromElement(event.currentTarget),
     handleKeyDown,
     handleKeyUp: (event: React.KeyboardEvent<TextControl>) => {
-      if (['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)) return;
+      if (
+        ["ArrowDown", "ArrowUp", "Enter", "Tab", "Escape"].includes(event.key)
+      )
+        return;
       updateFromElement(event.currentTarget);
     },
     insertSuggestion,
@@ -121,10 +145,10 @@ export function useVariableAutocomplete(args: UseVariableAutocompleteArgs) {
 
 function findVariableTrigger(value: string, caretIndex: number) {
   const beforeCaret = value.slice(0, caretIndex);
-  const startIndex = beforeCaret.lastIndexOf('{{');
-  const closedIndex = beforeCaret.lastIndexOf('}}');
+  const startIndex = beforeCaret.lastIndexOf("{{");
+  const closedIndex = beforeCaret.lastIndexOf("}}");
   if (startIndex <= closedIndex) return null;
-  if (startIndex < 0 || beforeCaret[startIndex + 1] !== '{') return null;
+  if (startIndex < 0 || beforeCaret[startIndex + 1] !== "{") return null;
 
   const query = beforeCaret.slice(startIndex + 2);
   if (/[{}\s]/.test(query)) return null;
@@ -134,25 +158,28 @@ function findVariableTrigger(value: string, caretIndex: number) {
 function findVariableReplacementEnd(value: string, caretIndex: number) {
   let endIndex = caretIndex;
 
-  while (/[A-Za-z0-9_$.-]/.test(value[endIndex] || '')) {
+  while (/[A-Za-z0-9_$.-]/.test(value[endIndex] || "")) {
     endIndex += 1;
   }
 
-  while (value[endIndex] === '}') {
+  while (value[endIndex] === "}") {
     endIndex += 1;
   }
 
   return endIndex;
 }
 
-function getCaretCoordinates(element: HTMLInputElement | HTMLTextAreaElement, caretIndex: number) {
+function getCaretCoordinates(
+  element: HTMLInputElement | HTMLTextAreaElement,
+  caretIndex: number,
+) {
   const style = window.getComputedStyle(element);
-  const mirror = document.createElement('div');
-  const span = document.createElement('span');
+  const mirror = document.createElement("div");
+  const span = document.createElement("span");
   const rect = element.getBoundingClientRect();
 
   mirror.textContent = element.value.slice(0, caretIndex);
-  span.textContent = element.value.slice(caretIndex, caretIndex + 1) || '.';
+  span.textContent = element.value.slice(caretIndex, caretIndex + 1) || ".";
   mirror.appendChild(span);
 
   Object.assign(mirror.style, {
@@ -162,11 +189,11 @@ function getCaretCoordinates(element: HTMLInputElement | HTMLTextAreaElement, ca
     letterSpacing: style.letterSpacing,
     lineHeight: style.lineHeight,
     padding: style.padding,
-    position: 'fixed',
-    whiteSpace: element.tagName === 'INPUT' ? 'pre' : 'pre-wrap',
-    wordBreak: element.tagName === 'INPUT' ? 'normal' : 'break-word',
+    position: "fixed",
+    whiteSpace: element.tagName === "INPUT" ? "pre" : "pre-wrap",
+    wordBreak: element.tagName === "INPUT" ? "normal" : "break-word",
     width: `${element.clientWidth}px`,
-    visibility: 'hidden',
+    visibility: "hidden",
     left: `${rect.left}px`,
     top: `${rect.top}px`,
   });

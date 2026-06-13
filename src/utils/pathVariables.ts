@@ -1,9 +1,9 @@
-import type { PathVariable } from '../contexts/WorkspaceContext';
+import type { PathVariable } from "../contexts/WorkspaceContext";
 
 const PATH_VARIABLE_REGEX = /(^|\/):([A-Za-z_][A-Za-z0-9_]*)/g;
 
 export function extractPathVariableKeys(url: string): string[] {
-  const baseUrl = (url || '').split('?')[0];
+  const baseUrl = (url || "").split("?")[0];
   const keys: string[] = [];
   let match: RegExpExecArray | null;
 
@@ -15,11 +15,16 @@ export function extractPathVariableKeys(url: string): string[] {
   return keys;
 }
 
-export function syncPathVariablesWithUrl(url: string, variables: PathVariable[] = []): PathVariable[] {
+export function syncPathVariablesWithUrl(
+  url: string,
+  variables: PathVariable[] = [],
+): PathVariable[] {
   const keys = extractPathVariableKeys(url);
   return keys.map((key) => {
     const existing = variables.find((variable) => variable.key === key);
-    return existing || { id: crypto.randomUUID(), key, value: '', description: '' };
+    return (
+      existing || { id: crypto.randomUUID(), key, value: "", description: "" }
+    );
   });
 }
 
@@ -27,26 +32,35 @@ export function upsertPathVariable(
   variables: PathVariable[] = [],
   key: string,
   value: string,
-  description?: string
+  description?: string,
 ): PathVariable[] {
   const exists = variables.some((variable) => variable.key === key);
   if (!exists) {
-    return [...variables, { id: crypto.randomUUID(), key, value, description: description || '' }];
+    return [
+      ...variables,
+      { id: crypto.randomUUID(), key, value, description: description || "" },
+    ];
   }
 
-  return variables.map((variable) => (
+  return variables.map((variable) =>
     variable.key === key
       ? { ...variable, value, description: description ?? variable.description }
-      : variable
-  ));
+      : variable,
+  );
 }
 
-export function applyPathVariables(url: string, variables: PathVariable[] = []): string {
+export function applyPathVariables(
+  url: string,
+  variables: PathVariable[] = [],
+): string {
   if (!url || variables.length === 0) return url;
 
-  return url.replace(PATH_VARIABLE_REGEX, (match, prefix: string, key: string) => {
-    const variable = variables.find((item) => item.key === key);
-    if (!variable?.value) return match;
-    return `${prefix}${encodeURIComponent(variable.value)}`;
-  });
+  return url.replace(
+    PATH_VARIABLE_REGEX,
+    (match, prefix: string, key: string) => {
+      const variable = variables.find((item) => item.key === key);
+      if (!variable?.value) return match;
+      return `${prefix}${encodeURIComponent(variable.value)}`;
+    },
+  );
 }

@@ -1,7 +1,7 @@
 export interface VariableSuggestion {
   key: string;
   value: string;
-  source: 'Environment' | 'Collection' | 'Folder' | 'Globals' | 'Dynamic';
+  source: "Environment" | "Collection" | "Folder" | "Globals" | "Dynamic";
 }
 
 export interface VariableAutocompleteState {
