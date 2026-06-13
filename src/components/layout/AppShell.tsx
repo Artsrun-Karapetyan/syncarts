@@ -5,6 +5,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { GlobalDropZone } from './GlobalDropZone';
+import { GlobalContextMenu } from './GlobalContextMenu';
 import { WorkspaceProvider } from '../../contexts/WorkspaceContext';
 import { useStoredUser } from '../../lib/session';
 
@@ -34,6 +35,7 @@ export function AppShell({ children }: AppShellProps) {
             </Panel>
           </PanelGroup>
         </div>
+        <GlobalContextMenu />
       </GlobalDropZone>
     </WorkspaceProvider>
   );
