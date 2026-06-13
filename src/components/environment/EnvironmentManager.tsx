@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Plus, Trash2, CheckSquare, Square, Globe, Upload } from 'lucide-react';
 import { useWorkspace, EnvironmentVariable } from '../../contexts/WorkspaceContext';
 import { importPostmanEnvironment } from '../../utils/postmanParser';
+import { VariableTextInput } from '../request/VariableTextInput';
 
 interface Props {
   isOpen: boolean;
@@ -336,19 +337,19 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
                         {v.enabled ? <CheckSquare size={16} /> : <Square size={16} />}
                       </button>
                     </div>
-                    <input
+                    <VariableTextInput
                       className="input"
                       style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
                       placeholder="Variable Key"
                       value={v.key}
-                      onChange={(e) => handleUpdateVariable(v.id, { key: e.target.value })}
+                      onChange={(value) => handleUpdateVariable(v.id, { key: value })}
                     />
-                    <input
+                    <VariableTextInput
                       className="input"
                       style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
                       placeholder="Value"
                       value={v.value}
-                      onChange={(e) => handleUpdateVariable(v.id, { value: e.target.value })}
+                      onChange={(value) => handleUpdateVariable(v.id, { value })}
                     />
                     <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
                       <button

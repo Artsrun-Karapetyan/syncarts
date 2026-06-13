@@ -1,5 +1,6 @@
 import { Plus, Trash2, CheckSquare, Square } from 'lucide-react';
 import { useWorkspace, EnvironmentVariable } from '../../contexts/WorkspaceContext';
+import { VariableTextInput } from './VariableTextInput';
 
 export function CollectionVariablesEditor() {
   const { activeTab, collections, updateCollection, updateFolder } = useWorkspace();
@@ -94,17 +95,17 @@ export function CollectionVariablesEditor() {
                   {v.enabled !== false ? <CheckSquare size={16} /> : <Square size={16} />}
                 </button>
               </div>
-              <input
+              <VariableTextInput
                 className="input"
                 value={v.key}
-                onChange={(e) => updateVariable(v.id, { key: e.target.value })}
+                onChange={(value) => updateVariable(v.id, { key: value })}
                 placeholder="New Variable"
                 style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
               />
-              <input
+              <VariableTextInput
                 className="input"
                 value={v.value}
-                onChange={(e) => updateVariable(v.id, { value: e.target.value })}
+                onChange={(value) => updateVariable(v.id, { value })}
                 placeholder="Value"
                 style={{ width: '100%', fontSize: 13, background: 'transparent', borderRadius: 0, margin: '-1px 0 0 -1px' }}
               />
