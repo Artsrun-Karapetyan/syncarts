@@ -30,7 +30,7 @@ export function UrlBar() {
       const parsed = parseCurlCommand(text);
       if (parsed) {
         e.preventDefault(); // Prevent pasting just the curl string into the URL
-        updateActiveTab(parsed);
+        updateActiveTab({ ...parsed, queryParams: parseQueryParamsFromUrl(parsed.url || '', parsed.queryParamDescriptions || {}) });
       }
     }
   };
@@ -47,7 +47,8 @@ export function UrlBar() {
   const updateUrlValue = (newUrl: string) => {
     const updates: any = {
       url: newUrl,
-      pathVariables: syncPathVariablesWithUrl(newUrl, activeTab?.pathVariables || [])
+      pathVariables: syncPathVariablesWithUrl(newUrl, activeTab?.pathVariables || []),
+      queryParams: parseQueryParamsFromUrl(newUrl, activeTab?.queryParamDescriptions || {})
     };
     if (!activeTab?.name || AUTO_REQUEST_NAMES.has(activeTab.name) || activeTab.name === activeTab.url) {
       updates.name = newUrl;
@@ -222,4 +223,28 @@ export function UrlBar() {
       )}
     </div>
   );
+}
+
+function parseQueryParamsFromUrl(url: string, descriptions: Record<string, string>) {
+  const [, queryString] = url.split('?');
+  if (!queryString) return [];
+
+  return queryString.split('&').filter(Boolean).map((pair) => {
+    const [k, ...rest] = pair.split('=');
+    const key = decodeQueryPart(k || '');
+    return {
+      key,
+      value: decodeQueryPart(rest.join('=') || ''),
+      description: descriptions[key] || '',
+      enabled: true,
+    };
+  });
+}
+
+function decodeQueryPart(value: string) {
+  try {
+    return decodeURIComponent(value.replace(/\+/g, ' '));
+  } catch {
+    return value;
+  }
 }

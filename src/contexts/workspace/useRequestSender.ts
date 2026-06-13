@@ -47,7 +47,8 @@ export function useRequestSender(args: RequestSenderArgs) {
     });
     const headerMap: Record<string, string> = {};
     requestTab.headers.forEach((h) => {
-      if (h.key && h.value) headerMap[interpolate(h.key)] = interpolate(h.value);
+      if (h.enabled === false || !h.key || !h.value) return;
+      headerMap[interpolate(h.key)] = interpolate(h.value);
     });
 
     const { authType: finalAuthType, bearerToken: finalBearerToken } = resolveRequestAuth(requestTab, requestCollections);
@@ -126,6 +127,7 @@ export function useRequestSender(args: RequestSenderArgs) {
         updateCollection(collectionContext.collectionId, { variables: collectionVariablesDraft });
       }
       updateActiveTab({ response: result, testResults, consoleLogs });
+      return result;
     } catch (err) {
       console.error(err);
     }

@@ -63,7 +63,7 @@ export function parseCurlCommand(curlCommand: string): Partial<TabData> | null {
   return {
     url: normalizeCurlUrl(url),
     method,
-    headers: headers.length > 0 ? headers : [{ key: '', value: '' }],
+    headers: headers.length > 0 ? headers : [{ key: '', value: '', enabled: true }],
     body: parsedBody.body,
     bodyType: parsedBody.bodyType,
     formData: parsedBody.formData
@@ -136,13 +136,14 @@ function addHeader(headers: HeaderItem[], headerStr: string) {
   if (colonIndex <= 0) return;
   headers.push({
     key: headerStr.substring(0, colonIndex).trim(),
-    value: headerStr.substring(colonIndex + 1).trim()
+    value: headerStr.substring(colonIndex + 1).trim(),
+    enabled: true
   });
 }
 
 function setHeaderIfMissing(headers: HeaderItem[], key: string, value: string) {
   if (!headers.some(header => header.key.toLowerCase() === key.toLowerCase())) {
-    headers.push({ key, value });
+    headers.push({ key, value, enabled: true });
   }
 }
 

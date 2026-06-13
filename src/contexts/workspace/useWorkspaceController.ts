@@ -255,7 +255,8 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
       name: 'New Request',
       method: 'GET',
       url: '',
-      headers: [{ key: '', value: '' }],
+      headers: [{ key: '', value: '', enabled: true }],
+      queryParams: [],
       body: ''
     };
     collectionActions.saveRequest(collectionId, folderId, newReq);

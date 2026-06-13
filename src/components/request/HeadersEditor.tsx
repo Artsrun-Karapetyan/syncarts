@@ -13,19 +13,35 @@ export function HeadersEditor() {
   };
 
   const addHeader = () => {
-    updateActiveTab({ headers: [...headers, { key: '', value: '' }] });
+    updateActiveTab({ headers: [...headers, { key: '', value: '', enabled: true }] });
   };
 
   const removeHeader = (index: number) => {
     const newHeaders = headers.filter((_, i) => i !== index);
-    if (newHeaders.length === 0) newHeaders.push({ key: '', value: '' });
+    if (newHeaders.length === 0) newHeaders.push({ key: '', value: '', enabled: true });
     updateActiveTab({ headers: newHeaders });
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {headers.map((header, idx) => (
-        <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 32px', gap: 8, alignItems: 'center' }}>
+        <div
+          key={idx}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr 1fr 1fr 32px',
+            gap: 8,
+            alignItems: 'center',
+            opacity: header.enabled === false ? 0.45 : 1,
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={header.enabled !== false}
+            onChange={(e) => updateHeader(idx, { enabled: e.target.checked })}
+            style={{ width: 16, height: 16, accentColor: 'var(--accent-primary)', cursor: 'pointer', margin: 0 }}
+            title={header.enabled === false ? 'Enable header' : 'Disable header'}
+          />
           <VariableTextInput
             className="input font-mono"
             style={{ width: '100%', fontSize: 13, padding: '8px 12px' }}

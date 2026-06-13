@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { X, Plus, Circle } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 export function TabsBar() {
@@ -98,11 +98,6 @@ export function TabsBar() {
                     if (dirtyDot) dirtyDot.style.opacity = '1';
                   }}
                 >
-                  <Circle
-                    size={7}
-                    fill={`var(--status-${tab.method?.toLowerCase() || 'get'})`}
-                    color={`var(--status-${tab.method?.toLowerCase() || 'get'})`}
-                  />
                   <span style={{ fontWeight: 600, fontSize: 10, color: `var(--status-${tab.method?.toLowerCase() || 'get'})`, flexShrink: 0 }}>
                     {tab.method}
                   </span>

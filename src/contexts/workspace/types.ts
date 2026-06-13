@@ -2,6 +2,7 @@ export interface HeaderItem {
   key: string;
   value: string;
   description?: string;
+  enabled?: boolean;
 }
 
 export interface HttpResponse {
@@ -34,6 +35,13 @@ export interface FormDataItem {
   files?: string[];
 }
 
+export interface QueryParamItem {
+  key: string;
+  value: string;
+  description?: string;
+  enabled: boolean;
+}
+
 export interface PathVariable {
   id: string;
   key: string;
@@ -60,6 +68,7 @@ export interface TabData {
   description?: string;
   pathVariables?: PathVariable[];
   queryParamDescriptions?: Record<string, string>;
+  queryParams?: QueryParamItem[];
   preRequestScript?: string;
   testScript?: string;
   variables?: EnvironmentVariable[];
@@ -98,6 +107,7 @@ export interface SavedRequest {
   description?: string;
   pathVariables?: PathVariable[];
   queryParamDescriptions?: Record<string, string>;
+  queryParams?: QueryParamItem[];
   formData?: FormDataItem[];
   body: string;
   preRequestScript?: string;
@@ -222,7 +232,7 @@ export interface WorkspaceContextState extends TabActions, CollectionActions, En
   saveRequest: (collectionId: string, folderId: string | null, request: SavedRequest) => void;
   createBlankRequestInFolder: (collectionId: string, folderId: string | null) => void;
   importCollection: (collectionData: Omit<Collection, 'id'>) => void;
-  sendRequest: () => Promise<void>;
+  sendRequest: () => Promise<HttpResponse | undefined>;
   isMutating: boolean;
   error: unknown;
   renameItem: (collectionId: string, itemId: string, newName: string) => void;

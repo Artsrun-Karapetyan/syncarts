@@ -117,3 +117,26 @@ pub async fn make_request(request: HttpRequest) -> Result<HttpResponse, String> 
         time_ms,
     })
 }
+
+#[tauri::command]
+pub fn save_response_body(path: String, body: String) -> Result<(), String> {
+    let bytes = if body.starts_with("data:") {
+        decode_data_url(&body)?
+    } else {
+        body.into_bytes()
+    };
+
+    std::fs::write(path, bytes).map_err(|error| error.to_string())
+}
+
+fn decode_data_url(value: &str) -> Result<Vec<u8>, String> {
+    use base64::{engine::general_purpose, Engine as _};
+
+    let (_, data) = value
+        .split_once(',')
+        .ok_or_else(|| "Invalid data URL response body".to_string())?;
+
+    general_purpose::STANDARD
+        .decode(data)
+        .map_err(|error| error.to_string())
+}

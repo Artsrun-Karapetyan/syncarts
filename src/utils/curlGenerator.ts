@@ -51,7 +51,7 @@ function buildHeaders(
   const headers = new Map<string, [string, string]>();
 
   for (const header of request.headers || []) {
-    if (!header.key.trim() || !header.value.trim()) continue;
+    if (header.enabled === false || !header.key.trim() || !header.value.trim()) continue;
     const key = interpolate(header.key.trim());
     headers.set(key.toLowerCase(), [key, interpolate(header.value)]);
   }

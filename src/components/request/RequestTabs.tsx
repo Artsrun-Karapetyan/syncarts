@@ -36,10 +36,13 @@ export function RequestTabs() {
     return () => window.removeEventListener('syncarts:open-request-tab', handleOpenTab);
   }, []);
 
-  const filledHeadersCount = activeRequest?.headers.filter(h => h.key.trim()).length ?? 0;
+  const filledHeadersCount = activeRequest?.headers.filter(h => h.enabled !== false && h.key.trim()).length ?? 0;
 
   // Calculate params count
   const getParamsCount = () => {
+    if (activeRequest?.queryParams) {
+      return activeRequest.queryParams.filter(p => p.enabled !== false && p.key.trim()).length + extractPathVariableKeys(activeRequest.url || '').length;
+    }
     if (!activeRequest?.url) return 0;
     try {
       const [, query] = activeRequest.url.split('?');

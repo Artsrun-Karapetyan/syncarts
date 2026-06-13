@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
-import { Send, Loader2, ChevronDown, Code2, Edit2 } from 'lucide-react';
+import { invoke } from '@tauri-apps/api/core';
+import { Send, Loader2, ChevronDown, Code2, Edit2, Download } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import { MethodSelector } from '../request/MethodSelector';
@@ -11,16 +12,19 @@ import { SaveDialog } from '../request/SaveDialog';
 import { RequestCodeModal } from '../request/RequestCodeModal';
 import { CollectionFolderTabs } from './CollectionFolderTabs';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import type { HttpResponse } from '../../contexts/workspace/types';
 
 export function Workspace() {
   const { sendRequest, isMutating, activeTab, collections, updateActiveTab, saveActiveRequestInPlace, addTab } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const [showSendMenu, setShowSendMenu] = useState(false);
   const [preferredSplitDirection, setPreferredSplitDirection] = useState<'horizontal' | 'vertical'>(() => {
     return window.localStorage.getItem('syncarts-request-response-split') === 'vertical' ? 'vertical' : 'horizontal';
   });
   const [isNarrowLayout, setIsNarrowLayout] = useState(false);
   const saveBtnRef = useRef<HTMLButtonElement>(null);
+  const sendMenuRef = useRef<HTMLDivElement>(null);
   const splitDirection = isNarrowLayout ? 'vertical' : preferredSplitDirection;
 
   const handleDirectSave = () => {
@@ -58,12 +62,39 @@ export function Workspace() {
     return () => media.removeEventListener('change', updateLayout);
   }, []);
 
+  useEffect(() => {
+    if (!showSendMenu) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (sendMenuRef.current?.contains(event.target as Node)) return;
+      setShowSendMenu(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowSendMenu(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showSendMenu]);
+
   const toggleSplitDirection = () => {
     setPreferredSplitDirection((current) => {
       const next = current === 'horizontal' ? 'vertical' : 'horizontal';
       window.localStorage.setItem('syncarts-request-response-split', next);
       return next;
     });
+  };
+
+  const handleSendAndDownload = async () => {
+    setShowSendMenu(false);
+    const response = await sendRequest();
+    if (!response) return;
+    await saveResponseToFile(response);
   };
 
   return (
@@ -214,47 +245,100 @@ export function Workspace() {
               >
                 {splitDirection === 'horizontal' ? 'Stack' : 'Split'}
               </button>
-              <button
-                className={activeTab?.type === 'example' ? "btn" : "btn-success"}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  fontSize: 13,
-                  padding: '0 24px',
-                  borderRadius: 9999,
-                  height: 38,
-                  fontWeight: 700,
-                  letterSpacing: '0.03em',
-                  border: 'none',
-                  cursor: isMutating && activeTab?.type !== 'example' ? 'not-allowed' : 'pointer',
-                  opacity: isMutating && activeTab?.type !== 'example' ? 0.7 : 1,
-                  transition: 'all var(--transition-fast)',
-                }}
-                onClick={() => {
-                  if (activeTab?.type === 'example') {
-                    // Just visually save for now or trigger a toast
-                  } else {
-                    sendRequest();
-                  }
-                }}
-                disabled={isMutating && activeTab?.type !== 'example'}
-              >
-                {activeTab?.type === 'example' ? (
-                  'Save Example'
-                ) : isMutating ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" />
-                    Sending…
-                  </>
-                ) : (
-                  <>
-                    <Send size={14} />
-                    SEND
-                  </>
+              <div style={{ position: 'relative', display: 'flex' }}>
+                <button
+                  className={activeTab?.type === 'example' ? "btn" : "btn-success"}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    fontSize: 13,
+                    padding: '0 20px 0 24px',
+                    borderRadius: '9999px 0 0 9999px',
+                    height: 38,
+                    fontWeight: 700,
+                    letterSpacing: '0.03em',
+                    border: 'none',
+                    cursor: isMutating && activeTab?.type !== 'example' ? 'not-allowed' : 'pointer',
+                    opacity: isMutating && activeTab?.type !== 'example' ? 0.7 : 1,
+                    transition: 'all var(--transition-fast)',
+                  }}
+                  onClick={() => {
+                    if (activeTab?.type === 'example') {
+                      // Just visually save for now or trigger a toast
+                    } else {
+                      void sendRequest();
+                    }
+                  }}
+                  disabled={isMutating && activeTab?.type !== 'example'}
+                >
+                  {activeTab?.type === 'example' ? (
+                    'Save Example'
+                  ) : isMutating ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Sending…
+                    </>
+                  ) : (
+                    <>
+                      <Send size={14} />
+                      SEND
+                    </>
+                  )}
+                </button>
+                {activeTab?.type !== 'example' && (
+                  <button
+                    className="btn-success"
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: '0 9999px 9999px 0',
+                      borderLeft: '1px solid rgba(255, 255, 255, 0.24)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: isMutating ? 0.7 : 1,
+                      cursor: isMutating ? 'not-allowed' : 'pointer',
+                    }}
+                    disabled={isMutating}
+                    onClick={() => setShowSendMenu((current) => !current)}
+                    title="More send actions"
+                  >
+                    <ChevronDown size={15} />
+                  </button>
                 )}
-              </button>
+                {showSendMenu && activeTab?.type !== 'example' && (
+                  <div
+                    ref={sendMenuRef}
+                    className="animate-fade-in"
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 'calc(100% + 8px)',
+                      width: 260,
+                      zIndex: 1000,
+                      padding: 8,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                      background: 'rgba(24, 24, 24, 0.98)',
+                      border: '1px solid var(--border-highlight)',
+                      borderRadius: 'var(--radius-md)',
+                      boxShadow: 'var(--shadow-lg)',
+                    }}
+                  >
+                    <button
+                      className="btn"
+                      style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '10px 12px', fontSize: 13 }}
+                      onClick={handleSendAndDownload}
+                    >
+                      <Download size={15} />
+                      Send and Download
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {showSaveDialog && <SaveDialog onClose={() => setShowSaveDialog(false)} anchorRef={saveBtnRef} />}
@@ -294,4 +378,62 @@ export function Workspace() {
       )}
     </div>
   );
+}
+
+async function saveResponseToFile(response: HttpResponse) {
+  const { save } = await import('@tauri-apps/plugin-dialog');
+  const filePath = await save({
+    defaultPath: getResponseFileName(response),
+  });
+
+  if (!filePath) return;
+
+  await invoke('save_response_body', {
+    path: filePath,
+    body: response.body,
+  });
+}
+
+function getResponseFileName(response: HttpResponse) {
+  const contentDisposition = getHeader(response.headers, 'content-disposition');
+  const filename = contentDisposition?.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i)?.[1];
+  if (filename) return sanitizeFileName(safeDecodeURIComponent(filename.replace(/^"|"$/g, '')));
+
+  const extension = getExtensionFromContentType(getHeader(response.headers, 'content-type'));
+  return `response-${response.status || 'body'}${extension}`;
+}
+
+function getHeader(headers: Record<string, string>, key: string) {
+  const entry = Object.entries(headers).find(([headerKey]) => headerKey.toLowerCase() === key);
+  return entry?.[1] || '';
+}
+
+function getExtensionFromContentType(contentType: string) {
+  const normalized = contentType.split(';')[0].trim().toLowerCase();
+  const map: Record<string, string> = {
+    'application/json': '.json',
+    'application/pdf': '.pdf',
+    'application/zip': '.zip',
+    'text/csv': '.csv',
+    'text/html': '.html',
+    'text/plain': '.txt',
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/gif': '.gif',
+    'image/webp': '.webp',
+  };
+
+  return map[normalized] || '.txt';
+}
+
+function sanitizeFileName(value: string) {
+  return value.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_').trim() || 'response.txt';
+}
+
+function safeDecodeURIComponent(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }

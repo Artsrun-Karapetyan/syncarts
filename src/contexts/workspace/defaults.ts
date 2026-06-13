@@ -18,6 +18,7 @@ export const DEFAULT_COLLECTIONS: Collection[] = [
             url: 'https://jsonplaceholder.typicode.com/posts',
             headers: [],
             bodyType: 'none',
+            queryParams: [],
             formData: [],
             body: ''
           },
@@ -27,8 +28,9 @@ export const DEFAULT_COLLECTIONS: Collection[] = [
             name: 'Create Post',
             method: 'POST',
             url: 'https://jsonplaceholder.typicode.com/posts',
-            headers: [{ key: 'Content-type', value: 'application/json; charset=UTF-8' }],
+            headers: [{ key: 'Content-type', value: 'application/json; charset=UTF-8', enabled: true }],
             bodyType: 'raw',
+            queryParams: [],
             formData: [],
             body: '{\n  "title": "foo",\n  "body": "bar",\n  "userId": 1\n}'
           }
@@ -42,6 +44,7 @@ export const DEFAULT_COLLECTIONS: Collection[] = [
         url: 'https://jsonplaceholder.typicode.com/users',
         headers: [],
         bodyType: 'none',
+        queryParams: [],
         formData: [],
         body: ''
       }
@@ -55,10 +58,11 @@ export function createEmptyRequestTab(): TabData {
     name: 'Untitled Request',
     method: 'GET',
     url: '',
-    headers: [{ key: '', value: '' }],
+    headers: [{ key: '', value: '', enabled: true }],
     authType: 'inherit',
     bodyType: 'raw',
     pathVariables: [],
+    queryParams: [],
     formData: [{ id: crypto.randomUUID(), key: '', value: '', enabled: true, type: 'text' }],
     body: '',
     response: null

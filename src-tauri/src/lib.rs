@@ -25,6 +25,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             commands::make_request,
+            commands::save_response_body,
             show_main_window
         ])
         .on_page_load({

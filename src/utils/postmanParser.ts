@@ -60,18 +60,18 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
       const req = item.request || {};
       
       if (typeof req === 'string') {
-        return {
-          type: 'request',
-          id: crypto.randomUUID(),
-          name: item.name || 'Untitled Request',
-          method: 'GET',
-          url: req,
-          pathVariables: parsePostmanPathVariables(undefined, req),
-          headers: [{ key: '', value: '' }],
-          body: '',
-          preRequestScript,
-          testScript,
-          authType,
+          return {
+            type: 'request',
+            id: crypto.randomUUID(),
+            name: item.name || 'Untitled Request',
+            method: 'GET',
+            url: req,
+            pathVariables: parsePostmanPathVariables(undefined, req),
+          headers: [{ key: '', value: '', enabled: true }],
+            body: '',
+            preRequestScript,
+            testScript,
+            authType,
           bearerToken,
           description
         };
@@ -86,15 +86,16 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
       }
       const pathVariables = parsePostmanPathVariables(req.url, url);
 
-      let headers: HeaderItem[] = [{ key: '', value: '' }];
+      let headers: HeaderItem[] = [{ key: '', value: '', enabled: true }];
       if (Array.isArray(req.header) && req.header.length > 0) {
         headers = req.header.map((h: any) => ({
           key: h.key || '',
           value: h.value || '',
-          description: typeof h.description === 'string' ? h.description : ''
+          description: typeof h.description === 'string' ? h.description : '',
+          enabled: h.disabled !== true
         }));
         if (headers[headers.length - 1].key !== '' || headers[headers.length - 1].value !== '') {
-          headers.push({ key: '', value: '' });
+          headers.push({ key: '', value: '', enabled: true });
         }
       }
 
@@ -148,14 +149,16 @@ export function importPostmanCollection(jsonString: string): Omit<Collection, 'i
           if (Array.isArray(res.header)) {
             resHeaders = res.header.map((h: any) => ({
               key: h.key || '',
-              value: h.value || ''
+              value: h.value || '',
+              enabled: true
             }));
           }
           let reqHeaders: HeaderItem[] = [];
           if (res.originalRequest && Array.isArray(res.originalRequest.header)) {
              reqHeaders = res.originalRequest.header.map((h: any) => ({
               key: h.key || '',
-              value: h.value || ''
+              value: h.value || '',
+              enabled: true
             }));
           }
           let parsedOrigBody = { body: '', bodyType: undefined as BodyType | undefined, formData: undefined as any[] | undefined };
