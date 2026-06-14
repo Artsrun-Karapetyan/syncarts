@@ -44,6 +44,7 @@ interface SidebarContextMenuProps {
   handleExportFolder: (collectionId: string, folderId: string) => void;
   handleExportRequest: (collectionId: string, requestId: string) => void;
   addExample: (collectionId: string, requestId: string, name: string) => void;
+  activeTabStatus?: number;
   forkCollection: (collectionId: string) => void;
   sortItems: (
     collectionId: string,
@@ -99,12 +100,11 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
             icon={FileText}
             label="Add example"
             onClick={() => {
-              if (ctxMenu.itemId)
-                props.addExample(
-                  ctxMenu.collectionId,
-                  ctxMenu.itemId,
-                  props.activeHasResponse ? "Example Response" : "New Example",
-                );
+              if (ctxMenu.itemId) {
+                const status = props.activeTabStatus;
+                const name = status ? `${status}` : "New Example";
+                props.addExample(ctxMenu.collectionId, ctxMenu.itemId, name);
+              }
               props.setCtxMenu(null);
             }}
           />

@@ -286,6 +286,12 @@ export interface WorkspaceContextState
     requestId: string,
     exampleId: string,
   ) => void;
+  updateExample: (
+    collectionId: string,
+    requestId: string,
+    exampleId: string,
+    data: Partial<SavedExample>,
+  ) => void;
   sortItems: (
     collectionId: string,
     folderId: string | null,

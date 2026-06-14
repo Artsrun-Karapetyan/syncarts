@@ -1,7 +1,7 @@
 import "./ResponseViewer.css";
 import "../request/tabs/RequestTabs.css";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
 import { ResponseBodyContent } from "./body/ResponseBodyContent";
@@ -20,7 +20,7 @@ import { ResponseEmptyState } from "./state/ResponseEmptyState";
 import { ResponseLoadingState } from "./state/ResponseLoadingState";
 
 export function ResponseViewer() {
-  const { activeTab, addTab, error, isMutating } = useWorkspace();
+  const { activeTab, addTab, addExample, error, isMutating } = useWorkspace();
   const response = activeTab?.response;
   const [viewTab, setViewTab] = useState<ResponseTab>("body");
   const [bodyFormat, setBodyFormat] = useState<BodyFormat>("pretty");
@@ -93,6 +93,12 @@ export function ResponseViewer() {
     });
   };
 
+  const handleSaveExample = useCallback(() => {
+    if (!activeTab?.savedRequestId || !activeTab?.collectionId) return;
+    const status = activeTab.response?.status || 200;
+    addExample(activeTab.collectionId, activeTab.savedRequestId, `${status}`);
+  }, [activeTab, addExample]);
+
   return (
     <div className="glass-panel response-viewer-root">
       <ResponsePanelHeader
@@ -101,6 +107,8 @@ export function ResponseViewer() {
         response={response}
         responseHeaderCount={responseHeaderEntries.length}
         testResults={activeTab?.testResults}
+        onSaveExample={handleSaveExample}
+        hasSavedRequestId={!!activeTab?.savedRequestId}
       />
 
       <div className="response-viewer-content">

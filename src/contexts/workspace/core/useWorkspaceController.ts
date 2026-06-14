@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 import { api } from "../../../lib/api";
 import { useCollectionActions } from "../collections/useCollectionActions";
+import { useExampleActions } from "../collections/useExampleActions";
 import { useEnvironmentActions } from "../environment/useEnvironmentActions";
 import { useRequestSender } from "../requests/useRequestSender";
 import {
@@ -170,10 +171,15 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
   });
 
   const collectionActions = useCollectionActions({
-    activeTab,
     activeWorkspaceId,
     localDefaultWorkspaceId,
     setTabsByWorkspace,
+    updateWorkspaces,
+  });
+
+  const exampleActions = useExampleActions({
+    activeTab,
+    activeWorkspaceId,
     updateWorkspaces,
   });
 
@@ -349,6 +355,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     ...tabActions,
     collections,
     ...collectionActions,
+    ...exampleActions,
     createBlankRequestInFolder,
     ...requestSender,
   };

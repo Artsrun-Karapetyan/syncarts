@@ -72,4 +72,144 @@ describe("collectionItemHelpers", () => {
       sortItemsByTarget([request("b"), folder("a")], null, "default")[0],
     ).toMatchObject({ type: "folder", id: "a" });
   });
+
+  test("saves originalRequest details when creating example from active tab", () => {
+    const activeTab = {
+      method: "POST",
+      url: "https://api.example.com/users",
+      headers: [
+        { key: "Content-Type", value: "application/json" },
+        { key: "Authorization", value: "Bearer token123" },
+      ],
+      bodyType: "raw" as const,
+      body: '{"name": "John"}',
+      formData: undefined,
+      queryParams: [{ key: "page", value: "1", enabled: true }],
+      pathVariables: [{ id: "v1", key: "version", value: "v2" }],
+      authType: "bearer" as const,
+      bearerToken: "token123",
+      response: {
+        status: 201,
+        status_text: "Created",
+        headers: { "Content-Type": "application/json" },
+        body: '{"id": 1}',
+        time_ms: 45,
+      },
+    } as TabData;
+
+    const withExample = addExampleToItems(
+      [request("req1")],
+      "req1",
+      "POST user",
+      activeTab,
+    );
+    const savedRequest = withExample[0] as SavedRequest;
+    const example = savedRequest.examples?.[0];
+
+    expect(example).toBeDefined();
+    expect(example!.originalRequest).toEqual({
+      method: "POST",
+      url: "https://api.example.com/users",
+      headers: [
+        { key: "Content-Type", value: "application/json" },
+        { key: "Authorization", value: "Bearer token123" },
+      ],
+      bodyType: "raw",
+      body: '{"name": "John"}',
+      formData: undefined,
+      queryParams: [{ key: "page", value: "1", enabled: true }],
+      pathVariables: [{ id: "v1", key: "version", value: "v2" }],
+      authType: "bearer",
+      bearerToken: "token123",
+    });
+    expect(example!.code).toBe(201);
+    expect(example!.body).toBe('{"id": 1}');
+  });
+
+  test("creates example with undefined originalRequest when no active tab", () => {
+    const withExample = addExampleToItems(
+      [request("req1")],
+      "req1",
+      "Empty example",
+      undefined,
+    );
+    const savedRequest = withExample[0] as SavedRequest;
+    const example = savedRequest.examples?.[0];
+
+    expect(example).toBeDefined();
+    expect(example!.originalRequest).toBeUndefined();
+    expect(example!.code).toBe(200);
+  });
+
+  test("saves form-data and body type in originalRequest", () => {
+    const activeTab = {
+      method: "POST",
+      url: "https://api.example.com/upload",
+      headers: [],
+      bodyType: "form-data" as const,
+      body: "",
+      formData: [
+        {
+          id: "f1",
+          key: "file",
+          value: "",
+          enabled: true,
+          type: "file",
+          files: ["/path/to/file.png"],
+        },
+        {
+          id: "f2",
+          key: "name",
+          value: "test",
+          enabled: true,
+          type: "text",
+        },
+      ],
+      response: {
+        status: 200,
+        status_text: "OK",
+        headers: {},
+        body: "",
+        time_ms: 10,
+      },
+    } as TabData;
+
+    const withExample = addExampleToItems(
+      [request("req1")],
+      "req1",
+      "Upload",
+      activeTab,
+    );
+    const savedRequest = withExample[0] as SavedRequest;
+    const example = savedRequest.examples?.[0];
+
+    expect(example!.originalRequest).toEqual({
+      method: "POST",
+      url: "https://api.example.com/upload",
+      headers: [],
+      bodyType: "form-data",
+      body: "",
+      formData: [
+        {
+          id: "f1",
+          key: "file",
+          value: "",
+          enabled: true,
+          type: "file",
+          files: ["/path/to/file.png"],
+        },
+        {
+          id: "f2",
+          key: "name",
+          value: "test",
+          enabled: true,
+          type: "text",
+        },
+      ],
+      queryParams: undefined,
+      pathVariables: undefined,
+      authType: undefined,
+      bearerToken: undefined,
+    });
+  });
 });

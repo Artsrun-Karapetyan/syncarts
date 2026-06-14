@@ -127,6 +127,20 @@ export function addExampleToItems(
       headers: Object.entries(activeTab?.response?.headers || {}).map(
         ([key, value]) => ({ key, value }),
       ),
+      originalRequest: activeTab
+        ? {
+            method: activeTab.method,
+            url: activeTab.url,
+            headers: activeTab.headers,
+            bodyType: activeTab.bodyType,
+            body: activeTab.body,
+            formData: activeTab.formData,
+            queryParams: activeTab.queryParams,
+            pathVariables: activeTab.pathVariables,
+            authType: activeTab.authType,
+            bearerToken: activeTab.bearerToken,
+          }
+        : undefined,
     };
     return { ...item, examples: [...(item.examples || []), newExample] };
   });
@@ -148,6 +162,31 @@ export function deleteExampleFromItems(
       return {
         ...item,
         examples: item.examples.filter((example) => example.id !== exampleId),
+      };
+    }
+    return item;
+  });
+}
+
+export function updateExampleInItems(
+  items: (Folder | SavedRequest)[],
+  requestId: string,
+  exampleId: string,
+  data: Partial<SavedExample>,
+): (Folder | SavedRequest)[] {
+  return items.map((item) => {
+    if (item.type === "folder") {
+      return {
+        ...item,
+        items: updateExampleInItems(item.items, requestId, exampleId, data),
+      };
+    }
+    if (item.type === "request" && item.id === requestId && item.examples) {
+      return {
+        ...item,
+        examples: item.examples.map((example) =>
+          example.id === exampleId ? { ...example, ...data } : example,
+        ),
       };
     }
     return item;

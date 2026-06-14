@@ -1,4 +1,4 @@
-import { Clock, Zap } from "lucide-react";
+import { BookMarked, Clock, Zap } from "lucide-react";
 
 import type {
   HttpResponse,
@@ -14,6 +14,8 @@ interface ResponsePanelHeaderProps {
   response: HttpResponse | null | undefined;
   responseHeaderCount: number;
   testResults?: TestResult[];
+  onSaveExample?: () => void;
+  hasSavedRequestId?: boolean;
 }
 
 export function ResponsePanelHeader(props: ResponsePanelHeaderProps) {
@@ -23,6 +25,8 @@ export function ResponsePanelHeader(props: ResponsePanelHeaderProps) {
     response,
     responseHeaderCount,
     testResults,
+    onSaveExample,
+    hasSavedRequestId,
   } = props;
 
   return (
@@ -55,6 +59,23 @@ export function ResponsePanelHeader(props: ResponsePanelHeaderProps) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {response && onSaveExample && hasSavedRequestId && (
+          <button
+            className="btn"
+            onClick={onSaveExample}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "4px 10px",
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
+            <BookMarked size={12} />
+            Save as Example
+          </button>
+        )}
         {response ? (
           <>
             <span className={`status-pill ${getStatusClass(response.status)}`}>

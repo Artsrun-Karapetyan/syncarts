@@ -328,6 +328,7 @@ export function Sidebar() {
           menuRef={menuRef}
           collections={collections}
           activeHasResponse={!!activeTab?.response}
+          activeTabStatus={activeTab?.response?.status}
           isCreatingFolder={isCreatingFolder}
           newFolderName={newFolderName}
           setCtxMenu={setCtxMenu}

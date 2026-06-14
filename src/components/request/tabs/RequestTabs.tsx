@@ -7,6 +7,7 @@ import { extractPathVariableKeys } from "../../../utils/pathVariables";
 import { AuthEditor } from "../auth/AuthEditor";
 import { BodyEditor } from "../body/BodyEditor";
 import { DocsEditor } from "../DocsEditor";
+import { ExampleDocsEditor } from "../ExampleDocsEditor";
 import { HeadersEditor } from "../HeadersEditor";
 import { ParamsEditor } from "../params/ParamsEditor";
 import { ScriptsEditor } from "../scripts/ScriptsEditor";
@@ -24,7 +25,38 @@ const TABS: { id: Tab; label: string; disabled?: boolean }[] = [
 
 export function RequestTabs() {
   const [activeTab, setActiveTab] = useState<Tab>("headers");
-  const { activeTab: activeRequest } = useWorkspace();
+  const { activeTab: activeRequest, collections } = useWorkspace();
+
+  const isExample = activeRequest?.type === "example";
+
+  const example =
+    isExample && activeRequest?.exampleId && activeRequest?.collectionId
+      ? (() => {
+          const col = collections.find(
+            (c) => c.id === activeRequest.collectionId,
+          );
+          if (!col) return null;
+          for (const item of col.items) {
+            if (item.type === "request" && item.examples) {
+              const found = item.examples.find(
+                (e) => e.id === activeRequest.exampleId,
+              );
+              if (found) return { example: found, requestId: item.id };
+            }
+            if (item.type === "folder") {
+              for (const sub of item.items) {
+                if (sub.type === "request" && sub.examples) {
+                  const found = sub.examples.find(
+                    (e) => e.id === activeRequest.exampleId,
+                  );
+                  if (found) return { example: found, requestId: sub.id };
+                }
+              }
+            }
+          }
+          return null;
+        })()
+      : null;
 
   useEffect(() => {
     const handleOpenTab = (event: Event) => {
@@ -146,7 +178,16 @@ export function RequestTabs() {
         {activeTab === "params" && <ParamsEditor />}
         {activeTab === "auth" && <AuthEditor />}
         {activeTab === "scripts" && <ScriptsEditor />}
-        {activeTab === "docs" && <DocsEditor />}
+        {activeTab === "docs" &&
+          (isExample && example && activeRequest?.collectionId ? (
+            <ExampleDocsEditor
+              example={example.example}
+              requestId={example.requestId}
+              collectionId={activeRequest.collectionId}
+            />
+          ) : (
+            <DocsEditor />
+          ))}
       </div>
     </div>
   );

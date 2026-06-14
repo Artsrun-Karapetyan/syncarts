@@ -6,9 +6,7 @@ import type {
   Workspace,
 } from "../core/types";
 import {
-  addExampleToItems,
   addRequestToFolder,
-  deleteExampleFromItems,
   filterItemFromItems,
   hasRequestInTarget,
   removeRequestFromItems,
@@ -18,7 +16,6 @@ import {
 } from "./collectionItemHelpers";
 
 interface CollectionActionsArgs {
-  activeTab: TabData | undefined;
   activeWorkspaceId: string;
   localDefaultWorkspaceId: string;
   setTabsByWorkspace: (
@@ -31,7 +28,6 @@ interface CollectionActionsArgs {
 
 export function useCollectionActions(args: CollectionActionsArgs) {
   const {
-    activeTab,
     activeWorkspaceId,
     localDefaultWorkspaceId,
     setTabsByWorkspace,
@@ -292,61 +288,6 @@ export function useCollectionActions(args: CollectionActionsArgs) {
     });
   };
 
-  const addExample = (
-    collectionId: string,
-    requestId: string,
-    exampleName: string,
-  ) => {
-    updateWorkspaces((prev) =>
-      prev.map((w) => {
-        if (w.id !== activeWorkspaceId) return w;
-        return {
-          ...w,
-          collections: w.collections.map((col) =>
-            col.id === collectionId
-              ? {
-                  ...col,
-                  items: addExampleToItems(
-                    col.items,
-                    requestId,
-                    exampleName,
-                    activeTab,
-                  ),
-                }
-              : col,
-          ),
-        };
-      }),
-    );
-  };
-
-  const deleteExample = (
-    collectionId: string,
-    requestId: string,
-    exampleId: string,
-  ) => {
-    updateWorkspaces((prev) =>
-      prev.map((w) => {
-        if (w.id !== activeWorkspaceId) return w;
-        return {
-          ...w,
-          collections: w.collections.map((col) =>
-            col.id === collectionId
-              ? {
-                  ...col,
-                  items: deleteExampleFromItems(
-                    col.items,
-                    requestId,
-                    exampleId,
-                  ),
-                }
-              : col,
-          ),
-        };
-      }),
-    );
-  };
-
   const sortItems = (
     collectionId: string,
     folderId: string | null,
@@ -378,8 +319,6 @@ export function useCollectionActions(args: CollectionActionsArgs) {
     saveRequest,
     deleteItem,
     renameItem,
-    addExample,
-    deleteExample,
     sortItems,
   };
 }
