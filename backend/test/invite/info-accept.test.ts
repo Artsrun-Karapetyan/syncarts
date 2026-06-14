@@ -173,10 +173,16 @@ describe("InviteService getInviteInfo/acceptInvite", () => {
           findMany: async () => [{ id: "workspace" }],
         },
         workspaceInvite: {
-          findUnique: async () => ({ token: "invite", workspaceIds: ["workspace"] }),
+          findUnique: async () => ({
+            token: "invite",
+            workspaceIds: ["workspace"],
+          }),
         },
         workspaceMember: {
-          findUnique: async () => ({ userId: "user", workspaceId: "workspace" }),
+          findUnique: async () => ({
+            userId: "user",
+            workspaceId: "workspace",
+          }),
           create: async () => {
             createCalled = true;
           },

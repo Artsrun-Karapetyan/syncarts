@@ -103,7 +103,9 @@ describe("AuthGuard", () => {
     );
 
     await expect(
-      guard.canActivate(createContext({ headers: { authorization: "Bearer old" } })),
+      guard.canActivate(
+        createContext({ headers: { authorization: "Bearer old" } }),
+      ),
     ).rejects.toBeInstanceOf(UnauthorizedException);
     expect(deletedTokenHash).toBe(
       createHash("sha256").update("old").digest("hex"),

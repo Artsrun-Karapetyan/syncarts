@@ -19,9 +19,9 @@ describe("WorkspaceService delete/members", () => {
       }),
     );
 
-    await expect(service.deleteWorkspace("workspace", "owner")).resolves.toEqual(
-      { status: "deleted", workspaceId: "workspace" },
-    );
+    await expect(
+      service.deleteWorkspace("workspace", "owner"),
+    ).resolves.toEqual({ status: "deleted", workspaceId: "workspace" });
     expect(calls).toEqual(["invites", "workspace"]);
   });
 
@@ -43,7 +43,10 @@ describe("WorkspaceService delete/members", () => {
     await expect(
       service.deleteWorkspace("workspace", "member"),
     ).resolves.toEqual({ status: "left", workspaceId: "workspace" });
-    expect(deletedMember).toEqual({ userId: "member", workspaceId: "workspace" });
+    expect(deletedMember).toEqual({
+      userId: "member",
+      workspaceId: "workspace",
+    });
   });
 
   test("delete rejects missing workspace access", async () => {

@@ -110,7 +110,11 @@ describe("InviteService generateInviteLink", () => {
       where: { id: "workspace" },
       data: {
         name: "New",
-        data: { collections: [{ id: "c" }], environments: [], globalVariables: [] },
+        data: {
+          collections: [{ id: "c" }],
+          environments: [],
+          globalVariables: [],
+        },
       },
     });
   });

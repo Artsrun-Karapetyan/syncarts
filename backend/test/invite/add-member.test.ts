@@ -9,7 +9,9 @@ describe("InviteService addMemberByEmail", () => {
     const created: any[] = [];
     const service = new InviteService(
       createPrismaMock({
-        user: { findUnique: async () => ({ id: "member", email: "m@test.com" }) },
+        user: {
+          findUnique: async () => ({ id: "member", email: "m@test.com" }),
+        },
         workspace: { findMany: async () => [{ id: "workspace" }] },
         workspaceMember: {
           findUnique: async () => null,
@@ -34,10 +36,15 @@ describe("InviteService addMemberByEmail", () => {
     let createCalled = false;
     const service = new InviteService(
       createPrismaMock({
-        user: { findUnique: async () => ({ id: "member", email: "m@test.com" }) },
+        user: {
+          findUnique: async () => ({ id: "member", email: "m@test.com" }),
+        },
         workspace: { findMany: async () => [{ id: "workspace" }] },
         workspaceMember: {
-          findUnique: async () => ({ userId: "member", workspaceId: "workspace" }),
+          findUnique: async () => ({
+            userId: "member",
+            workspaceId: "workspace",
+          }),
           create: async () => {
             createCalled = true;
           },

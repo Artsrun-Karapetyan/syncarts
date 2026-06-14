@@ -10,8 +10,8 @@ import {
 } from "@nestjs/common";
 
 import { Public } from "../common/public.decorator.js";
-import { extractBearerToken } from "./authToken.js";
 import { AuthService } from "./auth.service.js";
+import { extractBearerToken } from "./authToken.js";
 
 type AuthedRequest = {
   authUser?: {

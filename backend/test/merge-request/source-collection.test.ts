@@ -57,6 +57,46 @@ describe("MergeRequestService source collection", () => {
     );
   });
 
+  test("rejects missing fallback workspace data", async () => {
+    const service = new MergeRequestService(
+      createPrismaMock({
+        mergeRequest: {
+          findUnique: async () => ({
+            id: "mr",
+            sourceWorkspaceId: "source",
+            sourceCollectionId: "collection",
+            data: null,
+          }),
+        },
+        workspace: { findUnique: async () => null },
+      }),
+    );
+
+    await expect(service.getSourceCollection("mr")).rejects.toThrow(
+      "Source workspace not found or empty",
+    );
+  });
+
+  test("treats missing fallback collections as empty", async () => {
+    const service = new MergeRequestService(
+      createPrismaMock({
+        mergeRequest: {
+          findUnique: async () => ({
+            id: "mr",
+            sourceWorkspaceId: "source",
+            sourceCollectionId: "collection",
+            data: null,
+          }),
+        },
+        workspace: { findUnique: async () => ({ data: {} }) },
+      }),
+    );
+
+    await expect(service.getSourceCollection("mr")).rejects.toThrow(
+      "Source collection not found in workspace",
+    );
+  });
+
   test("rejects missing fallback collection", async () => {
     const service = new MergeRequestService(
       createPrismaMock({
