@@ -158,4 +158,40 @@ describe("requestHelpers", () => {
       }),
     ).toBe("https://{{missing}}");
   });
+
+  test("resolves request ancestors with deeply nested folders", () => {
+    const deepCollections: Collection[] = [
+      {
+        id: "c-1",
+        name: "C",
+        items: [
+          {
+            type: "folder",
+            id: "f-1",
+            name: "F1",
+            items: [
+              {
+                type: "folder",
+                id: "f-2",
+                name: "F2",
+                items: [],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const ancestors = getRequestAncestors(
+      tab({ collectionId: "c-1", folderId: "f-2" }),
+      deepCollections,
+    );
+    expect(ancestors.map((a) => a.id)).toEqual(["c-1", "f-1", "f-2"]);
+
+    const missingAncestors = getRequestAncestors(
+      tab({ collectionId: "c-1", folderId: "missing" }),
+      deepCollections,
+    );
+    expect(missingAncestors.map((a) => a.id)).toEqual(["c-1"]);
+  });
 });

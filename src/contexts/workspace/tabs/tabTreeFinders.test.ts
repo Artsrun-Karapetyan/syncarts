@@ -45,4 +45,16 @@ describe("tabTreeFinders", () => {
     expect(findFolder([], "missing")).toBeNull();
     expect(findExample([], "missing")).toBeNull();
   });
+
+  test("finds deeply nested folder", () => {
+    const items = [
+      {
+        type: "folder",
+        id: "f-1",
+        name: "F1",
+        items: [{ type: "folder", id: "f-2", name: "F2", items: [] }],
+      },
+    ] as Folder[];
+    expect(findFolder(items, "f-2")?.id).toBe("f-2");
+  });
 });

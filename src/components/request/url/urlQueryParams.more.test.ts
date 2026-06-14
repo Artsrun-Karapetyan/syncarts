@@ -11,4 +11,10 @@ describe("parseQueryParamsFromUrl extra cases", () => {
       { key: "q", value: "hello world", description: "", enabled: true },
     ]);
   });
+
+  test("returns raw string if decodeURIComponent throws", () => {
+    expect(parseQueryParamsFromUrl("?key=%E0%A4%A", {})).toEqual([
+      { key: "key", value: "%E0%A4%A", description: "", enabled: true },
+    ]);
+  });
 });

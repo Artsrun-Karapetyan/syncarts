@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { importPostmanEnvironment } from "./postmanParser";
+import {
+  exportToPostmanCollection,
+  importPostmanCollection,
+  importPostmanEnvironment,
+} from "./postmanParser";
 
 describe("importPostmanEnvironment", () => {
   test("imports enabled Postman environment variables", () => {
@@ -32,5 +36,20 @@ describe("importPostmanEnvironment", () => {
     expect(() =>
       importPostmanEnvironment(JSON.stringify({ name: "Broken" })),
     ).toThrow("Invalid Postman Environment format");
+  });
+
+  test("wrappers call underlying parsers", () => {
+    // Very basic test just to hit the wrapper functions
+    expect(() => importPostmanCollection("{}")).toThrow();
+
+    const colStr = exportToPostmanCollection({
+      id: "1",
+      name: "C",
+      items: [],
+      collections: [],
+      variables: [],
+      environments: [],
+    } as any);
+    expect(colStr).toContain("C");
   });
 });

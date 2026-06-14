@@ -40,4 +40,40 @@ describe("getMergeRequestChanges", () => {
       "deleted",
     ]);
   });
+
+  test("flattens nested folders when diffing", () => {
+    const targetCollection = {
+      items: [
+        {
+          type: "folder",
+          id: "folder-1",
+          name: "Old Folder",
+          items: [{ type: "request", id: "req-1", name: "Old Request" }],
+        },
+      ],
+    };
+    const sourceCollection = {
+      items: [
+        {
+          type: "folder",
+          id: "folder-1",
+          name: "New Folder",
+          items: [
+            { type: "request", id: "req-1", name: "New Request" },
+            { type: "request", id: "req-2", name: "Added Request" },
+          ],
+        },
+      ],
+    };
+
+    const changes = getMergeRequestChanges(targetCollection, sourceCollection);
+
+    expect(
+      changes.modified.find((c: any) => c.id === "folder-1")?.changedKeys,
+    ).toContain("name");
+    expect(
+      changes.modified.find((c: any) => c.id === "req-1")?.changedKeys,
+    ).toContain("name");
+    expect(changes.added.map((item: any) => item.id)).toEqual(["req-2"]);
+  });
 });

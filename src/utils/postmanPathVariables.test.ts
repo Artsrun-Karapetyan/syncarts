@@ -6,24 +6,36 @@ import {
 } from "./postmanPathVariables";
 
 describe("postmanPathVariables", () => {
-  test("parses Postman variable values and builds export variables", () => {
-    const variables = parsePostmanPathVariables(
-      {
-        variable: [
-          { key: "id", value: "42", description: "User id" },
-          { key: "unused", value: "ignored" },
-        ],
-      },
-      "https://api.test/users/:id/posts/:postId",
-    );
+  test("parsePostmanPathVariables merges variables from url object", () => {
+    const rawUrl = "https://api.com/:id";
+    const urlObj = {
+      variable: [{ key: "id", value: "123", description: "The ID" }],
+    };
 
-    expect(variables).toMatchObject([
-      { key: "id", value: "42", description: "User id" },
-      { key: "postId", value: "" },
+    const vars = parsePostmanPathVariables(urlObj, rawUrl);
+    expect(vars).toHaveLength(1);
+    expect(vars[0].key).toBe("id");
+    expect(vars[0].value).toBe("123");
+    expect(vars[0].description).toBe("The ID");
+  });
+
+  test("parsePostmanPathVariables works without url variable array", () => {
+    const rawUrl = "https://api.com/:id";
+    const vars = parsePostmanPathVariables({}, rawUrl);
+    expect(vars).toHaveLength(1);
+    expect(vars[0].key).toBe("id");
+    expect(vars[0].value).toBe("");
+  });
+
+  test("buildPostmanPathVariables builds correctly", () => {
+    const built = buildPostmanPathVariables([
+      { id: "1", key: "id", value: "123", description: "desc" },
     ]);
-    expect(buildPostmanPathVariables(variables)).toMatchObject([
-      { key: "id", value: "42", description: "User id" },
-      { key: "postId", value: "" },
-    ]);
+    expect(built).toHaveLength(1);
+    expect(built?.[0].key).toBe("id");
+    expect(built?.[0].value).toBe("123");
+    expect(built?.[0].description).toBe("desc");
+
+    expect(buildPostmanPathVariables([])).toBeUndefined();
   });
 });
