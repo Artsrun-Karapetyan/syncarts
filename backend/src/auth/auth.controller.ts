@@ -10,6 +10,7 @@ import {
 } from "@nestjs/common";
 
 import { Public } from "../common/public.decorator.js";
+import { extractBearerToken } from "./authToken.js";
 import { AuthService } from "./auth.service.js";
 
 type AuthedRequest = {
@@ -49,10 +50,6 @@ export class AuthController {
 
   @Post("logout")
   logout(@Headers("authorization") authorization: string | undefined) {
-    const token = authorization?.startsWith("Bearer ")
-      ? authorization.slice(7).trim()
-      : "";
-
-    return this.authService.logout(token);
+    return this.authService.logout(extractBearerToken(authorization));
   }
 }

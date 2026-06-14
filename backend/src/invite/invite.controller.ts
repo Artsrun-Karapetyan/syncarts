@@ -9,53 +9,11 @@ import {
   Request,
   UseGuards,
 } from "@nestjs/common";
-import { z } from "zod";
 
 import { AuthGuard } from "../auth/auth.guard.js";
 import { InviteService } from "./invite.service.js";
-
-const GenerateLinkSchema = z.object({
-  workspaceId: z.string().optional(),
-  workspaceIds: z.array(z.string()).min(1).optional(),
-  workspaces: z
-    .array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        collections: z.any().optional(),
-        environments: z.any().optional(),
-      }),
-    )
-    .optional(),
-  expiresInDays: z.number().optional(),
-});
-
-const InviteEmailSchema = z.object({
-  workspaceId: z.string().optional(),
-  workspaceIds: z.array(z.string()).min(1).optional(),
-  workspaces: z
-    .array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        collections: z.any().optional(),
-        environments: z.any().optional(),
-      }),
-    )
-    .optional(),
-  email: z.string().email(),
-});
-
-function normalizeWorkspaceIds(body: {
-  workspaceId?: string;
-  workspaceIds?: string[];
-}) {
-  return body.workspaceIds?.filter(Boolean).length
-    ? body.workspaceIds.filter(Boolean)
-    : body.workspaceId
-      ? [body.workspaceId]
-      : [];
-}
+import { GenerateLinkSchema, InviteEmailSchema } from "./inviteSchemas.js";
+import { normalizeWorkspaceIds } from "./normalizeWorkspaceIds.js";
 
 @Controller("invites")
 export class InviteController {

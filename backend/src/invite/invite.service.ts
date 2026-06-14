@@ -68,8 +68,10 @@ export class InviteService {
   }
 
   private normalizeWorkspaceIds(workspaceIds?: string[], workspaceId?: string) {
-    const ids =
-      workspaceIds?.filter(Boolean) ?? (workspaceId ? [workspaceId] : []);
+    const ids = workspaceIds?.filter(Boolean) || [];
+    if (ids.length === 0 && workspaceId) {
+      ids.push(workspaceId);
+    }
     return Array.from(new Set(ids));
   }
 
