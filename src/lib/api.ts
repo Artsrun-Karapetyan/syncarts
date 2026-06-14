@@ -68,9 +68,7 @@ export function login(input: { email: string; password: string }) {
 }
 
 export function getMe(token: string) {
-  return request<AuthUser>("/auth/me", {
-    token,
-  });
+  return request<AuthUser>("/auth/me", { token });
 }
 
 export function logout(token: string) {
@@ -92,23 +90,19 @@ const getToken = () =>
   window.localStorage.getItem("syncarts_auth_token") || undefined;
 
 export const api = {
-  get: async (path: string) => ({
-    data: await request<any>(path, { method: "GET", token: getToken() }),
+  get: async <T = any>(path: string) => ({
+    data: await request<T>(path, { method: "GET", token: getToken() }),
   }),
-  post: async (path: string, body?: any) => ({
-    data: await request<any>(path, { method: "POST", body, token: getToken() }),
+  post: async <T = any>(path: string, body?: unknown) => ({
+    data: await request<T>(path, { method: "POST", body, token: getToken() }),
   }),
-  put: async (path: string, body?: any) => ({
-    data: await request<any>(path, { method: "PUT", body, token: getToken() }),
+  put: async <T = any>(path: string, body?: unknown) => ({
+    data: await request<T>(path, { method: "PUT", body, token: getToken() }),
   }),
-  patch: async (path: string, body?: any) => ({
-    data: await request<any>(path, {
-      method: "PATCH",
-      body,
-      token: getToken(),
-    }),
+  patch: async <T = any>(path: string, body?: unknown) => ({
+    data: await request<T>(path, { method: "PATCH", body, token: getToken() }),
   }),
-  delete: async (path: string) => ({
-    data: await request<any>(path, { method: "DELETE", token: getToken() }),
+  delete: async <T = any>(path: string) => ({
+    data: await request<T>(path, { method: "DELETE", token: getToken() }),
   }),
 };
