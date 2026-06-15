@@ -11,6 +11,7 @@ export function MergeRequestsScreen() {
   const [loading, setLoading] = useState(false);
   const [selectedMr, setSelectedMr] = useState<any | null>(null);
   const [sourceCollection, setSourceCollection] = useState<any | null>(null);
+  const [targetCollection, setTargetCollection] = useState<any | null>(null);
   const [merging, setMerging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,15 +41,20 @@ export function MergeRequestsScreen() {
   const handleSelectMr = async (mr: any) => {
     setSelectedMr(mr);
     setSourceCollection(null);
+    setTargetCollection(null);
     setError(null);
     if (mr.status === "OPEN") {
       try {
-        const res = await api.get(`/merge-requests/${mr.id}/source-collection`);
-        setSourceCollection(res.data);
+        const [sourceRes, targetRes] = await Promise.all([
+          api.get(`/merge-requests/${mr.id}/source-collection`),
+          api.get(`/merge-requests/${mr.id}/target-collection`),
+        ]);
+        setSourceCollection(sourceRes.data);
+        setTargetCollection(targetRes.data);
       } catch (err) {
-        console.error("Failed to fetch source collection:", err);
+        console.error("Failed to fetch MR collections:", err);
         setError(
-          "Could not load changes. The source workspace might have been deleted, or it was created before snapshots were added.",
+          "Could not load changes. The source or target workspace might have been deleted, or it was created before snapshots were added.",
         );
       }
     }
@@ -82,6 +88,7 @@ export function MergeRequestsScreen() {
       });
       await fetchMrs();
       setSelectedMr(null);
+      setTargetCollection(null);
     } catch (err) {
       console.error("Merge failed:", err);
       setError("Merge failed! Check console for details.");
@@ -100,6 +107,7 @@ export function MergeRequestsScreen() {
       });
       await fetchMrs();
       setSelectedMr(null);
+      setTargetCollection(null);
     } catch (err) {
       console.error("Reject failed:", err);
       setError("Failed to reject merge request.");
@@ -168,11 +176,11 @@ export function MergeRequestsScreen() {
           onSelectMr={handleSelectMr}
         />
         <MergeRequestDetails
-          collections={collections}
           error={error}
           merging={merging}
           selectedMr={selectedMr}
           sourceCollection={sourceCollection}
+          targetCollection={targetCollection}
           onMerge={handleMerge}
           onReject={handleReject}
         />

@@ -27,7 +27,14 @@ describe("MergeRequestService create/read", () => {
     let createData: any;
     const service = new MergeRequestService(
       createPrismaMock({
-        workspace: { findUnique: async () => ({ id: "target" }) },
+        workspace: {
+          findUnique: async () => ({
+            id: "target",
+            data: {
+              collections: [{ id: "target-col", name: "Original" }],
+            },
+          }),
+        },
         mergeRequest: {
           create: async ({ data }: any) => {
             createData = data;
@@ -56,7 +63,14 @@ describe("MergeRequestService create/read", () => {
     let createData: any;
     const service = new MergeRequestService(
       createPrismaMock({
-        workspace: { findUnique: async () => ({ id: "target" }) },
+        workspace: {
+          findUnique: async () => ({
+            id: "target-workspace",
+            data: {
+              collections: [{ id: "target-collection", name: "API" }],
+            },
+          }),
+        },
         mergeRequest: {
           create: async ({ data }: any) => {
             createData = data;
@@ -158,6 +172,86 @@ describe("MergeRequestService create/read", () => {
           select: { id: true, name: true, email: true },
         },
       },
+    });
+  });
+
+  test("createMergeRequest snapshots target collection from workspace when not provided", async () => {
+    let createData: any;
+    const service = new MergeRequestService(
+      createPrismaMock({
+        workspace: {
+          findUnique: async () => ({
+            id: "target",
+            data: {
+              collections: [
+                { id: "col-1", name: "Users API", items: [{ id: "req-1" }] },
+                { id: "col-2", name: "Other" },
+              ],
+            },
+          }),
+        },
+        mergeRequest: {
+          create: async ({ data }: any) => {
+            createData = data;
+            return { id: "mr", ...data };
+          },
+        },
+      }),
+    );
+
+    await service.createMergeRequest({
+      title: "Test",
+      sourceWorkspaceId: "source",
+      targetWorkspaceId: "target",
+      sourceCollectionId: "source-col",
+      targetCollectionId: "col-1",
+      authorId: "author",
+      data: { id: "source-col" },
+      // targetData NOT provided
+    });
+
+    expect(createData.targetData).toEqual({
+      id: "col-1",
+      name: "Users API",
+      items: [{ id: "req-1" }],
+    });
+  });
+
+  test("createMergeRequest uses client-provided targetData over server fetch", async () => {
+    let createData: any;
+    const service = new MergeRequestService(
+      createPrismaMock({
+        workspace: {
+          findUnique: async () => ({
+            id: "target",
+            data: {
+              collections: [{ id: "col-1", name: "Server Version" }],
+            },
+          }),
+        },
+        mergeRequest: {
+          create: async ({ data }: any) => {
+            createData = data;
+            return { id: "mr", ...data };
+          },
+        },
+      }),
+    );
+
+    await service.createMergeRequest({
+      title: "Test",
+      sourceWorkspaceId: "source",
+      targetWorkspaceId: "target",
+      sourceCollectionId: "source-col",
+      targetCollectionId: "col-1",
+      authorId: "author",
+      data: { id: "source-col" },
+      targetData: { id: "col-1", name: "Client Version" },
+    });
+
+    expect(createData.targetData).toEqual({
+      id: "col-1",
+      name: "Client Version",
     });
   });
 });

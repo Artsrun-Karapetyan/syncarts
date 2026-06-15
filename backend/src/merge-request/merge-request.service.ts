@@ -15,12 +15,21 @@ export class MergeRequestService {
     targetCollectionId: string;
     authorId: string;
     data?: any;
+    targetData?: any;
   }) {
-    // Validate target workspace exists
     const targetWs = await this.prisma.workspace.findUnique({
       where: { id: data.targetWorkspaceId },
     });
     if (!targetWs) throw new Error("Target workspace not found");
+
+    // Snapshot the target collection at creation time if not provided
+    let targetData = data.targetData;
+    if (!targetData && targetWs.data) {
+      const wsData: any = targetWs.data;
+      const collections = wsData.collections || [];
+      targetData =
+        collections.find((c: any) => c.id === data.targetCollectionId) || null;
+    }
 
     return this.prisma.mergeRequest.create({
       data: {
@@ -31,6 +40,7 @@ export class MergeRequestService {
         sourceCollectionId: data.sourceCollectionId,
         targetCollectionId: data.targetCollectionId,
         data: data.data,
+        targetData,
         authorId: data.authorId,
         status: "OPEN",
       },
@@ -100,26 +110,23 @@ export class MergeRequestService {
     });
     if (!mr) throw new Error("Merge request not found");
 
-    if (mr.data) {
-      return mr.data;
+    if (!mr.data) {
+      throw new Error("Merge request has no source snapshot");
     }
 
-    // Fallback for older MRs
-    const sourceWorkspace = await this.prisma.workspace.findUnique({
-      where: { id: mr.sourceWorkspaceId },
+    return mr.data;
+  }
+
+  async getTargetCollection(mrId: string) {
+    const mr = await this.prisma.mergeRequest.findUnique({
+      where: { id: mrId },
     });
-    if (!sourceWorkspace || !sourceWorkspace.data)
-      throw new Error("Source workspace not found or empty");
+    if (!mr) throw new Error("Merge request not found");
 
-    const data: any = sourceWorkspace.data;
-    const collections = data.collections || [];
-    const sourceCollection = collections.find(
-      (c: any) => c.id === mr.sourceCollectionId,
-    );
+    if (!mr.targetData) {
+      throw new Error("Merge request has no target snapshot");
+    }
 
-    if (!sourceCollection)
-      throw new Error("Source collection not found in workspace");
-
-    return sourceCollection;
+    return mr.targetData;
   }
 }

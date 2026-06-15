@@ -44,6 +44,20 @@ export function CreateMergeRequestModal({
       if (!sourceCollection)
         throw new Error("Source collection not found locally");
 
+      // Fetch target collection snapshot from the server
+      let targetCollectionSnapshot: any = undefined;
+      try {
+        const wsRes = await api.get(`/workspaces/${targetWorkspaceId}`);
+        const wsData = wsRes.data?.data;
+        if (wsData) {
+          const cols = wsData.collections || [];
+          targetCollectionSnapshot =
+            cols.find((c: any) => c.id === targetCollectionId) || undefined;
+        }
+      } catch {
+        // Server-side will handle snapshotting as fallback
+      }
+
       await api.post("/merge-requests", {
         title,
         description,
@@ -52,6 +66,7 @@ export function CreateMergeRequestModal({
         targetCollectionId,
         sourceWorkspaceId: activeWorkspaceId,
         data: sourceCollection,
+        targetData: targetCollectionSnapshot,
       });
 
       onSuccess();

@@ -6,29 +6,27 @@ import { MergeRequestDiffItem } from "./MergeRequestDiffItem";
 import { MergeRequestError } from "./MergeRequestError";
 
 interface MergeRequestChangesProps {
-  collections: any[];
   error: string | null;
   merging: boolean;
   onMerge: () => void;
   onReject: () => void;
   selectedMr: any;
   sourceCollection: any | null;
+  targetCollection: any | null;
 }
 
 export function MergeRequestChanges({
-  collections,
   error,
   merging,
   onMerge,
   onReject,
   selectedMr,
   sourceCollection,
+  targetCollection,
 }: MergeRequestChangesProps) {
   if (selectedMr.status !== "OPEN") return null;
 
-  const targetCol = collections.find(
-    (collection) => collection.id === selectedMr.targetCollectionId,
-  );
+  const targetCol = targetCollection;
   const changes =
     targetCol && sourceCollection
       ? getMergeRequestChanges(targetCol, sourceCollection)

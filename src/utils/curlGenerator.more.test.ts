@@ -48,10 +48,28 @@ describe("generateCurlCommand extra cases", () => {
       request: request({
         bodyType: "x-www-form-urlencoded",
         formData: [
-          { key: "username", value: "admin", type: "text", enabled: true },
-          { key: "password", value: "pass", type: "text", enabled: true },
-          { key: "", value: "ignored", type: "text", enabled: true },
-          { key: "disabled", value: "ignored", type: "text", enabled: false },
+          {
+            id: "1",
+            key: "username",
+            value: "admin",
+            type: "text",
+            enabled: true,
+          },
+          {
+            id: "2",
+            key: "password",
+            value: "pass",
+            type: "text",
+            enabled: true,
+          },
+          { id: "3", key: "", value: "ignored", type: "text", enabled: true },
+          {
+            id: "4",
+            key: "disabled",
+            value: "ignored",
+            type: "text",
+            enabled: false,
+          },
         ],
       }),
     });
@@ -77,13 +95,14 @@ describe("generateCurlCommand extra cases", () => {
         ],
         formData: [
           {
+            id: "5",
             key: "profile",
             value: "",
             type: "file",
             enabled: true,
             files: ["/path/to/image.png"],
           },
-          { key: "name", value: "Admin", type: "text", enabled: true },
+          { id: "6", key: "name", value: "Admin", type: "text", enabled: true },
         ],
       }),
     });

@@ -4,23 +4,23 @@ import { MergeRequestChanges } from "./MergeRequestChanges";
 import { MergeRequestStatusBadge } from "./MergeRequestStatusBadge";
 
 interface MergeRequestDetailsProps {
-  collections: any[];
   error: string | null;
   merging: boolean;
   onMerge: () => void;
   onReject: () => void;
   selectedMr: any | null;
   sourceCollection: any | null;
+  targetCollection: any | null;
 }
 
 export function MergeRequestDetails({
-  collections,
   error,
   merging,
   onMerge,
   onReject,
   selectedMr,
   sourceCollection,
+  targetCollection,
 }: MergeRequestDetailsProps) {
   return (
     <div
@@ -69,11 +69,11 @@ export function MergeRequestDetails({
             </div>
           )}
           <MergeRequestChanges
-            collections={collections}
             error={error}
             merging={merging}
             selectedMr={selectedMr}
             sourceCollection={sourceCollection}
+            targetCollection={targetCollection}
             onMerge={onMerge}
             onReject={onReject}
           />

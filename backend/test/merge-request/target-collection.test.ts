@@ -3,37 +3,41 @@ import { describe, expect, test } from "bun:test";
 import { MergeRequestService } from "../../src/merge-request/merge-request.service.js";
 import { createPrismaMock } from "../helpers/prismaMock";
 
-describe("MergeRequestService source collection", () => {
-  test("returns stored MR data snapshot", async () => {
-    const service = new MergeRequestService(
-      createPrismaMock({
-        mergeRequest: {
-          findUnique: async () => ({ id: "mr", data: { id: "collection" } }),
-        },
-      }),
-    );
-
-    await expect(service.getSourceCollection("mr")).resolves.toEqual({
-      id: "collection",
-    });
-  });
-
-  test("rejects when snapshot is missing", async () => {
+describe("MergeRequestService target collection", () => {
+  test("returns stored target data snapshot", async () => {
     const service = new MergeRequestService(
       createPrismaMock({
         mergeRequest: {
           findUnique: async () => ({
             id: "mr",
-            sourceWorkspaceId: "source",
-            sourceCollectionId: "collection",
-            data: null,
+            targetData: { id: "target-col", name: "API" },
           }),
         },
       }),
     );
 
-    await expect(service.getSourceCollection("mr")).rejects.toThrow(
-      "Merge request has no source snapshot",
+    await expect(service.getTargetCollection("mr")).resolves.toEqual({
+      id: "target-col",
+      name: "API",
+    });
+  });
+
+  test("rejects when target snapshot is missing", async () => {
+    const service = new MergeRequestService(
+      createPrismaMock({
+        mergeRequest: {
+          findUnique: async () => ({
+            id: "mr",
+            targetWorkspaceId: "target",
+            targetCollectionId: "col",
+            targetData: null,
+          }),
+        },
+      }),
+    );
+
+    await expect(service.getTargetCollection("mr")).rejects.toThrow(
+      "Merge request has no target snapshot",
     );
   });
 
@@ -44,7 +48,7 @@ describe("MergeRequestService source collection", () => {
       }),
     );
 
-    await expect(service.getSourceCollection("missing")).rejects.toThrow(
+    await expect(service.getTargetCollection("missing")).rejects.toThrow(
       "Merge request not found",
     );
   });

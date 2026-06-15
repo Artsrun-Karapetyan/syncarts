@@ -22,6 +22,7 @@ const CreateMRSchema = z.object({
   sourceCollectionId: z.string().min(1),
   targetCollectionId: z.string().min(1),
   data: z.any().optional(),
+  targetData: z.any().optional(),
 });
 
 @Controller("merge-requests")
@@ -67,5 +68,10 @@ export class MergeRequestController {
   @Get(":id/source-collection")
   async getSourceCollection(@Param("id") id: string) {
     return this.mrService.getSourceCollection(id);
+  }
+
+  @Get(":id/target-collection")
+  async getTargetCollection(@Param("id") id: string) {
+    return this.mrService.getTargetCollection(id);
   }
 }

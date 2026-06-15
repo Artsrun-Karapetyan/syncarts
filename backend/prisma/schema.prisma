@@ -83,7 +83,8 @@ model MergeRequest {
   targetWorkspaceId   String
   sourceCollectionId  String
   targetCollectionId  String
-  data                Json?
+  data                Json?    // Source collection snapshot
+  targetData          Json?    // Target collection snapshot at MR creation time
   
   authorId            String
   author              User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
