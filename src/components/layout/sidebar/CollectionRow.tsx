@@ -166,6 +166,7 @@ export function CollectionRow({
               handleRenameSubmit={props.handleRenameSubmit}
               expandedFolders={props.expandedFolders}
               setExpandedFolders={props.setExpandedFolders}
+              highlightedExampleId={props.highlightedExampleId}
               highlightedRequestId={props.highlightedRequestId}
               highlightedFolderId={props.highlightedFolderId}
               searchQuery={props.collectionSearch}

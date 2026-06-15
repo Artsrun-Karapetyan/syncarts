@@ -20,6 +20,7 @@ export interface SidebarItemProps {
   handleRenameSubmit: () => void;
   expandedFolders: Record<string, boolean>;
   setExpandedFolders: Dispatch<SetStateAction<Record<string, boolean>>>;
+  highlightedExampleId: string | null;
   highlightedRequestId: string | null;
   highlightedFolderId: string | null;
   searchQuery?: string;

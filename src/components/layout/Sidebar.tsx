@@ -18,11 +18,11 @@ import type {
   MergeRequestTarget,
 } from "./sidebar/types";
 import { useOpenMergeRequestCount } from "./sidebar/useOpenMergeRequestCount";
+import { useSidebarHighlight } from "./sidebar/useSidebarHighlight";
 import {
   filterCollections,
   findFolder,
   findRequest,
-  findRequestPath,
   renameMatchingItem,
 } from "./sidebar/utils";
 
@@ -67,15 +67,20 @@ export function Sidebar() {
   const [expandedFolders, setExpandedFolders] = useState<
     Record<string, boolean>
   >({});
-  const [highlightedRequestId, setHighlightedRequestId] = useState<
-    string | null
-  >(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const highlightedCollectionId =
-    activeTab?.type === "collection" ? activeTab.collectionId || null : null;
-  const highlightedFolderId =
-    activeTab?.type === "folder" ? activeTab.folderId || null : null;
+  const {
+    highlightedCollectionId,
+    highlightedExampleId,
+    highlightedFolderId,
+    highlightedRequestId,
+  } = useSidebarHighlight({
+    activeTab,
+    collections,
+    resolveTabSavedRequestId,
+    setExpandedCollections,
+    setExpandedFolders,
+  });
   const filteredCollections = filterCollections(collections, collectionSearch);
 
   const showToast = (msg: string) => {
@@ -108,66 +113,6 @@ export function Sidebar() {
 
       return next;
     });
-  }, [collections]);
-
-  const highlightRequest = (savedRequestId?: string) => {
-    if (!savedRequestId) return;
-
-    const requestPath = findRequestPath(collections, savedRequestId);
-    if (!requestPath) return;
-
-    setExpandedCollections((prev) => ({
-      ...prev,
-      [requestPath.collectionId]: true,
-    }));
-    setExpandedFolders((prev) => {
-      const next = { ...prev };
-      let changed = false;
-      for (const folderId of requestPath.folderIds) {
-        if (!next[folderId]) {
-          next[folderId] = true;
-          changed = true;
-        }
-      }
-      return changed ? next : prev;
-    });
-    setHighlightedRequestId(savedRequestId);
-  };
-
-  useEffect(() => {
-    const savedRequestId = resolveTabSavedRequestId(activeTab);
-    if (savedRequestId) highlightRequest(savedRequestId);
-    else setHighlightedRequestId(null);
-
-    if (activeTab?.type === "collection" && activeTab.collectionId) {
-      setExpandedCollections((prev) => ({
-        ...prev,
-        [activeTab.collectionId!]: true,
-      }));
-    }
-
-    if (
-      activeTab?.type === "folder" &&
-      activeTab.collectionId &&
-      activeTab.folderId
-    ) {
-      setExpandedCollections((prev) => ({
-        ...prev,
-        [activeTab.collectionId!]: true,
-      }));
-      setExpandedFolders((prev) => ({ ...prev, [activeTab.folderId!]: true }));
-    }
-  }, [activeTab, collections, resolveTabSavedRequestId]);
-
-  useEffect(() => {
-    const onHighlightEvent = (e: Event) => {
-      const savedRequestId = (e as CustomEvent<{ savedRequestId?: string }>)
-        .detail?.savedRequestId;
-      highlightRequest(savedRequestId);
-    };
-    window.addEventListener("highlight-sidebar", onHighlightEvent);
-    return () =>
-      window.removeEventListener("highlight-sidebar", onHighlightEvent);
   }, [collections]);
 
   const handleAddCollection = () => {
@@ -305,6 +250,7 @@ export function Sidebar() {
           renamingId={renamingId}
           renameValue={renameValue}
           highlightedCollectionId={highlightedCollectionId}
+          highlightedExampleId={highlightedExampleId}
           highlightedRequestId={highlightedRequestId}
           highlightedFolderId={highlightedFolderId}
           setIsAdding={setIsAdding}

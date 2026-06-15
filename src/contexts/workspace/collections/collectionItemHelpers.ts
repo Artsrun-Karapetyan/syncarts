@@ -109,17 +109,24 @@ export function addExampleToItems(
   requestId: string,
   exampleName: string,
   activeTab: TabData | undefined,
+  exampleId: string = crypto.randomUUID(),
 ): (Folder | SavedRequest)[] {
   return items.map((item) => {
     if (item.type === "folder") {
       return {
         ...item,
-        items: addExampleToItems(item.items, requestId, exampleName, activeTab),
+        items: addExampleToItems(
+          item.items,
+          requestId,
+          exampleName,
+          activeTab,
+          exampleId,
+        ),
       };
     }
     if (item.type !== "request" || item.id !== requestId) return item;
     const newExample: SavedExample = {
-      id: crypto.randomUUID(),
+      id: exampleId,
       name: exampleName,
       code: activeTab?.response?.status || 200,
       status: activeTab?.response?.status_text || "OK",

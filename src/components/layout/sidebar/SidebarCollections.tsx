@@ -18,6 +18,7 @@ export interface SidebarCollectionsProps {
   renamingId: string | null;
   renameValue: string;
   highlightedCollectionId: string | null;
+  highlightedExampleId: string | null;
   highlightedRequestId: string | null;
   highlightedFolderId: string | null;
   setIsAdding: (value: boolean) => void;

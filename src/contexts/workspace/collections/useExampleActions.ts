@@ -18,6 +18,7 @@ export function useExampleActions(args: ExampleActionsArgs) {
     collectionId: string,
     requestId: string,
     exampleName: string,
+    exampleId: string = crypto.randomUUID(),
   ) => {
     updateWorkspaces((prev) =>
       prev.map((w) => {
@@ -33,6 +34,7 @@ export function useExampleActions(args: ExampleActionsArgs) {
                     requestId,
                     exampleName,
                     activeTab,
+                    exampleId,
                   ),
                 }
               : col,
@@ -40,6 +42,7 @@ export function useExampleActions(args: ExampleActionsArgs) {
         };
       }),
     );
+    return exampleId;
   };
 
   const deleteExample = (

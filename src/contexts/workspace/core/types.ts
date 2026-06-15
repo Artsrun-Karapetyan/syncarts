@@ -280,7 +280,8 @@ export interface WorkspaceContextState
     collectionId: string,
     requestId: string,
     exampleName: string,
-  ) => void;
+    exampleId?: string,
+  ) => string;
   deleteExample: (
     collectionId: string,
     requestId: string,

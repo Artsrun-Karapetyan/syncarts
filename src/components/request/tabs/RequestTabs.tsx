@@ -6,6 +6,7 @@ import { useWorkspace } from "../../../contexts/WorkspaceContext";
 import { extractPathVariableKeys } from "../../../utils/pathVariables";
 import { AuthEditor } from "../auth/AuthEditor";
 import { BodyEditor } from "../body/BodyEditor";
+import { findExampleInItems } from "../docs/findExampleInItems";
 import { DocsEditor } from "../DocsEditor";
 import { ExampleDocsEditor } from "../ExampleDocsEditor";
 import { HeadersEditor } from "../HeadersEditor";
@@ -36,25 +37,7 @@ export function RequestTabs() {
             (c) => c.id === activeRequest.collectionId,
           );
           if (!col) return null;
-          for (const item of col.items) {
-            if (item.type === "request" && item.examples) {
-              const found = item.examples.find(
-                (e) => e.id === activeRequest.exampleId,
-              );
-              if (found) return { example: found, requestId: item.id };
-            }
-            if (item.type === "folder") {
-              for (const sub of item.items) {
-                if (sub.type === "request" && sub.examples) {
-                  const found = sub.examples.find(
-                    (e) => e.id === activeRequest.exampleId,
-                  );
-                  if (found) return { example: found, requestId: sub.id };
-                }
-              }
-            }
-          }
-          return null;
+          return findExampleInItems(col.items, activeRequest.exampleId);
         })()
       : null;
 

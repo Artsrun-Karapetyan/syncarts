@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import type { Folder, SavedRequest } from "../../contexts/workspace/core/types";
 import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { findRequestInItems } from "./docs/findRequestInItems";
 import { FolderExamples } from "./docs/FolderExamples";
 import { RequestExamplesList } from "./docs/RequestExamplesList";
 
@@ -17,20 +16,13 @@ export function DocsEditor() {
   if (!activeTab) return null;
 
   const isCollection = activeTab.type === "collection";
-  const isRequest = activeTab.type === "request" || !!activeTab.savedRequestId;
 
   const collection = collections.find((c) => c.id === activeTab.collectionId);
 
   let collectionItemsForExamples: CollectionItem[] = [];
-  let requestForExamples: SavedRequest | null = null;
 
   if (isCollection && collection) {
     collectionItemsForExamples = collection.items;
-  } else if (isRequest && collection && activeTab.savedRequestId) {
-    requestForExamples = findRequestInItems(
-      collection.items,
-      activeTab.savedRequestId,
-    );
   }
 
   return (
@@ -115,10 +107,6 @@ export function DocsEditor() {
                   ),
                 )}
               </div>
-            )}
-
-            {isRequest && requestForExamples && (
-              <RequestExamplesList request={requestForExamples} level={0} />
             )}
           </div>
         )}

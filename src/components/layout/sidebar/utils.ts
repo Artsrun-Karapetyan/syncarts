@@ -67,6 +67,39 @@ export function findRequestPath(
   return null;
 }
 
+export function findExamplePath(collections: Collection[], exampleId: string) {
+  for (const collection of collections) {
+    const walk = (
+      items: (IFolder | SavedRequest)[],
+      folderIds: string[],
+    ): { folderIds: string[]; requestId: string } | null => {
+      for (const item of items) {
+        if (
+          item.type === "request" &&
+          item.examples?.some((example) => example.id === exampleId)
+        )
+          return { folderIds, requestId: item.id };
+
+        if (item.type === "folder") {
+          const found = walk(item.items, [...folderIds, item.id]);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const found = walk(collection.items, []);
+    if (found)
+      return {
+        collectionId: collection.id,
+        folderIds: found.folderIds,
+        requestId: found.requestId,
+      };
+  }
+
+  return null;
+}
+
 export function filterCollections(
   collections: Collection[],
   query: string,

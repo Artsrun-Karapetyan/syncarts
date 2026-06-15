@@ -1,11 +1,15 @@
 import { CheckSquare, Plus, Square, Trash2 } from "lucide-react";
+import { useRef } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
+import { syncRowKeys } from "./rowKeys";
 import { VariableTextInput } from "./variables/VariableTextInput";
 
 export function HeadersEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
   const headers = activeTab?.headers || [];
+  const rowKeysRef = useRef<string[]>([]);
+  const rowKeys = syncRowKeys(rowKeysRef.current, headers.length);
 
   const updateHeader = (
     index: number,
@@ -17,12 +21,14 @@ export function HeadersEditor() {
   };
 
   const addHeader = () => {
+    rowKeysRef.current.push(crypto.randomUUID());
     updateActiveTab({
       headers: [...headers, { key: "", value: "", enabled: true }],
     });
   };
 
   const removeHeader = (index: number) => {
+    rowKeysRef.current.splice(index, 1);
     const newHeaders = headers.filter((_, i) => i !== index);
     if (newHeaders.length === 0)
       newHeaders.push({ key: "", value: "", enabled: true });
@@ -41,7 +47,7 @@ export function HeadersEditor() {
     >
       {headers.map((header, idx) => (
         <div
-          key={`${header.key}-${header.value}-${header.description ?? ""}-${header.enabled ?? true}`}
+          key={rowKeys[idx]}
           style={{
             display: "grid",
             gridTemplateColumns: "40px 1fr 1fr 1fr 40px",

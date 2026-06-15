@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, FileText } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   type SavedRequest,
@@ -20,11 +20,17 @@ export function RequestSidebarItem({
   renameValue,
   setRenameValue,
   handleRenameSubmit,
+  highlightedExampleId,
   highlightedRequestId,
 }: SidebarItemProps & { item: SavedRequest }) {
   const [isExamplesOpen, setIsExamplesOpen] = useState(false);
   const { openExampleTab, openRequestTab } = useWorkspace();
   const isHighlighted = highlightedRequestId === item.id;
+
+  useEffect(() => {
+    if (item.examples?.some((example) => example.id === highlightedExampleId))
+      setIsExamplesOpen(true);
+  }, [highlightedExampleId, item.examples]);
 
   return (
     <>
@@ -103,49 +109,58 @@ export function RequestSidebarItem({
       </div>
       {isExamplesOpen && item.examples?.length ? (
         <div>
-          {item.examples.map((example) => (
-            <div
-              key={example.id}
-              style={{
-                ...itemRowStyle(false),
-                fontSize: 12,
-                color: "var(--text-tertiary)",
-                paddingLeft: 28,
-              }}
-              onClick={() => openExampleTab(collectionId, example.id)}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onContextMenu({
-                  event: e,
-                  itemId: example.id,
-                  type: "example",
-                  itemName: example.name,
-                  requestId: item.id,
-                });
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--bg-tertiary)";
-                e.currentTarget.style.color = "var(--text-secondary)";
-                e.currentTarget.style.transform = "translateX(2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "var(--text-tertiary)";
-                e.currentTarget.style.transform = "translateX(0)";
-              }}
-            >
-              <FileText size={13} style={{ opacity: 0.3 }} />
-              <RenameableName
-                isRenaming={renamingId === example.id}
-                value={renameValue}
-                setValue={setRenameValue}
-                onSubmit={handleRenameSubmit}
-                onCancel={() => setRenamingId(null)}
-                name={example.name}
-              />
-            </div>
-          ))}
+          {item.examples.map((example) => {
+            const isExampleHighlighted = highlightedExampleId === example.id;
+            return (
+              <div
+                key={example.id}
+                style={{
+                  ...itemRowStyle(isExampleHighlighted),
+                  fontSize: 12,
+                  color: isExampleHighlighted
+                    ? "var(--text-primary)"
+                    : "var(--text-tertiary)",
+                  paddingLeft: 28,
+                }}
+                onClick={() => openExampleTab(collectionId, example.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onContextMenu({
+                    event: e,
+                    itemId: example.id,
+                    type: "example",
+                    itemName: example.name,
+                    requestId: item.id,
+                  });
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--bg-tertiary)";
+                  e.currentTarget.style.color = "var(--text-secondary)";
+                  e.currentTarget.style.transform = "translateX(2px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = isExampleHighlighted
+                    ? "var(--bg-tertiary)"
+                    : "transparent";
+                  e.currentTarget.style.color = isExampleHighlighted
+                    ? "var(--text-primary)"
+                    : "var(--text-tertiary)";
+                  e.currentTarget.style.transform = "translateX(0)";
+                }}
+              >
+                <FileText size={13} style={{ opacity: 0.3 }} />
+                <RenameableName
+                  isRenaming={renamingId === example.id}
+                  value={renameValue}
+                  setValue={setRenameValue}
+                  onSubmit={handleRenameSubmit}
+                  onCancel={() => setRenamingId(null)}
+                  name={example.name}
+                />
+              </div>
+            );
+          })}
         </div>
       ) : null}
     </>

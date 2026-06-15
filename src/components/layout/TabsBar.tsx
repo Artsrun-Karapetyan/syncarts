@@ -49,6 +49,15 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
   }, [activeTabId]);
 
   useEffect(() => {
+    if (activeTab?.type === "example" && activeTab.exampleId) {
+      window.dispatchEvent(
+        new CustomEvent("highlight-sidebar", {
+          detail: { exampleId: activeTab.exampleId },
+        }),
+      );
+      return;
+    }
+
     const savedRequestId = resolveTabSavedRequestId(activeTab);
     if (!savedRequestId) return;
     window.dispatchEvent(
@@ -127,11 +136,13 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
                   onClick={() => {
                     const wasActive = activeTabId === tab.id;
                     const savedRequestId = resolveTabSavedRequestId(tab);
+                    const exampleId =
+                      tab.type === "example" ? tab.exampleId : undefined;
                     setActiveTabId(tab.id);
-                    if (wasActive && savedRequestId) {
+                    if (wasActive && (savedRequestId || exampleId)) {
                       window.dispatchEvent(
                         new CustomEvent("highlight-sidebar", {
-                          detail: { savedRequestId },
+                          detail: { exampleId, savedRequestId },
                         }),
                       );
                     }

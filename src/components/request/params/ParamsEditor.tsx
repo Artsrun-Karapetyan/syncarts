@@ -1,5 +1,5 @@
 import { CheckSquare, Plus, Square, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   PathVariable,
@@ -7,19 +7,18 @@ import {
   useWorkspace,
 } from "../../../contexts/WorkspaceContext";
 import { syncPathVariablesWithUrl } from "../../../utils/pathVariables";
+import { syncRowKeys } from "../rowKeys";
 import { VariableTextInput } from "../variables/VariableTextInput";
 import { ParamSectionTitle } from "./ParamSectionTitle";
-import {
-  createEmptyParam,
-  ensureTrailingBlank,
-  parseParamsFromUrl,
-} from "./paramsEditorHelpers";
+import { createEmptyParam, parseParamsFromUrl } from "./paramsEditorHelpers";
 
 export function ParamsEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
   const [params, setParams] = useState<QueryParamItem[]>([createEmptyParam()]);
   const pathVariables = activeTab?.pathVariables || [];
   const queryParamDescriptions = activeTab?.queryParamDescriptions || {};
+  const rowKeysRef = useRef<string[]>([]);
+  const rowKeys = syncRowKeys(rowKeysRef.current, params.length);
 
   useEffect(() => {
     if (!activeTab) return;
@@ -39,7 +38,7 @@ export function ParamsEditor() {
     const nextParams = activeTab.queryParams?.length
       ? activeTab.queryParams
       : parseParamsFromUrl(activeTab.url || "", queryParamDescriptions);
-    setParams(ensureTrailingBlank(nextParams));
+    setParams(nextParams);
   }, [
     activeTab?.url,
     activeTab?.queryParams,
@@ -47,7 +46,7 @@ export function ParamsEditor() {
   ]);
 
   const syncUrl = (newParams: QueryParamItem[]) => {
-    setParams(ensureTrailingBlank(newParams));
+    setParams(newParams);
     if (!activeTab) return;
 
     const baseUrl = activeTab.url.split("?")[0] || "";
@@ -87,10 +86,12 @@ export function ParamsEditor() {
   };
 
   const addParam = () => {
+    rowKeysRef.current.push(crypto.randomUUID());
     setParams((prev) => [...prev, createEmptyParam()]);
   };
 
   const removeParam = (index: number) => {
+    rowKeysRef.current.splice(index, 1);
     const newParams = params.filter((_, i) => i !== index);
     syncUrl(newParams.length > 0 ? newParams : [createEmptyParam()]);
   };
@@ -117,7 +118,7 @@ export function ParamsEditor() {
         <ParamSectionTitle title="Query Params" />
         {params.map((param, idx) => (
           <div
-            key={`${param.key}-${param.value}-${param.description ?? ""}-${param.enabled}`}
+            key={rowKeys[idx]}
             style={{
               display: "grid",
               gridTemplateColumns: "40px 1fr 1fr 1fr 40px",

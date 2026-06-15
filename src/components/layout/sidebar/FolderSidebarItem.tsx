@@ -20,6 +20,7 @@ export function FolderSidebarItem({
   handleRenameSubmit,
   expandedFolders,
   setExpandedFolders,
+  highlightedExampleId,
   highlightedRequestId,
   highlightedFolderId,
   searchQuery = "",
@@ -129,6 +130,7 @@ export function FolderSidebarItem({
               handleRenameSubmit={handleRenameSubmit}
               expandedFolders={expandedFolders}
               setExpandedFolders={setExpandedFolders}
+              highlightedExampleId={highlightedExampleId}
               highlightedRequestId={highlightedRequestId}
               highlightedFolderId={highlightedFolderId}
               searchQuery={searchQuery}

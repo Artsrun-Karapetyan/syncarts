@@ -63,7 +63,14 @@ jobs:
         with:
           tagName: app-v__VERSION__
           releaseName: "Syncarts v__VERSION__"
-          releaseBody: "See the assets to download this version and install."
+          releaseBody: |
+            ## 📥 Download Links
+
+            🍏 [Download for Mac (Apple M-Series)](https://github.com/${{ github.repository }}/releases/download/app-v0.2.1/Syncarts_0.2.1_aarch64.dmg)
+            🍏 [Download for Mac (Intel)](https://github.com/${{ github.repository }}/releases/download/app-v0.2.1/Syncarts_0.2.1_x64.dmg)
+
+            🐧 [Download for Linux (.AppImage)](https://github.com/${{ github.repository }}/releases/download/app-v0.2.1/syncarts_0.2.1_amd64.AppImage)
+            🐧 [Download for Linux (.deb)](https://github.com/${{ github.repository }}/releases/download/app-v0.2.1/syncarts_0.2.1_amd64.deb)
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
