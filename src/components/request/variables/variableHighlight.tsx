@@ -1,4 +1,7 @@
-import { getRequestAncestors } from "../../../contexts/workspace/requests/requestHelpers";
+import {
+  getRequestAncestors,
+  resolveChainVariable,
+} from "../../../contexts/workspace/requests/requestHelpers";
 import type {
   Environment,
   EnvironmentVariable,
@@ -32,9 +35,16 @@ export function renderVariableHighlight(args: {
   collections: any[];
   activeEnvironment?: Environment;
   globalVariables: EnvironmentVariable[];
+  responseCache?: Record<string, any>;
 }) {
-  const { text, activeTab, collections, activeEnvironment, globalVariables } =
-    args;
+  const {
+    text,
+    activeTab,
+    collections,
+    activeEnvironment,
+    globalVariables,
+    responseCache,
+  } = args;
   const parts = text.split(/(\{\{[^}]*\}\})/g);
 
   return parts.map((part) => {
@@ -53,9 +63,23 @@ export function renderVariableHighlight(args: {
     const isDynamic = ["$guid", "$timestamp", "$isoTimestamp"].includes(
       varName,
     );
+    const isChain = varName.startsWith("$chain:");
 
-    if (resolved.hasValue || isDynamic) {
-      const colors = getVariableColors(resolved.sourceType, isDynamic);
+    if (isChain && responseCache) {
+      const cv = resolveChainVariable(varName, responseCache);
+      if (cv !== null) {
+        resolved.hasValue = true;
+        resolved.value = cv;
+        resolved.sourceType = "Chain";
+        resolved.source = "response_cache";
+        resolved.exists = true;
+      }
+    }
+
+    if (resolved.hasValue || isDynamic || isChain) {
+      const colors = isChain
+        ? { color: "#ffb3d9" }
+        : getVariableColors(resolved.sourceType, isDynamic);
       return (
         <span
           key={`env-${part}`}

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { api } from "../../../lib/api";
 import { useCollectionActions } from "../collections/useCollectionActions";
@@ -21,6 +21,7 @@ import { useLegacyWorkspaceMigration } from "../sync/useLegacyWorkspaceMigration
 import { useWorkspaceSync } from "../sync/useWorkspaceSync";
 import { useTabActions } from "../tabs/useTabActions";
 import type {
+  HttpResponse,
   SavedRequest,
   TabData,
   Workspace,
@@ -57,6 +58,14 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
       `syncarts-active-env-by-workspace-v3-${userId}`,
       createDefaultActiveEnvByWorkspace(localDefaultWorkspaceId),
     );
+
+  const [responseCache, setResponseCache] = useState<
+    Record<string, HttpResponse>
+  >({});
+  const updateResponseCache = (id: string, response: HttpResponse) => {
+    setResponseCache((prev) => ({ ...prev, [id]: response }));
+  };
+
   const storageHydrated =
     workspacesHydrated &&
     activeWorkspaceHydrated &&
@@ -209,6 +218,8 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     updateCollection: collectionActions.updateCollection,
     updateEnvironment: environmentActions.updateEnvironment,
     updateGlobalVariables: environmentActions.updateGlobalVariables,
+    updateResponseCache,
+    responseCache,
   });
 
   const { reloadWorkspaces } = useWorkspaceSync({
@@ -333,7 +344,11 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     });
   };
 
-  useKeyboardShortcuts();
+  useKeyboardShortcuts({
+    addTab: tabActions.addTab,
+    closeTab: tabActions.closeTab,
+    activeTabId,
+  });
 
   return {
     workspaces,
@@ -358,5 +373,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     ...exampleActions,
     createBlankRequestInFolder,
     ...requestSender,
+    responseCache,
+    updateResponseCache,
   };
 }

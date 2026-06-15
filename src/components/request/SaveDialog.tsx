@@ -127,6 +127,8 @@ export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
       preRequestScript: activeTab.preRequestScript,
       testScript: activeTab.testScript,
       body: activeTab.body || "",
+      queryParams: activeTab.queryParams,
+      queryParamDescriptions: activeTab.queryParamDescriptions,
     };
 
     rememberTabSnapshot(activeTab.id, req);
@@ -145,6 +147,8 @@ export function SaveDialog({ onClose, anchorRef, onSaved }: SaveDialogProps) {
       preRequestScript: req.preRequestScript,
       testScript: req.testScript,
       body: req.body,
+      queryParams: req.queryParams,
+      queryParamDescriptions: req.queryParamDescriptions,
       collectionId,
       folderId: folderId || undefined,
       savedRequestId: reqId,

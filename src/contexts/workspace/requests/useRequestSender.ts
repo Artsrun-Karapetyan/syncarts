@@ -35,6 +35,8 @@ interface RequestSenderArgs {
   updateCollection: (id: string, data: Partial<Collection>) => void;
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
+  responseCache: Record<string, HttpResponse>;
+  updateResponseCache: (id: string, response: HttpResponse) => void;
 }
 
 export function useRequestSender(args: RequestSenderArgs) {
@@ -49,6 +51,8 @@ export function useRequestSender(args: RequestSenderArgs) {
     updateCollection,
     updateEnvironment,
     updateGlobalVariables,
+    responseCache,
+    updateResponseCache,
   } = args;
 
   const { trigger, isMutating, error } = useSWRMutation(
@@ -66,6 +70,7 @@ export function useRequestSender(args: RequestSenderArgs) {
           activeTab: requestTab,
           collections: requestCollections,
           globalVariables,
+          responseCache,
           text,
         });
       const headerMap: Record<string, string> = {};
@@ -197,6 +202,9 @@ export function useRequestSender(args: RequestSenderArgs) {
         updateCollection(collectionContext.collectionId, {
           variables: collectionVariablesDraft,
         });
+      }
+      if (activeTab.savedRequestId) {
+        updateResponseCache(activeTab.savedRequestId, result);
       }
       updateActiveTab({ response: result, testResults, consoleLogs });
       return result;

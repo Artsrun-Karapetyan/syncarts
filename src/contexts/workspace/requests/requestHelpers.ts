@@ -48,15 +48,58 @@ export function resolveRequestAuth(
   return { authType, bearerToken, inheritedFrom };
 }
 
+export function resolveChainVariable(
+  key: string,
+  responseCache?: Record<string, any>,
+): string | null {
+  if (!key.startsWith("$chain:") || !responseCache) return null;
+  const parts = key.split(":");
+  if (parts.length < 3) return null;
+
+  const reqId = parts[1];
+  const path = parts.slice(2).join(":");
+  const cachedRes = responseCache[reqId];
+  if (!cachedRes) return null;
+
+  try {
+    let currentData;
+    if (path.startsWith("body")) {
+      currentData = JSON.parse(cachedRes.body);
+    } else if (path.startsWith("headers")) {
+      currentData = cachedRes.headers;
+    }
+
+    const pathSegments = path.split(".").slice(1);
+    for (const segment of pathSegments) {
+      if (currentData === undefined || currentData === null) break;
+      currentData = currentData[segment];
+    }
+
+    if (currentData !== undefined) {
+      return String(currentData);
+    }
+  } catch (e) {
+    console.error("Failed to parse chained response JSON", e);
+  }
+  return null;
+}
+
 export function interpolateVariables(args: {
   activeEnvironment: Environment | undefined;
   activeTab: TabData | undefined;
   collections: Collection[];
   globalVariables: EnvironmentVariable[];
+  responseCache?: Record<string, any>;
   text: string;
 }) {
-  const { activeEnvironment, activeTab, collections, globalVariables, text } =
-    args;
+  const {
+    activeEnvironment,
+    activeTab,
+    collections,
+    globalVariables,
+    responseCache,
+    text,
+  } = args;
   if (!text) return text;
 
   const ancestors = getRequestAncestors(activeTab, collections);
@@ -86,6 +129,9 @@ export function interpolateVariables(args: {
   ): string | null {
     const dynamicValue = resolveDynamicVariable(key);
     if (dynamicValue !== null) return dynamicValue;
+
+    const chainValue = resolveChainVariable(key, responseCache);
+    if (chainValue !== null) return chainValue;
 
     for (const scope of lookupQueue) {
       if (skipSources.has(scope.source)) continue;

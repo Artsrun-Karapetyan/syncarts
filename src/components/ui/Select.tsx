@@ -80,11 +80,10 @@ export function Select({
       className={`select-container ${className}`}
       style={{ position: "relative", ...style }}
     >
-      <button
-        ref={btnRef}
-        type="button"
+      <div
+        ref={btnRef as any}
         className={variant === "default" ? "input" : ""}
-        disabled={disabled}
+        data-disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         style={{
           width: "100%",
@@ -225,7 +224,7 @@ export function Select({
             }}
           />
         </span>
-      </button>
+      </div>
 
       {isOpen &&
         createPortal(

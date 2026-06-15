@@ -68,8 +68,20 @@ export function ParamsEditor() {
       return;
     }
 
+    const encodeWithVars = (val: string) => {
+      const parts = val.split(/(\{\{[^}]+\}\})/g);
+      return parts
+        .map((part) => {
+          if (part.startsWith("{{") && part.endsWith("}}")) {
+            return part;
+          }
+          return encodeURIComponent(part);
+        })
+        .join("");
+    };
+
     const queryParts = enabledParams.map(
-      (p) => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`,
+      (p) => `${encodeWithVars(p.key)}=${encodeWithVars(p.value)}`,
     );
     const nextUrl = `${baseUrl}?${queryParts.join("&")}`;
     updateActiveTab({

@@ -198,6 +198,8 @@ export interface WorkspaceContextState
     CollectionActions,
     EnvironmentActions,
     RequestSenderActions {
+  responseCache: Record<string, HttpResponse>;
+  updateResponseCache: (id: string, response: HttpResponse) => void;
   workspaces: Workspace[];
   activeWorkspaceId: string;
   localDefaultWorkspaceId: string;

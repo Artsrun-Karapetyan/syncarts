@@ -1,7 +1,9 @@
+import { Link } from "lucide-react";
 import type { CSSProperties } from "react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import { useWorkspace } from "../../../contexts/WorkspaceContext";
+import { ChainingPickerModal } from "../chaining/ChainingPickerModal";
 import { UrlVariablePopover } from "../url/UrlVariablePopover";
 import { useVariableAutocomplete } from "./useVariableAutocomplete";
 import { useVariableHover } from "./useVariableHover";
@@ -26,11 +28,17 @@ export function VariableTextInput(props: VariableTextInputProps) {
     value,
     onChange,
   } = props;
-  const { activeEnvironment, activeTab, collections, globalVariables } =
-    useWorkspace();
+  const {
+    activeTab,
+    collections,
+    activeEnvironment,
+    globalVariables,
+    responseCache,
+  } = useWorkspace();
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const autocomplete = useVariableAutocomplete({ value, onChange });
   const hover = useVariableHover(overlayRef);
+  const [isChainingOpen, setIsChainingOpen] = useState(false);
 
   return (
     <div
@@ -63,6 +71,7 @@ export function VariableTextInput(props: VariableTextInputProps) {
               collections,
               activeEnvironment,
               globalVariables,
+              responseCache,
             })
           : placeholder}
       </div>
@@ -95,6 +104,40 @@ export function VariableTextInput(props: VariableTextInputProps) {
         }}
         spellCheck={false}
       />
+      {!disabled && (
+        <button
+          type="button"
+          onClick={() => setIsChainingOpen(true)}
+          style={{
+            position: "absolute",
+            right: 4,
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "var(--text-tertiary)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 4,
+            borderRadius: "var(--radius-sm)",
+            zIndex: 3,
+            transition: "all var(--transition-fast)",
+          }}
+          title="Chain Request Response"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--accent-primary)";
+            e.currentTarget.style.background = "var(--bg-tertiary)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--text-tertiary)";
+            e.currentTarget.style.background = "none";
+          }}
+        >
+          <Link size={12} />
+        </button>
+      )}
       {autocomplete.autocompleteState && (
         <VariableAutocompletePopover
           activeIndex={autocomplete.activeIndex}
@@ -129,6 +172,15 @@ export function VariableTextInput(props: VariableTextInputProps) {
                 ? "Collection"
                 : "Environment"
           }
+        />
+      )}
+      {isChainingOpen && (
+        <ChainingPickerModal
+          onClose={() => setIsChainingOpen(false)}
+          onSelect={(chainString) => {
+            // Append to current value, or replace? Usually append or insert at cursor. For now, append.
+            onChange(value ? value + chainString : chainString);
+          }}
         />
       )}
     </div>

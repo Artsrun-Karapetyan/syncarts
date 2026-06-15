@@ -8,7 +8,13 @@ export interface ResolvedVariable {
   hasValue: boolean;
   value: string;
   source?: string;
-  sourceType?: "Environment" | "Collection" | "Folder" | "Globals" | "Dynamic";
+  sourceType?:
+    | "Environment"
+    | "Collection"
+    | "Folder"
+    | "Globals"
+    | "Dynamic"
+    | "Chain";
 }
 
 export function resolveScopedVariable(args: {

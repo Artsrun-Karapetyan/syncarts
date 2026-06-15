@@ -2,7 +2,10 @@ import "./UrlBar.css";
 
 import { useEffect, useRef } from "react";
 
-import { getRequestAncestors } from "../../../contexts/workspace/requests/requestHelpers";
+import {
+  getRequestAncestors,
+  resolveChainVariable,
+} from "../../../contexts/workspace/requests/requestHelpers";
 import { useWorkspace } from "../../../contexts/WorkspaceContext";
 import { parseCurlCommand } from "../../../utils/curlParser";
 import { syncPathVariablesWithUrl } from "../../../utils/pathVariables";
@@ -25,6 +28,7 @@ export function UrlBar() {
     activeEnvironment,
     collections,
     globalVariables,
+    responseCache,
   } = useWorkspace();
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
@@ -150,9 +154,23 @@ export function UrlBar() {
         const isDynamic = ["$guid", "$timestamp", "$isoTimestamp"].includes(
           varName,
         );
+        const isChain = varName.startsWith("$chain:");
 
-        if (resolved.hasValue || isDynamic) {
-          const colors = getVariableColors(resolved.sourceType, isDynamic);
+        if (isChain && responseCache) {
+          const cv = resolveChainVariable(varName, responseCache);
+          if (cv !== null) {
+            resolved.hasValue = true;
+            resolved.value = cv;
+            resolved.sourceType = "Chain";
+            resolved.source = "response_cache";
+            resolved.exists = true;
+          }
+        }
+
+        if (resolved.hasValue || isDynamic || isChain) {
+          const colors = isChain
+            ? { color: "#ffb3d9" }
+            : getVariableColors(resolved.sourceType, isDynamic);
           return (
             <span
               key={`${part}-${varName}`}

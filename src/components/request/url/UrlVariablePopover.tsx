@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { RefObject } from "react";
+import { RefObject, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { interpolateVariables } from "../../../contexts/workspace/requests/requestHelpers";
@@ -46,6 +46,10 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
   const inputId = `url-var-input-${hoveredVar.kind}-${hoveredVar.name}`;
   const isPathVariable = hoveredVar.kind === "path";
   const isDynamic = hoveredVar.source === "Dynamic";
+  const isChain = hoveredVar.name.startsWith("$chain:");
+
+  const [newValue, setNewValue] = useState(hoveredVar.value || "");
+  const handleSave = () => onSave(hoveredVar.name, newValue);
 
   const { activeEnvironment, activeTab, collections, globalVariables } =
     useWorkspace();
@@ -58,6 +62,100 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
         text: hoveredVar.value,
       })
     : "";
+
+  if (hoveredVar.kind === "environment" && hoveredVar.hasValue && !isChain) {
+    return createPortal(
+      <div
+        ref={popoverRef}
+        style={{
+          position: "fixed",
+          left: hoveredVar.x,
+          top: hoveredVar.y,
+          background: "var(--bg-tertiary)",
+          border: "1px solid var(--border-color)",
+          borderRadius: "var(--radius-sm)",
+          padding: 0,
+          zIndex: 999999,
+          boxShadow: "var(--shadow-lg)",
+          minWidth: 340,
+          overflow: "hidden",
+          fontSize: 13,
+          color: "var(--text-primary)",
+        }}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <div style={{ padding: "14px 16px" }}>
+          <div style={{ marginBottom: 8, color: "var(--text-secondary)" }}>
+            Value
+          </div>
+          <div
+            className="font-mono"
+            style={{
+              padding: "8px 12px",
+              background: "var(--bg-secondary)",
+              border: "1px solid var(--border-color)",
+              borderRadius: "var(--radius-sm)",
+              color: hoveredVar.hasValue
+                ? "var(--text-primary)"
+                : "var(--text-tertiary)",
+              wordBreak: "break-all",
+              maxHeight: 150,
+              overflowY: "auto",
+            }}
+          >
+            {hoveredVar.hasValue ? hoveredVar.value : "Unknown variable"}
+          </div>
+          <div
+            style={{
+              marginTop: 12,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            <input
+              className="input font-mono"
+              style={{ width: "100%", fontSize: 12, padding: "6px 8px" }}
+              placeholder="Enter value"
+              value={newValue}
+              onChange={(e) => setNewValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave();
+              }}
+            />
+            <button
+              style={{
+                width: "100%",
+                padding: "6px 8px",
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border-color)",
+                borderRadius: "var(--radius-sm)",
+                color: "var(--text-primary)",
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+              }}
+              onClick={handleSave}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "var(--bg-tertiary)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "var(--bg-secondary)")
+              }
+            >
+              <Plus size={14} /> Update {variableTargetLabel} Variable
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
 
   return createPortal(
     <div
