@@ -6,10 +6,7 @@ import { exportCollectionFile } from "./sidebar/exportCollectionFile";
 import { SidebarCollections } from "./sidebar/SidebarCollections";
 import { SidebarContextMenu } from "./sidebar/SidebarContextMenu";
 import { SidebarDialogs } from "./sidebar/SidebarDialogs";
-import {
-  SIDEBAR_ROOT_STYLE,
-  SIDEBAR_SCROLL_STYLE,
-} from "./sidebar/sidebarStyles";
+import { SIDEBAR_ROOT_STYLE } from "./sidebar/sidebarStyles";
 import { SidebarToolbar } from "./sidebar/SidebarToolbar";
 import type {
   ContextMenuRequest,
@@ -228,7 +225,15 @@ export function Sidebar() {
 
   return (
     <div style={SIDEBAR_ROOT_STYLE}>
-      <div style={SIDEBAR_SCROLL_STYLE}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
         <SidebarToolbar
           openMrCount={openMrCount}
           onMergeRequests={() => navigate({ to: "/merge-requests" })}

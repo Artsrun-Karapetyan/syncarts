@@ -37,7 +37,14 @@ export interface SidebarCollectionsProps {
 
 export function SidebarCollections(props: SidebarCollectionsProps) {
   return (
-    <div style={{ minWidth: "max-content", paddingRight: 8, paddingBottom: 8 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        minHeight: 0,
+      }}
+    >
       {props.isAdding && (
         <NewCollectionInput
           newColName={props.newColName}
@@ -50,12 +57,28 @@ export function SidebarCollections(props: SidebarCollectionsProps) {
         value={props.collectionSearch}
         onChange={props.setCollectionSearch}
       />
-      {props.filteredCollections.map((collection) => (
-        <CollectionRow key={collection.id} collection={collection} {...props} />
-      ))}
-      {props.collections.length === 0 && !props.isAdding && (
-        <EmptyCollections />
-      )}
+      <div
+        style={{
+          flex: 1,
+          overflow: "auto",
+          minHeight: 0,
+          paddingRight: 4,
+          paddingBottom: 8,
+        }}
+      >
+        <div style={{ minWidth: "max-content" }}>
+          {props.filteredCollections.map((collection) => (
+            <CollectionRow
+              key={collection.id}
+              collection={collection}
+              {...props}
+            />
+          ))}
+          {props.collections.length === 0 && !props.isAdding && (
+            <EmptyCollections />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
