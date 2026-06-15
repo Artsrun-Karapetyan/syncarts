@@ -116,6 +116,24 @@ export function MergeRequestsScreen() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!selectedMr) return;
+    if (!confirm("Are you sure you want to delete this merge request?")) return;
+    setError(null);
+    try {
+      setMerging(true);
+      await api.delete(`/merge-requests/${selectedMr.id}`);
+      await fetchMrs();
+      setSelectedMr(null);
+      setTargetCollection(null);
+    } catch (err: any) {
+      console.error("Delete failed:", err);
+      setError(err.message || "Failed to delete merge request.");
+    } finally {
+      setMerging(false);
+    }
+  };
+
   return (
     <div
       style={{
@@ -183,6 +201,7 @@ export function MergeRequestsScreen() {
           targetCollection={targetCollection}
           onMerge={handleMerge}
           onReject={handleReject}
+          onDelete={handleDelete}
         />
       </div>
     </div>

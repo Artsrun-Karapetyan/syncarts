@@ -11,9 +11,18 @@ import { resolve } from "path";
 const root = resolve(import.meta.dirname, "..");
 
 const files = [
-  { path: resolve(root, "package.json"), pattern: /"version":\s*"(\d+\.\d+\.\d+)"/ },
-  { path: resolve(root, "src-tauri/tauri.conf.json"), pattern: /"version":\s*"(\d+\.\d+\.\d+)"/ },
-  { path: resolve(root, "src-tauri/Cargo.toml"), pattern: /version\s*=\s*"(\d+\.\d+\.\d+)"/ },
+  {
+    path: resolve(root, "package.json"),
+    pattern: /"version":\s*"(\d+\.\d+\.\d+)"/,
+  },
+  {
+    path: resolve(root, "src-tauri/tauri.conf.json"),
+    pattern: /"version":\s*"(\d+\.\d+\.\d+)"/,
+  },
+  {
+    path: resolve(root, "src-tauri/Cargo.toml"),
+    pattern: /version\s*=\s*"(\d+\.\d+\.\d+)"/,
+  },
 ];
 
 // Read current version from package.json

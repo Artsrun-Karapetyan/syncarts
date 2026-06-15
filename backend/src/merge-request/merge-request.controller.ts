@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -63,6 +64,11 @@ export class MergeRequestController {
       body.status,
       req.authUser.id,
     );
+  }
+
+  @Delete(":id")
+  async remove(@Request() req: any, @Param("id") id: string) {
+    return this.mrService.deleteMergeRequest(id, req.authUser.id);
   }
 
   @Get(":id/source-collection")

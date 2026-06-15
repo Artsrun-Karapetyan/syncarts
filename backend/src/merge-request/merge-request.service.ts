@@ -104,6 +104,25 @@ export class MergeRequestService {
     });
   }
 
+  async deleteMergeRequest(id: string, userId: string) {
+    const mr = await this.prisma.mergeRequest.findUnique({ where: { id } });
+    if (!mr) throw new Error("Merge request not found");
+
+    const isAuthor = mr.authorId === userId;
+    const targetWorkspace = await this.prisma.workspace.findUnique({
+      where: { id: mr.targetWorkspaceId },
+    });
+    const isTargetOwner = targetWorkspace?.ownerId === userId;
+
+    if (!isAuthor && !isTargetOwner) {
+      throw new Error(
+        "Only the author or the target workspace owner can delete this merge request",
+      );
+    }
+
+    return this.prisma.mergeRequest.delete({ where: { id } });
+  }
+
   async getSourceCollection(mrId: string) {
     const mr = await this.prisma.mergeRequest.findUnique({
       where: { id: mrId },

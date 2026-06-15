@@ -8,6 +8,7 @@ interface MergeRequestDetailsProps {
   merging: boolean;
   onMerge: () => void;
   onReject: () => void;
+  onDelete: () => void;
   selectedMr: any | null;
   sourceCollection: any | null;
   targetCollection: any | null;
@@ -18,6 +19,7 @@ export function MergeRequestDetails({
   merging,
   onMerge,
   onReject,
+  onDelete,
   selectedMr,
   sourceCollection,
   targetCollection,
@@ -41,17 +43,51 @@ export function MergeRequestDetails({
               marginBottom: 24,
             }}
           >
-            <h3
-              style={{
-                fontSize: 24,
-                fontWeight: 700,
-                margin: 0,
-                color: "var(--text-primary)",
-              }}
-            >
-              {selectedMr.title}
-            </h3>
-            <MergeRequestStatusBadge status={selectedMr.status} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <h3
+                style={{
+                  fontSize: 24,
+                  fontWeight: 700,
+                  margin: 0,
+                  color: "var(--text-primary)",
+                }}
+              >
+                {selectedMr.title}
+              </h3>
+              {selectedMr.author && (
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "var(--text-tertiary)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  Opened by
+                  <span
+                    style={{ fontWeight: 600, color: "var(--text-secondary)" }}
+                  >
+                    {selectedMr.author.name || selectedMr.author.email}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <MergeRequestStatusBadge status={selectedMr.status} />
+              <button
+                onClick={onDelete}
+                className="btn"
+                style={{
+                  background: "rgba(255, 80, 80, 0.1)",
+                  color: "#ff5050",
+                  border: "none",
+                  padding: "6px 12px",
+                }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
           {selectedMr.description && (
             <div

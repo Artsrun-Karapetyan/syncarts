@@ -72,9 +72,16 @@ export function InviteModal({ isOpen, onClose, workspaceId }: Props) {
         ? [preferredWorkspaceId]
         : [],
     );
-    setGeneratedLink("");
-    setStatusMsg("");
-  }, [activeWorkspaceId, isOpen, workspaceId, workspaces, user?.id]);
+    // Don't reset generatedLink or statusMsg on every workspace sync/switch,
+    // only when the modal is reopened.
+  }, [isOpen, workspaceId, user?.id]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setGeneratedLink("");
+      setStatusMsg("");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

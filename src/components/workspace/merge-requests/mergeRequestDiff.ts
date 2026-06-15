@@ -8,6 +8,7 @@ export interface MergeRequestDiffItem {
   name?: string;
   type?: string;
   url?: string;
+  originalItem?: any;
 }
 
 export function getMergeRequestChanges(targetCol: any, sourceCollection: any) {
@@ -37,7 +38,7 @@ export function getMergeRequestChanges(targetCol: any, sourceCollection: any) {
           JSON.stringify(sourceCompare[key]) !==
             JSON.stringify(targetCompare[key]),
       );
-      return { ...sourceItem, changedKeys };
+      return { ...sourceItem, changedKeys, originalItem: targetItem };
     })
     .filter(Boolean);
 
@@ -82,4 +83,14 @@ function withDiff(
   diffColor: string,
 ) {
   return { ...item, diffType, diffSymbol, diffColor };
+}
+
+export function formatDiffValue(val: any): string {
+  if (val === undefined || val === null) return "null";
+  if (typeof val === "string") return val;
+  try {
+    return JSON.stringify(val, null, 2);
+  } catch {
+    return String(val);
+  }
 }
