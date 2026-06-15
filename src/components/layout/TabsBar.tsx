@@ -2,6 +2,7 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
+import { TabsBarContextMenu } from "./TabsBarContextMenu";
 
 interface TabsBarProps {
   onRequestCloseTab: (tabId: string) => void;
@@ -14,6 +15,7 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
     activeTab,
     setActiveTabId,
     addTab,
+    closeTab,
     isTabDirty,
     resolveTabSavedRequestId,
   } = useWorkspace();
@@ -113,6 +115,12 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
                       y: e.clientY,
                       tabToDuplicate: tab,
                     });
+                  }}
+                  onAuxClick={(e) => {
+                    if (e.button === 1) {
+                      e.preventDefault();
+                      onRequestCloseTab(tab.id);
+                    }
                   }}
                   style={{
                     display: "flex",
@@ -283,60 +291,15 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
           </div>
         </div>
       </div>
-      {ctxMenu && (
-        <div
-          ref={menuRef}
-          style={{
-            position: "fixed",
-            top: ctxMenu.y,
-            left: ctxMenu.x,
-            zIndex: 1000,
-            background: "var(--bg-primary)",
-            border: "1px solid var(--border-color)",
-            borderRadius: "var(--radius-md)",
-            boxShadow: "var(--shadow-lg)",
-            padding: "4px",
-            minWidth: 160,
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
-          <div
-            style={{
-              padding: "6px 10px",
-              fontSize: 13,
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-              borderRadius: "4px",
-              transition: "background var(--transition-fast)",
-            }}
-            onClick={() => {
-              const cloneData = { ...ctxMenu.tabToDuplicate };
-              delete cloneData.id;
-              delete cloneData.savedRequestId;
-              delete cloneData.collectionId;
-              delete cloneData.folderId;
-              delete cloneData.exampleId;
-              addTab({
-                ...cloneData,
-                name: `${cloneData.name || "Untitled Request"} (Copy)`,
-              });
-              setCtxMenu(null);
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--bg-secondary)";
-              e.currentTarget.style.color = "var(--text-primary)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "var(--text-secondary)";
-            }}
-          >
-            Duplicate
-          </div>
-        </div>
-      )}
+      <TabsBarContextMenu
+        ctxMenu={ctxMenu}
+        setCtxMenu={setCtxMenu}
+        menuRef={menuRef}
+        addTab={addTab}
+        closeTab={closeTab}
+        onRequestCloseTab={onRequestCloseTab}
+        tabs={tabs}
+      />
     </div>
   );
 }

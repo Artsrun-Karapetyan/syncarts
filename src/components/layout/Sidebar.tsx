@@ -96,6 +96,25 @@ export function Sidebar() {
   }, [ctxMenu]);
 
   useEffect(() => {
+    const handleOpenImport = () => setIsImportModalOpen(true);
+    const handleCreateCollection = () => setIsAdding(true);
+
+    window.addEventListener("syncarts:open-import", handleOpenImport);
+    window.addEventListener(
+      "syncarts:create-collection",
+      handleCreateCollection,
+    );
+
+    return () => {
+      window.removeEventListener("syncarts:open-import", handleOpenImport);
+      window.removeEventListener(
+        "syncarts:create-collection",
+        handleCreateCollection,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
     setExpandedCollections((current) => {
       const next = { ...current };
 

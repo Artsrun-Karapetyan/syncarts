@@ -178,7 +178,7 @@ export function Workspace() {
       <TabsBar onRequestCloseTab={requestCloseTab} />
 
       {!activeTab ? (
-        <WorkspaceEmptyState onAddTab={() => addTab()} />
+        <WorkspaceEmptyState onAddTab={(data) => addTab(data)} />
       ) : activeTab.type === "request" ||
         activeTab.type === "example" ||
         !activeTab.type ? (
