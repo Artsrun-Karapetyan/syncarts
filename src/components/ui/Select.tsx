@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -100,26 +100,18 @@ export function Select({
                 ? "var(--bg-tertiary)"
                 : "transparent"
               : variant === "pill"
-                ? "var(--bg-primary)"
+                ? isOpen
+                  ? "var(--bg-tertiary)"
+                  : "var(--bg-secondary)"
                 : isOpen
-                  ? "rgba(0, 0, 0, 0.6)"
-                  : undefined,
+                  ? "var(--bg-tertiary)"
+                  : "var(--bg-primary)",
           border:
             variant === "ghost"
               ? "none"
               : variant === "pill"
                 ? `1px solid ${isOpen ? "var(--border-highlight)" : "var(--border-color)"}`
-                : undefined,
-          borderColor:
-            variant === "ghost"
-              ? "transparent"
-              : variant === "pill"
-                ? isOpen
-                  ? "var(--border-highlight)"
-                  : "var(--border-color)"
-                : isOpen
-                  ? "var(--border-highlight)"
-                  : undefined,
+                : `1px solid ${isOpen ? "var(--border-highlight)" : "var(--border-color)"}`,
           padding:
             variant === "ghost"
               ? "6px 12px"
@@ -127,20 +119,16 @@ export function Select({
                 ? compact
                   ? "0 12px"
                   : "0 16px"
-                : undefined,
+                : "0 12px",
           paddingRight:
             variant === "pill" && endAdornment
               ? compact
                 ? 74
                 : 82
               : undefined,
-          height: variant === "pill" ? (compact ? 38 : 46) : undefined,
+          height: variant === "pill" ? (compact ? 32 : 40) : compact ? 32 : 40,
           borderRadius:
-            variant === "ghost"
-              ? "8px"
-              : variant === "pill"
-                ? "9999px"
-                : undefined,
+            variant === "ghost" ? "6px" : variant === "pill" ? "8px" : "6px",
           fontSize:
             variant === "ghost"
               ? "14px"
@@ -156,16 +144,22 @@ export function Select({
           transition: "all var(--transition-fast)",
         }}
         onMouseEnter={(e) => {
-          if (variant === "ghost" && !isOpen)
+          if (!isOpen) {
             e.currentTarget.style.background = "var(--bg-tertiary)";
-          if (variant === "pill")
             e.currentTarget.style.borderColor = "var(--border-highlight)";
+          }
         }}
         onMouseLeave={(e) => {
-          if (variant === "ghost" && !isOpen)
-            e.currentTarget.style.background = "transparent";
-          if (variant === "pill" && !isOpen)
-            e.currentTarget.style.borderColor = "var(--border-color)";
+          if (!isOpen) {
+            e.currentTarget.style.background =
+              variant === "pill"
+                ? "var(--bg-secondary)"
+                : variant === "ghost"
+                  ? "transparent"
+                  : "var(--bg-primary)";
+            e.currentTarget.style.borderColor =
+              variant === "ghost" ? "transparent" : "var(--border-color)";
+          }
         }}
       >
         <span
@@ -204,12 +198,11 @@ export function Select({
               {selectedOption.badge}
             </span>
           )}
-          <ChevronDown
-            size={variant === "pill" ? (compact ? 13 : 14) : 16}
+          <ChevronsUpDown
+            size={14}
             style={{
-              opacity: 0.6,
-              transition: "transform var(--transition-fast)",
-              transform: isOpen ? "rotate(180deg)" : "rotate(0)",
+              opacity: 0.4,
+              marginLeft: 4,
             }}
           />
         </span>
