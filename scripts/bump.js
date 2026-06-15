@@ -37,5 +37,3 @@ for (const { path, pattern } of files) {
   );
   writeFileSync(path, updated);
 }
-
-console.log(`✅ ${pkg.version} → ${next}`);

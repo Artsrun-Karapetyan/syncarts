@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { getMergeRequestChanges } from "./mergeRequestDiff";
+import { formatDiffValue, getMergeRequestChanges } from "./mergeRequestDiff";
 
 describe("getMergeRequestChanges", () => {
   test("detects added, deleted, and modified collection items", () => {
@@ -34,6 +34,7 @@ describe("getMergeRequestChanges", () => {
     expect(changes.added.map((item) => item.id)).toEqual(["added"]);
     expect(changes.deleted.map((item) => item.id)).toEqual(["deleted"]);
     expect(changes.modified[0].changedKeys).toContain("url");
+    expect(changes.modified[0].originalItem).toEqual(targetCollection.items[0]);
     expect(changes.allChanges.map((item) => item.diffType)).toEqual([
       "added",
       "modified",
@@ -75,5 +76,20 @@ describe("getMergeRequestChanges", () => {
       changes.modified.find((c: any) => c.id === "req-1")?.changedKeys,
     ).toContain("name");
     expect(changes.added.map((item: any) => item.id)).toEqual(["req-2"]);
+  });
+});
+
+describe("formatDiffValue", () => {
+  test("formats undefined and null correctly", () => {
+    expect(formatDiffValue(undefined)).toBe("null");
+    expect(formatDiffValue(null)).toBe("null");
+  });
+
+  test("formats strings correctly", () => {
+    expect(formatDiffValue("hello")).toBe("hello");
+  });
+
+  test("formats objects correctly", () => {
+    expect(formatDiffValue({ key: "value" })).toBe('{\n  "key": "value"\n}');
   });
 });

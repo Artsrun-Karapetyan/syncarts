@@ -1,9 +1,13 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
-import { formatDiffValue, type MergeRequestDiffItem as DiffItem } from "./mergeRequestDiff";
+import {
+  formatDiffValue,
+  type MergeRequestDiffItem as DiffItem,
+} from "./mergeRequestDiff";
 import { MergeRequestFolderBadge } from "./MergeRequestFolderBadge";
 import { MergeRequestMethodBadge } from "./MergeRequestMethodBadge";
+import { TableDiffView } from "./TableDiffView";
 
 interface MergeRequestDiffItemProps {
   item: DiffItem;
@@ -112,93 +116,107 @@ export function MergeRequestDiffItem({ item }: MergeRequestDiffItemProps) {
             gap: 16,
           }}
         >
-          {item.changedKeys?.map((key) => (
-            <div
-              key={key}
-              style={{ display: "flex", flexDirection: "column", gap: 8 }}
-            >
+          {item.changedKeys?.map((key) => {
+            const oldVal =
+              item.originalItem?.[key as keyof typeof item.originalItem];
+            const newVal = (item as any)[key];
+            const isArrayDiff = Array.isArray(oldVal) || Array.isArray(newVal);
+
+            return (
               <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "var(--text-secondary)",
-                  textTransform: "uppercase",
-                }}
-              >
-                {key}
-              </div>
-              <div
-                style={{ display: "flex", gap: 16, alignItems: "flex-start" }}
+                key={key}
+                style={{ display: "flex", flexDirection: "column", gap: 8 }}
               >
                 <div
                   style={{
-                    flex: 1,
-                    background: "rgba(255, 80, 80, 0.05)",
-                    padding: 12,
-                    borderRadius: 6,
-                    border: "1px solid rgba(255, 80, 80, 0.1)",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "var(--text-secondary)",
+                    textTransform: "uppercase",
                   }}
                 >
+                  {key}
+                </div>
+
+                {isArrayDiff ? (
+                  <TableDiffView oldItems={oldVal} newItems={newVal} />
+                ) : (
                   <div
                     style={{
-                      fontSize: 11,
-                      color: "#ff5050",
-                      marginBottom: 6,
-                      fontWeight: 600,
+                      display: "flex",
+                      gap: 16,
+                      alignItems: "flex-start",
                     }}
                   >
-                    OLD VALUE
+                    <div
+                      style={{
+                        flex: 1,
+                        background: "rgba(255, 80, 80, 0.05)",
+                        padding: 12,
+                        borderRadius: 6,
+                        border: "1px solid rgba(255, 80, 80, 0.1)",
+                        overflow: "auto",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "#ff5050",
+                          marginBottom: 6,
+                          fontWeight: 600,
+                        }}
+                      >
+                        OLD VALUE
+                      </div>
+                      <pre
+                        style={{
+                          margin: 0,
+                          fontSize: 12,
+                          color: "var(--text-secondary)",
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-all",
+                        }}
+                      >
+                        {formatDiffValue(oldVal)}
+                      </pre>
+                    </div>
+                    <div
+                      style={{
+                        flex: 1,
+                        background: "rgba(0, 255, 170, 0.05)",
+                        padding: 12,
+                        borderRadius: 6,
+                        border: "1px solid rgba(0, 255, 170, 0.1)",
+                        overflow: "auto",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "#00ffaa",
+                          marginBottom: 6,
+                          fontWeight: 600,
+                        }}
+                      >
+                        NEW VALUE
+                      </div>
+                      <pre
+                        style={{
+                          margin: 0,
+                          fontSize: 12,
+                          color: "var(--text-primary)",
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-all",
+                        }}
+                      >
+                        {formatDiffValue(newVal)}
+                      </pre>
+                    </div>
                   </div>
-                  <pre
-                    style={{
-                      margin: 0,
-                      fontSize: 12,
-                      color: "var(--text-secondary)",
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-all",
-                    }}
-                  >
-                    {formatDiffValue(
-                      item.originalItem?.[
-                        key as keyof typeof item.originalItem
-                      ],
-                    )}
-                  </pre>
-                </div>
-                <div
-                  style={{
-                    flex: 1,
-                    background: "rgba(0, 255, 170, 0.05)",
-                    padding: 12,
-                    borderRadius: 6,
-                    border: "1px solid rgba(0, 255, 170, 0.1)",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "#00ffaa",
-                      marginBottom: 6,
-                      fontWeight: 600,
-                    }}
-                  >
-                    NEW VALUE
-                  </div>
-                  <pre
-                    style={{
-                      margin: 0,
-                      fontSize: 12,
-                      color: "var(--text-primary)",
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-all",
-                    }}
-                  >
-                    {formatDiffValue((item as any)[key])}
-                  </pre>
-                </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
