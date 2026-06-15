@@ -189,7 +189,8 @@ select.input {
   content: attr(data-tooltip);
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
   background: var(--text-primary);
   border: 1px solid var(--text-primary);
   padding: 4px 8px;
@@ -200,7 +201,6 @@ select.input {
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  transform: translateY(4px);
   transition: opacity 0.05s ease, transform 0.05s ease;
   z-index: 9999;
   box-shadow: var(--shadow-md);
@@ -208,6 +208,24 @@ select.input {
 
 .tooltip-trigger:hover::before {
   opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.tooltip-trigger[data-tooltip-pos="right"]::before {
+  left: auto;
+  right: 0;
+  transform: translateY(4px);
+}
+.tooltip-trigger[data-tooltip-pos="right"]:hover::before {
+  transform: translateY(0);
+}
+
+.tooltip-trigger[data-tooltip-pos="left"]::before {
+  left: 0;
+  right: auto;
+  transform: translateY(4px);
+}
+.tooltip-trigger[data-tooltip-pos="left"]:hover::before {
   transform: translateY(0);
 }
 

@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 
 interface ToolbarButtonProps {
   tooltip: string;
+  tooltipPos?: "left" | "right" | "center";
   icon: LucideIcon;
   onClick: () => void;
   children?: React.ReactNode;
@@ -13,6 +14,7 @@ interface ToolbarButtonProps {
 
 export function ToolbarButton({
   tooltip,
+  tooltipPos,
   icon: Icon,
   onClick,
   children,
@@ -25,6 +27,7 @@ export function ToolbarButton({
     <div
       className="tooltip-trigger"
       data-tooltip={tooltip}
+      data-tooltip-pos={tooltipPos}
       style={{
         width: 26,
         height: 26,

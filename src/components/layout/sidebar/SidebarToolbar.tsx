@@ -41,6 +41,7 @@ export function SidebarToolbar({
       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
         <ToolbarButton
           tooltip="Merge Requests"
+          tooltipPos="right"
           icon={GitPullRequest}
           onClick={onMergeRequests}
           color={openMrCount > 0 ? "#00f0ff" : undefined}
@@ -54,16 +55,19 @@ export function SidebarToolbar({
         </ToolbarButton>
         <ToolbarButton
           tooltip="Import (or drop file anywhere)"
+          tooltipPos="right"
           icon={Download}
           onClick={onImport}
         />
         <ToolbarButton
           tooltip="New Request"
+          tooltipPos="right"
           icon={FilePlus2}
           onClick={onNewRequest}
         />
         <ToolbarButton
           tooltip="New Collection"
+          tooltipPos="right"
           icon={FolderPlus}
           onClick={onNewCollection}
         />

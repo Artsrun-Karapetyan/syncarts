@@ -160,6 +160,7 @@ export function TopBar() {
             <button
               className="tooltip-trigger"
               data-tooltip="Environment Quick Look"
+              data-tooltip-pos="right"
               style={{
                 background: "transparent",
                 border: "none",
@@ -259,6 +260,7 @@ export function TopBar() {
           <button
             className="tooltip-trigger"
             data-tooltip="Manage Environments"
+            data-tooltip-pos="right"
             style={{
               background: "transparent",
               border: "none",
