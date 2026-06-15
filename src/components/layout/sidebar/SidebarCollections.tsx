@@ -45,14 +45,6 @@ export function SidebarCollections(props: SidebarCollectionsProps) {
         minHeight: 0,
       }}
     >
-      {props.isAdding && (
-        <NewCollectionInput
-          newColName={props.newColName}
-          setNewColName={props.setNewColName}
-          handleAddCollection={props.handleAddCollection}
-          setIsAdding={props.setIsAdding}
-        />
-      )}
       <CollectionSearchInput
         value={props.collectionSearch}
         onChange={props.setCollectionSearch}
@@ -67,6 +59,14 @@ export function SidebarCollections(props: SidebarCollectionsProps) {
         }}
       >
         <div style={{ minWidth: "max-content" }}>
+          {props.isAdding && (
+            <NewCollectionInput
+              newColName={props.newColName}
+              setNewColName={props.setNewColName}
+              handleAddCollection={props.handleAddCollection}
+              setIsAdding={props.setIsAdding}
+            />
+          )}
           {props.filteredCollections.map((collection) => (
             <CollectionRow
               key={collection.id}
@@ -75,7 +75,7 @@ export function SidebarCollections(props: SidebarCollectionsProps) {
             />
           ))}
           {props.collections.length === 0 && !props.isAdding && (
-            <EmptyCollections />
+            <EmptyCollections onClick={() => props.setIsAdding(true)} />
           )}
         </div>
       </div>

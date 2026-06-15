@@ -36,8 +36,8 @@ export function AppShell({ children }: AppShellProps) {
             style={{ flex: 1, minHeight: 0, overflow: "hidden" }}
           >
             <Panel
-              defaultSize={20}
-              minSize={15}
+              defaultSize={22}
+              minSize={20}
               maxSize={40}
               style={{ display: "flex", flexDirection: "column" }}
             >

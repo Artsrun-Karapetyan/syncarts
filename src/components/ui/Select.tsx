@@ -5,9 +5,8 @@ import { createPortal } from "react-dom";
 interface SelectOption {
   value: string;
   label: string;
-  badge?: string;
+  badge?: React.ReactNode;
 }
-
 interface SelectProps {
   value: string;
   options: SelectOption[];
@@ -121,11 +120,7 @@ export function Select({
                   : "0 16px"
                 : "0 12px",
           paddingRight:
-            variant === "pill" && endAdornment
-              ? compact
-                ? 74
-                : 82
-              : undefined,
+            variant === "pill" ? (compact ? "12px" : "16px") : "12px",
           height: variant === "pill" ? (compact ? 32 : 40) : compact ? 32 : 40,
           borderRadius:
             variant === "ghost" ? "6px" : variant === "pill" ? "8px" : "6px",
@@ -183,20 +178,44 @@ export function Select({
         >
           {selectedOption?.badge && (
             <span
-              style={{
-                flexShrink: 0,
-                border: "1px solid rgba(99, 102, 241, 0.34)",
-                borderRadius: 999,
-                padding: "2px 8px",
-                background: "rgba(99, 102, 241, 0.12)",
-                color: "var(--text-secondary)",
-                fontSize: 10,
-                fontWeight: 700,
-                lineHeight: 1,
-              }}
+              className="tooltip-trigger"
+              data-tooltip={
+                typeof selectedOption.badge === "string"
+                  ? undefined
+                  : "Shared Workspace"
+              }
+              style={
+                typeof selectedOption.badge === "string"
+                  ? {
+                      flexShrink: 0,
+                      border: "1px solid rgba(99, 102, 241, 0.34)",
+                      borderRadius: 999,
+                      padding: "2px 8px",
+                      background: "rgba(99, 102, 241, 0.12)",
+                      color: "var(--text-secondary)",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      lineHeight: 1,
+                    }
+                  : {
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      color: "var(--text-secondary)",
+                    }
+              }
             >
               {selectedOption.badge}
             </span>
+          )}
+          {endAdornment && (
+            <div
+              style={{ display: "flex", alignItems: "center", gap: 4 }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {endAdornment}
+            </div>
           )}
           <ChevronsUpDown
             size={14}
@@ -207,25 +226,6 @@ export function Select({
           />
         </span>
       </button>
-
-      {endAdornment && (
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            right: variant === "pill" ? (compact ? 34 : 38) : 10,
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            zIndex: 2,
-          }}
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {endAdornment}
-        </div>
-      )}
 
       {isOpen &&
         createPortal(
@@ -263,7 +263,8 @@ export function Select({
                   cursor: "pointer",
                   transition: "background var(--transition-fast)",
                 }}
-                onClick={() => {
+                onMouseDown={(e) => {
+                  e.preventDefault();
                   onChange(option.value);
                   setIsOpen(false);
                 }}
@@ -296,17 +297,26 @@ export function Select({
                   </span>
                   {option.badge && (
                     <span
-                      style={{
-                        flexShrink: 0,
-                        border: "1px solid rgba(99, 102, 241, 0.34)",
-                        borderRadius: 999,
-                        padding: "2px 7px",
-                        background: "rgba(99, 102, 241, 0.12)",
-                        color: "var(--text-secondary)",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        lineHeight: 1,
-                      }}
+                      style={
+                        typeof option.badge === "string"
+                          ? {
+                              flexShrink: 0,
+                              border: "1px solid rgba(99, 102, 241, 0.34)",
+                              borderRadius: 999,
+                              padding: "2px 7px",
+                              background: "rgba(99, 102, 241, 0.12)",
+                              color: "var(--text-secondary)",
+                              fontSize: 10,
+                              fontWeight: 700,
+                              lineHeight: 1,
+                            }
+                          : {
+                              flexShrink: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              color: "var(--text-secondary)",
+                            }
+                      }
                     >
                       {option.badge}
                     </span>

@@ -17,7 +17,9 @@ export function GlobalDropZone({ children }: { children: React.ReactNode }) {
         ? Array.from(e.dataTransfer.types)
         : [];
       const hasFiles =
-        types.includes("Files") || types.includes("application/x-moz-file");
+        types.includes("Files") ||
+        types.includes("application/x-moz-file") ||
+        types.includes("text/uri-list");
       if (hasFiles) {
         dragCounter.current += 1;
         setIsDragging(true);
@@ -37,7 +39,11 @@ export function GlobalDropZone({ children }: { children: React.ReactNode }) {
       const types = e.dataTransfer?.types
         ? Array.from(e.dataTransfer.types)
         : [];
-      if (types.includes("Files") && e.dataTransfer) {
+      const hasFiles =
+        types.includes("Files") ||
+        types.includes("application/x-moz-file") ||
+        types.includes("text/uri-list");
+      if (hasFiles && e.dataTransfer) {
         e.dataTransfer.dropEffect = "copy";
       }
     };

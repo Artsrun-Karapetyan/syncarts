@@ -1,4 +1,4 @@
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Users } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import {
@@ -174,7 +174,7 @@ export function WorkspaceSwitcher({
             ...workspaces.map((w) => ({
               label: w.name,
               value: w.id,
-              badge: isSharedWorkspace(w) ? "Shared" : undefined,
+              badge: isSharedWorkspace(w) ? <Users size={13} /> : undefined,
             })),
             { label: "+ Create Workspace", value: "new" },
           ]}
