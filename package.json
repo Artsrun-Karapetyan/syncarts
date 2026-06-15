@@ -1,7 +1,7 @@
 {
   "name": "syncarts",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.3.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "bun test src backend/test",
+    "bump": "node scripts/bump.js",
     "check": "bun run lint && bun run test && bun run build && bun run backend:typecheck",
     "preview": "vite preview",
     "tauri": "tauri",
