@@ -2,7 +2,7 @@ import JsonView from "@uiw/react-json-view";
 import CodeEditor from "@uiw/react-textarea-code-editor";
 
 import type { HttpResponse } from "../../../contexts/WorkspaceContext";
-import { JsonUrlString } from "../json/JsonUrlString";
+import { JsonExtractWrappers } from "../json/JsonExtractWrappers";
 import {
   type ResponseJsonThemeId,
   responseJsonThemes,
@@ -86,7 +86,7 @@ export function ResponseBodyContent(props: ResponseBodyContentProps) {
             collapsed={jsonCollapsed}
             shortenTextAfterLength={0}
           >
-            <JsonUrlString />
+            <JsonExtractWrappers />
           </JsonView>
         </div>
       ) : bodyFormat === "pretty" && response.body ? (

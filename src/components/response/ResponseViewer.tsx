@@ -9,6 +9,7 @@ import { ResponseBodyToolbar } from "./body/ResponseBodyToolbar";
 import { ResponseHeadersList } from "./header/ResponseHeadersList";
 import { ResponsePanelHeader } from "./header/ResponsePanelHeader";
 import { ResponseTestResults } from "./header/ResponseTestResults";
+import { JsonContextMenu } from "./json/JsonContextMenu";
 import { cleanClickedUrl } from "./shared/cleanClickedUrl";
 import type { ResponseJsonThemeId } from "./shared/responseJsonThemes";
 import {
@@ -183,6 +184,7 @@ export function ResponseViewer() {
         )}
         {!isMutating && !error && !response && <ResponseEmptyState />}
       </div>
+      <JsonContextMenu />
     </div>
   );
 }

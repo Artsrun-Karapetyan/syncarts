@@ -11,19 +11,25 @@ export function createTab(
     name: data?.name || "Untitled Request",
     method: isReq ? "GET" : "",
     url: isReq ? "" : "",
-    headers: isReq ? (isNew ? [{ key: "", value: "", enabled: true }] : []) : [],
+    headers: isReq
+      ? isNew
+        ? [{ key: "", value: "", enabled: true }]
+        : []
+      : [],
     bodyType: isReq ? "raw" : undefined,
     queryParams: isReq ? [] : undefined,
     formData: isReq
-      ? (isNew ? [
-          {
-            id: crypto.randomUUID(),
-            key: "",
-            value: "",
-            enabled: true,
-            type: "text",
-          },
-        ] : [])
+      ? isNew
+        ? [
+            {
+              id: crypto.randomUUID(),
+              key: "",
+              value: "",
+              enabled: true,
+              type: "text",
+            },
+          ]
+        : []
       : undefined,
     pathVariables: isReq ? [] : undefined,
     body: isReq ? "" : "",

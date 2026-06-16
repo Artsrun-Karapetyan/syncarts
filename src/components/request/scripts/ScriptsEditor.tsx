@@ -180,8 +180,6 @@ export function ScriptsEditor() {
           style={{
             flex: 1,
             background: "var(--bg-primary)",
-            display: "flex",
-            flexDirection: "column",
             overflow: "auto",
           }}
           onClick={(e) => {
@@ -222,7 +220,6 @@ export function ScriptsEditor() {
             onKeyUp={autocomplete.handleKeyUp}
             padding={24}
             style={{
-              flex: 1,
               fontSize: 14,
               backgroundColor: "transparent",
               fontFamily:

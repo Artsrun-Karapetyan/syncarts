@@ -133,6 +133,7 @@ export function WorkspaceSwitcher({
           justifyContent: "space-between",
           gap: 8,
           flexShrink: 0,
+          userSelect: "none",
         }}
       >
         <div

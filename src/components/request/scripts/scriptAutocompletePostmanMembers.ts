@@ -14,6 +14,13 @@ export const POSTMAN_MEMBERS: Record<string, ScriptSuggestion[]> = {
       "Collection variables",
       "PostmanVariableScope",
     ),
+    item(
+      "folderVariables",
+      "folderVariables",
+      "property",
+      "Folder variables",
+      "PostmanVariableScope",
+    ),
     item("cookies", "cookies", "property", "Cookie helpers", "PostmanCookies"),
     item(
       "datasets",
@@ -117,6 +124,7 @@ export const POSTMAN_MEMBERS: Record<string, ScriptSuggestion[]> = {
     ),
   ],
   "pm.environment": variableStoreSuggestions("Environment variable store"),
+  "pm.folderVariables": variableStoreSuggestions("Folder variable store"),
   "pm.collectionVariables": variableStoreSuggestions(
     "Collection variable store",
   ),

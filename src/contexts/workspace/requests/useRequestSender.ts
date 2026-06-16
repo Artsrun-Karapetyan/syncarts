@@ -33,6 +33,7 @@ interface RequestSenderArgs {
   globalVariables: EnvironmentVariable[];
   updateActiveTab: (data: Partial<TabData>) => void;
   updateCollection: (id: string, data: Partial<Collection>) => void;
+  updateFolder: (collectionId: string, folderId: string, data: any) => void;
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
   responseCache: Record<string, HttpResponse>;
@@ -49,6 +50,7 @@ export function useRequestSender(args: RequestSenderArgs) {
     globalVariables,
     updateActiveTab,
     updateCollection,
+    updateFolder,
     updateEnvironment,
     updateGlobalVariables,
     responseCache,
@@ -164,6 +166,7 @@ export function useRequestSender(args: RequestSenderArgs) {
         testResults,
         updateEnvironment,
         updateGlobalVariables,
+        updateFolder,
       });
 
       const allPreScripts = [

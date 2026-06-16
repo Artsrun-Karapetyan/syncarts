@@ -1,6 +1,7 @@
 import type {
   Environment,
   EnvironmentVariable,
+  Folder,
   HttpResponse,
   TabData,
   TestResult,
@@ -52,6 +53,11 @@ export function createScriptApi(args: {
   testResults: TestResult[];
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
+  updateFolder?: (
+    collectionId: string,
+    folderId: string,
+    data: Partial<Folder>,
+  ) => void;
 }) {
   const {
     activeEnvironmentId,
@@ -63,6 +69,7 @@ export function createScriptApi(args: {
     testResults,
     updateEnvironment,
     updateGlobalVariables,
+    updateFolder,
   } = args;
   const requestHeaders = createRequestHeadersApi(requestDraft);
   const api = {
@@ -113,6 +120,40 @@ export function createScriptApi(args: {
           collectionVariablesDraft,
           collectionVariablesDraft.filter((v) => v.key !== key),
         );
+      },
+    },
+    folderVariables: {
+      set: (key: string, value: string) => {
+        const folder = [...ancestors]
+          .reverse()
+          .find((a) => a.type === "folder");
+        if (folder && updateFolder) {
+          const newVars = upsertVariable(folder.variables || [], key, value);
+          // Mutate the local ancestor instance so that consecutive get() calls and variables API see the update immediately
+          folder.variables = newVars;
+          const collectionId = ancestors[0].id;
+          updateFolder(collectionId, folder.id, { variables: newVars });
+        }
+      },
+      get: (key: string) => {
+        const folder = [...ancestors]
+          .reverse()
+          .find((a) => a.type === "folder");
+        return folder?.variables?.find((v: any) => v.key === key)?.value;
+      },
+      unset: (key: string) => {
+        const folder = [...ancestors]
+          .reverse()
+          .find((a) => a.type === "folder");
+        if (folder && updateFolder) {
+          const newVars = (folder.variables || []).filter(
+            (v: any) => v.key !== key,
+          );
+          // Mutate the local ancestor instance
+          folder.variables = newVars;
+          const collectionId = ancestors[0].id;
+          updateFolder(collectionId, folder.id, { variables: newVars });
+        }
       },
     },
     globals: {

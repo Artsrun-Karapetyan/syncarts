@@ -11,6 +11,10 @@ export const SNIPPET_GROUPS = [
         code: 'pm.collectionVariables.get("variable_key");',
       },
       {
+        name: "Get a folder variable",
+        code: 'pm.folderVariables.get("variable_key");',
+      },
+      {
         name: "Get an environment variable",
         code: 'pm.environment.get("variable_key");',
       },
@@ -22,6 +26,10 @@ export const SNIPPET_GROUPS = [
       {
         name: "Set a collection variable",
         code: 'pm.collectionVariables.set("variable_key", "variable_value");',
+      },
+      {
+        name: "Set a folder variable",
+        code: 'pm.folderVariables.set("variable_key", "variable_value");',
       },
       {
         name: "Set an environment variable",
@@ -38,6 +46,10 @@ export const SNIPPET_GROUPS = [
       {
         name: "Clear a collection variable",
         code: 'pm.collectionVariables.unset("variable_key");',
+      },
+      {
+        name: "Clear a folder variable",
+        code: 'pm.folderVariables.unset("variable_key");',
       },
       {
         name: "Clear an environment variable",

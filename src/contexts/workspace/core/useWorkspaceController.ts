@@ -216,6 +216,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     globalVariables,
     updateActiveTab: tabActions.updateActiveTab,
     updateCollection: collectionActions.updateCollection,
+    updateFolder: collectionActions.updateFolder,
     updateEnvironment: environmentActions.updateEnvironment,
     updateGlobalVariables: environmentActions.updateGlobalVariables,
     updateResponseCache,

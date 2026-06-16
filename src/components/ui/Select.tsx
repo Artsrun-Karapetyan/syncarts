@@ -82,10 +82,15 @@ export function Select({
     >
       <div
         ref={btnRef as any}
+        role="button"
+        tabIndex={0}
+        aria-disabled={disabled}
         className={variant === "default" ? "input" : ""}
         data-disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
+        onMouseDown={(e) => e.preventDefault()}
         style={{
+          userSelect: "none",
           width: "100%",
           display: "flex",
           alignItems: "center",
