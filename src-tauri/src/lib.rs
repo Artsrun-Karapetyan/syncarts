@@ -24,15 +24,16 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            commands::make_request,
-            commands::save_response_body,
+            commands::make_request::make_request,
+            commands::save_response_body::save_response_body,
             show_main_window
         ])
         .on_page_load({
             let main_window_shown = main_window_shown.clone();
 
             move |webview, payload| {
-                if webview.label() != "main" || !matches!(payload.event(), PageLoadEvent::Finished) {
+                if webview.label() != "main" || !matches!(payload.event(), PageLoadEvent::Finished)
+                {
                     return;
                 }
 
