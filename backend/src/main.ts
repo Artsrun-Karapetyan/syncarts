@@ -5,21 +5,21 @@ import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
 
 import { AppModule } from "./app.module.js";
+import { getAppConfig } from "./config/getAppConfig.js";
 
 async function bootstrap() {
+  const config = getAppConfig();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  const bodyLimit = process.env.REQUEST_BODY_LIMIT ?? "50mb";
 
-  app.useBodyParser("json", { limit: bodyLimit });
+  app.useBodyParser("json", { limit: config.requestBodyLimit });
   app.enableCors({
-    origin: true,
+    origin: config.corsOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["content-type", "authorization"],
   });
 
-  const port = Number(process.env.PORT ?? 4000);
-  await app.listen(port);
+  await app.listen(config.port);
 }
 
 void bootstrap();

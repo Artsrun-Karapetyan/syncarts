@@ -1,4 +1,8 @@
-import { ForbiddenException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from "@nestjs/common";
 import { describe, expect, test } from "bun:test";
 
 import { WorkspaceService } from "../../src/workspace/workspace.service.js";
@@ -46,6 +50,47 @@ describe("WorkspaceService create/list/sync", () => {
       ownedWorkspace,
       sharedWorkspace,
     ]);
+  });
+
+  test("gets one workspace only when the user can access it", async () => {
+    const workspace = { id: "workspace", ownerId: "owner", members: [] };
+    const service = new WorkspaceService(
+      createPrismaMock({
+        workspace: { findFirst: async () => workspace },
+      }),
+    );
+
+    await expect(
+      service.getWorkspaceForUser("workspace", "owner"),
+    ).resolves.toEqual(workspace);
+  });
+
+  test("getWorkspaceForUser rejects missing and owned default workspace", async () => {
+    const missingService = new WorkspaceService(
+      createPrismaMock({
+        workspace: { findFirst: async () => null },
+      }),
+    );
+
+    await expect(
+      missingService.getWorkspaceForUser("missing", "owner"),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    const defaultService = new WorkspaceService(
+      createPrismaMock({
+        workspace: {
+          findFirst: async () => ({
+            id: "default",
+            ownerId: "owner",
+            members: [],
+          }),
+        },
+      }),
+    );
+
+    await expect(
+      defaultService.getWorkspaceForUser("default", "owner"),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 
   test("sync creates missing workspace with normalized data", async () => {
@@ -111,6 +156,7 @@ describe("WorkspaceService create/list/sync", () => {
           environments: [{ id: "env" }],
           globalVariables: [{ id: "global" }],
         },
+        version: { increment: 1 },
       },
     });
   });
@@ -137,6 +183,26 @@ describe("WorkspaceService create/list/sync", () => {
     await service.syncWorkspace("workspace", {}, "member");
 
     expect(updateInput.data.name).toBe("Existing");
+  });
+
+  test("sync can reject stale workspace versions", async () => {
+    const service = new WorkspaceService(
+      createPrismaMock({
+        workspace: {
+          findFirst: async () => ({
+            id: "workspace",
+            name: "Existing",
+            ownerId: "owner",
+            members: [],
+          }),
+          updateMany: async () => ({ count: 0 }),
+        },
+      }),
+    );
+
+    await expect(
+      service.syncWorkspace("workspace", { version: 1 }, "owner"),
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 
   test("sync blocks nonmembers and viewers", async () => {

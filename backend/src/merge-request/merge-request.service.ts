@@ -1,5 +1,11 @@
-import { Inject, Injectable } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 
+import type { PaginationOptions } from "../common/parsePaginationQuery.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 
 @Injectable()
@@ -20,7 +26,7 @@ export class MergeRequestService {
     const targetWs = await this.prisma.workspace.findUnique({
       where: { id: data.targetWorkspaceId },
     });
-    if (!targetWs) throw new Error("Target workspace not found");
+    if (!targetWs) throw new NotFoundException("Target workspace not found");
 
     // Snapshot the target collection at creation time if not provided
     let targetData = data.targetData;
@@ -47,7 +53,10 @@ export class MergeRequestService {
     });
   }
 
-  async getMergeRequestsForWorkspace(workspaceId: string) {
+  async getMergeRequestsForWorkspace(
+    workspaceId: string,
+    pagination: PaginationOptions = {},
+  ) {
     return this.prisma.mergeRequest.findMany({
       where: {
         OR: [
@@ -61,6 +70,8 @@ export class MergeRequestService {
         },
       },
       orderBy: { createdAt: "desc" },
+      skip: pagination.skip,
+      take: pagination.take,
     });
   }
 
@@ -77,7 +88,7 @@ export class MergeRequestService {
 
   async updateMergeRequestStatus(id: string, status: string, userId: string) {
     const mr = await this.prisma.mergeRequest.findUnique({ where: { id } });
-    if (!mr) throw new Error("Merge request not found");
+    if (!mr) throw new NotFoundException("Merge request not found");
 
     // Basic permission check: only target workspace owner/admin or MR author can update
     // For now, allow any member of the target workspace or the author
@@ -95,7 +106,7 @@ export class MergeRequestService {
     const isTargetOwner = targetWorkspace?.ownerId === userId;
 
     if (!isAuthor && !member && !isTargetOwner) {
-      throw new Error("Unauthorized to update this merge request");
+      throw new ForbiddenException("Unauthorized to update this merge request");
     }
 
     return this.prisma.mergeRequest.update({
@@ -106,7 +117,7 @@ export class MergeRequestService {
 
   async deleteMergeRequest(id: string, userId: string) {
     const mr = await this.prisma.mergeRequest.findUnique({ where: { id } });
-    if (!mr) throw new Error("Merge request not found");
+    if (!mr) throw new NotFoundException("Merge request not found");
 
     const isAuthor = mr.authorId === userId;
     const targetWorkspace = await this.prisma.workspace.findUnique({
@@ -115,7 +126,7 @@ export class MergeRequestService {
     const isTargetOwner = targetWorkspace?.ownerId === userId;
 
     if (!isAuthor && !isTargetOwner) {
-      throw new Error(
+      throw new ForbiddenException(
         "Only the author or the target workspace owner can delete this merge request",
       );
     }
@@ -127,10 +138,10 @@ export class MergeRequestService {
     const mr = await this.prisma.mergeRequest.findUnique({
       where: { id: mrId },
     });
-    if (!mr) throw new Error("Merge request not found");
+    if (!mr) throw new NotFoundException("Merge request not found");
 
     if (!mr.data) {
-      throw new Error("Merge request has no source snapshot");
+      throw new NotFoundException("Merge request has no source snapshot");
     }
 
     return mr.data;
@@ -140,10 +151,10 @@ export class MergeRequestService {
     const mr = await this.prisma.mergeRequest.findUnique({
       where: { id: mrId },
     });
-    if (!mr) throw new Error("Merge request not found");
+    if (!mr) throw new NotFoundException("Merge request not found");
 
     if (!mr.targetData) {
-      throw new Error("Merge request has no target snapshot");
+      throw new NotFoundException("Merge request has no target snapshot");
     }
 
     return mr.targetData;

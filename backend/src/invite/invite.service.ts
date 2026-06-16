@@ -183,28 +183,30 @@ export class InviteService {
       );
     }
 
-    for (const workspaceId of targetWorkspaceIds) {
-      const existingMember = await this.prisma.workspaceMember.findUnique({
-        where: {
-          userId_workspaceId: {
+    await this.prisma.$transaction(async (transaction) => {
+      for (const workspaceId of targetWorkspaceIds) {
+        const existingMember = await transaction.workspaceMember.findUnique({
+          where: {
+            userId_workspaceId: {
+              userId: userToAdd.id,
+              workspaceId,
+            },
+          },
+        });
+
+        if (existingMember) {
+          continue;
+        }
+
+        await transaction.workspaceMember.create({
+          data: {
             userId: userToAdd.id,
             workspaceId,
+            role: "MEMBER",
           },
-        },
-      });
-
-      if (existingMember) {
-        continue;
+        });
       }
-
-      await this.prisma.workspaceMember.create({
-        data: {
-          userId: userToAdd.id,
-          workspaceId,
-          role: "MEMBER",
-        },
-      });
-    }
+    });
 
     return { status: "added", workspaceIds: targetWorkspaceIds };
   }
@@ -265,31 +267,33 @@ export class InviteService {
       );
     }
 
-    for (const workspaceId of workspaceIds) {
-      const existingMember = await this.prisma.workspaceMember.findUnique({
-        where: {
-          userId_workspaceId: {
-            userId,
-            workspaceId,
-          },
-        },
-      });
-
-      if (!existingMember) {
-        await this.prisma.workspaceMember.create({
-          data: {
-            userId,
-            workspaceId,
-            role: "MEMBER",
+    await this.prisma.$transaction(async (transaction) => {
+      for (const workspaceId of workspaceIds) {
+        const existingMember = await transaction.workspaceMember.findUnique({
+          where: {
+            userId_workspaceId: {
+              userId,
+              workspaceId,
+            },
           },
         });
-      }
-    }
 
-    // Optionally delete the invite if it was a single-use direct invite
-    if (invite.invitedEmail) {
-      await this.prisma.workspaceInvite.delete({ where: { token } });
-    }
+        if (!existingMember) {
+          await transaction.workspaceMember.create({
+            data: {
+              userId,
+              workspaceId,
+              role: "MEMBER",
+            },
+          });
+        }
+      }
+
+      // Optionally delete the invite if it was a single-use direct invite
+      if (invite.invitedEmail) {
+        await transaction.workspaceInvite.delete({ where: { token } });
+      }
+    });
 
     return { status: "joined", workspaceIds };
   }

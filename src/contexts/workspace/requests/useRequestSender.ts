@@ -17,12 +17,14 @@ import {
   interpolateVariables,
   resolveRequestAuth,
 } from "./requestHelpers";
+import { createRequestErrorResponse } from "./createRequestErrorResponse";
 import {
   createScriptApi,
   createScriptConsole,
   createScriptResponse,
   runScripts,
 } from "./scriptRuntime";
+import { validateRequestUrl } from "./validateRequestUrl";
 
 interface RequestSenderArgs {
   activeEnvironment: Environment | undefined;
@@ -125,6 +127,11 @@ export function useRequestSender(args: RequestSenderArgs) {
         interpolate(requestTab.url),
         pathVariables,
       );
+      const urlError = validateRequestUrl(requestUrl);
+      if (urlError) {
+        throw new Error(urlError);
+      }
+
       const res: HttpResponse = await invoke("make_request", {
         request: {
           url: requestUrl,
@@ -212,7 +219,13 @@ export function useRequestSender(args: RequestSenderArgs) {
       updateActiveTab({ response: result, testResults, consoleLogs });
       return result;
     } catch (err) {
-      console.error(err);
+      const message = err instanceof Error ? err.message : String(err);
+      const response = createRequestErrorResponse(message);
+      updateActiveTab({
+        response,
+        consoleLogs: [`[REQUEST ERROR] ${message}`],
+      });
+      return response;
     }
   };
 

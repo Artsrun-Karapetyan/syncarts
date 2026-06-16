@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -11,6 +10,8 @@ import {
 } from "@nestjs/common";
 
 import { AuthGuard } from "../auth/auth.guard.js";
+import type { AuthenticatedRequest } from "../auth/authTypes.js";
+import { parseZodSchema } from "../common/parseZodSchema.js";
 import { InviteService } from "./invite.service.js";
 import { GenerateLinkSchema, InviteEmailSchema } from "./inviteSchemas.js";
 import { normalizeWorkspaceIds } from "./normalizeWorkspaceIds.js";
@@ -23,26 +24,28 @@ export class InviteController {
 
   @UseGuards(AuthGuard)
   @Post("generate")
-  async generateLink(@Body() body: any, @Request() req: any) {
-    try {
-      const parsed = GenerateLinkSchema.parse(body);
-      return await this.inviteService.generateInviteLink(
-        {
-          workspaceIds: normalizeWorkspaceIds(parsed),
-          workspaces: parsed.workspaces,
-        },
-        req.authUser.id,
-        parsed.expiresInDays,
-      );
-    } catch (e: any) {
-      throw new BadRequestException(e.message || String(e));
-    }
+  async generateLink(
+    @Body() body: unknown,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const parsed = parseZodSchema(GenerateLinkSchema, body);
+    return this.inviteService.generateInviteLink(
+      {
+        workspaceIds: normalizeWorkspaceIds(parsed),
+        workspaces: parsed.workspaces,
+      },
+      req.authUser.id,
+      parsed.expiresInDays,
+    );
   }
 
   @UseGuards(AuthGuard)
   @Post("add-member")
-  async addMember(@Body() body: any, @Request() req: any) {
-    const parsed = InviteEmailSchema.parse(body);
+  async addMember(
+    @Body() body: unknown,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const parsed = parseZodSchema(InviteEmailSchema, body);
     return this.inviteService.addMemberByEmail(
       {
         workspaceIds: normalizeWorkspaceIds(parsed),
@@ -61,7 +64,10 @@ export class InviteController {
 
   @UseGuards(AuthGuard)
   @Post(":token/accept")
-  async acceptInvite(@Param("token") token: string, @Request() req: any) {
+  async acceptInvite(
+    @Param("token") token: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.inviteService.acceptInvite(token, req.authUser.id);
   }
 }

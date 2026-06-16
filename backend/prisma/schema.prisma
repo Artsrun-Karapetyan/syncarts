@@ -42,10 +42,14 @@ model Workspace {
   ownerId   String
   owner     User     @relation(fields: [ownerId], references: [id])
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  version   Int      @default(1)
   data      Json?    // Stores collections, environments, and global variables
 
   members   WorkspaceMember[]
 
+  @@index([ownerId])
+  @@index([id, version])
   @@map("workspaces")
 }
 
@@ -92,5 +96,8 @@ model MergeRequest {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   
+  @@index([targetWorkspaceId, createdAt])
+  @@index([sourceWorkspaceId, createdAt])
+  @@index([authorId])
   @@map("merge_requests")
 }

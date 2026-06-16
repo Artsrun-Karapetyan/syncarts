@@ -10,14 +10,20 @@ import {
   Request,
   UseGuards,
 } from "@nestjs/common";
-import * as fs from "fs";
 import { z } from "zod";
 
 import { AuthGuard } from "../auth/auth.guard.js";
+import type { AuthenticatedRequest } from "../auth/authTypes.js";
+import { parseZodSchema } from "../common/parseZodSchema.js";
+import { RateLimit } from "../common/rateLimit.decorator.js";
 import { WorkspaceService } from "./workspace.service.js";
 
 const CreateWorkspaceSchema = z.object({
   name: z.string().min(1),
+});
+
+const UpdateMemberRoleSchema = z.object({
+  role: z.enum(["MEMBER", "EDITOR", "VIEWER"]),
 });
 
 @Controller("workspaces")
@@ -29,62 +35,31 @@ export class WorkspaceController {
   ) {}
 
   @Post()
-  async create(@Request() req: any, @Body() body: any) {
-    const { name } = CreateWorkspaceSchema.parse(body);
+  async create(@Request() req: AuthenticatedRequest, @Body() body: unknown) {
+    const { name } = parseZodSchema(CreateWorkspaceSchema, body);
     return this.workspaceService.createWorkspace(name, req.authUser.id);
   }
 
   @Get()
-  async findAll(@Request() req: any) {
-    const workspaces = await this.workspaceService.getWorkspacesForUser(
+  async findAll(@Request() req: AuthenticatedRequest) {
+    return this.workspaceService.getWorkspacesForUser(
       req.authUser.id,
     );
-    fs.appendFileSync(
-      "/tmp/syncarts_backend.log",
-      `\n[GET] Workspaces for User ${req.authUser.id}: ${workspaces.map((w: any) => w.id).join(", ")}\n`,
-    );
-    return workspaces;
   }
 
   @Get(":id")
-  async findOne(@Request() req: any, @Param("id") id: string) {
-    // Basic auth check already happens in service for sync, but for GET let's filter the findAll array
-    const workspaces = await this.workspaceService.getWorkspacesForUser(
-      req.authUser.id,
-    );
-    const workspace = workspaces.find((w: any) => w.id === id);
-    if (!workspace) throw new Error("Workspace not found or unauthorized");
-    return workspace;
+  async findOne(@Request() req: AuthenticatedRequest, @Param("id") id: string) {
+    return this.workspaceService.getWorkspaceForUser(id, req.authUser.id);
   }
 
   @Delete(":id")
-  async delete(@Request() req: any, @Param("id") id: string) {
-    fs.appendFileSync(
-      "/tmp/syncarts_backend.log",
-      `\n[DELETE] Workspace ${id} by User ${req.authUser.id}\n`,
-    );
-    try {
-      const result = await this.workspaceService.deleteWorkspace(
-        id,
-        req.authUser.id,
-      );
-      fs.appendFileSync(
-        "/tmp/syncarts_backend.log",
-        `[DELETE] Success: ${JSON.stringify(result)}\n`,
-      );
-      return result;
-    } catch (err: any) {
-      fs.appendFileSync(
-        "/tmp/syncarts_backend.log",
-        `[DELETE] Error: ${err.message}\n`,
-      );
-      throw err;
-    }
+  async delete(@Request() req: AuthenticatedRequest, @Param("id") id: string) {
+    return this.workspaceService.deleteWorkspace(id, req.authUser.id);
   }
 
   @Delete(":id/members/:memberUserId")
   async removeMember(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Param("id") id: string,
     @Param("memberUserId") memberUserId: string,
   ) {
@@ -97,34 +72,30 @@ export class WorkspaceController {
 
   @Put(":id/members/:memberUserId/role")
   async updateMemberRole(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Param() params: { id: string; memberUserId: string },
-    @Body() body: any,
+    @Body() body: unknown,
   ) {
+    const { role } = parseZodSchema(UpdateMemberRoleSchema, body);
     return this.workspaceService.updateMemberRole({
       workspaceId: params.id,
       memberUserId: params.memberUserId,
-      role: body.role,
+      role,
       userId: req.authUser.id,
     });
   }
 
   @Put(":id/sync")
+  @RateLimit({
+    keyPrefix: "workspace:sync",
+    windowMs: 60 * 1000,
+    max: 120,
+  })
   async syncData(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Param("id") id: string,
-    @Body() body: any,
+    @Body() body: unknown,
   ) {
-    try {
-      return await this.workspaceService.syncWorkspace(
-        id,
-        body,
-        req.authUser.id,
-      );
-    } catch (err: any) {
-      fs.writeFileSync("/tmp/sync_error.log", err.stack || err.message);
-      console.error("SYNC ERROR:", err);
-      throw err;
-    }
+    return this.workspaceService.syncWorkspace(id, body, req.authUser.id);
   }
 }

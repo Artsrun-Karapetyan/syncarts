@@ -1,9 +1,11 @@
 import {
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import type { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service.js";
 
@@ -65,11 +67,35 @@ export class WorkspaceService {
     return Array.from(workspacesMap.values());
   }
 
-  async syncWorkspace(workspaceId: string, data: any, userId: string) {
-    const workspaceData = {
-      collections: data?.collections ?? [],
-      environments: data?.environments ?? [],
-      globalVariables: data?.globalVariables ?? [],
+  async getWorkspaceForUser(workspaceId: string, userId: string) {
+    const workspace = await this.prisma.workspace.findFirst({
+      where: {
+        id: workspaceId,
+        OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+      },
+      include: {
+        members: {
+          include: { user: { select: { id: true, name: true, email: true } } },
+        },
+      },
+    });
+
+    if (
+      !workspace ||
+      (workspace.id === "default" && workspace.ownerId === userId)
+    ) {
+      throw new NotFoundException("Workspace not found or unauthorized");
+    }
+
+    return workspace;
+  }
+
+  async syncWorkspace(workspaceId: string, data: unknown, userId: string) {
+    const input = toWorkspaceSyncInput(data);
+    const workspaceData: Prisma.InputJsonObject = {
+      collections: input.collections ?? [],
+      environments: input.environments ?? [],
+      globalVariables: input.globalVariables ?? [],
     };
 
     const existing = await this.prisma.workspace.findFirst({
@@ -93,19 +119,35 @@ export class WorkspaceService {
         );
       }
 
+      const updateData = {
+        name: input.name ?? existing.name,
+        data: workspaceData,
+        version: { increment: 1 },
+      };
+
+      if (input.version !== undefined) {
+        const result = await this.prisma.workspace.updateMany({
+          where: { id: workspaceId, version: input.version },
+          data: updateData,
+        });
+
+        if (result.count === 0) {
+          throw new ConflictException("Workspace has changed. Please reload.");
+        }
+
+        return this.prisma.workspace.findUnique({ where: { id: workspaceId } });
+      }
+
       return this.prisma.workspace.update({
         where: { id: workspaceId },
-        data: {
-          name: data?.name ?? existing.name,
-          data: workspaceData,
-        },
+        data: updateData,
       });
     }
 
     return this.prisma.workspace.create({
       data: {
         id: workspaceId,
-        name: data?.name ?? "Workspace",
+        name: input.name ?? "Workspace",
         ownerId: userId,
         members: {
           create: {
@@ -131,10 +173,12 @@ export class WorkspaceService {
     }
 
     if (workspace.ownerId === userId) {
-      await this.prisma.workspaceInvite.deleteMany({
-        where: { workspaceIds: { has: workspaceId } },
+      await this.prisma.$transaction(async (transaction) => {
+        await transaction.workspaceInvite.deleteMany({
+          where: { workspaceIds: { has: workspaceId } },
+        });
+        await transaction.workspace.delete({ where: { id: workspaceId } });
       });
-      await this.prisma.workspace.delete({ where: { id: workspaceId } });
       return { status: "deleted", workspaceId };
     }
 
@@ -224,4 +268,27 @@ export class WorkspaceService {
 
     return { status: "updated", workspaceId, userId: memberUserId, role };
   }
+}
+
+type WorkspaceSyncInput = {
+  name?: string;
+  version?: number;
+  collections?: Prisma.InputJsonValue;
+  environments?: Prisma.InputJsonValue;
+  globalVariables?: Prisma.InputJsonValue;
+};
+
+function toWorkspaceSyncInput(value: unknown): WorkspaceSyncInput {
+  if (typeof value !== "object" || value === null) {
+    return {};
+  }
+
+  const input = value as Record<string, Prisma.InputJsonValue | undefined>;
+  return {
+    name: typeof input.name === "string" ? input.name : undefined,
+    version: typeof input.version === "number" ? input.version : undefined,
+    collections: input.collections,
+    environments: input.environments,
+    globalVariables: input.globalVariables,
+  };
 }

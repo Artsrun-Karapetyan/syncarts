@@ -7,12 +7,16 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
 } from "@nestjs/common";
 import { z } from "zod";
 
 import { AuthGuard } from "../auth/auth.guard.js";
+import type { AuthenticatedRequest } from "../auth/authTypes.js";
+import { parsePaginationQuery } from "../common/parsePaginationQuery.js";
+import { parseZodSchema } from "../common/parseZodSchema.js";
 import { MergeRequestService } from "./merge-request.service.js";
 
 const CreateMRSchema = z.object({
@@ -26,6 +30,10 @@ const CreateMRSchema = z.object({
   targetData: z.any().optional(),
 });
 
+const UpdateMRStatusSchema = z.object({
+  status: z.enum(["OPEN", "MERGED", "CLOSED", "REJECTED"]),
+});
+
 @Controller("merge-requests")
 @UseGuards(AuthGuard)
 export class MergeRequestController {
@@ -35,8 +43,8 @@ export class MergeRequestController {
   ) {}
 
   @Post()
-  async create(@Request() req: any, @Body() body: any) {
-    const data = CreateMRSchema.parse(body);
+  async create(@Request() req: AuthenticatedRequest, @Body() body: unknown) {
+    const data = parseZodSchema(CreateMRSchema, body);
     return this.mrService.createMergeRequest({
       ...data,
       authorId: req.authUser.id,
@@ -44,8 +52,14 @@ export class MergeRequestController {
   }
 
   @Get("workspace/:workspaceId")
-  async findByWorkspace(@Param("workspaceId") workspaceId: string) {
-    return this.mrService.getMergeRequestsForWorkspace(workspaceId);
+  async findByWorkspace(
+    @Param("workspaceId") workspaceId: string,
+    @Query() query: unknown,
+  ) {
+    return this.mrService.getMergeRequestsForWorkspace(
+      workspaceId,
+      parsePaginationQuery(query),
+    );
   }
 
   @Get(":id")
@@ -55,19 +69,20 @@ export class MergeRequestController {
 
   @Patch(":id/status")
   async updateStatus(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Param("id") id: string,
-    @Body() body: any,
+    @Body() body: unknown,
   ) {
+    const { status } = parseZodSchema(UpdateMRStatusSchema, body);
     return this.mrService.updateMergeRequestStatus(
       id,
-      body.status,
+      status,
       req.authUser.id,
     );
   }
 
   @Delete(":id")
-  async remove(@Request() req: any, @Param("id") id: string) {
+  async remove(@Request() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.mrService.deleteMergeRequest(id, req.authUser.id);
   }
 

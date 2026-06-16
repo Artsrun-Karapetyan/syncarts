@@ -4,6 +4,8 @@ import { PrismaClient } from "@prisma/client";
 import { config as loadEnv } from "dotenv";
 import { Pool } from "pg";
 
+import { getAppConfig } from "../config/getAppConfig.js";
+
 loadEnv();
 
 @Injectable()
@@ -12,10 +14,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) {
-      throw new Error("DATABASE_URL is required");
-    }
+    const connectionString = getAppConfig().databaseUrl;
 
     const pool = new Pool({ connectionString });
     const adapter = new PrismaPg(pool);

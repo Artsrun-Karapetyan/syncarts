@@ -34,9 +34,6 @@ pub async fn make_request(request: HttpRequest) -> Result<HttpResponse, String> 
 
     let mut req_builder = client.request(method, &request.url).headers(headers);
 
-    println!("Executing request to: {}", request.url);
-    println!("Payload type: {:?}", request.body);
-
     match request.body {
         BodyPayload::None => {}
         BodyPayload::Raw { content } => {

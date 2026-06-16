@@ -43,24 +43,28 @@ describe("WorkspaceController CRUD and Sync", () => {
     expect(result).toEqual([{ id: "1" }] as any);
   });
 
-  test("findOne filters workspaces for the user", async () => {
+  test("findOne delegates to workspaceService.getWorkspaceForUser", async () => {
     const mockService = {
-      getWorkspacesForUser: mock(async (_userId: string) => [
-        { id: "1" },
-        { id: "2" },
-      ]),
+      getWorkspaceForUser: mock(async (_id: string, _userId: string) => ({
+        id: "2",
+      })),
     } as unknown as WorkspaceService;
 
     const controller = new WorkspaceController(mockService);
     const result = await controller.findOne(req, "2");
 
-    expect(mockService.getWorkspacesForUser).toHaveBeenCalledWith("user-1");
+    expect(mockService.getWorkspaceForUser).toHaveBeenCalledWith(
+      "2",
+      "user-1",
+    );
     expect(result).toEqual({ id: "2" } as any);
   });
 
   test("findOne throws error if not found", async () => {
     const mockService = {
-      getWorkspacesForUser: mock(async (_userId: string) => [{ id: "1" }]),
+      getWorkspaceForUser: mock(async () => {
+        throw new Error("Workspace not found or unauthorized");
+      }),
     } as unknown as WorkspaceService;
 
     const controller = new WorkspaceController(mockService);

@@ -38,10 +38,11 @@ describe("MergeRequestController CRUD", () => {
     } as unknown as MergeRequestService;
 
     const controller = new MergeRequestController(mockService);
-    const result = await controller.findByWorkspace("ws-1");
+    const result = await controller.findByWorkspace("ws-1", {});
 
     expect(mockService.getMergeRequestsForWorkspace).toHaveBeenCalledWith(
       "ws-1",
+      { skip: undefined, take: undefined },
     );
     expect(result).toEqual([{ id: "mr-1" }] as any);
   });
