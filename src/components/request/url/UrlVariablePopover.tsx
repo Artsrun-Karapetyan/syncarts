@@ -111,12 +111,17 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
               marginTop: 12,
               display: "flex",
               flexDirection: "column",
-              gap: 8,
+              gap: 6,
             }}
           >
             <input
               className="input font-mono"
-              style={{ width: "100%", fontSize: 12, padding: "6px 8px" }}
+              style={{
+                width: "100%",
+                fontSize: 12,
+                padding: "6px 8px",
+                marginBottom: 2,
+              }}
               placeholder="Enter value"
               value={newValue}
               onChange={(e) => setNewValue(e.target.value)}
@@ -125,31 +130,21 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
               }}
             />
             <button
-              style={{
-                width: "100%",
-                padding: "6px 8px",
-                background: "var(--bg-secondary)",
-                border: "1px solid var(--border-color)",
-                borderRadius: "var(--radius-sm)",
-                color: "var(--text-primary)",
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: 500,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
-              }}
+              className="btn"
+              style={{ width: "100%", justifyContent: "center" }}
               onClick={handleSave}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "var(--bg-tertiary)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "var(--bg-secondary)")
-              }
             >
               <Plus size={14} /> Update {variableTargetLabel} Variable
             </button>
+            {variableTargetLabel === "Folder" && onSaveCollection && (
+              <button
+                className="btn"
+                style={{ width: "100%", justifyContent: "center" }}
+                onClick={() => onSaveCollection(hoveredVar.name, newValue)}
+              >
+                <Plus size={14} /> Update Collection Variable
+              </button>
+            )}
           </div>
         </div>
       </div>,
