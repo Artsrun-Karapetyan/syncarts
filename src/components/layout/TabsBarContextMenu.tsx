@@ -4,7 +4,7 @@ import { Copy, FilePlus, X, XCircle, XSquare } from "lucide-react";
 interface TabsBarContextMenuProps {
   ctxMenu: { x: number; y: number; tabToDuplicate: any } | null;
   setCtxMenu: (v: null) => void;
-  menuRef: React.RefObject<HTMLDivElement>;
+  menuRef: React.RefObject<HTMLDivElement | null>;
   addTab: (data?: any) => void;
   closeTab: (id: string) => void;
   onRequestCloseTab: (id: string) => void;
