@@ -12,12 +12,12 @@ import type {
   TabData,
   TestResult,
 } from "../core/types";
+import { createRequestErrorResponse } from "./createRequestErrorResponse";
 import {
   getRequestAncestors,
   interpolateVariables,
   resolveRequestAuth,
 } from "./requestHelpers";
-import { createRequestErrorResponse } from "./createRequestErrorResponse";
 import {
   createScriptApi,
   createScriptConsole,
