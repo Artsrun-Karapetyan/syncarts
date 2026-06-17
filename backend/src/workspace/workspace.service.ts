@@ -9,6 +9,22 @@ import type { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service.js";
 
+const workspaceMemberInclude = {
+  user: { select: { id: true, name: true, email: true } },
+} satisfies Prisma.WorkspaceMemberInclude;
+
+const workspaceMetaSelect = {
+  id: true,
+  name: true,
+  ownerId: true,
+  createdAt: true,
+  updatedAt: true,
+  version: true,
+  members: {
+    include: workspaceMemberInclude,
+  },
+} satisfies Prisma.WorkspaceSelect;
+
 @Injectable()
 export class WorkspaceService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
@@ -35,24 +51,14 @@ export class WorkspaceService {
         ownerId: userId,
         id: { not: "default" },
       },
-      include: {
-        members: {
-          include: { user: { select: { id: true, name: true, email: true } } },
-        },
-      },
+      select: workspaceMetaSelect,
     });
 
     const memberOf = await this.prisma.workspaceMember.findMany({
       where: { userId },
       include: {
         workspace: {
-          include: {
-            members: {
-              include: {
-                user: { select: { id: true, name: true, email: true } },
-              },
-            },
-          },
+          select: workspaceMetaSelect,
         },
       },
     });
@@ -135,12 +141,16 @@ export class WorkspaceService {
           throw new ConflictException("Workspace has changed. Please reload.");
         }
 
-        return this.prisma.workspace.findUnique({ where: { id: workspaceId } });
+        return this.prisma.workspace.findUnique({
+          where: { id: workspaceId },
+          select: workspaceMetaSelect,
+        });
       }
 
       return this.prisma.workspace.update({
         where: { id: workspaceId },
         data: updateData,
+        select: workspaceMetaSelect,
       });
     }
 
@@ -157,6 +167,7 @@ export class WorkspaceService {
         },
         data: workspaceData,
       },
+      select: workspaceMetaSelect,
     });
   }
 

@@ -6,6 +6,7 @@ export function shouldSkipLegacyDefaultRemote(
   localDefaultWorkspaceId: string,
   userId: string,
 ) {
+  if (!remote.data) return false;
   const remoteData = remote.data || {};
   const localDefault = localWorkspaces.find(
     (workspace) => workspace.id === localDefaultWorkspaceId,
@@ -48,16 +49,20 @@ export function normalizeLegacyWorkspaces(
 }
 
 export function mapRemoteWorkspace(remote: any, local?: Workspace): Workspace {
-  const remoteData = remote.data || { collections: [], environments: [] };
+  const remoteData = remote.data;
   return {
     ...local,
     id: remote.id,
     name: remote.name,
     ownerId: remote.ownerId,
+    createdAt: remote.createdAt || local?.createdAt,
+    updatedAt: remote.updatedAt || local?.updatedAt,
+    version: remote.version ?? local?.version,
     members: remote.members || [],
-    collections: remoteData.collections || [],
-    environments: remoteData.environments || [],
-    globalVariables: remoteData.globalVariables || local?.globalVariables || [],
+    collections: remoteData?.collections || local?.collections || [],
+    environments: remoteData?.environments || local?.environments || [],
+    globalVariables:
+      remoteData?.globalVariables || local?.globalVariables || [],
   };
 }
 

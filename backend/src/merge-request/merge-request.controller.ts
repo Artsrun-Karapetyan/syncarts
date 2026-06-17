@@ -74,11 +74,7 @@ export class MergeRequestController {
     @Body() body: unknown,
   ) {
     const { status } = parseZodSchema(UpdateMRStatusSchema, body);
-    return this.mrService.updateMergeRequestStatus(
-      id,
-      status,
-      req.authUser.id,
-    );
+    return this.mrService.updateMergeRequestStatus(id, status, req.authUser.id);
   }
 
   @Delete(":id")

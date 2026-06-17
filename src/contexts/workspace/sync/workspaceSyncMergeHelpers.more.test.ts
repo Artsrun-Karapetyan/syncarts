@@ -133,6 +133,39 @@ describe("workspaceSyncMergeHelpers extra cases", () => {
     expect(nextLocals[0].name).toBe("New Remote");
   });
 
+  test("mergePolledRemoteWorkspace keeps local data for meta-only remote", () => {
+    const local = {
+      id: "remote",
+      name: "Remote",
+      ownerId: "user",
+      version: 1,
+      members: [],
+      collections: [{ id: "collection", name: "API", items: [] }],
+      environments: [],
+    };
+    const nextLocals = [local];
+    const args = createArgs();
+    args.lastSyncedSignaturesRef.current["remote"] = "local-sig";
+
+    const changed = mergePolledRemoteWorkspace(
+      {
+        id: "remote",
+        name: "Remote",
+        ownerId: "user",
+        version: 2,
+        members: [],
+      },
+      nextLocals,
+      false,
+      args,
+    );
+
+    expect(changed).toBe(true);
+    expect(nextLocals[0].version).toBe(2);
+    expect(nextLocals[0].collections).toEqual(local.collections);
+    expect(args.lastSyncedSignaturesRef.current["remote"]).toBe("local-sig");
+  });
+
   test("mergePolledRemoteWorkspace handles viewer with updates", () => {
     const local = {
       id: "remote",

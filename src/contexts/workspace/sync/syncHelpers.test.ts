@@ -41,6 +41,33 @@ describe("syncHelpers", () => {
     });
   });
 
+  it("keeps local data when remote workspace is meta-only", () => {
+    expect(
+      mapRemoteWorkspace(
+        {
+          id: "remote-1",
+          name: "Remote",
+          ownerId: "owner-1",
+          version: 2,
+          members: [],
+        },
+        {
+          id: "remote-1",
+          name: "Local",
+          ownerId: "owner-1",
+          collections: [{ id: "collection-1", name: "API", items: [] }],
+          environments: [{ id: "env-1", name: "Dev", variables: [] }],
+        },
+      ),
+    ).toMatchObject({
+      id: "remote-1",
+      name: "Remote",
+      version: 2,
+      collections: [{ id: "collection-1", name: "API", items: [] }],
+      environments: [{ id: "env-1", name: "Dev", variables: [] }],
+    });
+  });
+
   it("builds local and remote sync payloads", () => {
     expect(getWorkspaceSyncPayload(workspace)).toEqual({
       name: "Team",

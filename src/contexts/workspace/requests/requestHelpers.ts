@@ -1,5 +1,4 @@
 import { resolveDynamicVariable } from "../../../components/request/variables/variableResolution";
-import { findSavedRequestByIdInCollections } from "../tabs/tabHelpers";
 import type {
   Collection,
   Environment,
@@ -8,6 +7,7 @@ import type {
   SavedRequest,
   TabData,
 } from "../core/types";
+import { findSavedRequestByIdInCollections } from "../tabs/tabHelpers";
 
 export function getRequestAncestors(
   activeTab: TabData | undefined,
@@ -20,7 +20,10 @@ export function getRequestAncestors(
   const ancestors: (Collection | Folder)[] = [col];
   let folderId = activeTab.folderId;
   if (!folderId && (activeTab.savedRequestId || activeTab.id)) {
-    const loc = findSavedRequestByIdInCollections(collections, activeTab.savedRequestId || activeTab.id);
+    const loc = findSavedRequestByIdInCollections(
+      collections,
+      activeTab.savedRequestId || activeTab.id,
+    );
     if (loc) {
       folderId = loc.folderId || folderId;
     }

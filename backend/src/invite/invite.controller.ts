@@ -41,10 +41,7 @@ export class InviteController {
 
   @UseGuards(AuthGuard)
   @Post("add-member")
-  async addMember(
-    @Body() body: unknown,
-    @Request() req: AuthenticatedRequest,
-  ) {
+  async addMember(@Body() body: unknown, @Request() req: AuthenticatedRequest) {
     const parsed = parseZodSchema(InviteEmailSchema, body);
     return this.inviteService.addMemberByEmail(
       {

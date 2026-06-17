@@ -45,11 +45,15 @@ export function mergeInitialRemoteWorkspace(
     userId,
   } = args;
   const localIndex = nextLocals.findIndex((w) => w.id === remote.id);
-  const remoteSignature = getSyncSignature(getRemoteSyncPayload(remote));
+  const remoteSignature = remote.data
+    ? getSyncSignature(getRemoteSyncPayload(remote))
+    : null;
 
   if (localIndex === -1) {
     nextLocals.push(mapRemoteWorkspace(remote));
-    lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+    if (remoteSignature) {
+      lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+    }
     return true;
   }
 
@@ -63,7 +67,9 @@ export function mergeInitialRemoteWorkspace(
     syncingWorkspaceIdsRef.current.has(remote.id);
 
   if (isViewer && remote.ownerId !== userId) {
-    lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+    if (remoteSignature) {
+      lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+    }
     if (JSON.stringify(local) !== JSON.stringify(remoteWorkspace)) {
       nextLocals[localIndex] = remoteWorkspace;
       return true;
@@ -72,20 +78,22 @@ export function mergeInitialRemoteWorkspace(
   }
 
   if (hasPendingLocalChanges) {
-    nextLocals[localIndex] = withRemoteMembers(local, remote);
+    nextLocals[localIndex] = withRemoteMeta(local, remote);
     return true;
   }
 
-  if (localSignature !== remoteSignature) {
+  if (remoteSignature && localSignature !== remoteSignature) {
     nextLocals[localIndex] = remoteWorkspace;
     lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
     return true;
   }
 
-  lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+  if (remoteSignature) {
+    lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+  }
 
-  if (hasDifferentMembers(local, remote)) {
-    nextLocals[localIndex] = withRemoteMembers(local, remote);
+  if (hasDifferentMeta(local, remote)) {
+    nextLocals[localIndex] = withRemoteMeta(local, remote);
     return true;
   }
 
@@ -111,11 +119,15 @@ export function mergePolledRemoteWorkspace(
     remote,
     localIndex !== -1 ? nextLocals[localIndex] : undefined,
   );
-  const remoteSignature = getSyncSignature(getRemoteSyncPayload(remote));
+  const remoteSignature = remote.data
+    ? getSyncSignature(getRemoteSyncPayload(remote))
+    : null;
 
   if (localIndex === -1) {
     nextLocals.push(remoteWorkspace);
-    lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+    if (remoteSignature) {
+      lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+    }
     return true;
   }
 
@@ -130,13 +142,23 @@ export function mergePolledRemoteWorkspace(
 
   if (isViewer && remote.ownerId !== userId) {
     nextLocals[localIndex] = remoteWorkspace;
-    lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+    if (remoteSignature) {
+      lastSyncedSignaturesRef.current[remote.id] = remoteSignature;
+    }
     return true;
   }
 
   if (hasPendingLocalChanges) {
-    nextLocals[localIndex] = withRemoteMembers(local, remote);
+    nextLocals[localIndex] = withRemoteMeta(local, remote);
     return true;
+  }
+
+  if (!remoteSignature) {
+    if (hasDifferentMeta(local, remote)) {
+      nextLocals[localIndex] = withRemoteMeta(local, remote);
+      return true;
+    }
+    return hasChanges;
   }
 
   if (!lastSyncedSignature) {
@@ -154,24 +176,32 @@ export function mergePolledRemoteWorkspace(
     return true;
   }
 
-  if (hasDifferentMembers(local, remote)) {
-    nextLocals[localIndex] = withRemoteMembers(local, remote);
+  if (hasDifferentMeta(local, remote)) {
+    nextLocals[localIndex] = withRemoteMeta(local, remote);
     return true;
   }
 
   return hasChanges;
 }
 
-function hasDifferentMembers(local: Workspace, remote: any) {
+function hasDifferentMeta(local: Workspace, remote: any) {
   return (
+    local.name !== remote.name ||
+    local.ownerId !== remote.ownerId ||
+    local.version !== remote.version ||
+    local.updatedAt !== remote.updatedAt ||
     JSON.stringify(local.members || []) !== JSON.stringify(remote.members || [])
   );
 }
 
-function withRemoteMembers(local: Workspace, remote: any) {
+function withRemoteMeta(local: Workspace, remote: any) {
   return {
     ...local,
+    name: remote.name || local.name,
     ownerId: remote.ownerId,
+    createdAt: remote.createdAt || local.createdAt,
+    updatedAt: remote.updatedAt || local.updatedAt,
+    version: remote.version ?? local.version,
     members: remote.members || [],
   };
 }

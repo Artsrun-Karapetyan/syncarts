@@ -53,10 +53,7 @@ describe("WorkspaceController CRUD and Sync", () => {
     const controller = new WorkspaceController(mockService);
     const result = await controller.findOne(req, "2");
 
-    expect(mockService.getWorkspaceForUser).toHaveBeenCalledWith(
-      "2",
-      "user-1",
-    );
+    expect(mockService.getWorkspaceForUser).toHaveBeenCalledWith("2", "user-1");
     expect(result).toEqual({ id: "2" } as any);
   });
 

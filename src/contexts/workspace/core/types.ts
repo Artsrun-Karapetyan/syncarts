@@ -169,6 +169,9 @@ export interface Workspace {
   id: string;
   name: string;
   ownerId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  version?: number;
   members?: WorkspaceMember[];
   collections: Collection[];
   environments?: Environment[];

@@ -42,9 +42,7 @@ export class WorkspaceController {
 
   @Get()
   async findAll(@Request() req: AuthenticatedRequest) {
-    return this.workspaceService.getWorkspacesForUser(
-      req.authUser.id,
-    );
+    return this.workspaceService.getWorkspacesForUser(req.authUser.id);
   }
 
   @Get(":id")

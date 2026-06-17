@@ -32,16 +32,26 @@ describe("WorkspaceService create/list/sync", () => {
   });
 
   test("merges owned and member workspaces without duplicates", async () => {
+    let ownedQuery: any;
+    let memberQuery: any;
     const ownedWorkspace = { id: "owned", ownerId: "user" };
     const sharedWorkspace = { id: "shared", ownerId: "other" };
     const service = new WorkspaceService(
       createPrismaMock({
-        workspace: { findMany: async () => [ownedWorkspace] },
+        workspace: {
+          findMany: async (query: any) => {
+            ownedQuery = query;
+            return [ownedWorkspace];
+          },
+        },
         workspaceMember: {
-          findMany: async () => [
-            { workspaceId: "owned", workspace: ownedWorkspace },
-            { workspaceId: "shared", workspace: sharedWorkspace },
-          ],
+          findMany: async (query: any) => {
+            memberQuery = query;
+            return [
+              { workspaceId: "owned", workspace: ownedWorkspace },
+              { workspaceId: "shared", workspace: sharedWorkspace },
+            ];
+          },
         },
       }),
     );
@@ -50,6 +60,8 @@ describe("WorkspaceService create/list/sync", () => {
       ownedWorkspace,
       sharedWorkspace,
     ]);
+    expect(ownedQuery.select.data).toBeUndefined();
+    expect(memberQuery.include.workspace.select.data).toBeUndefined();
   });
 
   test("gets one workspace only when the user can access it", async () => {
@@ -147,7 +159,7 @@ describe("WorkspaceService create/list/sync", () => {
       "owner",
     );
 
-    expect(updateInput).toEqual({
+    expect(updateInput).toMatchObject({
       where: { id: "workspace" },
       data: {
         name: "New",
@@ -159,6 +171,7 @@ describe("WorkspaceService create/list/sync", () => {
         version: { increment: 1 },
       },
     });
+    expect(updateInput.select.data).toBeUndefined();
   });
 
   test("sync keeps existing name when body name is missing", async () => {

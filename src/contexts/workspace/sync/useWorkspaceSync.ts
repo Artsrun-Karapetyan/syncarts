@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { api } from "../../../lib/api";
 import type { Workspace } from "../core/types";
+import { hydrateRemoteWorkspaceDetails } from "./remoteWorkspaceDetails";
 import {
   canSyncWorkspace,
   getSyncSignature,
@@ -46,6 +47,11 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
     userId,
     workspaces,
   } = args;
+  const workspacesRef = useRef(workspaces);
+
+  useEffect(() => {
+    workspacesRef.current = workspaces;
+  }, [workspaces]);
 
   const reloadWorkspaces = async () => {
     try {
@@ -53,15 +59,20 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
       const remoteWorkspaces = (res.data || []).filter(
         (remote: any) => !deletedWorkspaceIdsRef.current.has(remote.id),
       );
+      const hydratedRemotes = await hydrateRemoteWorkspaceDetails(
+        remoteWorkspaces,
+        workspacesRef.current,
+        args,
+      );
       const remoteIds = new Set<string>(
-        remoteWorkspaces.map((remote: any) => remote.id),
+        hydratedRemotes.map((remote: any) => remote.id),
       );
 
       setWorkspaces((prevLocals) => {
         const nextLocals = [
           ...removeUnavailableRemoteWorkspaces(prevLocals, remoteIds, args),
         ];
-        for (const remote of remoteWorkspaces) {
+        for (const remote of hydratedRemotes) {
           if (
             shouldSkipLegacyDefaultRemote(
               remote,
@@ -110,13 +121,19 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
     let isMounted = true;
     api
       .get("/workspaces")
-      .then((res: any) => {
+      .then(async (res: any) => {
         if (!isMounted) return;
         const remoteWorkspaces = (res.data || []).filter(
           (remote: any) => !deletedWorkspaceIdsRef.current.has(remote.id),
         );
+        const hydratedRemotes = await hydrateRemoteWorkspaceDetails(
+          remoteWorkspaces,
+          workspacesRef.current,
+          args,
+        );
+        if (!isMounted) return;
         const remoteIds = new Set<string>(
-          remoteWorkspaces.map((remote: any) => remote.id),
+          hydratedRemotes.map((remote: any) => remote.id),
         );
         setWorkspaces((prevLocals) => {
           let hasChanges = false;
@@ -127,7 +144,7 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
             hasChanges = true;
           }
 
-          for (const remote of remoteWorkspaces) {
+          for (const remote of hydratedRemotes) {
             if (
               shouldSkipLegacyDefaultRemote(
                 remote,
@@ -191,10 +208,28 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
 
         syncingWorkspaceIdsRef.current.add(workspace.id);
         api
-          .put(`/workspaces/${workspace.id}/sync`, dataPayload)
-          .then(() => {
+          .put(`/workspaces/${workspace.id}/sync`, {
+            ...dataPayload,
+            version: workspace.version,
+          })
+          .then((res: any) => {
+            const remote = res.data;
             lastSyncedSignaturesRef.current[workspace.id] = signature;
             dirtyWorkspaceIdsRef.current.delete(workspace.id);
+            if (!remote) return;
+            setWorkspaces((prevLocals) =>
+              prevLocals.map((local) =>
+                local.id === workspace.id
+                  ? {
+                      ...local,
+                      ownerId: remote.ownerId ?? local.ownerId,
+                      members: remote.members || local.members,
+                      version: remote.version ?? local.version,
+                      updatedAt: remote.updatedAt || local.updatedAt,
+                    }
+                  : local,
+              ),
+            );
           })
           .catch((err: any) => {
             dirtyWorkspaceIdsRef.current.add(workspace.id);
@@ -219,12 +254,17 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
     const intervalId = window.setInterval(() => {
       api
         .get("/workspaces")
-        .then((res: any) => {
+        .then(async (res: any) => {
           const remoteWorkspaces = (res.data || []).filter(
             (remote: any) => !deletedWorkspaceIdsRef.current.has(remote.id),
           );
+          const hydratedRemotes = await hydrateRemoteWorkspaceDetails(
+            remoteWorkspaces,
+            workspacesRef.current,
+            args,
+          );
           const remoteIds = new Set<string>(
-            remoteWorkspaces.map((remote: any) => remote.id),
+            hydratedRemotes.map((remote: any) => remote.id),
           );
 
           setWorkspaces((prevLocals) => {
@@ -234,7 +274,7 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
             ];
             if (nextLocals.length !== prevLocals.length) hasChanges = true;
 
-            for (const remote of remoteWorkspaces) {
+            for (const remote of hydratedRemotes) {
               hasChanges = mergePolledRemoteWorkspace(
                 remote,
                 nextLocals,
