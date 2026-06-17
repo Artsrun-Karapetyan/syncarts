@@ -7,16 +7,16 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String   @id @default(cuid())
+  email        String   @unique
   name         String
   passwordHash String
   passwordSalt String
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime @default(now())
 
-  sessions          Session[]
-  ownedWorkspaces   Workspace[]
-  workspaceMembers  WorkspaceMember[]
+  sessions              Session[]
+  ownedWorkspaces       Workspace[]
+  workspaceMembers      WorkspaceMember[]
   authoredMergeRequests MergeRequest[]
 
   @@map("users")
@@ -32,7 +32,6 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
-
   @@map("sessions")
 }
 
@@ -44,13 +43,150 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
-  data      Json?    // Stores collections, environments, and global variables
 
-  members   WorkspaceMember[]
+  members         WorkspaceMember[]
+  collections     WorkspaceCollection[]
+  folders         WorkspaceFolder[]
+  requests        WorkspaceRequest[]
+  environments    WorkspaceEnvironment[]
+  globalVariables WorkspaceGlobalVariable[]
 
   @@index([ownerId])
   @@index([id, version])
   @@map("workspaces")
+}
+
+model WorkspaceCollection {
+  id               String    @id
+  workspaceId      String
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name             String
+  sortOrder        Int       @default(0)
+  authType         String?
+  bearerToken      String?
+  description      String?
+  preRequestScript String?
+  testScript       String?
+  variables        Json?
+  fork             Json?
+
+  folders  WorkspaceFolder[]
+  requests WorkspaceRequest[]
+
+  @@index([workspaceId, sortOrder])
+  @@map("workspace_collections")
+}
+
+model WorkspaceFolder {
+  id               String              @id
+  workspaceId      String
+  collectionId     String
+  parentFolderId   String?
+  workspace        Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  collection       WorkspaceCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  parentFolder     WorkspaceFolder?    @relation("WorkspaceFolderChildren", fields: [parentFolderId], references: [id], onDelete: Cascade)
+  childFolders     WorkspaceFolder[]   @relation("WorkspaceFolderChildren")
+  name             String
+  sortOrder        Int                 @default(0)
+  authType         String?
+  bearerToken      String?
+  description      String?
+  preRequestScript String?
+  testScript       String?
+  variables        Json?
+
+  requests WorkspaceRequest[]
+
+  @@index([workspaceId])
+  @@index([collectionId, parentFolderId, sortOrder])
+  @@map("workspace_folders")
+}
+
+model WorkspaceRequest {
+  id                     String              @id
+  workspaceId            String
+  collectionId           String
+  folderId               String?
+  workspace              Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  collection             WorkspaceCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  folder                 WorkspaceFolder?    @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  name                   String
+  sortOrder              Int                 @default(0)
+  method                 String
+  url                    String
+  headers                Json?
+  authType               String?
+  bearerToken            String?
+  bodyType               String?
+  description            String?
+  pathVariables          Json?
+  queryParamDescriptions Json?
+  queryParams            Json?
+  formData               Json?
+  body                   String
+  preRequestScript       String?
+  testScript             String?
+
+  examples RequestExample[]
+
+  @@index([workspaceId])
+  @@index([collectionId, folderId, sortOrder])
+  @@map("workspace_requests")
+}
+
+model RequestExample {
+  id              String           @id
+  requestId       String
+  request         WorkspaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  name            String
+  sortOrder       Int              @default(0)
+  originalRequest Json?
+  code            Int
+  status          String
+  body            String
+  headers         Json?
+
+  @@index([requestId, sortOrder])
+  @@map("request_examples")
+}
+
+model WorkspaceEnvironment {
+  id          String    @id
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  sortOrder   Int       @default(0)
+
+  variables WorkspaceEnvironmentVariable[]
+
+  @@index([workspaceId, sortOrder])
+  @@map("workspace_environments")
+}
+
+model WorkspaceEnvironmentVariable {
+  id            String               @id
+  environmentId String
+  environment   WorkspaceEnvironment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  key           String
+  value         String
+  enabled       Boolean              @default(true)
+  sortOrder     Int                  @default(0)
+
+  @@index([environmentId, sortOrder])
+  @@map("workspace_environment_variables")
+}
+
+model WorkspaceGlobalVariable {
+  id          String    @id
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  key         String
+  value       String
+  enabled     Boolean   @default(true)
+  sortOrder   Int       @default(0)
+
+  @@index([workspaceId, sortOrder])
+  @@map("workspace_global_variables")
 }
 
 model WorkspaceMember {
@@ -59,8 +195,8 @@ model WorkspaceMember {
   role        String   @default("MEMBER") // "OWNER", "ADMIN", "MEMBER"
   joinedAt    DateTime @default(now())
 
-  user        User      @relation(fields: [userId], references: [id])
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@id([userId, workspaceId])
   @@map("workspace_members")
@@ -68,34 +204,34 @@ model WorkspaceMember {
 
 model WorkspaceInvite {
   token        String    @id @default(cuid()) // The invite link token
-  workspaceId  String?   // Backward compatibility for older single-workspace invites
-  workspaceIds String[]   @default([])
-  invitedEmail String?   // Null if generic share link, string if direct email invite
-  createdAt    DateTime   @default(now())
+  workspaceId  String? // Backward compatibility for older single-workspace invites
+  workspaceIds String[]  @default([])
+  invitedEmail String? // Null if generic share link, string if direct email invite
+  createdAt    DateTime  @default(now())
   expiresAt    DateTime?
 
   @@map("workspace_invites")
 }
 
 model MergeRequest {
-  id                  String   @id @default(cuid())
-  title               String
-  description         String?
-  status              String   @default("OPEN") // OPEN, MERGED, CLOSED, REJECTED
-  
-  sourceWorkspaceId   String
-  targetWorkspaceId   String
-  sourceCollectionId  String
-  targetCollectionId  String
-  data                Json?    // Source collection snapshot
-  targetData          Json?    // Target collection snapshot at MR creation time
-  
-  authorId            String
-  author              User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  status      String  @default("OPEN") // OPEN, MERGED, CLOSED, REJECTED
+
+  sourceWorkspaceId  String
+  targetWorkspaceId  String
+  sourceCollectionId String
+  targetCollectionId String
+  data               Json? // Source collection snapshot
+  targetData         Json? // Target collection snapshot at MR creation time
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([targetWorkspaceId, createdAt])
   @@index([sourceWorkspaceId, createdAt])
   @@index([authorId])

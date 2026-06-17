@@ -7,6 +7,7 @@ import {
 
 import type { PaginationOptions } from "../common/parsePaginationQuery.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { readWorkspaceData } from "../workspace/workspaceData.js";
 
 @Injectable()
 export class MergeRequestService {
@@ -30,8 +31,11 @@ export class MergeRequestService {
 
     // Snapshot the target collection at creation time if not provided
     let targetData = data.targetData;
-    if (!targetData && targetWs.data) {
-      const wsData: any = targetWs.data;
+    if (!targetData) {
+      const wsData = await readWorkspaceData(
+        this.prisma,
+        data.targetWorkspaceId,
+      );
       const collections = wsData.collections || [];
       targetData =
         collections.find((c: any) => c.id === data.targetCollectionId) || null;

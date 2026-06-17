@@ -8,6 +8,11 @@ import {
 import type { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service.js";
+import {
+  normalizeWorkspaceData,
+  readWorkspaceData,
+  replaceWorkspaceData,
+} from "./workspaceData.js";
 
 const workspaceMemberInclude = {
   user: { select: { id: true, name: true, email: true } },
@@ -93,16 +98,15 @@ export class WorkspaceService {
       throw new NotFoundException("Workspace not found or unauthorized");
     }
 
-    return workspace;
+    return {
+      ...workspace,
+      data: await readWorkspaceData(this.prisma, workspace.id),
+    };
   }
 
   async syncWorkspace(workspaceId: string, data: unknown, userId: string) {
     const input = toWorkspaceSyncInput(data);
-    const workspaceData: Prisma.InputJsonObject = {
-      collections: input.collections ?? [],
-      environments: input.environments ?? [],
-      globalVariables: input.globalVariables ?? [],
-    };
+    const workspaceData = normalizeWorkspaceData(input);
 
     const existing = await this.prisma.workspace.findFirst({
       where: { id: workspaceId },
@@ -127,47 +131,57 @@ export class WorkspaceService {
 
       const updateData = {
         name: input.name ?? existing.name,
-        data: workspaceData,
         version: { increment: 1 },
       };
 
       if (input.version !== undefined) {
-        const result = await this.prisma.workspace.updateMany({
-          where: { id: workspaceId, version: input.version },
-          data: updateData,
-        });
+        return this.prisma.$transaction(async (transaction) => {
+          const result = await transaction.workspace.updateMany({
+            where: { id: workspaceId, version: input.version },
+            data: updateData,
+          });
 
-        if (result.count === 0) {
-          throw new ConflictException("Workspace has changed. Please reload.");
-        }
+          if (result.count === 0) {
+            throw new ConflictException(
+              "Workspace has changed. Please reload.",
+            );
+          }
 
-        return this.prisma.workspace.findUnique({
-          where: { id: workspaceId },
-          select: workspaceMetaSelect,
+          await replaceWorkspaceData(transaction, workspaceId, workspaceData);
+          return transaction.workspace.findUnique({
+            where: { id: workspaceId },
+            select: workspaceMetaSelect,
+          });
         });
       }
 
-      return this.prisma.workspace.update({
-        where: { id: workspaceId },
-        data: updateData,
-        select: workspaceMetaSelect,
+      return this.prisma.$transaction(async (transaction) => {
+        await replaceWorkspaceData(transaction, workspaceId, workspaceData);
+        return transaction.workspace.update({
+          where: { id: workspaceId },
+          data: updateData,
+          select: workspaceMetaSelect,
+        });
       });
     }
 
-    return this.prisma.workspace.create({
-      data: {
-        id: workspaceId,
-        name: input.name ?? "Workspace",
-        ownerId: userId,
-        members: {
-          create: {
-            userId,
-            role: "OWNER",
+    return this.prisma.$transaction(async (transaction) => {
+      const workspace = await transaction.workspace.create({
+        data: {
+          id: workspaceId,
+          name: input.name ?? "Workspace",
+          ownerId: userId,
+          members: {
+            create: {
+              userId,
+              role: "OWNER",
+            },
           },
         },
-        data: workspaceData,
-      },
-      select: workspaceMetaSelect,
+        select: workspaceMetaSelect,
+      });
+      await replaceWorkspaceData(transaction, workspaceId, workspaceData);
+      return workspace;
     });
   }
 

@@ -182,13 +182,37 @@ describe("MergeRequestService create/read", () => {
         workspace: {
           findUnique: async () => ({
             id: "target",
-            data: {
-              collections: [
-                { id: "col-1", name: "Users API", items: [{ id: "req-1" }] },
-                { id: "col-2", name: "Other" },
+          }),
+        },
+        workspaceCollection: {
+          findMany: async () => [
+            {
+              id: "col-1",
+              name: "Users API",
+              sortOrder: 0,
+              folders: [],
+              requests: [
+                {
+                  id: "req-1",
+                  name: "List Users",
+                  method: "GET",
+                  url: "/users",
+                  headers: [],
+                  body: "",
+                  sortOrder: 0,
+                  folderId: null,
+                  examples: [],
+                },
               ],
             },
-          }),
+            {
+              id: "col-2",
+              name: "Other",
+              sortOrder: 1,
+              folders: [],
+              requests: [],
+            },
+          ],
         },
         mergeRequest: {
           create: async ({ data }: any) => {
@@ -210,10 +234,10 @@ describe("MergeRequestService create/read", () => {
       // targetData NOT provided
     });
 
-    expect(createData.targetData).toEqual({
+    expect(createData.targetData).toMatchObject({
       id: "col-1",
       name: "Users API",
-      items: [{ id: "req-1" }],
+      items: [{ id: "req-1", type: "request" }],
     });
   });
 

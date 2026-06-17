@@ -74,7 +74,10 @@ describe("WorkspaceService create/list/sync", () => {
 
     await expect(
       service.getWorkspaceForUser("workspace", "owner"),
-    ).resolves.toEqual(workspace);
+    ).resolves.toEqual({
+      ...workspace,
+      data: { collections: [], environments: [], globalVariables: [] },
+    });
   });
 
   test("getWorkspaceForUser rejects missing and owned default workspace", async () => {
@@ -125,12 +128,15 @@ describe("WorkspaceService create/list/sync", () => {
       id: "workspace",
       name: "API",
       ownerId: "owner",
-      data: { collections: [], environments: [], globalVariables: [] },
     });
+    expect(createData.data).toBeUndefined();
   });
 
   test("sync updates existing workspace for owner", async () => {
     let updateInput: any;
+    const createdCollections: any[] = [];
+    const createdEnvironments: any[] = [];
+    const createdGlobalVariables: any[] = [];
     const service = new WorkspaceService(
       createPrismaMock({
         workspace: {
@@ -144,6 +150,30 @@ describe("WorkspaceService create/list/sync", () => {
             updateInput = input;
             return { id: "workspace", ...input.data };
           },
+        },
+        workspaceCollection: {
+          deleteMany: async () => ({ count: 0 }),
+          create: async ({ data }: any) => {
+            createdCollections.push(data);
+            return data;
+          },
+          findMany: async () => [],
+        },
+        workspaceEnvironment: {
+          deleteMany: async () => ({ count: 0 }),
+          create: async ({ data }: any) => {
+            createdEnvironments.push(data);
+            return data;
+          },
+          findMany: async () => [],
+        },
+        workspaceGlobalVariable: {
+          deleteMany: async () => ({ count: 0 }),
+          create: async ({ data }: any) => {
+            createdGlobalVariables.push(data);
+            return data;
+          },
+          findMany: async () => [],
         },
       }),
     );
@@ -163,15 +193,22 @@ describe("WorkspaceService create/list/sync", () => {
       where: { id: "workspace" },
       data: {
         name: "New",
-        data: {
-          collections: [{ id: "collection" }],
-          environments: [{ id: "env" }],
-          globalVariables: [{ id: "global" }],
-        },
         version: { increment: 1 },
       },
     });
     expect(updateInput.select.data).toBeUndefined();
+    expect(createdCollections[0]).toMatchObject({
+      id: "collection",
+      workspaceId: "workspace",
+    });
+    expect(createdEnvironments[0]).toMatchObject({
+      id: "env",
+      workspaceId: "workspace",
+    });
+    expect(createdGlobalVariables[0]).toMatchObject({
+      id: "global",
+      workspaceId: "workspace",
+    });
   });
 
   test("sync keeps existing name when body name is missing", async () => {

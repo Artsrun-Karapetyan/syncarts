@@ -77,6 +77,7 @@ describe("InviteService generateInviteLink", () => {
 
   test("updates existing owned workspace snapshot", async () => {
     let updateInput: any;
+    const createdCollections: any[] = [];
     const service = new InviteService(
       createPrismaMock({
         workspace: {
@@ -92,6 +93,14 @@ describe("InviteService generateInviteLink", () => {
         },
         workspaceInvite: {
           create: async ({ data }: any) => ({ token: "invite", ...data }),
+        },
+        workspaceCollection: {
+          deleteMany: async () => ({ count: 0 }),
+          create: async ({ data }: any) => {
+            createdCollections.push(data);
+            return data;
+          },
+          findMany: async () => [],
         },
       }),
     );
@@ -110,17 +119,20 @@ describe("InviteService generateInviteLink", () => {
       where: { id: "workspace" },
       data: {
         name: "New",
-        data: {
-          collections: [{ id: "c" }],
-          environments: [],
-          globalVariables: [],
-        },
+        version: { increment: 1 },
       },
+    });
+    expect(createdCollections[0]).toMatchObject({
+      id: "c",
+      workspaceId: "workspace",
     });
   });
 
   test("syncs new workspace snapshots", async () => {
     let createdWorkspace: any;
+    const createdCollections: any[] = [];
+    const createdEnvironments: any[] = [];
+    const createdGlobalVariables: any[] = [];
     const service = new InviteService(
       createPrismaMock({
         workspace: {
@@ -132,6 +144,30 @@ describe("InviteService generateInviteLink", () => {
         },
         workspaceInvite: {
           create: async ({ data }: any) => ({ token: "invite", ...data }),
+        },
+        workspaceCollection: {
+          deleteMany: async () => ({ count: 0 }),
+          create: async ({ data }: any) => {
+            createdCollections.push(data);
+            return data;
+          },
+          findMany: async () => [],
+        },
+        workspaceEnvironment: {
+          deleteMany: async () => ({ count: 0 }),
+          create: async ({ data }: any) => {
+            createdEnvironments.push(data);
+            return data;
+          },
+          findMany: async () => [],
+        },
+        workspaceGlobalVariable: {
+          deleteMany: async () => ({ count: 0 }),
+          create: async ({ data }: any) => {
+            createdGlobalVariables.push(data);
+            return data;
+          },
+          findMany: async () => [],
         },
       }),
     );
@@ -156,11 +192,10 @@ describe("InviteService generateInviteLink", () => {
       id: "workspace",
       name: "API",
       ownerId: "owner",
-      data: {
-        collections: [{ id: "collection" }],
-        environments: [{ id: "env" }],
-        globalVariables: [{ id: "global" }],
-      },
     });
+    expect(createdWorkspace.data).toBeUndefined();
+    expect(createdCollections[0]).toMatchObject({ id: "collection" });
+    expect(createdEnvironments[0]).toMatchObject({ id: "env" });
+    expect(createdGlobalVariables[0]).toMatchObject({ id: "global" });
   });
 });

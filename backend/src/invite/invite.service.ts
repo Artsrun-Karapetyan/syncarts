@@ -7,6 +7,10 @@ import {
 } from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma.service.js";
+import {
+  normalizeWorkspaceData,
+  replaceWorkspaceData,
+} from "../workspace/workspaceData.js";
 
 @Injectable()
 export class InviteService {
@@ -27,11 +31,7 @@ export class InviteService {
         where: { id: workspace.id },
       });
 
-      const workspaceData = {
-        collections: workspace.collections ?? [],
-        environments: workspace.environments ?? [],
-        globalVariables: workspace.globalVariables ?? [],
-      };
+      const workspaceData = normalizeWorkspaceData(workspace);
 
       if (existing) {
         if (existing.ownerId !== userId) {
@@ -40,29 +40,34 @@ export class InviteService {
           );
         }
 
-        await this.prisma.workspace.update({
-          where: { id: workspace.id },
-          data: {
-            name: workspace.name || existing.name,
-            data: workspaceData,
-          },
+        await this.prisma.$transaction(async (transaction) => {
+          await transaction.workspace.update({
+            where: { id: workspace.id },
+            data: {
+              name: workspace.name || existing.name,
+              version: { increment: 1 },
+            },
+          });
+          await replaceWorkspaceData(transaction, workspace.id, workspaceData);
         });
         continue;
       }
 
-      await this.prisma.workspace.create({
-        data: {
-          id: workspace.id,
-          name: workspace.name || "Workspace",
-          ownerId: userId,
-          data: workspaceData,
-          members: {
-            create: {
-              userId,
-              role: "OWNER",
+      await this.prisma.$transaction(async (transaction) => {
+        await transaction.workspace.create({
+          data: {
+            id: workspace.id,
+            name: workspace.name || "Workspace",
+            ownerId: userId,
+            members: {
+              create: {
+                userId,
+                role: "OWNER",
+              },
             },
           },
-        },
+        });
+        await replaceWorkspaceData(transaction, workspace.id, workspaceData);
       });
     }
   }
