@@ -14,6 +14,7 @@ import {
   findSavedRequestByIdInCollections,
   requestSnapshot,
 } from "./tabHelpers";
+import { reorderTabs } from "./tabReorderHelpers";
 import { normalizeTabsWithSavedRequests } from "./tabSyncHelpers";
 import { findExample, findFolder } from "./tabTreeFinders";
 import { useRequestEntitySave } from "./useRequestEntitySave";
@@ -167,6 +168,16 @@ export function useTabActions(args: TabActionsArgs) {
     delete lastSavedTabSnapshotsRef.current[id];
   };
 
+  const moveTab = (
+    sourceId: string,
+    targetId: string,
+    position: "before" | "after",
+  ) => {
+    updateCurrentTabs((prev) =>
+      reorderTabs(prev, sourceId, targetId, position),
+    );
+  };
+
   const openCollectionTab = (
     collectionId: string,
     view: TabData["collectionView"] = "overview",
@@ -317,6 +328,7 @@ export function useTabActions(args: TabActionsArgs) {
     saveActiveRequestInPlace,
     saveRequestTabInPlace,
     setActiveTabId,
+    moveTab,
     updateActiveTab,
     updateCurrentTabs,
   };

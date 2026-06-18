@@ -3,6 +3,14 @@ import { useEffect, useRef, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
 import { TabsBarContextMenu } from "./TabsBarContextMenu";
+import {
+  getTabDropPosition,
+  readTabDragData,
+  tabDropShadow,
+  type TabDropTarget,
+  writeTabDragData,
+} from "./tabsDragHelpers";
+import { useActiveTabSidebarHighlight } from "./useActiveTabSidebarHighlight";
 
 interface TabsBarProps {
   onRequestCloseTab: (tabId: string) => void;
@@ -16,6 +24,7 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
     setActiveTabId,
     addTab,
     closeTab,
+    moveTab,
     isTabDirty,
     resolveTabSavedRequestId,
   } = useWorkspace();
@@ -26,6 +35,8 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
     tabToDuplicate: any;
   } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<TabDropTarget | null>(null);
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -50,22 +61,16 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
     });
   }, [activeTabId]);
 
-  useEffect(() => {
-    if (activeTab?.type === "example" && activeTab.exampleId) {
-      window.dispatchEvent(
-        new CustomEvent("highlight-sidebar", {
-          detail: { exampleId: activeTab.exampleId },
-        }),
-      );
-      return;
-    }
+  useActiveTabSidebarHighlight({
+    activeTab,
+    activeTabId,
+    resolveTabSavedRequestId,
+  });
 
-    const savedRequestId = resolveTabSavedRequestId(activeTab);
-    if (!savedRequestId) return;
-    window.dispatchEvent(
-      new CustomEvent("highlight-sidebar", { detail: { savedRequestId } }),
-    );
-  }, [activeTabId, activeTab, resolveTabSavedRequestId]);
+  const clearDragState = () => {
+    setDraggingTabId(null);
+    setDropTarget(null);
+  };
 
   return (
     <div
@@ -104,10 +109,38 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
             {tabs.map((tab) => {
               const isActive = activeTabId === tab.id;
               const isDirty = isTabDirty(tab);
+              const isDragging = draggingTabId === tab.id;
+              const isDropTarget = dropTarget?.tabId === tab.id;
               return (
                 <div
                   key={tab.id}
                   data-tab-id={tab.id}
+                  draggable
+                  onDragStart={(event) => {
+                    setCtxMenu(null);
+                    setDraggingTabId(tab.id);
+                    writeTabDragData(event, tab.id);
+                  }}
+                  onDragOver={(event) => {
+                    if (!draggingTabId || draggingTabId === tab.id) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.dataTransfer.dropEffect = "move";
+                    setDropTarget({
+                      tabId: tab.id,
+                      position: getTabDropPosition(event),
+                    });
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const sourceId = draggingTabId || readTabDragData(event);
+                    if (sourceId && sourceId !== tab.id) {
+                      moveTab(sourceId, tab.id, getTabDropPosition(event));
+                    }
+                    clearDragState();
+                  }}
+                  onDragEnd={clearDragState}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     setCtxMenu({
@@ -140,6 +173,10 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
                     color: isActive
                       ? "var(--text-primary)"
                       : "var(--text-tertiary)",
+                    opacity: isDragging ? 0.45 : 1,
+                    boxShadow: isDropTarget
+                      ? tabDropShadow(dropTarget.position)
+                      : "none",
                   }}
                   onClick={() => {
                     const wasActive = activeTabId === tab.id;
