@@ -1,4 +1,5 @@
-import { CheckSquare, Plus, Square, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import type { DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -7,10 +8,17 @@ import {
   useWorkspace,
 } from "../../../contexts/WorkspaceContext";
 import { syncPathVariablesWithUrl } from "../../../utils/pathVariables";
+import {
+  getRowDropPosition,
+  readRowDragData,
+  type RowDropTarget,
+} from "../rowDrag";
 import { syncRowKeys } from "../rowKeys";
-import { VariableTextInput } from "../variables/VariableTextInput";
+import { reorderRows } from "../rowReorder";
 import { ParamSectionTitle } from "./ParamSectionTitle";
 import { createEmptyParam, parseParamsFromUrl } from "./paramsEditorHelpers";
+import { PathVariableRow } from "./PathVariableRow";
+import { QueryParamRow } from "./QueryParamRow";
 
 export function ParamsEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
@@ -19,6 +27,10 @@ export function ParamsEditor() {
   const queryParamDescriptions = activeTab?.queryParamDescriptions || {};
   const rowKeysRef = useRef<string[]>([]);
   const rowKeys = syncRowKeys(rowKeysRef.current, params.length);
+  const [draggingParamKey, setDraggingParamKey] = useState<string | null>(null);
+  const [paramDropTarget, setParamDropTarget] = useState<RowDropTarget | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!activeTab) return;
@@ -108,6 +120,49 @@ export function ParamsEditor() {
     syncUrl(newParams.length > 0 ? newParams : [createEmptyParam()]);
   };
 
+  const clearParamDrag = () => {
+    setDraggingParamKey(null);
+    setParamDropTarget(null);
+  };
+
+  const handleParamDragOver = (
+    targetKey: string,
+    event: DragEvent<HTMLElement>,
+  ) => {
+    if (!activeTab || !draggingParamKey || draggingParamKey === targetKey)
+      return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = "move";
+    setParamDropTarget({
+      id: targetKey,
+      position: getRowDropPosition(event),
+    });
+  };
+
+  const handleParamDrop = (
+    targetKey: string,
+    event: DragEvent<HTMLElement>,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const sourceKey = draggingParamKey || readRowDragData(event);
+    if (!activeTab || !sourceKey || sourceKey === targetKey) return;
+
+    const sourceIndex = rowKeys.indexOf(sourceKey);
+    const targetIndex = rowKeys.indexOf(targetKey);
+    const position = getRowDropPosition(event);
+    const nextParams = reorderRows(params, sourceIndex, targetIndex, position);
+    rowKeysRef.current = reorderRows(
+      rowKeys,
+      sourceIndex,
+      targetIndex,
+      position,
+    );
+    syncUrl(nextParams);
+    clearParamDrag();
+  };
+
   const updatePathVariable = (id: string, data: Partial<PathVariable>) => {
     updateActiveTab({
       pathVariables: pathVariables.map((variable) =>
@@ -129,114 +184,21 @@ export function ParamsEditor() {
       >
         <ParamSectionTitle title="Query Params" />
         {params.map((param, idx) => (
-          <div
+          <QueryParamRow
             key={rowKeys[idx]}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "40px 1fr 1fr 1fr 40px",
-              gap: 0,
-              alignItems: "center",
-              opacity: param.enabled === false ? 0.45 : 1,
-            }}
-          >
-            <div
-              style={{ width: 40, display: "flex", justifyContent: "center" }}
-            >
-              <button
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color:
-                    param.enabled !== false
-                      ? "var(--accent-primary)"
-                      : "var(--text-tertiary)",
-                }}
-                onClick={() =>
-                  updateParam(idx, { enabled: param.enabled === false })
-                }
-                title={
-                  param.enabled === false ? "Enable param" : "Disable param"
-                }
-              >
-                {param.enabled !== false ? (
-                  <CheckSquare size={16} />
-                ) : (
-                  <Square size={16} />
-                )}
-              </button>
-            </div>
-            <VariableTextInput
-              className="input"
-              style={{
-                width: "100%",
-                fontSize: 13,
-                background: "transparent",
-                borderRadius: 0,
-                margin: "-1px 0 0 -1px",
-              }}
-              placeholder="Key"
-              value={param.key}
-              onChange={(value) => updateParam(idx, { key: value })}
-              disabled={!activeTab}
-            />
-            <VariableTextInput
-              className="input"
-              style={{
-                width: "100%",
-                fontSize: 13,
-                background: "transparent",
-                borderRadius: 0,
-                margin: "-1px 0 0 -1px",
-              }}
-              placeholder="Value"
-              value={param.value}
-              onChange={(value) => updateParam(idx, { value })}
-              disabled={!activeTab}
-            />
-            <VariableTextInput
-              className="input"
-              style={{
-                width: "100%",
-                fontSize: 13,
-                background: "transparent",
-                borderRadius: 0,
-                margin: "-1px 0 0 -1px",
-              }}
-              placeholder="Description"
-              value={param.description || ""}
-              onChange={(value) => updateParam(idx, { description: value })}
-              disabled={!activeTab}
-            />
-            <div
-              style={{ width: 40, display: "flex", justifyContent: "center" }}
-            >
-              <button
-                type="button"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: activeTab ? "pointer" : "not-allowed",
-                  color: "var(--text-tertiary)",
-                  opacity: activeTab ? 1 : 0.3,
-                }}
-                onClick={() => {
-                  if (activeTab) removeParam(idx);
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab)
-                    e.currentTarget.style.color = "var(--status-delete)";
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab)
-                    e.currentTarget.style.color = "var(--text-tertiary)";
-                }}
-                title="Remove Param"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </div>
+            active={!!activeTab}
+            dragId={rowKeys[idx]}
+            draggingId={draggingParamKey}
+            dropTarget={paramDropTarget}
+            index={idx}
+            param={param}
+            setDraggingId={setDraggingParamKey}
+            onDragEnd={clearParamDrag}
+            onDragOver={handleParamDragOver}
+            onDrop={handleParamDrop}
+            onRemove={removeParam}
+            onUpdate={updateParam}
+          />
         ))}
 
         <button
@@ -289,69 +251,12 @@ export function ParamsEditor() {
         >
           <ParamSectionTitle title="Path Variables" />
           {pathVariables.map((variable) => (
-            <div
+            <PathVariableRow
               key={variable.id}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "40px 1fr 1fr 1fr 40px",
-                gap: 0,
-                alignItems: "center",
-              }}
-            >
-              <div style={{ width: 40 }} />
-              <input
-                className="input"
-                style={{
-                  width: "100%",
-                  fontSize: 13,
-                  background: "transparent",
-                  color: "var(--text-secondary)",
-                  borderRadius: 0,
-                  margin: "-1px 0 0 -1px",
-                }}
-                value={variable.key}
-                disabled
-              />
-              <VariableTextInput
-                className="input"
-                style={{
-                  width: "100%",
-                  fontSize: 13,
-                  background: "transparent",
-                  borderRadius: 0,
-                  margin: "-1px 0 0 -1px",
-                }}
-                placeholder="Value"
-                value={variable.value}
-                onChange={(value) => updatePathVariable(variable.id, { value })}
-                disabled={!activeTab}
-              />
-              <VariableTextInput
-                className="input"
-                style={{
-                  width: "100%",
-                  fontSize: 13,
-                  background: "transparent",
-                  borderRadius: 0,
-                  margin: "-1px 0 0 -1px",
-                }}
-                placeholder="Description"
-                value={variable.description || ""}
-                onChange={(value) =>
-                  updatePathVariable(variable.id, { description: value })
-                }
-                disabled={!activeTab}
-              />
-              <div
-                style={{ width: 40, display: "flex", justifyContent: "center" }}
-              >
-                <span
-                  style={{ color: "var(--text-tertiary)", textAlign: "center" }}
-                >
-                  ...
-                </span>
-              </div>
-            </div>
+              active={!!activeTab}
+              variable={variable}
+              onUpdate={updatePathVariable}
+            />
           ))}
         </div>
       )}

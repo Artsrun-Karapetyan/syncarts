@@ -1,17 +1,27 @@
-import { CheckSquare, Plus, Square, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import type { DragEvent } from "react";
+import { useState } from "react";
 
 import {
   BodyType,
   FormDataItem,
   useWorkspace,
 } from "../../../contexts/WorkspaceContext";
-import { Select } from "../../ui/Select";
+import {
+  getRowDropPosition,
+  readRowDragData,
+  type RowDropTarget,
+} from "../rowDrag";
+import { reorderRows } from "../rowReorder";
 import { VariableTextarea } from "../variables/VariableTextarea";
-import { VariableTextInput } from "../variables/VariableTextInput";
-import { FileValueEditor } from "./FileValueEditor";
+import { BodyFieldRow } from "./BodyFieldRow";
 
 export function BodyEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();
+  const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null);
+  const [fieldDropTarget, setFieldDropTarget] = useState<RowDropTarget | null>(
+    null,
+  );
 
   const currentBodyType = activeTab?.bodyType || "raw";
 
@@ -46,6 +56,45 @@ export function BodyEditor() {
     if (!activeTab) return;
     const newData = (activeTab.formData || []).filter((item) => item.id !== id);
     updateActiveTab({ formData: newData });
+  };
+
+  const clearFieldDrag = () => {
+    setDraggingFieldId(null);
+    setFieldDropTarget(null);
+  };
+
+  const handleFieldDragOver = (
+    targetId: string,
+    event: DragEvent<HTMLElement>,
+  ) => {
+    if (!activeTab || !draggingFieldId || draggingFieldId === targetId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = "move";
+    setFieldDropTarget({
+      id: targetId,
+      position: getRowDropPosition(event),
+    });
+  };
+
+  const handleFieldDrop = (targetId: string, event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const sourceId = draggingFieldId || readRowDragData(event);
+    if (!activeTab || !sourceId || sourceId === targetId) return;
+
+    const formData = activeTab.formData || [];
+    const sourceIndex = formData.findIndex((item) => item.id === sourceId);
+    const targetIndex = formData.findIndex((item) => item.id === targetId);
+    updateActiveTab({
+      formData: reorderRows(
+        formData,
+        sourceIndex,
+        targetIndex,
+        getRowDropPosition(event),
+      ),
+    });
+    clearFieldDrag();
   };
 
   return (
@@ -154,155 +203,19 @@ export function BodyEditor() {
           }}
         >
           {(activeTab?.formData || []).map((item) => (
-            <div
+            <BodyFieldRow
               key={item.id}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "40px 1fr 1fr 1fr 40px",
-                alignItems: "center",
-                gap: 0,
-                marginBottom: 0,
-                opacity: item.enabled === false ? 0.45 : 1,
-              }}
-            >
-              <div
-                style={{ width: 40, display: "flex", justifyContent: "center" }}
-              >
-                <button
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: item.enabled
-                      ? "var(--accent-primary)"
-                      : "var(--text-tertiary)",
-                  }}
-                  onClick={() =>
-                    handleUpdateFormData(item.id, { enabled: !item.enabled })
-                  }
-                >
-                  {item.enabled ? (
-                    <CheckSquare size={16} />
-                  ) : (
-                    <Square size={16} />
-                  )}
-                </button>
-              </div>
-              <div
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  minWidth: 0,
-                }}
-              >
-                <VariableTextInput
-                  className="input"
-                  style={{
-                    width: "100%",
-                    fontSize: 13,
-                    background: "transparent",
-                    paddingRight:
-                      currentBodyType === "form-data" ? 60 : undefined,
-                    borderRadius: 0,
-                    margin: "-1px 0 0 -1px",
-                  }}
-                  placeholder="Key"
-                  value={item.key}
-                  onChange={(value) =>
-                    handleUpdateFormData(item.id, { key: value })
-                  }
-                />
-                {currentBodyType === "form-data" && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      right: 4,
-                      zIndex: 5,
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Select
-                      value={item.type || "text"}
-                      options={[
-                        { value: "text", label: "Text" },
-                        { value: "file", label: "File" },
-                      ]}
-                      onChange={(val) =>
-                        handleUpdateFormData(item.id, {
-                          type: val as "text" | "file",
-                        })
-                      }
-                      variant="ghost"
-                      style={{ minWidth: 70 }}
-                    />
-                  </div>
-                )}
-              </div>
-              <div
-                style={{ display: "flex", alignItems: "center", minWidth: 0 }}
-              >
-                {item.type === "file" ? (
-                  <FileValueEditor
-                    item={item}
-                    handleUpdateFormData={handleUpdateFormData}
-                  />
-                ) : (
-                  <VariableTextInput
-                    className="input"
-                    style={{
-                      width: "100%",
-                      fontSize: 13,
-                      background: "transparent",
-                      borderRadius: 0,
-                      margin: "-1px 0 0 -1px",
-                    }}
-                    placeholder="Value"
-                    value={item.value}
-                    onChange={(value) =>
-                      handleUpdateFormData(item.id, { value })
-                    }
-                  />
-                )}
-              </div>
-              <VariableTextInput
-                className="input"
-                style={{
-                  width: "100%",
-                  fontSize: 13,
-                  background: "transparent",
-                  borderRadius: 0,
-                  margin: "-1px 0 0 -1px",
-                }}
-                placeholder="Description"
-                value={item.description || ""}
-                onChange={(description) =>
-                  handleUpdateFormData(item.id, { description })
-                }
-              />
-              <div
-                style={{ width: 40, display: "flex", justifyContent: "center" }}
-              >
-                <button
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--text-tertiary)",
-                  }}
-                  onClick={() => handleDeleteFormData(item.id)}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "var(--status-delete)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = "var(--text-tertiary)")
-                  }
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
+              bodyType={currentBodyType}
+              draggingId={draggingFieldId}
+              dropTarget={fieldDropTarget}
+              item={item}
+              setDraggingId={setDraggingFieldId}
+              onDelete={handleDeleteFormData}
+              onDragEnd={clearFieldDrag}
+              onDragOver={handleFieldDragOver}
+              onDrop={handleFieldDrop}
+              onUpdate={handleUpdateFormData}
+            />
           ))}
 
           <button
