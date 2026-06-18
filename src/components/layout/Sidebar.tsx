@@ -15,6 +15,7 @@ import type {
   MergeRequestTarget,
 } from "./sidebar/types";
 import { useOpenMergeRequestCount } from "./sidebar/useOpenMergeRequestCount";
+import { useSidebarDragHandlers } from "./sidebar/useSidebarDragHandlers";
 import { useSidebarHighlight } from "./sidebar/useSidebarHighlight";
 import {
   filterCollections,
@@ -42,10 +43,10 @@ export function Sidebar() {
     forkCollection,
     pullCollection,
     activeWorkspaceId,
+    moveSidebarItem,
   } = useWorkspace();
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement | null>(null);
-
   const [isAdding, setIsAdding] = useState(false);
   const [newColName, setNewColName] = useState("");
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
@@ -80,6 +81,13 @@ export function Sidebar() {
     setExpandedFolders,
   });
   const filteredCollections = filterCollections(collections, collectionSearch);
+  const dragHandlers = useSidebarDragHandlers({
+    collectionSearch,
+    moveSidebarItem,
+    setCtxMenu,
+    setExpandedCollections,
+    setExpandedFolders,
+  });
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -290,6 +298,7 @@ export function Sidebar() {
           handleRenameSubmit={handleRenameSubmit}
           handleContextMenu={handleContextMenu}
           openCollectionTab={openCollectionTab}
+          dragHandlers={dragHandlers}
         />
       </div>
 

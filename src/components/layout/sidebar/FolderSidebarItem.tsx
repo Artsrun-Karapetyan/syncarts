@@ -5,6 +5,7 @@ import {
   useWorkspace,
 } from "../../../contexts/WorkspaceContext";
 import { RenameableName } from "./RenameableName";
+import { dragRowStyle } from "./sidebarDragStyles";
 import { SidebarItem, type SidebarItemProps } from "./SidebarItem";
 import { SidebarItemMoreButton } from "./SidebarItemMoreButton";
 import { itemRowStyle } from "./sidebarItemStyles";
@@ -24,15 +25,27 @@ export function FolderSidebarItem({
   highlightedRequestId,
   highlightedFolderId,
   searchQuery = "",
+  dragHandlers,
 }: SidebarItemProps & { item: IFolder }) {
   const { openFolderTab } = useWorkspace();
   const isHighlighted = highlightedFolderId === item.id;
   const isExpanded = expandedFolders[item.id] || !!searchQuery;
+  const entity = { type: "folder" as const, collectionId, itemId: item.id };
 
   return (
     <div>
       <div
-        style={itemRowStyle(isHighlighted)}
+        draggable={dragHandlers.canDrag && renamingId !== item.id}
+        style={dragRowStyle({
+          base: itemRowStyle(isHighlighted),
+          entity,
+          draggingEntity: dragHandlers.draggingEntity,
+          dropTarget: dragHandlers.dropTarget,
+        })}
+        onDragStart={(event) => dragHandlers.onDragStart(entity, event)}
+        onDragOver={(event) => dragHandlers.onDragOver(entity, event)}
+        onDrop={(event) => dragHandlers.onDrop(entity, event)}
+        onDragEnd={dragHandlers.onDragEnd}
         onClick={() => {
           if (!expandedFolders[item.id])
             setExpandedFolders((prev) => ({ ...prev, [item.id]: true }));
@@ -134,6 +147,7 @@ export function FolderSidebarItem({
               highlightedRequestId={highlightedRequestId}
               highlightedFolderId={highlightedFolderId}
               searchQuery={searchQuery}
+              dragHandlers={dragHandlers}
             />
           ))}
         </div>

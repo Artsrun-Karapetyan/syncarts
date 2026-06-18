@@ -6,6 +6,7 @@ import {
   useWorkspace,
 } from "../../../contexts/WorkspaceContext";
 import { RenameableName } from "./RenameableName";
+import { dragRowStyle } from "./sidebarDragStyles";
 import type { SidebarItemProps } from "./SidebarItem";
 import { SidebarItemMoreButton } from "./SidebarItemMoreButton";
 import { itemRowStyle, toggleStyle } from "./sidebarItemStyles";
@@ -22,10 +23,12 @@ export function RequestSidebarItem({
   handleRenameSubmit,
   highlightedExampleId,
   highlightedRequestId,
+  dragHandlers,
 }: SidebarItemProps & { item: SavedRequest }) {
   const [isExamplesOpen, setIsExamplesOpen] = useState(false);
   const { openExampleTab, openRequestTab } = useWorkspace();
   const isHighlighted = highlightedRequestId === item.id;
+  const entity = { type: "request" as const, collectionId, itemId: item.id };
 
   useEffect(() => {
     if (item.examples?.some((example) => example.id === highlightedExampleId))
@@ -35,7 +38,17 @@ export function RequestSidebarItem({
   return (
     <>
       <div
-        style={itemRowStyle(isHighlighted)}
+        draggable={dragHandlers.canDrag && renamingId !== item.id}
+        style={dragRowStyle({
+          base: itemRowStyle(isHighlighted),
+          entity,
+          draggingEntity: dragHandlers.draggingEntity,
+          dropTarget: dragHandlers.dropTarget,
+        })}
+        onDragStart={(event) => dragHandlers.onDragStart(entity, event)}
+        onDragOver={(event) => dragHandlers.onDragOver(entity, event)}
+        onDrop={(event) => dragHandlers.onDrop(entity, event)}
+        onDragEnd={dragHandlers.onDragEnd}
         onClick={() => openRequestTab(collectionId, parentFolderId, item.id)}
         onContextMenu={(event) =>
           onContextMenu({
@@ -111,17 +124,37 @@ export function RequestSidebarItem({
         <div>
           {item.examples.map((example) => {
             const isExampleHighlighted = highlightedExampleId === example.id;
+            const exampleEntity = {
+              type: "example" as const,
+              collectionId,
+              itemId: example.id,
+              requestId: item.id,
+            };
             return (
               <div
                 key={example.id}
-                style={{
-                  ...itemRowStyle(isExampleHighlighted),
-                  fontSize: 12,
-                  color: isExampleHighlighted
-                    ? "var(--text-primary)"
-                    : "var(--text-tertiary)",
-                  paddingLeft: 28,
-                }}
+                draggable={dragHandlers.canDrag && renamingId !== example.id}
+                style={dragRowStyle({
+                  base: {
+                    ...itemRowStyle(isExampleHighlighted),
+                    fontSize: 12,
+                    color: isExampleHighlighted
+                      ? "var(--text-primary)"
+                      : "var(--text-tertiary)",
+                    paddingLeft: 28,
+                  },
+                  entity: exampleEntity,
+                  draggingEntity: dragHandlers.draggingEntity,
+                  dropTarget: dragHandlers.dropTarget,
+                })}
+                onDragStart={(event) =>
+                  dragHandlers.onDragStart(exampleEntity, event)
+                }
+                onDragOver={(event) =>
+                  dragHandlers.onDragOver(exampleEntity, event)
+                }
+                onDrop={(event) => dragHandlers.onDrop(exampleEntity, event)}
+                onDragEnd={dragHandlers.onDragEnd}
                 onClick={() => openExampleTab(collectionId, example.id)}
                 onContextMenu={(e) => {
                   e.preventDefault();

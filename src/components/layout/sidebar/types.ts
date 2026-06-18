@@ -1,4 +1,10 @@
 import type { RefObject } from "react";
+import type { DragEvent } from "react";
+
+import type {
+  SidebarMoveEntity,
+  SidebarMoveTarget,
+} from "../../../contexts/WorkspaceContext";
 
 export type SidebarItemType = "collection" | "folder" | "request" | "example";
 
@@ -47,3 +53,19 @@ export type SidebarItemContextMenuHandler = (
 ) => void;
 
 export type MenuRef = RefObject<HTMLDivElement | null>;
+
+export interface SidebarDragHandlers {
+  canDrag: boolean;
+  draggingEntity: SidebarMoveEntity | null;
+  dropTarget: SidebarMoveTarget | null;
+  onDragStart: (
+    entity: SidebarMoveEntity,
+    event: DragEvent<HTMLElement>,
+  ) => void;
+  onDragOver: (
+    target: SidebarMoveEntity,
+    event: DragEvent<HTMLElement>,
+  ) => void;
+  onDrop: (target: SidebarMoveEntity, event: DragEvent<HTMLElement>) => void;
+  onDragEnd: () => void;
+}

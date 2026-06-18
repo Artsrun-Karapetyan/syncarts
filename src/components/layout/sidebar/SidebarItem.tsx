@@ -6,7 +6,10 @@ import type {
 } from "../../../contexts/WorkspaceContext";
 import { FolderSidebarItem } from "./FolderSidebarItem";
 import { RequestSidebarItem } from "./RequestSidebarItem";
-import type { SidebarItemContextMenuHandler } from "./types";
+import type {
+  SidebarDragHandlers,
+  SidebarItemContextMenuHandler,
+} from "./types";
 
 export interface SidebarItemProps {
   item: IFolder | SavedRequest;
@@ -24,6 +27,7 @@ export interface SidebarItemProps {
   highlightedRequestId: string | null;
   highlightedFolderId: string | null;
   searchQuery?: string;
+  dragHandlers: SidebarDragHandlers;
 }
 
 export function SidebarItem(props: SidebarItemProps) {

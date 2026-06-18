@@ -209,6 +209,24 @@ export interface WorkspaceMember {
   };
 }
 
+export type SidebarMoveEntityType =
+  | "collection"
+  | "folder"
+  | "request"
+  | "example";
+export type SidebarDropPosition = "before" | "after" | "inside";
+
+export interface SidebarMoveEntity {
+  type: SidebarMoveEntityType;
+  collectionId: string;
+  itemId?: string;
+  requestId?: string;
+}
+
+export interface SidebarMoveTarget extends SidebarMoveEntity {
+  position: SidebarDropPosition;
+}
+
 export interface SavedRequestLocation {
   collectionId: string;
   folderId: string | null;
@@ -302,6 +320,10 @@ export interface WorkspaceContextState
   isMutating: boolean;
   error: unknown;
   renameItem: (collectionId: string, itemId: string, newName: string) => void;
+  moveSidebarItem: (
+    source: SidebarMoveEntity,
+    target: SidebarMoveTarget,
+  ) => void;
   addExample: (
     collectionId: string,
     requestId: string,

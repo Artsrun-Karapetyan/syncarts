@@ -10,6 +10,7 @@ import type { Collection } from "../../../contexts/WorkspaceContext";
 import { CollectionName } from "./CollectionName";
 import { HoverIcon } from "./HoverIcon";
 import type { SidebarCollectionsProps } from "./SidebarCollections";
+import { dragRowStyle } from "./sidebarDragStyles";
 import { SidebarItem } from "./SidebarItem";
 import { countItems } from "./utils";
 
@@ -18,27 +19,40 @@ export function CollectionRow({
   ...props
 }: SidebarCollectionsProps & { collection: Collection }) {
   const expanded = props.expandedCollections[collection.id];
+  const entity = { type: "collection" as const, collectionId: collection.id };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", marginBottom: 8 }}>
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          fontSize: 13,
-          color: "var(--text-primary)",
-          fontWeight: 600,
-          padding: "6px 10px",
-          background: "var(--bg-tertiary)",
-          boxShadow:
-            props.highlightedCollectionId === collection.id
-              ? "inset 0 0 0 1px var(--accent-primary)"
-              : "none",
-          borderRadius: 6,
-          cursor: "pointer",
-          transition: "all var(--transition-fast)",
-        }}
+        draggable={
+          props.dragHandlers.canDrag && props.renamingId !== collection.id
+        }
+        style={dragRowStyle({
+          base: {
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 13,
+            color: "var(--text-primary)",
+            fontWeight: 600,
+            padding: "6px 10px",
+            background: "var(--bg-tertiary)",
+            boxShadow:
+              props.highlightedCollectionId === collection.id
+                ? "inset 0 0 0 1px var(--accent-primary)"
+                : "none",
+            borderRadius: 6,
+            cursor: "pointer",
+            transition: "all var(--transition-fast)",
+          },
+          entity,
+          draggingEntity: props.dragHandlers.draggingEntity,
+          dropTarget: props.dragHandlers.dropTarget,
+        })}
+        onDragStart={(event) => props.dragHandlers.onDragStart(entity, event)}
+        onDragOver={(event) => props.dragHandlers.onDragOver(entity, event)}
+        onDrop={(event) => props.dragHandlers.onDrop(entity, event)}
+        onDragEnd={props.dragHandlers.onDragEnd}
         onClick={() => {
           if (!expanded)
             props.setExpandedCollections((prev) => ({
@@ -170,6 +184,7 @@ export function CollectionRow({
               highlightedRequestId={props.highlightedRequestId}
               highlightedFolderId={props.highlightedFolderId}
               searchQuery={props.collectionSearch}
+              dragHandlers={props.dragHandlers}
             />
           ))}
         </div>

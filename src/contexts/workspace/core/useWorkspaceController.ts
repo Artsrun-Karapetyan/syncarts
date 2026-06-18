@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { api } from "../../../lib/api";
 import { useCollectionActions } from "../collections/useCollectionActions";
+import { useCollectionMoveActions } from "../collections/useCollectionMoveActions";
 import { useExampleActions } from "../collections/useExampleActions";
 import { useEnvironmentActions } from "../environment/useEnvironmentActions";
 import { useRequestSender } from "../requests/useRequestSender";
@@ -192,6 +193,10 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     updateWorkspaces,
     updateWorkspacesLocal,
   });
+  const collectionMoveActions = useCollectionMoveActions({
+    activeWorkspaceId,
+    updateWorkspaces,
+  });
 
   const exampleActions = useExampleActions({
     activeTab,
@@ -378,6 +383,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     ...tabActions,
     collections,
     ...collectionActions,
+    ...collectionMoveActions,
     ...exampleActions,
     createBlankRequestInFolder,
     ...requestSender,

@@ -5,7 +5,11 @@ import { CollectionRow } from "./CollectionRow";
 import { CollectionSearchInput } from "./CollectionSearchInput";
 import { EmptyCollections } from "./EmptyCollections";
 import { NewCollectionInput } from "./NewCollectionInput";
-import type { ContextMenuRequest, DeleteTarget } from "./types";
+import type {
+  ContextMenuRequest,
+  DeleteTarget,
+  SidebarDragHandlers,
+} from "./types";
 
 export interface SidebarCollectionsProps {
   collections: Collection[];
@@ -33,6 +37,7 @@ export interface SidebarCollectionsProps {
   handleRenameSubmit: () => void;
   handleContextMenu: (request: ContextMenuRequest) => void;
   openCollectionTab: (collectionId: string) => void;
+  dragHandlers: SidebarDragHandlers;
 }
 
 export function SidebarCollections(props: SidebarCollectionsProps) {
