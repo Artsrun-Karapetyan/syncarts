@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+::highlight(search-results) {
+  background-color: yellow;
+  color: black;
+}
+</style>
+</head>
+<body>
+<p id="p">Hello world</p>
+<script>
+const p = document.getElementById("p");
+const range = new Range();
+range.setStart(p.firstChild, 0);
+range.setEnd(p.firstChild, 5);
+const highlight = new Highlight(range);
+CSS.highlights.set("search-results", highlight);
+console.log("Highlight API:", typeof CSS.highlights !== "undefined");
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import "./ResponseViewer.css";
 import "../request/tabs/RequestTabs.css";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
 import { ResponseBodyContent } from "./body/ResponseBodyContent";
@@ -30,6 +30,7 @@ export function ResponseViewer() {
   const [jsonCollapsed, setJsonCollapsed] = useState<number | false>(false);
   const [wrapLines, setWrapLines] = useState(false);
   const [jsonTheme, setJsonTheme] = useState<ResponseJsonThemeId>("syncarts");
+  const bodyContainerRef = useRef<HTMLDivElement>(null);
 
   const contentType = (
     response?.headers?.["content-type"] ||
@@ -144,11 +145,11 @@ export function ResponseViewer() {
           >
             {!isBinary && (
               <ResponseBodyToolbar
+                bodyContainerRef={bodyContainerRef}
                 bodyFormat={bodyFormat}
                 effectiveLanguage={effectiveLanguage}
                 hasJsonBody={!!parsedBody && effectiveLanguage === "json"}
                 jsonCollapsed={jsonCollapsed}
-                searchText={response.body || ""}
                 jsonTheme={jsonTheme}
                 wrapLines={wrapLines}
                 onBodyFormatChange={setBodyFormat}
@@ -158,18 +159,28 @@ export function ResponseViewer() {
                 onWrapLinesChange={setWrapLines}
               />
             )}
-            <ResponseBodyContent
-              bodyFormat={bodyFormat}
-              effectiveLanguage={effectiveLanguage}
-              isBinary={isBinary}
-              isImage={isImage}
-              jsonCollapsed={jsonCollapsed}
-              jsonTheme={jsonTheme}
-              parsedBody={parsedBody}
-              response={response}
-              wrapLines={wrapLines}
-              onJsonClick={handleJsonClick}
-            />
+            <div
+              ref={bodyContainerRef}
+              style={{
+                flex: 1,
+                minHeight: 0,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <ResponseBodyContent
+                bodyFormat={bodyFormat}
+                effectiveLanguage={effectiveLanguage}
+                isBinary={isBinary}
+                isImage={isImage}
+                jsonCollapsed={jsonCollapsed}
+                jsonTheme={jsonTheme}
+                parsedBody={parsedBody}
+                response={response}
+                wrapLines={wrapLines}
+                onJsonClick={handleJsonClick}
+              />
+            </div>
           </div>
         )}
 

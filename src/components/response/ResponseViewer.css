@@ -65,6 +65,10 @@
   align-items: center;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-primary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
 }
 
 .response-language-icon {
@@ -285,4 +289,8 @@
   white-space: nowrap;
   pointer-events: none;
   box-shadow: var(--shadow-lg);
+}
+::highlight(search-results) {
+  background-color: var(--accent-primary, #6366f1);
+  color: #ffffff;
 }

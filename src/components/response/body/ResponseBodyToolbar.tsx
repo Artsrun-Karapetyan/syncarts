@@ -8,7 +8,7 @@ import {
   Search,
   WrapText,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { type RefObject, useEffect, useState } from "react";
 
 import { Select } from "../../ui/Select";
 import type { ResponseJsonThemeId } from "../shared/responseJsonThemes";
@@ -16,18 +16,17 @@ import { responseJsonThemeOptions } from "../shared/responseJsonThemes";
 import type { ResponseLanguage } from "../shared/responseLanguage";
 import type { BodyFormat } from "../shared/responseTypes";
 import {
-  countMatches,
+  findNextInContainer,
   formatButtonClass,
-  getNextMatchIndex,
   toolButtonClass,
 } from "./responseBodyToolbarHelpers";
 
 interface ResponseBodyToolbarProps {
+  bodyContainerRef: RefObject<HTMLDivElement | null>;
   bodyFormat: BodyFormat;
   effectiveLanguage: ResponseLanguage;
   hasJsonBody: boolean;
   jsonCollapsed: number | false;
-  searchText: string;
   wrapLines: boolean;
   jsonTheme: ResponseJsonThemeId;
   onBodyFormatChange: (format: BodyFormat) => void;
@@ -43,11 +42,11 @@ interface ResponseBodyToolbarProps {
 
 export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
   const {
+    bodyContainerRef,
     bodyFormat,
     effectiveLanguage,
     hasJsonBody,
     jsonCollapsed,
-    searchText,
     wrapLines,
     jsonTheme,
     onBodyFormatChange,
@@ -58,29 +57,24 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
   } = props;
 
   const [searchQuery, setSearchQuery] = useState("");
-  const matchCount = useMemo(
-    () => countMatches(searchText, searchQuery),
-    [searchText, searchQuery],
-  );
   const [currentMatch, setCurrentMatch] = useState(0);
+  const [matchInfo, setMatchInfo] = useState({ count: 0, current: 0 });
 
   useEffect(() => {
     setCurrentMatch(0);
-  }, [matchCount, searchQuery]);
+    setMatchInfo({ count: 0, current: 0 });
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentMatch(0);
+  }, [matchInfo.count]);
 
   const handleSearch = (forward: boolean) => {
-    if (!searchQuery || matchCount === 0) return;
-    // window.find(aString, aCaseSensitive, aBackwards, aWrapAround)
-    (window as any).find(
-      searchQuery,
-      false,
-      !forward,
-      true,
-      false,
-      false,
-      false,
-    );
-    setCurrentMatch((prev) => getNextMatchIndex(prev, matchCount, forward));
+    if (!searchQuery || !bodyContainerRef.current) return;
+    const container = bodyContainerRef.current;
+    const result = findNextInContainer(container, searchQuery, currentMatch, forward);
+    setMatchInfo({ count: result.totalMatches, current: result.matchIndex });
+    setCurrentMatch(result.matchIndex);
   };
 
   return (
@@ -174,25 +168,25 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
                 minWidth: 38,
                 textAlign: "right",
                 fontSize: 11,
-                color: matchCount
+                color: matchInfo.count
                   ? "var(--text-secondary)"
                   : "var(--status-delete)",
                 fontFamily: "var(--font-mono)",
               }}
             >
-              {currentMatch}/{matchCount}
+              {matchInfo.current}/{matchInfo.count}
             </span>
           )}
           <button
-            disabled={!matchCount}
+            disabled={!matchInfo.count}
             onClick={() => handleSearch(false)}
             style={{
               background: "transparent",
               border: "none",
               padding: 2,
-              cursor: matchCount ? "pointer" : "not-allowed",
+              cursor: matchInfo.count ? "pointer" : "not-allowed",
               color: "var(--text-tertiary)",
-              opacity: matchCount ? 1 : 0.4,
+              opacity: matchInfo.count ? 1 : 0.4,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -202,15 +196,15 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
             <ChevronUp size={12} />
           </button>
           <button
-            disabled={!matchCount}
+            disabled={!matchInfo.count}
             onClick={() => handleSearch(true)}
             style={{
               background: "transparent",
               border: "none",
               padding: 2,
-              cursor: matchCount ? "pointer" : "not-allowed",
+              cursor: matchInfo.count ? "pointer" : "not-allowed",
               color: "var(--text-tertiary)",
-              opacity: matchCount ? 1 : 0.4,
+              opacity: matchInfo.count ? 1 : 0.4,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
