@@ -82,12 +82,18 @@ describe("collectionItemHelpers", () => {
         { key: "Authorization", value: "Bearer token123" },
       ],
       bodyType: "raw" as const,
+      description: "Creates a user",
       body: '{"name": "John"}',
       formData: undefined,
       queryParams: [{ key: "page", value: "1", enabled: true }],
-      pathVariables: [{ id: "v1", key: "version", value: "v2" }],
+      queryParamDescriptions: { page: "Page number" },
+      pathVariables: [
+        { id: "v1", key: "version", value: "v2", description: "API version" },
+      ],
       authType: "bearer" as const,
       bearerToken: "token123",
+      preRequestScript: "console.log('before')",
+      testScript: "pm.test('created', () => {})",
       response: {
         status: 201,
         status_text: "Created",
@@ -115,12 +121,18 @@ describe("collectionItemHelpers", () => {
         { key: "Authorization", value: "Bearer token123" },
       ],
       bodyType: "raw",
+      description: "Creates a user",
       body: '{"name": "John"}',
       formData: undefined,
       queryParams: [{ key: "page", value: "1", enabled: true }],
-      pathVariables: [{ id: "v1", key: "version", value: "v2" }],
+      queryParamDescriptions: { page: "Page number" },
+      pathVariables: [
+        { id: "v1", key: "version", value: "v2", description: "API version" },
+      ],
       authType: "bearer",
       bearerToken: "token123",
+      preRequestScript: "console.log('before')",
+      testScript: "pm.test('created', () => {})",
     });
     expect(example!.code).toBe(201);
     expect(example!.body).toBe('{"id": 1}');
@@ -207,9 +219,13 @@ describe("collectionItemHelpers", () => {
         },
       ],
       queryParams: undefined,
+      queryParamDescriptions: undefined,
       pathVariables: undefined,
       authType: undefined,
       bearerToken: undefined,
+      description: undefined,
+      preRequestScript: undefined,
+      testScript: undefined,
     });
   });
 });
