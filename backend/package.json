@@ -12,7 +12,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
-    "deploy": "prisma migrate resolve --rolled-back 20260618085142_fix || true; prisma migrate deploy",
+    "deploy": "prisma migrate reset --force",
     "reset": "prisma migrate reset --force",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
