@@ -17,6 +17,9 @@ interface VariableTextInputProps {
   style?: CSSProperties;
   value: string;
   onChange: (value: string) => void;
+  onPaste?: (event: React.ClipboardEvent<HTMLInputElement>) => void;
+  selectionId?: string;
+  isSelected?: boolean;
 }
 
 export function VariableTextInput(props: VariableTextInputProps) {
@@ -27,6 +30,9 @@ export function VariableTextInput(props: VariableTextInputProps) {
     style,
     value,
     onChange,
+    onPaste,
+    selectionId,
+    isSelected,
   } = props;
   const {
     activeTab,
@@ -39,14 +45,19 @@ export function VariableTextInput(props: VariableTextInputProps) {
   const autocomplete = useVariableAutocomplete({ value, onChange });
   const hover = useVariableHover(overlayRef);
   const [isChainingOpen, setIsChainingOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <div
+      data-selection-id={selectionId}
       style={{
         position: "relative",
         width: style?.width || "100%",
         flex: style?.flex,
         display: "flex",
+        background: isSelected ? "rgba(99, 102, 241, 0.15)" : "transparent",
+        transition: "background 0.15s ease",
       }}
     >
       <div
@@ -56,13 +67,15 @@ export function VariableTextInput(props: VariableTextInputProps) {
           ...style,
           position: "absolute",
           inset: 0,
-          pointerEvents: "none",
           color: value ? "var(--text-primary)" : "var(--text-tertiary)",
           overflow: "hidden",
           whiteSpace: "pre",
           zIndex: 1,
+          userSelect: isFocused ? "auto" : "none",
+          background: "transparent",
         }}
         aria-hidden="true"
+        onClick={() => inputRef.current?.focus()}
       >
         {value
           ? renderVariableHighlight({
@@ -76,6 +89,7 @@ export function VariableTextInput(props: VariableTextInputProps) {
           : placeholder}
       </div>
       <input
+        ref={inputRef}
         className={`${className} variable-input-proxy`}
         style={{
           ...style,
@@ -83,15 +97,23 @@ export function VariableTextInput(props: VariableTextInputProps) {
           color: "transparent",
           caretColor: "var(--text-primary)",
           background: "transparent",
+          pointerEvents: isFocused ? "auto" : "none",
           zIndex: 2,
         }}
         placeholder=""
         value={value}
         disabled={disabled}
-        onBlur={autocomplete.handleBlur}
+        onPaste={onPaste}
+        onBlur={() => {
+          setIsFocused(false);
+          autocomplete.handleBlur();
+        }}
         onChange={autocomplete.handleChange}
         onClick={autocomplete.handleClick}
-        onFocus={autocomplete.handleFocus}
+        onFocus={(e) => {
+          setIsFocused(true);
+          autocomplete.handleFocus(e);
+        }}
         onMouseMove={hover.handleMouseMove}
         onMouseLeave={hover.handleMouseLeave}
         onKeyDown={(event) => {

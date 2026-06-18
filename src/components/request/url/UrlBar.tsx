@@ -97,8 +97,6 @@ export function UrlBar() {
     }
   }, [activeTab?.id]);
 
-
-
   const renderPathVariables = (part: string, baseKey: string) => {
     const nodes: React.ReactNode[] = [];
     let lastIndex = 0;

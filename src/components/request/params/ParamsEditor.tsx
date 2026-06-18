@@ -8,6 +8,7 @@ import {
   useWorkspace,
 } from "../../../contexts/WorkspaceContext";
 import { syncPathVariablesWithUrl } from "../../../utils/pathVariables";
+import { SelectionArea } from "../../ui/SelectionArea";
 import {
   getRowDropPosition,
   readRowDragData,
@@ -31,6 +32,7 @@ export function ParamsEditor() {
   const [paramDropTarget, setParamDropTarget] = useState<RowDropTarget | null>(
     null,
   );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!activeTab) return;
@@ -163,6 +165,43 @@ export function ParamsEditor() {
     clearParamDrag();
   };
 
+  const handlePaste = (
+    index: number,
+    event: React.ClipboardEvent<HTMLInputElement>,
+  ) => {
+    const text = event.clipboardData.getData("text");
+    if (!text || (!text.includes("\t") && !text.includes("\n"))) return;
+
+    event.preventDefault();
+
+    const pastedRows = text.split("\n").filter((r) => r.trim());
+    const newParams = [...params];
+
+    pastedRows.forEach((row, i) => {
+      let cols = row.split("\t");
+      // If copied from our app, the first column is the checkbox (empty text)
+      if (cols.length > 3 && cols[0].trim() === "") {
+        cols = cols.slice(1);
+      }
+
+      const param = {
+        key: cols[0] || "",
+        value: cols[1] || "",
+        description: cols[2] || "",
+        enabled: true,
+      };
+
+      if (i === 0) {
+        newParams[index] = { ...newParams[index], ...param };
+      } else {
+        newParams.splice(index + i, 0, param);
+        rowKeysRef.current.splice(index + i, 0, crypto.randomUUID());
+      }
+    });
+
+    syncUrl(newParams);
+  };
+
   const updatePathVariable = (id: string, data: Partial<PathVariable>) => {
     updateActiveTab({
       pathVariables: pathVariables.map((variable) =>
@@ -171,73 +210,100 @@ export function ParamsEditor() {
     });
   };
 
+  const handleCopy = (ids: Set<string>) => {
+    const selectedParams = params.filter(
+      (_, i) =>
+        ids.has(`${rowKeys[i]}-key`) ||
+        ids.has(`${rowKeys[i]}-value`) ||
+        ids.has(`${rowKeys[i]}-description`),
+    );
+    if (selectedParams.length === 0) return;
+
+    const tsv = selectedParams
+      .map((p) => {
+        const id = rowKeys[params.indexOf(p)];
+        const parts = [];
+        if (ids.has(`${id}-key`)) parts.push(p.key || "");
+        if (ids.has(`${id}-value`)) parts.push(p.value || "");
+        if (ids.has(`${id}-description`)) parts.push(p.description || "");
+        return parts.join("\t");
+      })
+      .join("\n");
+
+    navigator.clipboard.writeText(tsv);
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 0,
-          paddingTop: 1,
-          paddingLeft: 1,
-        }}
-      >
-        <ParamSectionTitle title="Query Params" />
-        {params.map((param, idx) => (
-          <QueryParamRow
-            key={rowKeys[idx]}
-            active={!!activeTab}
-            dragId={rowKeys[idx]}
-            draggingId={draggingParamKey}
-            dropTarget={paramDropTarget}
-            index={idx}
-            param={param}
-            setDraggingId={setDraggingParamKey}
-            onDragEnd={clearParamDrag}
-            onDragOver={handleParamDragOver}
-            onDrop={handleParamDrop}
-            onRemove={removeParam}
-            onUpdate={updateParam}
-          />
-        ))}
-
-        <button
-          type="button"
+      <SelectionArea onSelectionChange={setSelectedIds} onCopy={handleCopy}>
+        <div
           style={{
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            padding: "8px",
-            border: "1px dashed var(--border-color)",
-            borderRadius: "var(--radius-sm)",
-            color: "var(--text-secondary)",
-            background: "transparent",
-            cursor: activeTab ? "pointer" : "not-allowed",
-            opacity: activeTab ? 1 : 0.5,
-            fontSize: 13,
-            fontWeight: 500,
-            transition: "all var(--transition-fast)",
-          }}
-          onClick={() => {
-            if (activeTab) addParam();
-          }}
-          onMouseEnter={(e) => {
-            if (!activeTab) return;
-            e.currentTarget.style.borderColor = "var(--border-highlight)";
-            e.currentTarget.style.color = "var(--text-primary)";
-            e.currentTarget.style.background = "rgba(255,255,255,0.02)";
-          }}
-          onMouseLeave={(e) => {
-            if (!activeTab) return;
-            e.currentTarget.style.borderColor = "var(--border-color)";
-            e.currentTarget.style.color = "var(--text-secondary)";
-            e.currentTarget.style.background = "transparent";
+            flexDirection: "column",
+            gap: 0,
+            paddingTop: 1,
+            paddingLeft: 1,
           }}
         >
-          <Plus size={14} /> Add Param
-        </button>
-      </div>
+          <ParamSectionTitle title="Query Params" />
+          {params.map((param, idx) => (
+            <QueryParamRow
+              key={rowKeys[idx]}
+              active={!!activeTab}
+              dragId={rowKeys[idx]}
+              draggingId={draggingParamKey}
+              dropTarget={paramDropTarget}
+              index={idx}
+              param={param}
+              selectedIds={selectedIds}
+              setDraggingId={setDraggingParamKey}
+              onDragEnd={clearParamDrag}
+              onDragOver={handleParamDragOver}
+              onDrop={handleParamDrop}
+              onRemove={removeParam}
+              onUpdate={updateParam}
+              onPaste={handlePaste}
+            />
+          ))}
+
+          <button
+            type="button"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              padding: "8px",
+              border: "1px dashed var(--border-color)",
+              borderRadius: "var(--radius-sm)",
+              color: "var(--text-secondary)",
+              background: "transparent",
+              cursor: activeTab ? "pointer" : "not-allowed",
+              opacity: activeTab ? 1 : 0.5,
+              fontSize: 13,
+              fontWeight: 500,
+              transition: "all var(--transition-fast)",
+            }}
+            onClick={() => {
+              if (activeTab) addParam();
+            }}
+            onMouseEnter={(e) => {
+              if (!activeTab) return;
+              e.currentTarget.style.borderColor = "var(--border-highlight)";
+              e.currentTarget.style.color = "var(--text-primary)";
+              e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+            }}
+            onMouseLeave={(e) => {
+              if (!activeTab) return;
+              e.currentTarget.style.borderColor = "var(--border-color)";
+              e.currentTarget.style.color = "var(--text-secondary)";
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            <Plus size={14} /> Add Param
+          </button>
+        </div>
+      </SelectionArea>
 
       {pathVariables.length > 0 && (
         <div

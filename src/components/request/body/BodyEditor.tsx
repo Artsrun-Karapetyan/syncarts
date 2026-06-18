@@ -7,6 +7,7 @@ import {
   FormDataItem,
   useWorkspace,
 } from "../../../contexts/WorkspaceContext";
+import { SelectionArea } from "../../ui/SelectionArea";
 import {
   getRowDropPosition,
   readRowDragData,
@@ -22,6 +23,7 @@ export function BodyEditor() {
   const [fieldDropTarget, setFieldDropTarget] = useState<RowDropTarget | null>(
     null,
   );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const currentBodyType = activeTab?.bodyType || "raw";
 
@@ -95,6 +97,68 @@ export function BodyEditor() {
       ),
     });
     clearFieldDrag();
+  };
+
+  const handlePaste = (
+    index: number,
+    event: React.ClipboardEvent<HTMLInputElement>,
+  ) => {
+    const text = event.clipboardData.getData("text");
+    if (!text || (!text.includes("\t") && !text.includes("\n"))) return;
+
+    event.preventDefault();
+
+    const pastedRows = text.split("\n").filter((r) => r.trim());
+    const formData = activeTab?.formData || [];
+    const newData = [...formData];
+
+    pastedRows.forEach((row, i) => {
+      let cols = row.split("\t");
+      if (cols.length > 3 && cols[0].trim() === "") {
+        cols = cols.slice(1);
+      }
+
+      const item: FormDataItem = {
+        id: crypto.randomUUID(),
+        key: cols[0] || "",
+        value: cols[1] || "",
+        description: cols[2] || "",
+        enabled: true,
+        type: "text",
+      };
+
+      if (i === 0 && newData[index]) {
+        newData[index] = { ...newData[index], ...item, id: newData[index].id };
+      } else {
+        newData.splice(index + i, 0, item);
+      }
+    });
+
+    updateActiveTab({ formData: newData });
+  };
+
+  const handleCopy = (ids: Set<string>) => {
+    const formData = activeTab?.formData || [];
+    const selectedFields = formData.filter(
+      (item) =>
+        ids.has(`${item.id}-key`) ||
+        ids.has(`${item.id}-value`) ||
+        ids.has(`${item.id}-description`),
+    );
+    if (selectedFields.length === 0) return;
+
+    const tsv = selectedFields
+      .map((f) => {
+        const parts = [];
+        if (ids.has(`${f.id}-key`)) parts.push(f.key || "");
+        if (ids.has(`${f.id}-value`))
+          parts.push(f.type === "file" ? "[File]" : f.value || "");
+        if (ids.has(`${f.id}-description`)) parts.push(f.description || "");
+        return parts.join("\t");
+      })
+      .join("\n");
+
+    navigator.clipboard.writeText(tsv);
   };
 
   return (
@@ -192,41 +256,46 @@ export function BodyEditor() {
 
       {(currentBodyType === "form-data" ||
         currentBodyType === "x-www-form-urlencoded") && (
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            overflowY: "auto",
-            paddingTop: 1,
-            paddingLeft: 1,
-          }}
-        >
-          {(activeTab?.formData || []).map((item) => (
-            <BodyFieldRow
-              key={item.id}
-              bodyType={currentBodyType}
-              draggingId={draggingFieldId}
-              dropTarget={fieldDropTarget}
-              item={item}
-              setDraggingId={setDraggingFieldId}
-              onDelete={handleDeleteFormData}
-              onDragEnd={clearFieldDrag}
-              onDragOver={handleFieldDragOver}
-              onDrop={handleFieldDrop}
-              onUpdate={handleUpdateFormData}
-            />
-          ))}
-
-          <button
-            className="btn"
-            style={{ alignSelf: "flex-start", marginTop: 8 }}
-            onClick={handleAddFormData}
+        <SelectionArea onSelectionChange={setSelectedIds} onCopy={handleCopy}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              overflowY: "auto",
+              paddingTop: 1,
+              paddingLeft: 1,
+            }}
           >
-            <Plus size={14} />
-            Add Field
-          </button>
-        </div>
+            {(activeTab?.formData || []).map((item, idx) => (
+              <BodyFieldRow
+                key={item.id}
+                index={idx}
+                bodyType={currentBodyType}
+                draggingId={draggingFieldId}
+                dropTarget={fieldDropTarget}
+                item={item}
+                selectedIds={selectedIds}
+                setDraggingId={setDraggingFieldId}
+                onDelete={handleDeleteFormData}
+                onDragEnd={clearFieldDrag}
+                onDragOver={handleFieldDragOver}
+                onDrop={handleFieldDrop}
+                onUpdate={handleUpdateFormData}
+                onPaste={handlePaste}
+              />
+            ))}
+
+            <button
+              className="btn"
+              style={{ alignSelf: "flex-start", marginTop: 8 }}
+              onClick={handleAddFormData}
+            >
+              <Plus size={14} />
+              Add Field
+            </button>
+          </div>
+        </SelectionArea>
       )}
     </div>
   );

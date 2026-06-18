@@ -22,11 +22,17 @@ interface BodyFieldRowProps {
   draggingId: string | null;
   dropTarget: RowDropTarget | null;
   item: FormDataItem;
+  selectedIds?: Set<string>;
   onDelete: (id: string) => void;
   onDragEnd: () => void;
   onDragOver: (id: string, event: DragEvent<HTMLElement>) => void;
   onDrop: (id: string, event: DragEvent<HTMLElement>) => void;
   onUpdate: (id: string, updates: Partial<FormDataItem>) => void;
+  onPaste?: (
+    index: number,
+    event: React.ClipboardEvent<HTMLInputElement>,
+  ) => void;
+  index: number;
   setDraggingId: (id: string | null) => void;
 }
 
@@ -60,6 +66,7 @@ export function BodyFieldRow(props: BodyFieldRowProps) {
           isDropTarget && props.dropTarget
             ? rowDropShadow(props.dropTarget.position)
             : "none",
+        transition: "background 0.15s ease",
       }}
       onDragOver={(event) => props.onDragOver(props.item.id, event)}
       onDrop={(event) => props.onDrop(props.item.id, event)}
@@ -121,6 +128,9 @@ export function BodyFieldRow(props: BodyFieldRowProps) {
           placeholder="Key"
           value={props.item.key}
           onChange={(value) => props.onUpdate(props.item.id, { key: value })}
+          onPaste={(e) => props.onPaste?.(props.index, e)}
+          selectionId={`${props.item.id}-key`}
+          isSelected={props.selectedIds?.has(`${props.item.id}-key`)}
         />
         {props.bodyType === "form-data" && (
           <div
@@ -162,6 +172,9 @@ export function BodyFieldRow(props: BodyFieldRowProps) {
             placeholder="Value"
             value={props.item.value}
             onChange={(value) => props.onUpdate(props.item.id, { value })}
+            onPaste={(e) => props.onPaste?.(props.index, e)}
+            selectionId={`${props.item.id}-value`}
+            isSelected={props.selectedIds?.has(`${props.item.id}-value`)}
           />
         )}
       </div>
@@ -173,6 +186,9 @@ export function BodyFieldRow(props: BodyFieldRowProps) {
         onChange={(description) =>
           props.onUpdate(props.item.id, { description })
         }
+        onPaste={(e) => props.onPaste?.(props.index, e)}
+        selectionId={`${props.item.id}-description`}
+        isSelected={props.selectedIds?.has(`${props.item.id}-description`)}
       />
       <div style={{ width: 40, display: "flex", justifyContent: "center" }}>
         <button

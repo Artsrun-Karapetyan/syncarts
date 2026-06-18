@@ -19,11 +19,16 @@ interface QueryParamRowProps {
   dropTarget: RowDropTarget | null;
   index: number;
   param: QueryParamItem;
+  selectedIds?: Set<string>;
   onDragEnd: () => void;
   onDragOver: (id: string, event: DragEvent<HTMLElement>) => void;
   onDrop: (id: string, event: DragEvent<HTMLElement>) => void;
   onRemove: (index: number) => void;
   onUpdate: (index: number, updates: Partial<QueryParamItem>) => void;
+  onPaste?: (
+    index: number,
+    event: React.ClipboardEvent<HTMLInputElement>,
+  ) => void;
   setDraggingId: (id: string | null) => void;
 }
 
@@ -56,6 +61,7 @@ export function QueryParamRow(props: QueryParamRowProps) {
           isDropTarget && props.dropTarget
             ? rowDropShadow(props.dropTarget.position)
             : "none",
+        transition: "background 0.15s ease",
       }}
       onDragOver={(event) => props.onDragOver(props.dragId, event)}
       onDrop={(event) => props.onDrop(props.dragId, event)}
@@ -123,6 +129,9 @@ export function QueryParamRow(props: QueryParamRowProps) {
         placeholder="Key"
         value={props.param.key}
         onChange={(value) => props.onUpdate(props.index, { key: value })}
+        onPaste={(e) => props.onPaste?.(props.index, e)}
+        selectionId={`${props.dragId}-key`}
+        isSelected={props.selectedIds?.has(`${props.dragId}-key`)}
         disabled={!props.active}
       />
       <VariableTextInput
@@ -131,6 +140,9 @@ export function QueryParamRow(props: QueryParamRowProps) {
         placeholder="Value"
         value={props.param.value}
         onChange={(value) => props.onUpdate(props.index, { value })}
+        onPaste={(e) => props.onPaste?.(props.index, e)}
+        selectionId={`${props.dragId}-value`}
+        isSelected={props.selectedIds?.has(`${props.dragId}-value`)}
         disabled={!props.active}
       />
       <VariableTextInput
@@ -141,6 +153,9 @@ export function QueryParamRow(props: QueryParamRowProps) {
         onChange={(value) =>
           props.onUpdate(props.index, { description: value })
         }
+        onPaste={(e) => props.onPaste?.(props.index, e)}
+        selectionId={`${props.dragId}-description`}
+        isSelected={props.selectedIds?.has(`${props.dragId}-description`)}
         disabled={!props.active}
       />
       <div style={{ width: 40, display: "flex", justifyContent: "center" }}>
