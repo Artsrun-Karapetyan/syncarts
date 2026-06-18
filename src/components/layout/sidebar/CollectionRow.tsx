@@ -3,7 +3,6 @@ import {
   ChevronRight,
   Folder,
   MoreHorizontal,
-  Trash2,
 } from "lucide-react";
 
 import type { Collection } from "../../../contexts/WorkspaceContext";
@@ -24,6 +23,7 @@ export function CollectionRow({
   return (
     <div style={{ display: "flex", flexDirection: "column", marginBottom: 8 }}>
       <div
+        className="sidebar-row"
         draggable={
           props.dragHandlers.canDrag && props.renamingId !== collection.id
         }
@@ -123,15 +123,7 @@ export function CollectionRow({
         >
           {countItems(collection.items)}
         </span>
-        <HoverIcon
-          color="var(--status-delete)"
-          title="Delete Collection"
-          onClick={() =>
-            props.setDeleteTarget({ id: collection.id, type: "collection" })
-          }
-        >
-          <Trash2 size={13} />
-        </HoverIcon>
+
         <HoverIcon
           onClick={(event) =>
             props.handleContextMenu({

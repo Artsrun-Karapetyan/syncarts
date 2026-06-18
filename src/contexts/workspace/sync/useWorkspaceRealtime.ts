@@ -82,12 +82,20 @@ export function useWorkspaceRealtime(args: WorkspaceRealtimeArgs) {
       void reloadRef.current();
     };
 
+    const onWorkspaceDeleted = (message: MessageEvent<string>) => {
+      const event = parseWorkspaceEvent(message.data);
+      if (!event) return;
+      void reloadRef.current();
+    };
+
     eventSource.addEventListener("request.updated", onRequestUpdated);
     eventSource.addEventListener("workspace.updated", onWorkspaceUpdated);
+    eventSource.addEventListener("workspace.deleted", onWorkspaceDeleted);
 
     return () => {
       eventSource.removeEventListener("request.updated", onRequestUpdated);
       eventSource.removeEventListener("workspace.updated", onWorkspaceUpdated);
+      eventSource.removeEventListener("workspace.deleted", onWorkspaceDeleted);
       eventSource.close();
     };
   }, [activeWorkspaceId, storageHydrated, setWorkspaces, workspacesRef]);

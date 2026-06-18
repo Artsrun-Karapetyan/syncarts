@@ -35,6 +35,7 @@ export function FolderSidebarItem({
   return (
     <div>
       <div
+        className="sidebar-row"
         draggable={dragHandlers.canDrag && renamingId !== item.id}
         style={dragRowStyle({
           base: itemRowStyle(isHighlighted),

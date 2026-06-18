@@ -278,3 +278,11 @@ select.input {
 [data-color-mode="dark"] .w-tc-editor-text .token.punctuation {
   color: #c9d1d9 !important; /* Lighter color for better visibility */
 }
+
+/* Sidebar Hover Icons */
+.sidebar-row .sidebar-action-icon {
+  opacity: 0;
+}
+.sidebar-row:hover .sidebar-action-icon {
+  opacity: 1;
+}

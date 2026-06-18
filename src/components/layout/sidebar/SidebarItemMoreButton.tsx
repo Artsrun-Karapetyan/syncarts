@@ -7,8 +7,8 @@ export function SidebarItemMoreButton({
 }) {
   return (
     <div
+      className="sidebar-action-icon"
       style={{
-        opacity: 0,
         width: 22,
         height: 22,
         borderRadius: 5,
@@ -24,11 +24,9 @@ export function SidebarItemMoreButton({
         onClick(e);
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.opacity = "1";
         e.currentTarget.style.background = "var(--bg-secondary)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.opacity = "0";
         e.currentTarget.style.background = "transparent";
       }}
     >

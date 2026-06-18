@@ -59,10 +59,15 @@ export function mapRemoteWorkspace(remote: any, local?: Workspace): Workspace {
     updatedAt: remote.updatedAt || local?.updatedAt,
     version: remote.version ?? local?.version,
     members: remote.members || [],
-    collections: remoteData?.collections || local?.collections || [],
-    environments: remoteData?.environments || local?.environments || [],
-    globalVariables:
-      remoteData?.globalVariables || local?.globalVariables || [],
+    collections: remoteData
+      ? remoteData.collections || []
+      : local?.collections || [],
+    environments: remoteData
+      ? remoteData.environments || []
+      : local?.environments || [],
+    globalVariables: remoteData
+      ? remoteData.globalVariables || []
+      : local?.globalVariables || [],
   };
 }
 
