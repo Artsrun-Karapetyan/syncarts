@@ -89,7 +89,7 @@ export function HeadersEditor() {
 
   const handleCopy = (ids: Set<string>) => {
     const selectedHeaders = headers.filter(
-      (h, i) =>
+      (_, i) =>
         ids.has(`${rowKeys[i]}-key`) ||
         ids.has(`${rowKeys[i]}-value`) ||
         ids.has(`${rowKeys[i]}-description`),
