@@ -20,3 +20,9 @@
   color: var(--text-tertiary);
   opacity: 0.6;
 }
+
+.url-input-proxy::selection {
+  background: rgba(99, 102, 241, 0.46);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}

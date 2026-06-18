@@ -47,12 +47,14 @@ export function BodyFieldRow(props: BodyFieldRowProps) {
     <div
       ref={rowRef}
       style={{
+        position: "relative",
+        zIndex: isDragging ? 10 : isDropTarget ? 5 : 1,
         display: "grid",
         gridTemplateColumns: "52px 1fr 1fr 1fr 40px",
         alignItems: "center",
         gap: 0,
         marginBottom: 0,
-        opacity: isDragging ? 0.35 : props.item.enabled === false ? 0.45 : 1,
+        opacity: isDragging ? 0.7 : props.item.enabled === false ? 0.45 : 1,
         background: rowDropBackground(isDropTarget),
         boxShadow:
           isDropTarget && props.dropTarget

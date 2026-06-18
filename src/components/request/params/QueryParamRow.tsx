@@ -44,11 +44,13 @@ export function QueryParamRow(props: QueryParamRowProps) {
     <div
       ref={rowRef}
       style={{
+        position: "relative",
+        zIndex: isDragging ? 10 : isDropTarget ? 5 : 1,
         display: "grid",
         gridTemplateColumns: "52px 1fr 1fr 1fr 40px",
         gap: 0,
         alignItems: "center",
-        opacity: isDragging ? 0.35 : props.param.enabled === false ? 0.45 : 1,
+        opacity: isDragging ? 0.7 : props.param.enabled === false ? 0.45 : 1,
         background: rowDropBackground(isDropTarget),
         boxShadow:
           isDropTarget && props.dropTarget

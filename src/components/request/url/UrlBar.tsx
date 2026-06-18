@@ -97,6 +97,8 @@ export function UrlBar() {
     }
   }, [activeTab?.id]);
 
+
+
   const renderPathVariables = (part: string, baseKey: string) => {
     const nodes: React.ReactNode[] = [];
     let lastIndex = 0;
@@ -249,7 +251,7 @@ export function UrlBar() {
       {/* Actual Input */}
       <input
         ref={inputRef}
-        className="url-input font-mono variable-input-proxy"
+        className="url-input font-mono variable-input-proxy url-input-proxy"
         style={{
           position: "absolute",
           inset: 0,

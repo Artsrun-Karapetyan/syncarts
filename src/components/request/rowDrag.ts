@@ -34,8 +34,8 @@ export function getRowDropPosition(
 
 export function rowDropShadow(position: RowDropPosition) {
   return position === "after"
-    ? "inset 0 -2px 0 var(--accent-primary), inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 45%, transparent)"
-    : "inset 0 2px 0 var(--accent-primary), inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 45%, transparent)";
+    ? "0 2px 0 0 var(--accent-primary)"
+    : "0 -2px 0 0 var(--accent-primary)";
 }
 
 export function rowDropBackground(isDropTarget: boolean) {
