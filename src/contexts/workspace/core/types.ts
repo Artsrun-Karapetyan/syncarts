@@ -274,6 +274,7 @@ export interface WorkspaceContextState
   saveRequestTabInPlace: (tab: TabData) => boolean;
   addCollection: (name: string) => void;
   forkCollection: (collectionId: string) => void;
+  pullCollection: (collectionId: string) => Promise<void>;
   updateCollection: (id: string, data: Partial<Collection>) => void;
   deleteCollection: (id: string) => void;
   deleteItem: (collectionId: string, itemId: string) => void;

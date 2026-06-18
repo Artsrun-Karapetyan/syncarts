@@ -7,7 +7,9 @@ import {
   FolderPlus,
   GitFork,
   GitPullRequest,
+  GitPullRequestArrow,
   ListOrdered,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 import { createPortal } from "react-dom";
@@ -15,6 +17,7 @@ import { createPortal } from "react-dom";
 import type { Collection } from "../../../contexts/WorkspaceContext";
 import { MenuButton } from "./MenuButton";
 import { MenuDivider } from "./MenuDivider";
+import { MenuSubmenu } from "./MenuSubmenu";
 import { NewFolderMenuInput } from "./NewFolderMenuInput";
 import type {
   CtxMenuState,
@@ -46,6 +49,7 @@ interface SidebarContextMenuProps {
   addExample: (collectionId: string, requestId: string, name: string) => void;
   activeTabStatus?: number;
   forkCollection: (collectionId: string) => void;
+  pullCollection: (collectionId: string) => Promise<void>;
   sortItems: (
     collectionId: string,
     folderId: string | null,
@@ -72,7 +76,7 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
         boxShadow: "var(--shadow-md)",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
+        overflow: "visible",
         top: `${ctxMenu.y}px`,
         left: `${ctxMenu.x}px`,
         minWidth: 200,
@@ -161,19 +165,38 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
       {ctxMenu.itemType === "collection" && (
         <>
           <MenuDivider />
-          <MenuButton
-            icon={GitFork}
-            label="Fork collection"
+          <MenuSubmenu
+            icon={GitPullRequestArrow}
+            label="Sync"
             iconColor="var(--accent-primary)"
-            onClick={() => {
-              props.forkCollection(ctxMenu.collectionId);
-              props.setCtxMenu(null);
-              props.showToast('Fork created in "My Workspace"');
-            }}
-          />
-          {forkSource?.fork && (
-            <>
-              <MenuDivider />
+          >
+            <MenuButton
+              icon={GitFork}
+              label="Fork collection"
+              iconColor="var(--accent-primary)"
+              onClick={() => {
+                props.forkCollection(ctxMenu.collectionId);
+                props.setCtxMenu(null);
+                props.showToast('Fork created in "My Workspace"');
+              }}
+            />
+            {forkSource?.fork && (
+              <MenuButton
+                icon={RefreshCw}
+                label="Pull latest"
+                iconColor="var(--status-get)"
+                onClick={() => {
+                  props.setCtxMenu(null);
+                  void props
+                    .pullCollection(ctxMenu.collectionId)
+                    .then(() => props.showToast("Pulled latest changes"))
+                    .catch((error) =>
+                      props.showToast(error.message || "Pull failed"),
+                    );
+                }}
+              />
+            )}
+            {forkSource?.fork && (
               <MenuButton
                 icon={GitPullRequest}
                 label="Create Merge Request"
@@ -187,38 +210,40 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
                   props.setCtxMenu(null);
                 }}
               />
-            </>
-          )}
+            )}
+          </MenuSubmenu>
         </>
       )}
 
       {(ctxMenu.itemType === "collection" || ctxMenu.itemType === "folder") && (
         <>
           <MenuDivider />
-          <MenuButton
-            icon={ListOrdered}
-            label="Sort (Folders first)"
-            onClick={() => {
-              props.sortItems(
-                ctxMenu.collectionId,
-                ctxMenu.itemType === "folder" ? ctxMenu.itemId : null,
-                "default",
-              );
-              props.setCtxMenu(null);
-            }}
-          />
-          <MenuButton
-            icon={ArrowDownAZ}
-            label="Sort (A to Z)"
-            onClick={() => {
-              props.sortItems(
-                ctxMenu.collectionId,
-                ctxMenu.itemType === "folder" ? ctxMenu.itemId : null,
-                "az",
-              );
-              props.setCtxMenu(null);
-            }}
-          />
+          <MenuSubmenu icon={ListOrdered} label="Sort">
+            <MenuButton
+              icon={ListOrdered}
+              label="Folders first"
+              onClick={() => {
+                props.sortItems(
+                  ctxMenu.collectionId,
+                  ctxMenu.itemType === "folder" ? ctxMenu.itemId : null,
+                  "default",
+                );
+                props.setCtxMenu(null);
+              }}
+            />
+            <MenuButton
+              icon={ArrowDownAZ}
+              label="A to Z"
+              onClick={() => {
+                props.sortItems(
+                  ctxMenu.collectionId,
+                  ctxMenu.itemType === "folder" ? ctxMenu.itemId : null,
+                  "az",
+                );
+                props.setCtxMenu(null);
+              }}
+            />
+          </MenuSubmenu>
         </>
       )}
 

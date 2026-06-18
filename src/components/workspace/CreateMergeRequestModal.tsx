@@ -1,5 +1,5 @@
 import { GitPullRequest, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
 import { api } from "../../lib/api";
@@ -27,6 +27,13 @@ export function CreateMergeRequestModal({
   const [error, setError] = useState<string | null>(null);
 
   const { collections, activeWorkspaceId } = useWorkspace();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setTitle("");
+    setDescription("");
+    setError(null);
+  }, [isOpen, sourceCollectionId, targetCollectionId, targetWorkspaceId]);
 
   if (!isOpen) return null;
 
@@ -70,6 +77,9 @@ export function CreateMergeRequestModal({
       });
 
       onSuccess();
+      setTitle("");
+      setDescription("");
+      setError(null);
       onClose();
     } catch (err: any) {
       console.error("Failed to create MR:", err);

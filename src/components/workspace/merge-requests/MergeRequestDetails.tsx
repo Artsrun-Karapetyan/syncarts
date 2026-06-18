@@ -1,6 +1,7 @@
 import { GitPullRequest } from "lucide-react";
 
 import { MergeRequestChanges } from "./MergeRequestChanges";
+import { formatMergeRequestCreatedAt } from "./mergeRequestDate";
 import { MergeRequestStatusBadge } from "./MergeRequestStatusBadge";
 
 interface MergeRequestDetailsProps {
@@ -73,6 +74,9 @@ export function MergeRequestDetails({
                     style={{ fontWeight: 600, color: "var(--text-secondary)" }}
                   >
                     {selectedMr.author.name || selectedMr.author.email}
+                  </span>
+                  <span>
+                    at {formatMergeRequestCreatedAt(selectedMr.createdAt)}
                   </span>
                 </div>
               )}

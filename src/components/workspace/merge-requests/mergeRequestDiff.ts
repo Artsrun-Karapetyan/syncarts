@@ -27,8 +27,8 @@ export function getMergeRequestChanges(targetCol: any, sourceCollection: any) {
     .map((sourceItem) => {
       const targetItem = targetFlat.find((item) => item.id === sourceItem.id);
       if (!targetItem) return null;
-      const sourceCompare = omitDiffMeta(sourceItem);
-      const targetCompare = omitDiffMeta(targetItem);
+      const sourceCompare = normalizeDiffValue(sourceItem);
+      const targetCompare = normalizeDiffValue(targetItem);
       const isDiff =
         JSON.stringify(sourceCompare) !== JSON.stringify(targetCompare);
       if (!isDiff) return null;
@@ -67,13 +67,27 @@ function flattenItems(items: any[]): any[] {
   return flat;
 }
 
-function omitDiffMeta(item: any) {
-  return {
-    ...item,
-    updatedAt: undefined,
-    parentId: undefined,
-    changedKeys: undefined,
-  };
+const ignoredDiffKeys = new Set([
+  "changedKeys",
+  "createdAt",
+  "parentId",
+  "sortOrder",
+  "updatedAt",
+  "version",
+]);
+
+function normalizeDiffValue(value: any): any {
+  if (Array.isArray(value)) return value.map(normalizeDiffValue);
+  if (!value || typeof value !== "object") return value;
+
+  return Object.keys(value)
+    .sort()
+    .reduce<Record<string, any>>((result, key) => {
+      if (ignoredDiffKeys.has(key)) return result;
+      const normalizedValue = normalizeDiffValue(value[key]);
+      if (normalizedValue !== undefined) result[key] = normalizedValue;
+      return result;
+    }, {});
 }
 
 function withDiff(

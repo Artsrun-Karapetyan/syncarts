@@ -1,5 +1,6 @@
 import { Ban, GitMerge, GitPullRequest } from "lucide-react";
 
+import { formatMergeRequestCreatedAt } from "./mergeRequestDate";
 import { MergeRequestsSidebarEmptyText } from "./MergeRequestsSidebarEmptyText";
 
 interface MergeRequestsSidebarProps {
@@ -82,7 +83,7 @@ export function MergeRequestsSidebar({
                 }}
               >
                 <span>By {mr.author?.name}</span>
-                <span>{new Date(mr.createdAt).toLocaleDateString()}</span>
+                <span>{formatMergeRequestCreatedAt(mr.createdAt)}</span>
               </div>
             </div>
           ))}

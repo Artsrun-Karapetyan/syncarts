@@ -40,6 +40,7 @@ export function Sidebar() {
     activeTab,
     resolveTabSavedRequestId,
     forkCollection,
+    pullCollection,
     activeWorkspaceId,
   } = useWorkspace();
   const navigate = useNavigate();
@@ -316,6 +317,7 @@ export function Sidebar() {
           handleExportRequest={handleExportRequest}
           addExample={addExample}
           forkCollection={forkCollection}
+          pullCollection={pullCollection}
           sortItems={sortItems}
           showToast={showToast}
         />

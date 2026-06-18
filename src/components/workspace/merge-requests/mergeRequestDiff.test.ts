@@ -77,6 +77,59 @@ describe("getMergeRequestChanges", () => {
     ).toContain("name");
     expect(changes.added.map((item: any) => item.id)).toEqual(["req-2"]);
   });
+
+  test("ignores metadata-only differences recursively", () => {
+    const targetCollection = {
+      items: [
+        {
+          type: "request",
+          id: "request",
+          name: "Request",
+          method: "GET",
+          url: "/same",
+          createdAt: "old",
+          updatedAt: "old",
+          version: 1,
+          examples: [
+            {
+              id: "example",
+              name: "Example",
+              createdAt: "old",
+              updatedAt: "old",
+              version: 1,
+            },
+          ],
+        },
+      ],
+    };
+    const sourceCollection = {
+      items: [
+        {
+          type: "request",
+          id: "request",
+          name: "Request",
+          method: "GET",
+          url: "/same",
+          createdAt: "new",
+          updatedAt: "new",
+          version: 2,
+          examples: [
+            {
+              id: "example",
+              name: "Example",
+              createdAt: "new",
+              updatedAt: "new",
+              version: 2,
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      getMergeRequestChanges(targetCollection, sourceCollection).modified,
+    ).toHaveLength(0);
+  });
 });
 
 describe("formatDiffValue", () => {

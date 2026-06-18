@@ -1,3 +1,5 @@
+import { GitFork } from "lucide-react";
+
 import type { Collection } from "../../../contexts/WorkspaceContext";
 
 interface CollectionNameProps {
@@ -62,20 +64,15 @@ export function CollectionName({
       {collection.fork && (
         <span
           style={{
-            fontSize: 9,
-            fontWeight: 800,
-            color: "#000",
-            background: "linear-gradient(135deg, #00f0ff 0%, #00b8ff 100%)",
-            borderRadius: 4,
-            padding: "1px 5px",
+            alignItems: "center",
+            color: "var(--accent-primary)",
+            display: "inline-flex",
             flexShrink: 0,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            boxShadow: "0 2px 8px rgba(0, 240, 255, 0.25)",
           }}
           title="This is a forked collection"
+          aria-label="Forked collection"
         >
-          Fork
+          <GitFork size={13} />
         </span>
       )}
     </div>

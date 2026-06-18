@@ -187,6 +187,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
   const collectionActions = useCollectionActions({
     activeWorkspaceId,
     localDefaultWorkspaceId,
+    workspaces,
     setTabsByWorkspace,
     updateWorkspaces,
     updateWorkspacesLocal,

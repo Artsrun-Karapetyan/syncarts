@@ -9,7 +9,6 @@ import type { Prisma } from "@prisma/client";
 import type { PaginationOptions } from "../common/parsePaginationQuery.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { readWorkspaceData } from "../workspace/workspaceData.js";
-import { canWriteWorkspace } from "../workspace/workspaceRoles.js";
 
 const mergeRequestInclude = {
   author: {
@@ -43,27 +42,8 @@ export class MergeRequestService {
     });
     if (!targetWs) throw new NotFoundException("Target workspace not found");
 
-    const sourceWs = await this.prisma.workspace.findFirst({
-      where: {
-        id: data.sourceWorkspaceId,
-        OR: [
-          { ownerId: data.authorId },
-          { members: { some: { userId: data.authorId } } },
-        ],
-      },
-      include: { members: true },
-    });
-    if (!sourceWs) throw new NotFoundException("Source workspace not found");
-
-    const sourceMember = sourceWs.members.find(
-      (member) => member.userId === data.authorId,
-    );
-    if (
-      !canWriteWorkspace(sourceMember?.role, sourceWs.ownerId === data.authorId)
-    ) {
-      throw new ForbiddenException(
-        "You cannot create merge requests from a read-only workspace",
-      );
+    if (!data.data) {
+      throw new NotFoundException("Source collection snapshot not found");
     }
 
     // Snapshot the target collection at creation time if not provided

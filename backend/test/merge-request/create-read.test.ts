@@ -64,6 +64,56 @@ describe("MergeRequestService create/read", () => {
     expect(createData.authorId).toBe("author");
   });
 
+  test("createMergeRequest accepts local fork source snapshot", async () => {
+    let createData: any;
+    const service = new MergeRequestService(
+      createPrismaMock({
+        workspace: {
+          findFirst: async ({ where }: any) =>
+            where.id === "target" ? { id: "target", ownerId: "owner" } : null,
+        },
+        mergeRequest: {
+          create: async ({ data }: any) => {
+            createData = data;
+            return { id: "mr", ...data };
+          },
+        },
+      }),
+    );
+
+    await service.createMergeRequest({
+      title: "MR",
+      sourceWorkspaceId: "local-default",
+      targetWorkspaceId: "target",
+      sourceCollectionId: "fork",
+      targetCollectionId: "target-col",
+      authorId: "author",
+      data: { id: "fork", items: [] },
+    });
+
+    expect(createData.sourceWorkspaceId).toBe("local-default");
+    expect(createData.data).toEqual({ id: "fork", items: [] });
+  });
+
+  test("createMergeRequest requires source snapshot", async () => {
+    const service = new MergeRequestService(
+      createPrismaMock({
+        workspace: { findFirst: async () => ({ id: "target" }) },
+      }),
+    );
+
+    await expect(
+      service.createMergeRequest({
+        title: "MR",
+        sourceWorkspaceId: "local-default",
+        targetWorkspaceId: "target",
+        sourceCollectionId: "fork",
+        targetCollectionId: "target-col",
+        authorId: "author",
+      }),
+    ).rejects.toThrow("Source collection snapshot not found");
+  });
+
   test("createMergeRequest stores collection targets and data", async () => {
     let createData: any;
     const service = new MergeRequestService(

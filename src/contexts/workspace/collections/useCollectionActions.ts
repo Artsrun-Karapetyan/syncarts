@@ -14,10 +14,13 @@ import {
   sortItemsByTarget,
   updateRequestInItems,
 } from "./collectionItemHelpers";
+import { getUniqueCollectionName } from "./collectionNameHelpers";
+import { pullForkCollection } from "./collectionPullHelpers";
 
 interface CollectionActionsArgs {
   activeWorkspaceId: string;
   localDefaultWorkspaceId: string;
+  workspaces: Workspace[];
   setTabsByWorkspace: (
     value:
       | Record<string, TabData[]>
@@ -31,6 +34,7 @@ export function useCollectionActions(args: CollectionActionsArgs) {
   const {
     activeWorkspaceId,
     localDefaultWorkspaceId,
+    workspaces,
     setTabsByWorkspace,
     updateWorkspaces,
     updateWorkspacesLocal,
@@ -63,7 +67,6 @@ export function useCollectionActions(args: CollectionActionsArgs) {
       const forkedCollection: Collection = {
         ...collectionToFork,
         id: crypto.randomUUID(),
-        name: `${collectionToFork.name} (Fork)`,
         fork: {
           originalWorkspaceId: activeWorkspaceId,
           originalCollectionId: collectionToFork.id,
@@ -72,11 +75,25 @@ export function useCollectionActions(args: CollectionActionsArgs) {
       };
 
       return prev.map((ws) => {
-        if (ws.id === localDefaultWorkspaceId) {
-          return { ...ws, collections: [...ws.collections, forkedCollection] };
-        }
-        return ws;
+        if (ws.id !== localDefaultWorkspaceId) return ws;
+        const name = getUniqueCollectionName(
+          ws.collections,
+          collectionToFork.name,
+        );
+        return {
+          ...ws,
+          collections: [...ws.collections, { ...forkedCollection, name }],
+        };
       });
+    });
+  };
+
+  const pullCollection = async (collectionId: string) => {
+    await pullForkCollection({
+      activeWorkspaceId,
+      collectionId,
+      updateWorkspaces,
+      workspaces,
     });
   };
 
@@ -316,6 +333,7 @@ export function useCollectionActions(args: CollectionActionsArgs) {
   return {
     addCollection,
     forkCollection,
+    pullCollection,
     updateCollection,
     importCollection,
     deleteCollection,
