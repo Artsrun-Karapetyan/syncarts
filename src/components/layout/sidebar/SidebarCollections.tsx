@@ -38,6 +38,7 @@ export interface SidebarCollectionsProps {
   handleContextMenu: (request: ContextMenuRequest) => void;
   openCollectionTab: (collectionId: string) => void;
   dragHandlers: SidebarDragHandlers;
+  isViewer?: boolean;
 }
 
 export function SidebarCollections(props: SidebarCollectionsProps) {

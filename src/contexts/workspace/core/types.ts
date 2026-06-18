@@ -241,6 +241,7 @@ export interface WorkspaceContextState
     RequestSenderActions {
   responseCache: Record<string, HttpResponse>;
   updateResponseCache: (id: string, response: HttpResponse) => void;
+  userId: string;
   workspaces: Workspace[];
   activeWorkspaceId: string;
   localDefaultWorkspaceId: string;

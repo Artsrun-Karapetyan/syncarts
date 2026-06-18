@@ -389,5 +389,6 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     ...requestSender,
     responseCache,
     updateResponseCache,
+    userId,
   };
 }

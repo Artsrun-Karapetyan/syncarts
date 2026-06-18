@@ -64,6 +64,8 @@ interface SidebarContextMenuProps {
     requestId: string,
     exampleId: string,
   ) => void;
+  isOwner?: boolean;
+  isViewer?: boolean;
 }
 
 export function SidebarContextMenu(props: SidebarContextMenuProps) {
@@ -71,6 +73,7 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
   const forkSource = props.collections.find(
     (collection) => collection.id === ctxMenu.collectionId,
   );
+  const isOwner = props.isOwner ?? true;
 
   return createPortal(
     <div
@@ -281,36 +284,38 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
       )}
 
       <MenuDivider />
-      <MenuButton
-        icon={Trash2}
-        label={`Delete ${ctxMenu.itemType}`}
-        destructive
-        onClick={() => {
-          if (ctxMenu.itemType === "collection")
-            props.setDeleteTarget({
-              id: ctxMenu.collectionId,
-              type: "collection",
-            });
-          else if (
-            ctxMenu.itemType === "example" &&
-            ctxMenu.itemId &&
-            ctxMenu.requestId
-          )
-            props.setDeleteTarget({
-              id: ctxMenu.itemId,
-              type: "example",
-              collectionId: ctxMenu.collectionId,
-              requestId: ctxMenu.requestId,
-            });
-          else if (ctxMenu.itemId)
-            props.setDeleteTarget({
-              id: ctxMenu.itemId,
-              type: "item",
-              collectionId: ctxMenu.collectionId,
-            });
-          props.setCtxMenu(null);
-        }}
-      />
+      {!(ctxMenu.itemType === "collection" && !isOwner) && (
+        <MenuButton
+          icon={Trash2}
+          label={`Delete ${ctxMenu.itemType}`}
+          destructive
+          onClick={() => {
+            if (ctxMenu.itemType === "collection")
+              props.setDeleteTarget({
+                id: ctxMenu.collectionId,
+                type: "collection",
+              });
+            else if (
+              ctxMenu.itemType === "example" &&
+              ctxMenu.itemId &&
+              ctxMenu.requestId
+            )
+              props.setDeleteTarget({
+                id: ctxMenu.itemId,
+                type: "example",
+                collectionId: ctxMenu.collectionId,
+                requestId: ctxMenu.requestId,
+              });
+            else if (ctxMenu.itemId)
+              props.setDeleteTarget({
+                id: ctxMenu.itemId,
+                type: "item",
+                collectionId: ctxMenu.collectionId,
+              });
+            props.setCtxMenu(null);
+          }}
+        />
+      )}
     </div>,
     document.body,
   );

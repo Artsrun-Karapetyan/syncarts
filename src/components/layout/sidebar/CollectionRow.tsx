@@ -61,15 +61,16 @@ export function CollectionRow({
             }));
           props.openCollectionTab(collection.id);
         }}
-        onContextMenu={(event) =>
+        onContextMenu={(event) => {
+          if (props.isViewer) return;
           props.handleContextMenu({
             event,
             collectionId: collection.id,
             itemId: collection.id,
             itemType: "collection",
             itemName: collection.name,
-          })
-        }
+          });
+        }}
       >
         <button
           type="button"
@@ -124,19 +125,21 @@ export function CollectionRow({
           {countItems(collection.items)}
         </span>
 
-        <HoverIcon
-          onClick={(event) =>
-            props.handleContextMenu({
-              event,
-              collectionId: collection.id,
-              itemId: collection.id,
-              itemType: "collection",
-              itemName: collection.name,
-            })
-          }
-        >
-          <MoreHorizontal size={13} />
-        </HoverIcon>
+        {!props.isViewer && (
+          <HoverIcon
+            onClick={(event) =>
+              props.handleContextMenu({
+                event,
+                collectionId: collection.id,
+                itemId: collection.id,
+                itemType: "collection",
+                itemName: collection.name,
+              })
+            }
+          >
+            <MoreHorizontal size={13} />
+          </HoverIcon>
+        )}
       </div>
       {expanded && (
         <div
@@ -177,6 +180,7 @@ export function CollectionRow({
               highlightedFolderId={props.highlightedFolderId}
               searchQuery={props.collectionSearch}
               dragHandlers={props.dragHandlers}
+              isViewer={props.isViewer}
             />
           ))}
         </div>

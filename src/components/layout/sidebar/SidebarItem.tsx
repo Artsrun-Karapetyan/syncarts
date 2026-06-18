@@ -28,6 +28,7 @@ export interface SidebarItemProps {
   highlightedFolderId: string | null;
   searchQuery?: string;
   dragHandlers: SidebarDragHandlers;
+  isViewer?: boolean;
 }
 
 export function SidebarItem(props: SidebarItemProps) {

@@ -6,9 +6,9 @@ import { ToolbarButton } from "./ToolbarButton";
 interface SidebarToolbarProps {
   openMrCount: number;
   onMergeRequests: () => void;
-  onImport: () => void;
-  onNewRequest: () => void;
-  onNewCollection: () => void;
+  onImport?: () => void;
+  onNewRequest?: () => void;
+  onNewCollection?: () => void;
 }
 
 export function SidebarToolbar({
@@ -53,24 +53,30 @@ export function SidebarToolbar({
         >
           {openMrCount > 0 && <MergeRequestBadge count={openMrCount} />}
         </ToolbarButton>
-        <ToolbarButton
-          tooltip="Import (or drop file anywhere)"
-          tooltipPos="right"
-          icon={Download}
-          onClick={onImport}
-        />
-        <ToolbarButton
-          tooltip="New Request"
-          tooltipPos="right"
-          icon={FilePlus2}
-          onClick={onNewRequest}
-        />
-        <ToolbarButton
-          tooltip="New Collection"
-          tooltipPos="right"
-          icon={FolderPlus}
-          onClick={onNewCollection}
-        />
+        {onImport && (
+          <ToolbarButton
+            tooltip="Import (or drop file anywhere)"
+            tooltipPos="right"
+            icon={Download}
+            onClick={onImport}
+          />
+        )}
+        {onNewRequest && (
+          <ToolbarButton
+            tooltip="New Request"
+            tooltipPos="right"
+            icon={FilePlus2}
+            onClick={onNewRequest}
+          />
+        )}
+        {onNewCollection && (
+          <ToolbarButton
+            tooltip="New Collection"
+            tooltipPos="right"
+            icon={FolderPlus}
+            onClick={onNewCollection}
+          />
+        )}
       </div>
     </div>
   );

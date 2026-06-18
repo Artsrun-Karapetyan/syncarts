@@ -24,6 +24,7 @@ export function RequestSidebarItem({
   highlightedExampleId,
   highlightedRequestId,
   dragHandlers,
+  isViewer,
 }: SidebarItemProps & { item: SavedRequest }) {
   const [isExamplesOpen, setIsExamplesOpen] = useState(false);
   const { openExampleTab, openRequestTab } = useWorkspace();
@@ -51,14 +52,15 @@ export function RequestSidebarItem({
         onDrop={(event) => dragHandlers.onDrop(entity, event)}
         onDragEnd={dragHandlers.onDragEnd}
         onClick={() => openRequestTab(collectionId, parentFolderId, item.id)}
-        onContextMenu={(event) =>
+        onContextMenu={(event) => {
+          if (isViewer) return;
           onContextMenu({
             event,
             itemId: item.id,
             type: "request",
             itemName: item.name,
-          })
-        }
+          });
+        }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "var(--bg-tertiary)";
           e.currentTarget.style.color = "var(--text-primary)";
@@ -110,16 +112,18 @@ export function RequestSidebarItem({
           onCancel={() => setRenamingId(null)}
           name={item.name}
         />
-        <SidebarItemMoreButton
-          onClick={(event) =>
-            onContextMenu({
-              event,
-              itemId: item.id,
-              type: "request",
-              itemName: item.name,
-            })
-          }
-        />
+        {!isViewer && (
+          <SidebarItemMoreButton
+            onClick={(event) =>
+              onContextMenu({
+                event,
+                itemId: item.id,
+                type: "request",
+                itemName: item.name,
+              })
+            }
+          />
+        )}
       </div>
       {isExamplesOpen && item.examples?.length ? (
         <div>
@@ -161,6 +165,7 @@ export function RequestSidebarItem({
                 onContextMenu={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  if (isViewer) return;
                   onContextMenu({
                     event: e,
                     itemId: example.id,

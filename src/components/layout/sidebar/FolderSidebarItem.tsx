@@ -26,6 +26,7 @@ export function FolderSidebarItem({
   highlightedFolderId,
   searchQuery = "",
   dragHandlers,
+  isViewer,
 }: SidebarItemProps & { item: IFolder }) {
   const { openFolderTab } = useWorkspace();
   const isHighlighted = highlightedFolderId === item.id;
@@ -52,14 +53,15 @@ export function FolderSidebarItem({
             setExpandedFolders((prev) => ({ ...prev, [item.id]: true }));
           openFolderTab(collectionId, item.id);
         }}
-        onContextMenu={(event) =>
+        onContextMenu={(event) => {
+          if (isViewer) return;
           onContextMenu({
             event,
             itemId: item.id,
             type: "folder",
             itemName: item.name,
-          })
-        }
+          });
+        }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "var(--bg-tertiary)";
           e.currentTarget.style.color = "var(--text-primary)";
@@ -108,16 +110,18 @@ export function FolderSidebarItem({
           onCancel={() => setRenamingId(null)}
           name={item.name}
         />
-        <SidebarItemMoreButton
-          onClick={(event) =>
-            onContextMenu({
-              event,
-              itemId: item.id,
-              type: "folder",
-              itemName: item.name,
-            })
-          }
-        />
+        {!isViewer && (
+          <SidebarItemMoreButton
+            onClick={(event) =>
+              onContextMenu({
+                event,
+                itemId: item.id,
+                type: "folder",
+                itemName: item.name,
+              })
+            }
+          />
+        )}
       </div>
       {expandedFolders[item.id] && (
         <div
@@ -149,6 +153,7 @@ export function FolderSidebarItem({
               highlightedFolderId={highlightedFolderId}
               searchQuery={searchQuery}
               dragHandlers={dragHandlers}
+              isViewer={isViewer}
             />
           ))}
         </div>

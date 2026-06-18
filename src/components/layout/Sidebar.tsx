@@ -47,6 +47,8 @@ export function Sidebar() {
     pullCollection,
     activeWorkspaceId,
     moveSidebarItem,
+    workspaces,
+    userId,
   } = useWorkspace();
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -254,6 +256,13 @@ export function Sidebar() {
     setDeleteTarget(null);
   };
 
+  const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
+  const isOwner =
+    !activeWorkspace?.ownerId || activeWorkspace.ownerId === userId;
+  const isViewer =
+    activeWorkspace?.members?.find((m) => m.userId === userId)?.role ===
+    "VIEWER";
+
   return (
     <div style={SIDEBAR_ROOT_STYLE}>
       <div
@@ -268,12 +277,16 @@ export function Sidebar() {
         <SidebarToolbar
           openMrCount={openMrCount}
           onMergeRequests={() => navigate({ to: "/merge-requests" })}
-          onImport={() => setIsImportModalOpen(true)}
-          onNewRequest={() => addTab()}
-          onNewCollection={() => {
-            setNewColName("");
-            setIsAdding(true);
-          }}
+          onImport={isViewer ? undefined : () => setIsImportModalOpen(true)}
+          onNewRequest={isViewer ? undefined : () => addTab()}
+          onNewCollection={
+            isViewer
+              ? undefined
+              : () => {
+                  setNewColName("");
+                  setIsAdding(true);
+                }
+          }
         />
         <SidebarCollections
           collections={collections}
@@ -302,41 +315,47 @@ export function Sidebar() {
           handleContextMenu={handleContextMenu}
           openCollectionTab={openCollectionTab}
           dragHandlers={dragHandlers}
+          isViewer={isViewer}
         />
       </div>
 
-      {ctxMenu && (
-        <SidebarContextMenu
-          ctxMenu={ctxMenu}
-          menuRef={menuRef}
-          collections={collections}
-          activeHasResponse={!!activeTab?.response}
-          activeTabStatus={activeTab?.response?.status}
-          isCreatingFolder={isCreatingFolder}
-          newFolderName={newFolderName}
-          setCtxMenu={setCtxMenu}
-          setRenamingId={setRenamingId}
-          setRenameValue={setRenameValue}
-          setDeleteTarget={setDeleteTarget}
-          setMergeRequestTarget={setMergeRequestTarget}
-          setIsCreatingFolder={setIsCreatingFolder}
-          setNewFolderName={setNewFolderName}
-          handleCreateFolder={handleCreateFolder}
-          handleFolderSubmit={handleFolderSubmit}
-          handleCreateRequest={handleCreateRequest}
-          handleExportCollection={handleExportCollection}
-          handleExportFolder={handleExportFolder}
-          handleExportRequest={handleExportRequest}
-          addExample={addExample}
-          duplicateCollection={duplicateCollection}
-          duplicateItem={duplicateItem}
-          duplicateExample={duplicateExample}
-          forkCollection={forkCollection}
-          pullCollection={pullCollection}
-          sortItems={sortItems}
-          showToast={showToast}
-        />
-      )}
+      {ctxMenu &&
+        (() => {
+          return (
+            <SidebarContextMenu
+              ctxMenu={ctxMenu}
+              menuRef={menuRef}
+              collections={collections}
+              activeHasResponse={!!activeTab?.response}
+              activeTabStatus={activeTab?.response?.status}
+              isCreatingFolder={isCreatingFolder}
+              newFolderName={newFolderName}
+              setCtxMenu={setCtxMenu}
+              setRenamingId={setRenamingId}
+              setRenameValue={setRenameValue}
+              setDeleteTarget={setDeleteTarget}
+              setMergeRequestTarget={setMergeRequestTarget}
+              setIsCreatingFolder={setIsCreatingFolder}
+              setNewFolderName={setNewFolderName}
+              handleCreateFolder={handleCreateFolder}
+              handleFolderSubmit={handleFolderSubmit}
+              handleCreateRequest={handleCreateRequest}
+              handleExportCollection={handleExportCollection}
+              handleExportFolder={handleExportFolder}
+              handleExportRequest={handleExportRequest}
+              addExample={addExample}
+              duplicateCollection={duplicateCollection}
+              duplicateItem={duplicateItem}
+              duplicateExample={duplicateExample}
+              forkCollection={forkCollection}
+              pullCollection={pullCollection}
+              sortItems={sortItems}
+              showToast={showToast}
+              isOwner={isOwner}
+              isViewer={isViewer}
+            />
+          );
+        })()}
 
       <SidebarDialogs
         isImportModalOpen={isImportModalOpen}
