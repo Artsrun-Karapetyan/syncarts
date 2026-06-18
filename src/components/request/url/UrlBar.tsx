@@ -288,6 +288,7 @@ export function UrlBar() {
 
       {hover.hoveredVar && (
         <UrlVariablePopover
+          key={`${hover.hoveredVar.kind}-${hover.hoveredVar.name}`}
           hoveredVar={hover.hoveredVar}
           popoverRef={hover.popoverRef}
           onSave={hover.handleAddVar}
