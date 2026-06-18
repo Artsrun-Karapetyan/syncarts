@@ -33,13 +33,18 @@ describe("MergeRequestController Actions", () => {
 
   test("getSourceCollection delegates to mrService.getSourceCollection", async () => {
     const mockService = {
-      getSourceCollection: mock(async (_id: string) => ({ items: [] })),
+      getSourceCollection: mock(async (_id: string, _userId: string) => ({
+        items: [],
+      })),
     } as unknown as MergeRequestService;
 
     const controller = new MergeRequestController(mockService);
-    const result = await controller.getSourceCollection("mr-1");
+    const result = await controller.getSourceCollection(req, "mr-1");
 
-    expect(mockService.getSourceCollection).toHaveBeenCalledWith("mr-1");
+    expect(mockService.getSourceCollection).toHaveBeenCalledWith(
+      "mr-1",
+      "user-1",
+    );
     expect(result).toEqual({ items: [] } as any);
   });
 });

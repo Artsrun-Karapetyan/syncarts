@@ -10,13 +10,15 @@ describe("MergeRequestService target collection", () => {
         mergeRequest: {
           findUnique: async () => ({
             id: "mr",
+            authorId: "author",
+            targetWorkspaceId: "target",
             targetData: { id: "target-col", name: "API" },
           }),
         },
       }),
     );
 
-    await expect(service.getTargetCollection("mr")).resolves.toEqual({
+    await expect(service.getTargetCollection("mr", "author")).resolves.toEqual({
       id: "target-col",
       name: "API",
     });
@@ -28,6 +30,7 @@ describe("MergeRequestService target collection", () => {
         mergeRequest: {
           findUnique: async () => ({
             id: "mr",
+            authorId: "author",
             targetWorkspaceId: "target",
             targetCollectionId: "col",
             targetData: null,
@@ -36,7 +39,7 @@ describe("MergeRequestService target collection", () => {
       }),
     );
 
-    await expect(service.getTargetCollection("mr")).rejects.toThrow(
+    await expect(service.getTargetCollection("mr", "author")).rejects.toThrow(
       "Merge request has no target snapshot",
     );
   });
@@ -48,8 +51,8 @@ describe("MergeRequestService target collection", () => {
       }),
     );
 
-    await expect(service.getTargetCollection("missing")).rejects.toThrow(
-      "Merge request not found",
-    );
+    await expect(
+      service.getTargetCollection("missing", "author"),
+    ).rejects.toThrow("Merge request not found");
   });
 });

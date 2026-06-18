@@ -6,6 +6,7 @@ import { MergeRequestDiffItem } from "./MergeRequestDiffItem";
 import { MergeRequestError } from "./MergeRequestError";
 
 interface MergeRequestChangesProps {
+  canReview: boolean;
   error: string | null;
   merging: boolean;
   onMerge: () => void;
@@ -16,6 +17,7 @@ interface MergeRequestChangesProps {
 }
 
 export function MergeRequestChanges({
+  canReview,
   error,
   merging,
   onMerge,
@@ -104,26 +106,44 @@ export function MergeRequestChanges({
                 />
               ))}
             </div>
-            <div
-              style={{ display: "flex", gap: 12, justifyContent: "flex-start" }}
-            >
-              <button
-                className="mr-btn mr-btn-approve"
-                onClick={onMerge}
-                disabled={merging}
+            {canReview ? (
+              <div
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  justifyContent: "flex-start",
+                }}
               >
-                <GitMerge size={18} />
-                {merging ? "Processing..." : "Approve & Merge"}
-              </button>
-              <button
-                className="mr-btn mr-btn-reject"
-                onClick={onReject}
-                disabled={merging}
+                <button
+                  className="mr-btn mr-btn-approve"
+                  onClick={onMerge}
+                  disabled={merging}
+                >
+                  <GitMerge size={18} />
+                  {merging ? "Processing..." : "Approve & Merge"}
+                </button>
+                <button
+                  className="mr-btn mr-btn-reject"
+                  onClick={onReject}
+                  disabled={merging}
+                >
+                  <Ban size={18} />
+                  <span>Reject</span>
+                </button>
+              </div>
+            ) : (
+              <div
+                style={{
+                  color: "var(--text-tertiary)",
+                  fontSize: 13,
+                  padding: "10px 12px",
+                  border: "1px solid var(--border-color)",
+                  borderRadius: 8,
+                }}
               >
-                <Ban size={18} />
-                <span>Reject</span>
-              </button>
-            </div>
+                Only the target workspace owner can approve or reject.
+              </div>
+            )}
           </>
         ) : null}
       </div>

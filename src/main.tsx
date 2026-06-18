@@ -5,6 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
+import { isTauriRuntime } from "./lib/tauriRuntime";
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 
@@ -63,7 +64,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 
 window.requestAnimationFrame(() => {
   window.requestAnimationFrame(() => {
-    void invoke("show_main_window").catch(() => undefined);
+    if (isTauriRuntime()) {
+      void invoke("show_main_window").catch(() => undefined);
+    }
 
     const bootScreen = document.getElementById("boot-screen");
     bootScreen?.classList.add("boot-hidden");

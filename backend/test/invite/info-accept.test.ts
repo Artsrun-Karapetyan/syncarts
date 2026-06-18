@@ -92,7 +92,7 @@ describe("InviteService getInviteInfo/acceptInvite", () => {
       workspaceIds: ["workspace"],
     });
     expect(created).toEqual([
-      { userId: "user", workspaceId: "workspace", role: "MEMBER" },
+      { userId: "user", workspaceId: "workspace", role: "EDITOR" },
     ]);
     expect(deletedToken).toBe("invite");
   });
@@ -264,7 +264,7 @@ describe("InviteService getInviteInfo/acceptInvite", () => {
     expect(createdMembership).toEqual({
       userId: "user",
       workspaceId: "legacy-workspace",
-      role: "MEMBER",
+      role: "EDITOR",
     });
   });
 });

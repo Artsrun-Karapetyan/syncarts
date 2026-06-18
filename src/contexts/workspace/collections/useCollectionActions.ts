@@ -24,6 +24,7 @@ interface CollectionActionsArgs {
       | ((prev: Record<string, TabData[]>) => Record<string, TabData[]>),
   ) => void;
   updateWorkspaces: (updater: (prev: Workspace[]) => Workspace[]) => void;
+  updateWorkspacesLocal: (updater: (prev: Workspace[]) => Workspace[]) => void;
 }
 
 export function useCollectionActions(args: CollectionActionsArgs) {
@@ -32,6 +33,7 @@ export function useCollectionActions(args: CollectionActionsArgs) {
     localDefaultWorkspaceId,
     setTabsByWorkspace,
     updateWorkspaces,
+    updateWorkspacesLocal,
   } = args;
 
   const addCollection = (name: string) => {
@@ -193,8 +195,11 @@ export function useCollectionActions(args: CollectionActionsArgs) {
     collectionId: string,
     folderId: string | null,
     request: SavedRequest,
+    options: { markDirty?: boolean } = {},
   ) => {
-    updateWorkspaces((prev) =>
+    const update =
+      options.markDirty === false ? updateWorkspacesLocal : updateWorkspaces;
+    update((prev) =>
       prev.map((w) => {
         if (w.id !== activeWorkspaceId) return w;
         const targetCol = w.collections.find((c) => c.id === collectionId);

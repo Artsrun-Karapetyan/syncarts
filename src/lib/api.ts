@@ -1,4 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+import { clearAuthToken } from "./auth";
+import { clearStoredUser } from "./session";
+
+export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
 type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -20,15 +23,36 @@ async function request<T>(
   });
 
   if (!response.ok) {
+    if (shouldClearAuthSession(response.status, options.token)) {
+      clearAuthSession();
+    }
     throw new Error(formatApiError(await response.text(), response.status));
   }
 
   return response.json() as Promise<T>;
 }
 
-function formatApiError(rawText: string, status: number) {
+export function shouldClearAuthSession(status: number, token?: string) {
+  return status === 401 && !!token;
+}
+
+function clearAuthSession() {
+  clearAuthToken();
+  clearStoredUser();
+
+  if (window.location.pathname !== "/login") {
+    window.location.assign("/login");
+  }
+}
+
+export function formatApiError(rawText: string, status: number) {
   try {
     const payload = JSON.parse(rawText);
+    const fieldError = formatFieldErrors(
+      payload.message?.fieldErrors ?? payload.fieldErrors,
+    );
+    if (fieldError) return fieldError;
+
     const message = Array.isArray(payload.message)
       ? payload.message.join(", ")
       : payload.message;
@@ -40,6 +64,26 @@ function formatApiError(rawText: string, status: number) {
   }
 
   return rawText || `Request failed (${status})`;
+}
+
+function formatFieldErrors(fieldErrors: unknown) {
+  if (!fieldErrors || typeof fieldErrors !== "object") return "";
+
+  const messages = Object.entries(fieldErrors)
+    .flatMap(([field, errors]) => {
+      if (!Array.isArray(errors)) return [];
+      return errors.map((error) => formatFieldError(field, String(error)));
+    })
+    .filter(Boolean);
+
+  return messages.join(" ");
+}
+
+function formatFieldError(field: string, message: string) {
+  const label = field.charAt(0).toUpperCase() + field.slice(1);
+  return message.toLowerCase().startsWith(label.toLowerCase())
+    ? message
+    : `${label}: ${message}`;
 }
 
 export type AuthUser = {
@@ -86,7 +130,7 @@ export function updateMe(token: string, input: { name?: string }) {
   });
 }
 
-const getToken = () =>
+export const getToken = () =>
   window.localStorage.getItem("syncarts_auth_token") || undefined;
 
 export const api = {

@@ -6,49 +6,18 @@ import type {
   SavedRequest,
   SavedRequestLocation,
   TabData,
-  Workspace,
 } from "../core/types";
+import { createExampleTabData } from "./exampleTabData";
+import { createSavedRequestTabUpdate } from "./savedRequestTabUpdate";
 import { createTab } from "./tabFactory";
 import {
-  buildSavedRequestFromTab,
   findSavedRequestByIdInCollections,
   requestSnapshot,
 } from "./tabHelpers";
 import { normalizeTabsWithSavedRequests } from "./tabSyncHelpers";
 import { findExample, findFolder } from "./tabTreeFinders";
-
-interface TabActionsArgs {
-  activeTab: TabData | undefined;
-  activeTabId: string | null;
-  activeWorkspaceId: string;
-  collections: Collection[];
-  currentTabs: TabData[];
-  currentWorkspace: Workspace | undefined;
-  lastSavedTabSnapshotsRef: React.MutableRefObject<Record<string, string>>;
-  saveRequest: (
-    collectionId: string,
-    folderId: string | null,
-    request: SavedRequest,
-  ) => void;
-  setActiveTabIdByWorkspace: (
-    value:
-      | Record<string, string | null>
-      | ((
-          prev: Record<string, string | null>,
-        ) => Record<string, string | null>),
-  ) => void;
-  setTabsByWorkspace: (
-    value:
-      | Record<string, TabData[]>
-      | ((prev: Record<string, TabData[]>) => Record<string, TabData[]>),
-  ) => void;
-  updateCollection: (id: string, data: Partial<Collection>) => void;
-  updateFolder: (
-    collectionId: string,
-    folderId: string,
-    data: Partial<Folder>,
-  ) => void;
-}
+import { useRequestEntitySave } from "./useRequestEntitySave";
+import type { TabActionsArgs } from "./useTabActionsTypes";
 
 export function useTabActions(args: TabActionsArgs) {
   const {
@@ -90,6 +59,14 @@ export function useTabActions(args: TabActionsArgs) {
   const rememberTabSnapshot = (tabId: string, request: Partial<TabData>) => {
     lastSavedTabSnapshotsRef.current[tabId] = requestSnapshot(request);
   };
+  const { saveSavedRequestTab } = useRequestEntitySave({
+    activeWorkspaceId,
+    currentWorkspace,
+    findSavedRequestById,
+    rememberTabSnapshot,
+    resolveTabSavedRequestId,
+    saveRequest,
+  });
 
   const isTabDirty = (tab?: TabData) => {
     if (!tab || (tab.type && tab.type !== "request")) return false;
@@ -146,26 +123,14 @@ export function useTabActions(args: TabActionsArgs) {
     folderId: string | null,
     savedRequestId = request.id,
   ) => {
-    updateActiveTab({
-      name: request.name,
-      method: request.method,
-      url: request.url,
-      headers: request.headers,
-      authType: request.authType,
-      bearerToken: request.bearerToken,
-      bodyType: request.bodyType,
-      pathVariables: request.pathVariables,
-      queryParamDescriptions: request.queryParamDescriptions,
-      queryParams: request.queryParams,
-      formData: request.formData,
-      description: request.description,
-      preRequestScript: request.preRequestScript,
-      testScript: request.testScript,
-      body: request.body,
-      collectionId,
-      folderId: folderId || undefined,
-      savedRequestId,
-    });
+    updateActiveTab(
+      createSavedRequestTabUpdate(
+        request,
+        collectionId,
+        folderId,
+        savedRequestId,
+      ),
+    );
   };
 
   const setActiveTabId = (id: string) => {
@@ -298,29 +263,7 @@ export function useTabActions(args: TabActionsArgs) {
     );
     if (existing) return setActiveTabId(existing.id);
 
-    addTab({
-      type: "example",
-      name: example.name,
-      collectionId,
-      exampleId,
-      method: example.originalRequest?.method || "GET",
-      url: example.originalRequest?.url || "",
-      pathVariables: example.originalRequest?.pathVariables,
-      body: example.originalRequest?.body || "",
-      bodyType: example.originalRequest?.bodyType || "none",
-      formData: example.originalRequest?.formData,
-      headers: example.originalRequest?.headers || [],
-      response: {
-        status: example.code,
-        status_text: example.status,
-        headers: example.headers.reduce(
-          (acc, h) => ({ ...acc, [h.key]: h.value }),
-          {},
-        ),
-        body: example.body,
-        time_ms: 0,
-      },
-    });
+    addTab(createExampleTabData(collectionId, example));
   };
 
   const saveActiveRequestInPlace = () => {
@@ -331,24 +274,15 @@ export function useTabActions(args: TabActionsArgs) {
 
   function saveRequestTabInPlace(tab: TabData) {
     if (!tab || (tab.type && tab.type !== "request")) return false;
-    const savedRequestId = resolveTabSavedRequestId(tab);
-    if (!savedRequestId) return false;
-    const saved = findSavedRequestById(savedRequestId);
+    const saved = saveSavedRequestTab(tab);
     if (!saved) return false;
 
-    const updatedRequest = buildSavedRequestFromTab(
-      tab,
-      savedRequestId,
-      saved.request,
-    );
-    rememberTabSnapshot(tab.id, updatedRequest);
-    saveRequest(saved.collectionId, saved.folderId, updatedRequest);
     if (activeTab?.id === tab.id) {
       syncTabWithSavedRequest(
-        updatedRequest,
+        saved.request,
         saved.collectionId,
         saved.folderId,
-        savedRequestId,
+        saved.savedRequestId,
       );
     }
     return true;

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
 import { api } from "../../lib/api";
+import { useStoredUser } from "../../lib/session";
 import { MergeRequestDetails } from "./merge-requests/MergeRequestDetails";
 import { MergeRequestsSidebar } from "./merge-requests/MergeRequestsSidebar";
 import { MergeRequestsTopBar } from "./merge-requests/MergeRequestsTopBar";
@@ -15,7 +16,21 @@ export function MergeRequestsScreen() {
   const [merging, setMerging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { collections, updateCollection, activeWorkspaceId } = useWorkspace();
+  const { collections, updateCollection, activeWorkspaceId, workspaces } =
+    useWorkspace();
+  const user = useStoredUser();
+  const activeWorkspace = workspaces.find(
+    (workspace) => workspace.id === activeWorkspaceId,
+  );
+  const canReviewSelectedMr =
+    !!selectedMr &&
+    activeWorkspaceId === selectedMr.targetWorkspaceId &&
+    activeWorkspace?.ownerId === user?.id;
+  const canDeleteSelectedMr =
+    !!selectedMr &&
+    (selectedMr.authorId === user?.id ||
+      (activeWorkspaceId === selectedMr.targetWorkspaceId &&
+        activeWorkspace?.ownerId === user?.id));
 
   useEffect(() => {
     if (activeWorkspaceId) {
@@ -63,6 +78,12 @@ export function MergeRequestsScreen() {
   const handleMerge = async () => {
     if (!selectedMr || !sourceCollection) return;
     setError(null);
+    if (!canReviewSelectedMr) {
+      setError(
+        "Only the target workspace owner can approve this merge request.",
+      );
+      return;
+    }
 
     const targetCol = collections.find(
       (c) => c.id === selectedMr.targetCollectionId,
@@ -100,6 +121,12 @@ export function MergeRequestsScreen() {
   const handleReject = async () => {
     if (!selectedMr) return;
     setError(null);
+    if (!canReviewSelectedMr) {
+      setError(
+        "Only the target workspace owner can reject this merge request.",
+      );
+      return;
+    }
     try {
       setMerging(true);
       await api.patch(`/merge-requests/${selectedMr.id}/status`, {
@@ -118,6 +145,12 @@ export function MergeRequestsScreen() {
 
   const handleDelete = async () => {
     if (!selectedMr) return;
+    if (!canDeleteSelectedMr) {
+      setError(
+        "Only the author or target workspace owner can delete this merge request.",
+      );
+      return;
+    }
     if (!confirm("Are you sure you want to delete this merge request?")) return;
     setError(null);
     try {
@@ -199,6 +232,8 @@ export function MergeRequestsScreen() {
           selectedMr={selectedMr}
           sourceCollection={sourceCollection}
           targetCollection={targetCollection}
+          canDelete={canDeleteSelectedMr}
+          canReview={canReviewSelectedMr}
           onMerge={handleMerge}
           onReject={handleReject}
           onDelete={handleDelete}

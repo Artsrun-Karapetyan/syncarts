@@ -4,10 +4,22 @@ import { MergeRequestService } from "../../src/merge-request/merge-request.servi
 import { createPrismaMock } from "../helpers/prismaMock";
 
 describe("MergeRequestService create/read", () => {
+  const workspaceAccess = {
+    findFirst: async ({ where }: any) => ({
+      id: where.id,
+      ownerId:
+        where.id === "source" || where.id === "source-workspace"
+          ? "author"
+          : "owner",
+      members: [{ userId: "author", role: "EDITOR" }],
+    }),
+    findUnique: async () => ({ id: "target", ownerId: "owner" }),
+  };
+
   test("createMergeRequest requires target workspace", async () => {
     const service = new MergeRequestService(
       createPrismaMock({
-        workspace: { findUnique: async () => null },
+        workspace: { findFirst: async () => null },
       }),
     );
 
@@ -27,14 +39,7 @@ describe("MergeRequestService create/read", () => {
     let createData: any;
     const service = new MergeRequestService(
       createPrismaMock({
-        workspace: {
-          findUnique: async () => ({
-            id: "target",
-            data: {
-              collections: [{ id: "target-col", name: "Original" }],
-            },
-          }),
-        },
+        workspace: workspaceAccess,
         mergeRequest: {
           create: async ({ data }: any) => {
             createData = data;
@@ -63,14 +68,7 @@ describe("MergeRequestService create/read", () => {
     let createData: any;
     const service = new MergeRequestService(
       createPrismaMock({
-        workspace: {
-          findUnique: async () => ({
-            id: "target-workspace",
-            data: {
-              collections: [{ id: "target-collection", name: "API" }],
-            },
-          }),
-        },
+        workspace: workspaceAccess,
         mergeRequest: {
           create: async ({ data }: any) => {
             createData = data;
@@ -101,10 +99,13 @@ describe("MergeRequestService create/read", () => {
     });
   });
 
-  test("getMergeRequestsForWorkspace includes source and target workspaces", async () => {
+  test("getMergeRequestsForWorkspace queries target workspace only", async () => {
     let query: any;
     const service = new MergeRequestService(
       createPrismaMock({
+        workspace: {
+          findFirst: async () => ({ id: "workspace", ownerId: "owner" }),
+        },
         mergeRequest: {
           findMany: async (input: any) => {
             query = input;
@@ -114,19 +115,38 @@ describe("MergeRequestService create/read", () => {
       }),
     );
 
-    await service.getMergeRequestsForWorkspace("workspace");
+    await service.getMergeRequestsForWorkspace("workspace", "owner");
 
-    expect(query.where.OR).toEqual([
-      { targetWorkspaceId: "workspace" },
-      { sourceWorkspaceId: "workspace" },
-    ]);
+    expect(query.where).toEqual({ targetWorkspaceId: "workspace" });
     expect(query.orderBy).toEqual({ createdAt: "desc" });
+  });
+
+  test("getMergeRequestsForWorkspace hides target merge requests from members", async () => {
+    const service = new MergeRequestService(
+      createPrismaMock({
+        workspace: {
+          findFirst: async () => ({ id: "workspace", ownerId: "owner" }),
+        },
+        mergeRequest: {
+          findMany: async () => {
+            throw new Error("should not query merge requests");
+          },
+        },
+      }),
+    );
+
+    await expect(
+      service.getMergeRequestsForWorkspace("workspace", "member"),
+    ).resolves.toEqual([]);
   });
 
   test("getMergeRequestsForWorkspace includes author summary", async () => {
     let query: any;
     const service = new MergeRequestService(
       createPrismaMock({
+        workspace: {
+          findFirst: async () => ({ id: "workspace", ownerId: "owner" }),
+        },
         mergeRequest: {
           findMany: async (input: any) => {
             query = input;
@@ -136,7 +156,7 @@ describe("MergeRequestService create/read", () => {
       }),
     );
 
-    await service.getMergeRequestsForWorkspace("workspace");
+    await service.getMergeRequestsForWorkspace("workspace", "owner");
 
     expect(query.include.author.select).toEqual({
       id: true,
@@ -154,6 +174,8 @@ describe("MergeRequestService create/read", () => {
             query = input;
             return {
               id: "mr",
+              authorId: "a",
+              targetWorkspaceId: "target",
               author: { id: "a", name: "A", email: "a@test.com" },
             } as any;
           },
@@ -161,10 +183,12 @@ describe("MergeRequestService create/read", () => {
       }),
     );
 
-    await expect(service.getMergeRequestById("mr")).resolves.toMatchObject({
-      id: "mr",
-      author: { id: "a", name: "A", email: "a@test.com" },
-    });
+    await expect(service.getMergeRequestById("mr", "a")).resolves.toMatchObject(
+      {
+        id: "mr",
+        author: { id: "a", name: "A", email: "a@test.com" },
+      },
+    );
     expect(query).toEqual({
       where: { id: "mr" },
       include: {
@@ -179,11 +203,7 @@ describe("MergeRequestService create/read", () => {
     let createData: any;
     const service = new MergeRequestService(
       createPrismaMock({
-        workspace: {
-          findUnique: async () => ({
-            id: "target",
-          }),
-        },
+        workspace: workspaceAccess,
         workspaceCollection: {
           findMany: async () => [
             {
@@ -245,14 +265,7 @@ describe("MergeRequestService create/read", () => {
     let createData: any;
     const service = new MergeRequestService(
       createPrismaMock({
-        workspace: {
-          findUnique: async () => ({
-            id: "target",
-            data: {
-              collections: [{ id: "col-1", name: "Server Version" }],
-            },
-          }),
-        },
+        workspace: workspaceAccess,
         mergeRequest: {
           create: async ({ data }: any) => {
             createData = data;

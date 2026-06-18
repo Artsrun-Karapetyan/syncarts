@@ -32,6 +32,9 @@ async function readCollections(
   return collections.map((collection: any) => ({
     id: collection.id,
     name: collection.name,
+    createdAt: serializeDate(collection.createdAt),
+    updatedAt: serializeDate(collection.updatedAt),
+    version: collection.version,
     items: buildCollectionItems(collection, null),
     authType: collection.authType ?? undefined,
     bearerToken: collection.bearerToken ?? undefined,
@@ -52,6 +55,9 @@ function buildCollectionItems(collection: any, parentFolderId: string | null) {
         id: folder.id,
         type: "folder",
         name: folder.name,
+        createdAt: serializeDate(folder.createdAt),
+        updatedAt: serializeDate(folder.updatedAt),
+        version: folder.version,
         items: buildCollectionItems(collection, folder.id),
         authType: folder.authType ?? undefined,
         bearerToken: folder.bearerToken ?? undefined,
@@ -66,7 +72,7 @@ function buildCollectionItems(collection: any, parentFolderId: string | null) {
     .filter((request: any) => (request.folderId ?? null) === parentFolderId)
     .map((request: any) => ({
       sortOrder: request.sortOrder,
-      item: mapRequest(request),
+      item: mapWorkspaceRequest(request),
     }));
 
   return [...folders, ...requests]
@@ -74,11 +80,16 @@ function buildCollectionItems(collection: any, parentFolderId: string | null) {
     .map(({ item }) => item);
 }
 
-function mapRequest(request: any) {
+export function mapWorkspaceRequest(request: any) {
   return {
     type: "request",
     id: request.id,
+    collectionId: request.collectionId,
+    folderId: request.folderId ?? undefined,
     name: request.name,
+    createdAt: serializeDate(request.createdAt),
+    updatedAt: serializeDate(request.updatedAt),
+    version: request.version,
     method: request.method,
     url: request.url,
     headers: fromJson(request.headers) ?? [],
@@ -96,6 +107,9 @@ function mapRequest(request: any) {
     examples: request.examples.map((example: any) => ({
       id: example.id,
       name: example.name,
+      createdAt: serializeDate(example.createdAt),
+      updatedAt: serializeDate(example.updatedAt),
+      version: example.version,
       originalRequest: fromJson(example.originalRequest),
       code: example.code,
       status: example.status,
@@ -118,6 +132,9 @@ async function readEnvironments(
   return environments.map((environment: any) => ({
     id: environment.id,
     name: environment.name,
+    createdAt: serializeDate(environment.createdAt),
+    updatedAt: serializeDate(environment.updatedAt),
+    version: environment.version,
     variables: environment.variables.map(mapVariable),
   }));
 }
@@ -140,9 +157,16 @@ function mapVariable(variable: any) {
     key: variable.key,
     value: variable.value,
     enabled: variable.enabled,
+    createdAt: serializeDate(variable.createdAt),
+    updatedAt: serializeDate(variable.updatedAt),
+    version: variable.version,
   };
 }
 
 function fromJson(value: unknown) {
   return value ?? undefined;
+}
+
+function serializeDate(value: unknown) {
+  return value instanceof Date ? value.toISOString() : value;
 }

@@ -72,11 +72,13 @@ describe("workspaceData normalized persistence", () => {
     });
     expect(writes.examples[0]).toMatchObject({
       id: "example",
+      workspaceId: "workspace",
       requestId: "request",
       code: 200,
     });
     expect(writes.environments[0].variables.create[0]).toMatchObject({
       id: "env-var",
+      workspaceId: "workspace",
       key: "host",
     });
     expect(writes.globalVariables[0]).toMatchObject({
@@ -94,12 +96,16 @@ describe("workspaceData normalized persistence", () => {
               id: "collection",
               name: "API",
               sortOrder: 0,
+              createdAt: new Date("2026-01-01T00:00:00.000Z"),
+              updatedAt: new Date("2026-01-01T00:00:01.000Z"),
+              version: 3,
               folders: [
                 {
                   id: "folder",
                   name: "Users",
                   parentFolderId: null,
                   sortOrder: 0,
+                  version: 4,
                 },
               ],
               requests: [
@@ -112,6 +118,7 @@ describe("workspaceData normalized persistence", () => {
                   body: "",
                   folderId: "folder",
                   sortOrder: 0,
+                  version: 5,
                   examples: [
                     {
                       id: "example",
@@ -121,6 +128,7 @@ describe("workspaceData normalized persistence", () => {
                       body: "{}",
                       headers: [],
                       sortOrder: 0,
+                      version: 6,
                     },
                   ],
                 },
@@ -133,12 +141,14 @@ describe("workspaceData normalized persistence", () => {
             {
               id: "env",
               name: "Dev",
+              version: 7,
               variables: [
                 {
                   id: "env-var",
                   key: "host",
                   value: "localhost",
                   enabled: true,
+                  version: 8,
                 },
               ],
             },
@@ -156,15 +166,22 @@ describe("workspaceData normalized persistence", () => {
     expect(data.collections[0].items[0]).toMatchObject({
       id: "folder",
       type: "folder",
+      version: 4,
       items: [{ id: "request", type: "request" }],
+    });
+    expect(data.collections[0]).toMatchObject({
+      version: 3,
+      updatedAt: "2026-01-01T00:00:01.000Z",
     });
     expect(data.collections[0].items[0].items[0].examples[0]).toMatchObject({
       id: "example",
       code: 200,
+      version: 6,
     });
     expect(data.environments[0].variables[0]).toMatchObject({
       id: "env-var",
       key: "host",
+      version: 8,
     });
     expect(data.globalVariables[0]).toMatchObject({
       id: "global",

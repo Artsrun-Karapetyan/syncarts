@@ -29,7 +29,8 @@ export function InviteMemberActions({
           disabled={loading}
           onChange={onChangeRole}
           options={[
-            { value: "MEMBER", label: "Editor" },
+            { value: "ADMIN", label: "Admin" },
+            { value: "EDITOR", label: "Editor" },
             { value: "VIEWER", label: "Viewer" },
           ]}
           variant="ghost"
@@ -54,7 +55,13 @@ export function InviteMemberActions({
             textTransform: "uppercase",
           }}
         >
-          {isOwner ? "Owner" : memberRole === "VIEWER" ? "Viewer" : "Editor"}
+          {isOwner
+            ? "Owner"
+            : memberRole === "ADMIN"
+              ? "Admin"
+              : memberRole === "VIEWER"
+                ? "Viewer"
+                : "Editor"}
         </span>
       )}
       {canManageMembers && !isOwner && (

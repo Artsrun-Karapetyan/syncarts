@@ -8,12 +8,17 @@ describe("MergeRequestService source collection", () => {
     const service = new MergeRequestService(
       createPrismaMock({
         mergeRequest: {
-          findUnique: async () => ({ id: "mr", data: { id: "collection" } }),
+          findUnique: async () => ({
+            id: "mr",
+            authorId: "author",
+            targetWorkspaceId: "target",
+            data: { id: "collection" },
+          }),
         },
       }),
     );
 
-    await expect(service.getSourceCollection("mr")).resolves.toEqual({
+    await expect(service.getSourceCollection("mr", "author")).resolves.toEqual({
       id: "collection",
     });
   });
@@ -24,6 +29,8 @@ describe("MergeRequestService source collection", () => {
         mergeRequest: {
           findUnique: async () => ({
             id: "mr",
+            authorId: "author",
+            targetWorkspaceId: "target",
             sourceWorkspaceId: "source",
             sourceCollectionId: "collection",
             data: null,
@@ -32,7 +39,7 @@ describe("MergeRequestService source collection", () => {
       }),
     );
 
-    await expect(service.getSourceCollection("mr")).rejects.toThrow(
+    await expect(service.getSourceCollection("mr", "author")).rejects.toThrow(
       "Merge request has no source snapshot",
     );
   });
@@ -44,8 +51,8 @@ describe("MergeRequestService source collection", () => {
       }),
     );
 
-    await expect(service.getSourceCollection("missing")).rejects.toThrow(
-      "Merge request not found",
-    );
+    await expect(
+      service.getSourceCollection("missing", "author"),
+    ).rejects.toThrow("Merge request not found");
   });
 });

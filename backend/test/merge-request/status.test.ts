@@ -21,7 +21,9 @@ describe("MergeRequestService status", () => {
 
     await expect(
       service.updateMergeRequestStatus("mr", "MERGED", "outsider"),
-    ).rejects.toThrow("Unauthorized to update this merge request");
+    ).rejects.toThrow(
+      "Only the target workspace owner can update this merge request",
+    );
   });
 
   test("allows target owner", async () => {
@@ -54,7 +56,7 @@ describe("MergeRequestService status", () => {
     expect(updateData.updatedAt).toBeInstanceOf(Date);
   });
 
-  test("allows merge request author", async () => {
+  test("blocks merge request author", async () => {
     const service = new MergeRequestService(
       createPrismaMock({
         mergeRequest: {
@@ -72,10 +74,12 @@ describe("MergeRequestService status", () => {
 
     await expect(
       service.updateMergeRequestStatus("mr", "CLOSED", "author"),
-    ).resolves.toMatchObject({ id: "mr", status: "CLOSED" });
+    ).rejects.toThrow(
+      "Only the target workspace owner can update this merge request",
+    );
   });
 
-  test("allows target workspace member", async () => {
+  test("blocks target workspace member", async () => {
     const service = new MergeRequestService(
       createPrismaMock({
         mergeRequest: {
@@ -93,7 +97,9 @@ describe("MergeRequestService status", () => {
 
     await expect(
       service.updateMergeRequestStatus("mr", "REJECTED", "member"),
-    ).resolves.toMatchObject({ id: "mr", status: "REJECTED" });
+    ).rejects.toThrow(
+      "Only the target workspace owner can update this merge request",
+    );
   });
 
   test("rejects missing merge request", async () => {

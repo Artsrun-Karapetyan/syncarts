@@ -6,6 +6,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { login, register } from "../../lib/api";
 import { getAuthToken, setAuthToken } from "../../lib/auth";
 import { setStoredUser } from "../../lib/session";
+import { isTauriRuntime } from "../../lib/tauriRuntime";
 import { type AuthMode, getAuthErrorMessage } from "./authErrorMessage";
 
 type AuthScreenProps = {
@@ -59,6 +60,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
       'button, input, textarea, select, a, [role="button"]',
     );
     if (event.button !== 0 || isInteractive) return;
+    if (!isTauriRuntime()) return;
 
     getCurrentWindow()
       .startDragging()
@@ -171,6 +173,9 @@ export function AuthScreen({ mode }: AuthScreenProps) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoComplete="name"
+                minLength={2}
+                maxLength={120}
+                required
               />
             </label>
           )}
@@ -191,9 +196,11 @@ export function AuthScreen({ mode }: AuthScreenProps) {
               className="input"
               style={{ fontSize: 14 }}
               placeholder="user@example.com"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
+              required
             />
           </label>
 
@@ -219,6 +226,9 @@ export function AuthScreen({ mode }: AuthScreenProps) {
               autoComplete={
                 mode === "login" ? "current-password" : "new-password"
               }
+              minLength={8}
+              maxLength={128}
+              required
             />
           </label>
 

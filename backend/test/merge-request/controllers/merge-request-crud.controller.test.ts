@@ -32,16 +32,17 @@ describe("MergeRequestController CRUD", () => {
 
   test("findByWorkspace delegates to mrService.getMergeRequestsForWorkspace", async () => {
     const mockService = {
-      getMergeRequestsForWorkspace: mock(async (_workspaceId: string) => [
-        { id: "mr-1" },
-      ]),
+      getMergeRequestsForWorkspace: mock(
+        async (_workspaceId: string, _userId: string) => [{ id: "mr-1" }],
+      ),
     } as unknown as MergeRequestService;
 
     const controller = new MergeRequestController(mockService);
-    const result = await controller.findByWorkspace("ws-1", {});
+    const result = await controller.findByWorkspace(req, "ws-1", {});
 
     expect(mockService.getMergeRequestsForWorkspace).toHaveBeenCalledWith(
       "ws-1",
+      "user-1",
       { skip: undefined, take: undefined },
     );
     expect(result).toEqual([{ id: "mr-1" }] as any);
@@ -49,13 +50,18 @@ describe("MergeRequestController CRUD", () => {
 
   test("findOne delegates to mrService.getMergeRequestById", async () => {
     const mockService = {
-      getMergeRequestById: mock(async (_id: string) => ({ id: "mr-1" })),
+      getMergeRequestById: mock(async (_id: string, _userId: string) => ({
+        id: "mr-1",
+      })),
     } as unknown as MergeRequestService;
 
     const controller = new MergeRequestController(mockService);
-    const result = await controller.findOne("mr-1");
+    const result = await controller.findOne(req, "mr-1");
 
-    expect(mockService.getMergeRequestById).toHaveBeenCalledWith("mr-1");
+    expect(mockService.getMergeRequestById).toHaveBeenCalledWith(
+      "mr-1",
+      "user-1",
+    );
     expect(result).toEqual({ id: "mr-1" } as any);
   });
 });

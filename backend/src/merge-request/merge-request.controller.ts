@@ -53,18 +53,20 @@ export class MergeRequestController {
 
   @Get("workspace/:workspaceId")
   async findByWorkspace(
+    @Request() req: AuthenticatedRequest,
     @Param("workspaceId") workspaceId: string,
     @Query() query: unknown,
   ) {
     return this.mrService.getMergeRequestsForWorkspace(
       workspaceId,
+      req.authUser.id,
       parsePaginationQuery(query),
     );
   }
 
   @Get(":id")
-  async findOne(@Param("id") id: string) {
-    return this.mrService.getMergeRequestById(id);
+  async findOne(@Request() req: AuthenticatedRequest, @Param("id") id: string) {
+    return this.mrService.getMergeRequestById(id, req.authUser.id);
   }
 
   @Patch(":id/status")
@@ -83,12 +85,18 @@ export class MergeRequestController {
   }
 
   @Get(":id/source-collection")
-  async getSourceCollection(@Param("id") id: string) {
-    return this.mrService.getSourceCollection(id);
+  async getSourceCollection(
+    @Request() req: AuthenticatedRequest,
+    @Param("id") id: string,
+  ) {
+    return this.mrService.getSourceCollection(id, req.authUser.id);
   }
 
   @Get(":id/target-collection")
-  async getTargetCollection(@Param("id") id: string) {
-    return this.mrService.getTargetCollection(id);
+  async getTargetCollection(
+    @Request() req: AuthenticatedRequest,
+    @Param("id") id: string,
+  ) {
+    return this.mrService.getTargetCollection(id, req.authUser.id);
   }
 }

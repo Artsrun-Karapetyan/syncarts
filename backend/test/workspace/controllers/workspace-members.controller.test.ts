@@ -7,6 +7,7 @@ import type { WorkspaceService } from "../../../src/workspace/workspace.service.
 
 describe("WorkspaceController Members Management", () => {
   const req = { authUser: { id: "user-1" } };
+  const requestService = {} as any;
 
   test("removeMember delegates to workspaceService.removeMember", async () => {
     const mockService = {
@@ -17,7 +18,7 @@ describe("WorkspaceController Members Management", () => {
       ),
     } as unknown as WorkspaceService;
 
-    const controller = new WorkspaceController(mockService);
+    const controller = new WorkspaceController(mockService, requestService);
     const result = await controller.removeMember(
       req,
       "workspace-1",
@@ -37,7 +38,7 @@ describe("WorkspaceController Members Management", () => {
       updateMemberRole: mock(async (_params: any) => ({ updated: true })),
     } as unknown as WorkspaceService;
 
-    const controller = new WorkspaceController(mockService);
+    const controller = new WorkspaceController(mockService, requestService);
     const params = { id: "workspace-1", memberUserId: "member-2" };
     const body = { role: "EDITOR" };
 

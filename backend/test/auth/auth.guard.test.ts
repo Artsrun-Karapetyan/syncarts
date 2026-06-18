@@ -8,7 +8,10 @@ import { createPrismaMock } from "../helpers/prismaMock";
 
 const createdAt = new Date("2026-01-01T00:00:00.000Z");
 
-function createContext(request: { headers: { authorization?: string } }) {
+function createContext(request: {
+  headers: { authorization?: string };
+  query?: { access_token?: string };
+}) {
   return {
     getClass: () => class TestController {},
     getHandler: () => function handler() {},
@@ -77,6 +80,35 @@ describe("AuthGuard", () => {
       name: "User",
       createdAt,
     });
+  });
+
+  test("loads active session from query token for event streams", async () => {
+    const token = "stream-token";
+    let tokenHash = "";
+    const request = { headers: {}, query: { access_token: token } };
+    const guard = new AuthGuard(
+      createReflector(),
+      createPrismaMock({
+        session: {
+          findUnique: async ({ where }: any) => {
+            tokenHash = where.tokenHash;
+            return {
+              id: "session",
+              expiresAt: new Date(Date.now() + 60_000),
+              user: {
+                id: "user",
+                email: "user@test.com",
+                name: "User",
+                createdAt,
+              },
+            };
+          },
+        },
+      }),
+    );
+
+    await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
+    expect(tokenHash).toBe(createHash("sha256").update(token).digest("hex"));
   });
 
   test("deletes expired sessions and rejects request", async () => {

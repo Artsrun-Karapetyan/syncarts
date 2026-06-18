@@ -57,11 +57,14 @@ model Workspace {
 }
 
 model WorkspaceCollection {
-  id               String    @id
+  id               String
   workspaceId      String
   workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name             String
   sortOrder        Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  version          Int       @default(1)
   authType         String?
   bearerToken      String?
   description      String?
@@ -73,21 +76,25 @@ model WorkspaceCollection {
   folders  WorkspaceFolder[]
   requests WorkspaceRequest[]
 
+  @@id([workspaceId, id])
   @@index([workspaceId, sortOrder])
   @@map("workspace_collections")
 }
 
 model WorkspaceFolder {
-  id               String              @id
+  id               String
   workspaceId      String
   collectionId     String
   parentFolderId   String?
   workspace        Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  collection       WorkspaceCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  parentFolder     WorkspaceFolder?    @relation("WorkspaceFolderChildren", fields: [parentFolderId], references: [id], onDelete: Cascade)
+  collection       WorkspaceCollection @relation(fields: [workspaceId, collectionId], references: [workspaceId, id], onDelete: Cascade)
+  parentFolder     WorkspaceFolder?    @relation("WorkspaceFolderChildren", fields: [workspaceId, parentFolderId], references: [workspaceId, id], onDelete: Cascade)
   childFolders     WorkspaceFolder[]   @relation("WorkspaceFolderChildren")
   name             String
   sortOrder        Int                 @default(0)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  version          Int                 @default(1)
   authType         String?
   bearerToken      String?
   description      String?
@@ -97,21 +104,24 @@ model WorkspaceFolder {
 
   requests WorkspaceRequest[]
 
-  @@index([workspaceId])
-  @@index([collectionId, parentFolderId, sortOrder])
+  @@id([workspaceId, id])
+  @@index([workspaceId, collectionId, parentFolderId, sortOrder])
   @@map("workspace_folders")
 }
 
 model WorkspaceRequest {
-  id                     String              @id
+  id                     String
   workspaceId            String
   collectionId           String
   folderId               String?
   workspace              Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  collection             WorkspaceCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  folder                 WorkspaceFolder?    @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  collection             WorkspaceCollection @relation(fields: [workspaceId, collectionId], references: [workspaceId, id], onDelete: Cascade)
+  folder                 WorkspaceFolder?    @relation(fields: [workspaceId, folderId], references: [workspaceId, id], onDelete: Cascade)
   name                   String
   sortOrder              Int                 @default(0)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  version                Int                 @default(1)
   method                 String
   url                    String
   headers                Json?
@@ -129,62 +139,80 @@ model WorkspaceRequest {
 
   examples RequestExample[]
 
-  @@index([workspaceId])
-  @@index([collectionId, folderId, sortOrder])
+  @@id([workspaceId, id])
+  @@index([workspaceId, collectionId, folderId, sortOrder])
   @@map("workspace_requests")
 }
 
 model RequestExample {
-  id              String           @id
+  id              String
+  workspaceId     String
   requestId       String
-  request         WorkspaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  request         WorkspaceRequest @relation(fields: [workspaceId, requestId], references: [workspaceId, id], onDelete: Cascade)
   name            String
   sortOrder       Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  version         Int              @default(1)
   originalRequest Json?
   code            Int
   status          String
   body            String
   headers         Json?
 
-  @@index([requestId, sortOrder])
+  @@id([workspaceId, id])
+  @@index([workspaceId, requestId, sortOrder])
   @@map("request_examples")
 }
 
 model WorkspaceEnvironment {
-  id          String    @id
+  id          String
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name        String
   sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  version     Int       @default(1)
 
   variables WorkspaceEnvironmentVariable[]
 
+  @@id([workspaceId, id])
   @@index([workspaceId, sortOrder])
   @@map("workspace_environments")
 }
 
 model WorkspaceEnvironmentVariable {
-  id            String               @id
+  id            String
+  workspaceId   String
   environmentId String
-  environment   WorkspaceEnvironment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environment   WorkspaceEnvironment @relation(fields: [workspaceId, environmentId], references: [workspaceId, id], onDelete: Cascade)
   key           String
   value         String
   enabled       Boolean              @default(true)
   sortOrder     Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  version       Int                  @default(1)
 
-  @@index([environmentId, sortOrder])
+  @@id([workspaceId, id])
+  @@index([workspaceId, environmentId, sortOrder])
   @@map("workspace_environment_variables")
 }
 
 model WorkspaceGlobalVariable {
-  id          String    @id
+  id          String
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   key         String
   value       String
   enabled     Boolean   @default(true)
   sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  version     Int       @default(1)
 
+  @@id([workspaceId, id])
   @@index([workspaceId, sortOrder])
   @@map("workspace_global_variables")
 }
@@ -192,7 +220,7 @@ model WorkspaceGlobalVariable {
 model WorkspaceMember {
   userId      String
   workspaceId String
-  role        String   @default("MEMBER") // "OWNER", "ADMIN", "MEMBER"
+  role        String   @default("EDITOR") // OWNER, ADMIN, EDITOR, VIEWER
   joinedAt    DateTime @default(now())
 
   user      User      @relation(fields: [userId], references: [id])

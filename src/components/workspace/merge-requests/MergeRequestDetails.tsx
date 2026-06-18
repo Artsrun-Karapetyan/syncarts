@@ -4,6 +4,8 @@ import { MergeRequestChanges } from "./MergeRequestChanges";
 import { MergeRequestStatusBadge } from "./MergeRequestStatusBadge";
 
 interface MergeRequestDetailsProps {
+  canDelete: boolean;
+  canReview: boolean;
   error: string | null;
   merging: boolean;
   onMerge: () => void;
@@ -15,6 +17,8 @@ interface MergeRequestDetailsProps {
 }
 
 export function MergeRequestDetails({
+  canDelete,
+  canReview,
   error,
   merging,
   onMerge,
@@ -75,18 +79,20 @@ export function MergeRequestDetails({
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <MergeRequestStatusBadge status={selectedMr.status} />
-              <button
-                onClick={onDelete}
-                className="btn"
-                style={{
-                  background: "rgba(255, 80, 80, 0.1)",
-                  color: "#ff5050",
-                  border: "none",
-                  padding: "6px 12px",
-                }}
-              >
-                Delete
-              </button>
+              {canDelete && (
+                <button
+                  onClick={onDelete}
+                  className="btn"
+                  style={{
+                    background: "rgba(255, 80, 80, 0.1)",
+                    color: "#ff5050",
+                    border: "none",
+                    padding: "6px 12px",
+                  }}
+                >
+                  Delete
+                </button>
+              )}
             </div>
           </div>
           {selectedMr.description && (
@@ -110,6 +116,7 @@ export function MergeRequestDetails({
             selectedMr={selectedMr}
             sourceCollection={sourceCollection}
             targetCollection={targetCollection}
+            canReview={canReview}
             onMerge={onMerge}
             onReject={onReject}
           />

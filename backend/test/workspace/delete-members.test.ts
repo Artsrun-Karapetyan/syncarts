@@ -157,7 +157,7 @@ describe("WorkspaceService delete/members", () => {
       service.updateMemberRole({
         workspaceId: "workspace",
         memberUserId: "member",
-        role: "ADMIN",
+        role: "OWNER",
         userId: "owner",
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);

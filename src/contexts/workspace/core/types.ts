@@ -92,6 +92,9 @@ export interface TabData {
 export interface SavedExample {
   id: string;
   name: string;
+  createdAt?: string;
+  updatedAt?: string;
+  version?: number;
   originalRequest?: Partial<TabData>;
   code: number;
   status: string;
@@ -102,7 +105,12 @@ export interface SavedExample {
 export interface SavedRequest {
   type: "request";
   id: string;
+  collectionId?: string;
+  folderId?: string;
   name: string;
+  createdAt?: string;
+  updatedAt?: string;
+  version?: number;
   method: string;
   url: string;
   headers: HeaderItem[];
@@ -124,6 +132,9 @@ export interface Folder {
   type: "folder";
   id: string;
   name: string;
+  createdAt?: string;
+  updatedAt?: string;
+  version?: number;
   items: (Folder | SavedRequest)[];
   authType?: "inherit" | "none" | "bearer";
   bearerToken?: string;
@@ -142,6 +153,9 @@ export interface ForkMetadata {
 export interface Collection {
   id: string;
   name: string;
+  createdAt?: string;
+  updatedAt?: string;
+  version?: number;
   items: (Folder | SavedRequest)[];
   authType?: "inherit" | "none" | "bearer";
   bearerToken?: string;
@@ -157,11 +171,17 @@ export interface EnvironmentVariable {
   key: string;
   value: string;
   enabled: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  version?: number;
 }
 
 export interface Environment {
   id: string;
   name: string;
+  createdAt?: string;
+  updatedAt?: string;
+  version?: number;
   variables: EnvironmentVariable[];
 }
 

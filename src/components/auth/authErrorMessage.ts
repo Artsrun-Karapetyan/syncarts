@@ -16,10 +16,15 @@ export function getAuthErrorMessage(error: unknown, mode: AuthMode) {
   }
 
   if (normalized.includes("email") || normalized.includes("password")) {
+    if (message !== "Bad Request (400)") return message;
     return mode === "login"
       ? "Please enter a valid email and password."
       : "Please enter a valid email and use a password with at least 8 characters.";
   }
 
-  return "Something went wrong. Please try again.";
+  if (normalized.includes("name")) return message;
+
+  return message && message !== "Bad Request (400)"
+    ? message
+    : "Something went wrong. Please try again.";
 }

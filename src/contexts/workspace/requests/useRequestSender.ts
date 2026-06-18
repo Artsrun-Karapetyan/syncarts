@@ -1,6 +1,6 @@
-import { invoke } from "@tauri-apps/api/core";
 import useSWRMutation from "swr/mutation";
 
+import { sendHttpRequest } from "../../../lib/httpRequestSender";
 import { applyPathVariables } from "../../../utils/pathVariables";
 import type {
   Collection,
@@ -132,13 +132,11 @@ export function useRequestSender(args: RequestSenderArgs) {
         throw new Error(urlError);
       }
 
-      const res: HttpResponse = await invoke("make_request", {
-        request: {
-          url: requestUrl,
-          method: requestTab.method,
-          headers: headerMap,
-          body: reqBodyPayload,
-        },
+      const res = await sendHttpRequest({
+        url: requestUrl,
+        method: requestTab.method,
+        headers: headerMap,
+        body: reqBodyPayload,
       });
       return res;
     },

@@ -19,6 +19,26 @@ describe("AuthService register/login", () => {
     );
   });
 
+  test("register returns readable field validation messages", async () => {
+    const service = new AuthService(createPrismaMock());
+
+    try {
+      await service.register({
+        email: "a@gmail.com",
+        name: "a",
+        password: "password123",
+      });
+      throw new Error("Expected register to fail");
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).getResponse()).toMatchObject({
+        fieldErrors: {
+          name: ["Name must be at least 2 characters."],
+        },
+      });
+    }
+  });
+
   test("register rejects duplicate emails", async () => {
     const service = new AuthService(
       createPrismaMock({

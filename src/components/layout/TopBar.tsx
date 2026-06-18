@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
 import { useStoredUser } from "../../lib/session";
+import { isTauriRuntime } from "../../lib/tauriRuntime";
 import { EnvironmentManager } from "../environment/EnvironmentManager";
 import { Select } from "../ui/Select";
 import { InviteModal } from "../workspace/InviteModal";
@@ -56,6 +57,8 @@ export function TopBar() {
   }, [isEnvQuickLookOpen]);
 
   useEffect(() => {
+    if (!isTauriRuntime()) return;
+
     const currentWindow = getCurrentWindow();
     let unlisten: (() => void) | undefined;
     let isMounted = true;
@@ -85,6 +88,7 @@ export function TopBar() {
       'button, input, textarea, select, a, [role="button"]',
     );
     if (event.button !== 0 || isInteractive) return;
+    if (!isTauriRuntime()) return;
 
     getCurrentWindow()
       .startDragging()

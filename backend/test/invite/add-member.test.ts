@@ -28,7 +28,7 @@ describe("InviteService addMemberByEmail", () => {
       ),
     ).resolves.toEqual({ status: "added", workspaceIds: ["workspace"] });
     expect(created).toEqual([
-      { userId: "member", workspaceId: "workspace", role: "MEMBER" },
+      { userId: "member", workspaceId: "workspace", role: "EDITOR" },
     ]);
   });
 

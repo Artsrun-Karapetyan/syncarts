@@ -4,10 +4,18 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import type { Prisma } from "@prisma/client";
 
 import type { PaginationOptions } from "../common/parsePaginationQuery.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { readWorkspaceData } from "../workspace/workspaceData.js";
+import { canWriteWorkspace } from "../workspace/workspaceRoles.js";
+
+const mergeRequestInclude = {
+  author: {
+    select: { id: true, name: true, email: true },
+  },
+} satisfies Prisma.MergeRequestInclude;
 
 @Injectable()
 export class MergeRequestService {
@@ -24,10 +32,39 @@ export class MergeRequestService {
     data?: any;
     targetData?: any;
   }) {
-    const targetWs = await this.prisma.workspace.findUnique({
-      where: { id: data.targetWorkspaceId },
+    const targetWs = await this.prisma.workspace.findFirst({
+      where: {
+        id: data.targetWorkspaceId,
+        OR: [
+          { ownerId: data.authorId },
+          { members: { some: { userId: data.authorId } } },
+        ],
+      },
     });
     if (!targetWs) throw new NotFoundException("Target workspace not found");
+
+    const sourceWs = await this.prisma.workspace.findFirst({
+      where: {
+        id: data.sourceWorkspaceId,
+        OR: [
+          { ownerId: data.authorId },
+          { members: { some: { userId: data.authorId } } },
+        ],
+      },
+      include: { members: true },
+    });
+    if (!sourceWs) throw new NotFoundException("Source workspace not found");
+
+    const sourceMember = sourceWs.members.find(
+      (member) => member.userId === data.authorId,
+    );
+    if (
+      !canWriteWorkspace(sourceMember?.role, sourceWs.ownerId === data.authorId)
+    ) {
+      throw new ForbiddenException(
+        "You cannot create merge requests from a read-only workspace",
+      );
+    }
 
     // Snapshot the target collection at creation time if not provided
     let targetData = data.targetData;
@@ -59,59 +96,44 @@ export class MergeRequestService {
 
   async getMergeRequestsForWorkspace(
     workspaceId: string,
+    userId: string,
     pagination: PaginationOptions = {},
   ) {
-    return this.prisma.mergeRequest.findMany({
+    const workspace = await this.prisma.workspace.findFirst({
       where: {
-        OR: [
-          { targetWorkspaceId: workspaceId },
-          { sourceWorkspaceId: workspaceId },
-        ],
+        id: workspaceId,
+        OR: [{ ownerId: userId }, { members: { some: { userId } } }],
       },
-      include: {
-        author: {
-          select: { id: true, name: true, email: true },
-        },
-      },
+    });
+    if (!workspace) {
+      throw new NotFoundException("Workspace not found or unauthorized");
+    }
+    if (workspace.ownerId !== userId) return [];
+
+    return this.prisma.mergeRequest.findMany({
+      where: { targetWorkspaceId: workspaceId },
+      include: mergeRequestInclude,
       orderBy: { createdAt: "desc" },
       skip: pagination.skip,
       take: pagination.take,
     });
   }
 
-  async getMergeRequestById(id: string) {
-    return this.prisma.mergeRequest.findUnique({
+  async getMergeRequestById(id: string, userId: string) {
+    const mr = await this.prisma.mergeRequest.findUnique({
       where: { id },
-      include: {
-        author: {
-          select: { id: true, name: true, email: true },
-        },
-      },
+      include: mergeRequestInclude,
     });
+    if (!mr) throw new NotFoundException("Merge request not found");
+    await this.ensureMergeRequestReadable(mr, userId);
+    return mr;
   }
 
   async updateMergeRequestStatus(id: string, status: string, userId: string) {
     const mr = await this.prisma.mergeRequest.findUnique({ where: { id } });
     if (!mr) throw new NotFoundException("Merge request not found");
 
-    // Basic permission check: only target workspace owner/admin or MR author can update
-    // For now, allow any member of the target workspace or the author
-    const isAuthor = mr.authorId === userId;
-
-    // Check if user is member of target workspace
-    const member = await this.prisma.workspaceMember.findUnique({
-      where: {
-        userId_workspaceId: { userId, workspaceId: mr.targetWorkspaceId },
-      },
-    });
-    const targetWorkspace = await this.prisma.workspace.findUnique({
-      where: { id: mr.targetWorkspaceId },
-    });
-    const isTargetOwner = targetWorkspace?.ownerId === userId;
-
-    if (!isAuthor && !member && !isTargetOwner) {
-      throw new ForbiddenException("Unauthorized to update this merge request");
-    }
+    await this.ensureTargetWorkspaceOwner(mr.targetWorkspaceId, userId);
 
     return this.prisma.mergeRequest.update({
       where: { id },
@@ -138,11 +160,12 @@ export class MergeRequestService {
     return this.prisma.mergeRequest.delete({ where: { id } });
   }
 
-  async getSourceCollection(mrId: string) {
+  async getSourceCollection(mrId: string, userId: string) {
     const mr = await this.prisma.mergeRequest.findUnique({
       where: { id: mrId },
     });
     if (!mr) throw new NotFoundException("Merge request not found");
+    await this.ensureMergeRequestReadable(mr, userId);
 
     if (!mr.data) {
       throw new NotFoundException("Merge request has no source snapshot");
@@ -151,16 +174,39 @@ export class MergeRequestService {
     return mr.data;
   }
 
-  async getTargetCollection(mrId: string) {
+  async getTargetCollection(mrId: string, userId: string) {
     const mr = await this.prisma.mergeRequest.findUnique({
       where: { id: mrId },
     });
     if (!mr) throw new NotFoundException("Merge request not found");
+    await this.ensureMergeRequestReadable(mr, userId);
 
     if (!mr.targetData) {
       throw new NotFoundException("Merge request has no target snapshot");
     }
 
     return mr.targetData;
+  }
+
+  private async ensureMergeRequestReadable(
+    mr: { authorId: string; targetWorkspaceId: string },
+    userId: string,
+  ) {
+    if (mr.authorId === userId) return;
+    await this.ensureTargetWorkspaceOwner(mr.targetWorkspaceId, userId);
+  }
+
+  private async ensureTargetWorkspaceOwner(
+    workspaceId: string,
+    userId: string,
+  ) {
+    const workspace = await this.prisma.workspace.findUnique({
+      where: { id: workspaceId },
+    });
+    if (!workspace || workspace.ownerId !== userId) {
+      throw new ForbiddenException(
+        "Only the target workspace owner can update this merge request",
+      );
+    }
   }
 }

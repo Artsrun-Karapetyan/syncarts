@@ -19,26 +19,36 @@ import { PrismaService } from "../prisma/prisma.service.js";
 const registerSchema = z.object({
   email: z
     .string()
-    .email()
+    .email("Enter a valid email address.")
     .transform((value) => value.trim().toLowerCase()),
   name: z
     .string()
-    .min(2)
-    .max(120)
+    .min(2, "Name must be at least 2 characters.")
+    .max(120, "Name must be 120 characters or fewer.")
     .transform((value) => value.trim()),
-  password: z.string().min(8).max(128),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters.")
+    .max(128, "Password must be 128 characters or fewer."),
 });
 
 const loginSchema = z.object({
   email: z
     .string()
-    .email()
+    .email("Enter a valid email address.")
     .transform((value) => value.trim().toLowerCase()),
-  password: z.string().min(8).max(128),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters.")
+    .max(128, "Password must be 128 characters or fewer."),
 });
 
 const updateMeSchema = z.object({
-  name: z.string().min(2).max(120).optional(),
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters.")
+    .max(120, "Name must be 120 characters or fewer.")
+    .optional(),
 });
 
 type AuthUser = {

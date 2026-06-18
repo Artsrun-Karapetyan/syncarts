@@ -171,6 +171,11 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
       return next;
     });
   };
+  const updateWorkspacesLocal = (
+    updater: (prev: Workspace[]) => Workspace[],
+  ) => {
+    setWorkspaces(updater);
+  };
 
   const environmentActions = useEnvironmentActions({
     activeEnvironmentId,
@@ -184,6 +189,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     localDefaultWorkspaceId,
     setTabsByWorkspace,
     updateWorkspaces,
+    updateWorkspacesLocal,
   });
 
   const exampleActions = useExampleActions({

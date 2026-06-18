@@ -11,6 +11,7 @@ import {
   normalizeWorkspaceData,
   replaceWorkspaceData,
 } from "../workspace/workspaceData.js";
+import { WorkspaceRoles } from "../workspace/workspaceRoles.js";
 
 @Injectable()
 export class InviteService {
@@ -62,7 +63,7 @@ export class InviteService {
             members: {
               create: {
                 userId,
-                role: "OWNER",
+                role: WorkspaceRoles.Owner,
               },
             },
           },
@@ -207,7 +208,7 @@ export class InviteService {
           data: {
             userId: userToAdd.id,
             workspaceId,
-            role: "MEMBER",
+            role: WorkspaceRoles.Editor,
           },
         });
       }
@@ -288,7 +289,7 @@ export class InviteService {
             data: {
               userId,
               workspaceId,
-              role: "MEMBER",
+              role: WorkspaceRoles.Editor,
             },
           });
         }

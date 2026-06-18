@@ -4,15 +4,25 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service.js";
+import { WorkspaceRealtimeService } from "./workspace-realtime.service.js";
+import { getWorkspaceAccess } from "./workspaceAccess.js";
 import {
   normalizeWorkspaceData,
   readWorkspaceData,
   replaceWorkspaceData,
 } from "./workspaceData.js";
+import { WorkspaceEventTypes } from "./workspaceEvents.js";
+import {
+  canAssignWorkspaceRole,
+  canWriteWorkspace,
+  WorkspaceRoles,
+} from "./workspaceRoles.js";
+import { toWorkspaceSyncInput } from "./workspaceSyncInput.js";
 
 const workspaceMemberInclude = {
   user: { select: { id: true, name: true, email: true } },
@@ -32,7 +42,12 @@ const workspaceMetaSelect = {
 
 @Injectable()
 export class WorkspaceService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Optional()
+    @Inject(WorkspaceRealtimeService)
+    private readonly realtime?: WorkspaceRealtimeService,
+  ) {}
 
   async createWorkspace(name: string, ownerId: string) {
     const workspace = await this.prisma.workspace.create({
@@ -42,7 +57,7 @@ export class WorkspaceService {
         members: {
           create: {
             userId: ownerId,
-            role: "OWNER",
+            role: WorkspaceRoles.Owner,
           },
         },
       },
@@ -104,6 +119,10 @@ export class WorkspaceService {
     };
   }
 
+  async ensureWorkspaceAccess(workspaceId: string, userId: string) {
+    await getWorkspaceAccess(this.prisma, workspaceId, userId);
+  }
+
   async syncWorkspace(workspaceId: string, data: unknown, userId: string) {
     const input = toWorkspaceSyncInput(data);
     const workspaceData = normalizeWorkspaceData(input);
@@ -123,7 +142,7 @@ export class WorkspaceService {
         );
       }
 
-      if (member?.role === "VIEWER" && !isOwner) {
+      if (!canWriteWorkspace(member?.role, isOwner)) {
         throw new ForbiddenException(
           "You only have view access to this workspace",
         );
@@ -148,20 +167,24 @@ export class WorkspaceService {
           }
 
           await replaceWorkspaceData(transaction, workspaceId, workspaceData);
-          return transaction.workspace.findUnique({
+          const workspace = await transaction.workspace.findUnique({
             where: { id: workspaceId },
             select: workspaceMetaSelect,
           });
+          this.emitWorkspaceUpdated(workspaceId, workspace?.version);
+          return workspace;
         });
       }
 
       return this.prisma.$transaction(async (transaction) => {
         await replaceWorkspaceData(transaction, workspaceId, workspaceData);
-        return transaction.workspace.update({
+        const workspace = await transaction.workspace.update({
           where: { id: workspaceId },
           data: updateData,
           select: workspaceMetaSelect,
         });
+        this.emitWorkspaceUpdated(workspaceId, workspace.version);
+        return workspace;
       });
     }
 
@@ -174,13 +197,14 @@ export class WorkspaceService {
           members: {
             create: {
               userId,
-              role: "OWNER",
+              role: WorkspaceRoles.Owner,
             },
           },
         },
         select: workspaceMetaSelect,
       });
       await replaceWorkspaceData(transaction, workspaceId, workspaceData);
+      this.emitWorkspaceUpdated(workspaceId, workspace.version);
       return workspace;
     });
   }
@@ -275,9 +299,9 @@ export class WorkspaceService {
       );
     }
 
-    if (!["MEMBER", "EDITOR", "VIEWER"].includes(role)) {
+    if (!canAssignWorkspaceRole(role)) {
       throw new ForbiddenException(
-        "Invalid role. Must be MEMBER, EDITOR, or VIEWER",
+        "Invalid role. Must be ADMIN, EDITOR, or VIEWER",
       );
     }
 
@@ -293,27 +317,14 @@ export class WorkspaceService {
 
     return { status: "updated", workspaceId, userId: memberUserId, role };
   }
-}
 
-type WorkspaceSyncInput = {
-  name?: string;
-  version?: number;
-  collections?: Prisma.InputJsonValue;
-  environments?: Prisma.InputJsonValue;
-  globalVariables?: Prisma.InputJsonValue;
-};
-
-function toWorkspaceSyncInput(value: unknown): WorkspaceSyncInput {
-  if (typeof value !== "object" || value === null) {
-    return {};
+  private emitWorkspaceUpdated(workspaceId: string, version?: number) {
+    this.realtime?.emit({
+      type: WorkspaceEventTypes.WorkspaceUpdated,
+      workspaceId,
+      entityType: "workspace",
+      entityId: workspaceId,
+      version,
+    });
   }
-
-  const input = value as Record<string, Prisma.InputJsonValue | undefined>;
-  return {
-    name: typeof input.name === "string" ? input.name : undefined,
-    version: typeof input.version === "number" ? input.version : undefined,
-    collections: input.collections,
-    environments: input.environments,
-    globalVariables: input.globalVariables,
-  };
 }

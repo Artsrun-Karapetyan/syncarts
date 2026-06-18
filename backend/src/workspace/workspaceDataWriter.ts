@@ -155,6 +155,7 @@ async function writeRequest(
     await client.requestExample.create({
       data: {
         id: entityId(example.id),
+        workspaceId,
         requestId,
         name: String(example.name || "Example"),
         sortOrder: index,
@@ -184,6 +185,7 @@ async function writeEnvironment(
         create: Array.isArray(environment.variables)
           ? environment.variables.map((variable: any, index: number) => ({
               ...mapVariableForWrite(variable),
+              workspaceId,
               sortOrder: index,
             }))
           : [],

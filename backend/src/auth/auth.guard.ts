@@ -31,10 +31,7 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const authHeader = request.headers.authorization ?? "";
-    const token = authHeader.startsWith("Bearer ")
-      ? authHeader.slice(7).trim()
-      : "";
+    const token = getAuthToken(request);
 
     if (!token) {
       throw new UnauthorizedException("Missing auth token");
@@ -64,4 +61,14 @@ export class AuthGuard implements CanActivate {
 
     return true;
   }
+}
+
+function getAuthToken(request: AuthenticatedRequest) {
+  const authHeader = request.headers.authorization ?? "";
+  if (authHeader.startsWith("Bearer ")) {
+    return authHeader.slice(7).trim();
+  }
+
+  const queryToken = request.query?.access_token;
+  return typeof queryToken === "string" ? queryToken.trim() : "";
 }

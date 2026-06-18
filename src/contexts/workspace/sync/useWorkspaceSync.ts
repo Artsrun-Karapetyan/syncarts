@@ -11,6 +11,7 @@ import {
   normalizeLegacyWorkspaces,
   shouldSkipLegacyDefaultRemote,
 } from "./syncHelpers";
+import { useWorkspaceRealtime } from "./useWorkspaceRealtime";
 import {
   mergeInitialRemoteWorkspace,
   mergePolledRemoteWorkspace,
@@ -115,6 +116,16 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
     }
   };
 
+  useWorkspaceRealtime({
+    activeWorkspaceId,
+    dirtyWorkspaceIdsRef,
+    reloadWorkspaces,
+    setWorkspaces,
+    storageHydrated,
+    syncingWorkspaceIdsRef,
+    workspacesRef,
+  });
+
   useEffect(() => {
     if (!storageHydrated) return;
 
@@ -198,11 +209,7 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
 
         const dataPayload = getWorkspaceSyncPayload(workspace);
         const signature = getSyncSignature(dataPayload);
-        const lastSyncedSignature =
-          lastSyncedSignaturesRef.current[workspace.id];
-        const shouldSync =
-          dirtyWorkspaceIdsRef.current.has(workspace.id) ||
-          signature !== lastSyncedSignature;
+        const shouldSync = dirtyWorkspaceIdsRef.current.has(workspace.id);
         if (!shouldSync || syncingWorkspaceIdsRef.current.has(workspace.id))
           return;
 
@@ -295,7 +302,7 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
         .catch((err: any) => {
           console.error("Failed to refresh shared workspaces", err);
         });
-    }, 5000);
+    }, 30000);
 
     return () => window.clearInterval(intervalId);
   }, [setWorkspaces, storageHydrated, userId]);
