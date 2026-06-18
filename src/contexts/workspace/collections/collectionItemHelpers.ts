@@ -242,3 +242,84 @@ function findFolder(
   }
   return null;
 }
+
+export function duplicateItemRecursively(
+  item: Folder | SavedRequest,
+  suffix: string = " Copy",
+): Folder | SavedRequest {
+  if (item.type === "request") {
+    return {
+      ...item,
+      id: crypto.randomUUID(),
+      name: item.name + suffix,
+      examples: item.examples?.map((ex) => ({
+        ...ex,
+        id: crypto.randomUUID(),
+      })),
+    };
+  }
+
+  // It's a folder
+  return {
+    ...item,
+    id: crypto.randomUUID(),
+    name: item.name + suffix,
+    items: item.items.map((child) => duplicateItemRecursively(child, "")), // only add suffix to the root duplicated item
+  };
+}
+
+export function duplicateItemInItems(
+  items: (Folder | SavedRequest)[],
+  itemId: string,
+): (Folder | SavedRequest)[] {
+  const result: (Folder | SavedRequest)[] = [];
+  let foundInCurrentLevel = false;
+
+  for (const item of items) {
+    result.push(item);
+    if (item.id === itemId) {
+      result.push(duplicateItemRecursively(item));
+      foundInCurrentLevel = true;
+    }
+  }
+
+  if (foundInCurrentLevel) return result;
+
+  // If not found at this level, search deeply in folders
+  return items.map((item) => {
+    if (item.type === "folder") {
+      return { ...item, items: duplicateItemInItems(item.items, itemId) };
+    }
+    return item;
+  });
+}
+
+export function duplicateExampleInItems(
+  items: (Folder | SavedRequest)[],
+  requestId: string,
+  exampleId: string,
+): (Folder | SavedRequest)[] {
+  return items.map((item) => {
+    if (item.type === "folder") {
+      return {
+        ...item,
+        items: duplicateExampleInItems(item.items, requestId, exampleId),
+      };
+    }
+    if (item.type === "request" && item.id === requestId && item.examples) {
+      const result: SavedExample[] = [];
+      for (const ex of item.examples) {
+        result.push(ex);
+        if (ex.id === exampleId) {
+          result.push({
+            ...ex,
+            id: crypto.randomUUID(),
+            name: `${ex.name} Copy`,
+          });
+        }
+      }
+      return { ...item, examples: result };
+    }
+    return item;
+  });
+}

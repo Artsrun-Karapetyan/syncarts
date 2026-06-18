@@ -2,6 +2,7 @@ import type { SavedExample, TabData, Workspace } from "../core/types";
 import {
   addExampleToItems,
   deleteExampleFromItems,
+  duplicateExampleInItems,
   updateExampleInItems,
 } from "./collectionItemHelpers";
 
@@ -101,5 +102,32 @@ export function useExampleActions(args: ExampleActionsArgs) {
     );
   };
 
-  return { addExample, deleteExample, updateExample };
+  const duplicateExample = (
+    collectionId: string,
+    requestId: string,
+    exampleId: string,
+  ) => {
+    updateWorkspaces((prev) =>
+      prev.map((w) => {
+        if (w.id !== activeWorkspaceId) return w;
+        return {
+          ...w,
+          collections: w.collections.map((col) =>
+            col.id === collectionId
+              ? {
+                  ...col,
+                  items: duplicateExampleInItems(
+                    col.items,
+                    requestId,
+                    exampleId,
+                  ),
+                }
+              : col,
+          ),
+        };
+      }),
+    );
+  };
+
+  return { addExample, deleteExample, updateExample, duplicateExample };
 }

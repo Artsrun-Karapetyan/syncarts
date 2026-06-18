@@ -296,6 +296,8 @@ export interface WorkspaceContextState
   updateCollection: (id: string, data: Partial<Collection>) => void;
   deleteCollection: (id: string) => void;
   deleteItem: (collectionId: string, itemId: string) => void;
+  duplicateCollection: (collectionId: string) => void;
+  duplicateItem: (collectionId: string, itemId: string) => void;
   addFolder: (
     collectionId: string,
     parentFolderId: string | null,
@@ -330,6 +332,11 @@ export interface WorkspaceContextState
     exampleName: string,
     exampleId?: string,
   ) => string;
+  duplicateExample: (
+    collectionId: string,
+    requestId: string,
+    exampleId: string,
+  ) => void;
   deleteExample: (
     collectionId: string,
     requestId: string,

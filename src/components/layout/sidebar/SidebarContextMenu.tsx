@@ -1,5 +1,6 @@
 import {
   ArrowDownAZ,
+  Copy,
   Download,
   Edit2,
   FilePlus2,
@@ -56,6 +57,13 @@ interface SidebarContextMenuProps {
     mode: "default" | "az",
   ) => void;
   showToast: (message: string) => void;
+  duplicateCollection: (collectionId: string) => void;
+  duplicateItem: (collectionId: string, itemId: string) => void;
+  duplicateExample: (
+    collectionId: string,
+    requestId: string,
+    exampleId: string,
+  ) => void;
 }
 
 export function SidebarContextMenu(props: SidebarContextMenuProps) {
@@ -96,6 +104,31 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
           }}
         />
       )}
+
+      <MenuButton
+        icon={Copy}
+        label={`Duplicate ${ctxMenu.itemType}`}
+        onClick={() => {
+          if (ctxMenu.itemType === "collection") {
+            props.duplicateCollection(ctxMenu.collectionId);
+          } else if (
+            ctxMenu.itemType === "folder" ||
+            ctxMenu.itemType === "request"
+          ) {
+            if (ctxMenu.itemId)
+              props.duplicateItem(ctxMenu.collectionId, ctxMenu.itemId);
+          } else if (ctxMenu.itemType === "example") {
+            if (ctxMenu.requestId && ctxMenu.itemId) {
+              props.duplicateExample(
+                ctxMenu.collectionId,
+                ctxMenu.requestId,
+                ctxMenu.itemId,
+              );
+            }
+          }
+          props.setCtxMenu(null);
+        }}
+      />
 
       {ctxMenu.itemType === "request" && (
         <>

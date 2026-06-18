@@ -7,6 +7,8 @@ import type {
 } from "../core/types";
 import {
   addRequestToFolder,
+  duplicateItemInItems,
+  duplicateItemRecursively,
   filterItemFromItems,
   hasRequestInTarget,
   removeRequestFromItems,
@@ -330,6 +332,53 @@ export function useCollectionActions(args: CollectionActionsArgs) {
     );
   };
 
+  const duplicateCollection = (collectionId: string) => {
+    updateWorkspaces((prev) =>
+      prev.map((w) => {
+        if (w.id !== activeWorkspaceId) return w;
+        const colToDuplicate = w.collections.find((c) => c.id === collectionId);
+        if (!colToDuplicate) return w;
+
+        const newName = getUniqueCollectionName(
+          w.collections,
+          `${colToDuplicate.name} Copy`,
+        );
+        const newCollection: Collection = {
+          ...colToDuplicate,
+          id: crypto.randomUUID(),
+          name: newName,
+          items: colToDuplicate.items.map((item) =>
+            duplicateItemRecursively(item, ""),
+          ), // suffix "" because the collection name has it
+        };
+        // Add adjacent to original
+        const result: Collection[] = [];
+        for (const col of w.collections) {
+          result.push(col);
+          if (col.id === collectionId) result.push(newCollection);
+        }
+
+        return { ...w, collections: result };
+      }),
+    );
+  };
+
+  const duplicateItem = (collectionId: string, itemId: string) => {
+    updateWorkspaces((prev) =>
+      prev.map((w) => {
+        if (w.id !== activeWorkspaceId) return w;
+        return {
+          ...w,
+          collections: w.collections.map((col) =>
+            col.id === collectionId
+              ? { ...col, items: duplicateItemInItems(col.items, itemId) }
+              : col,
+          ),
+        };
+      }),
+    );
+  };
+
   return {
     addCollection,
     forkCollection,
@@ -343,5 +392,7 @@ export function useCollectionActions(args: CollectionActionsArgs) {
     deleteItem,
     renameItem,
     sortItems,
+    duplicateCollection,
+    duplicateItem,
   };
 }

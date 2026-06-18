@@ -38,6 +38,9 @@ export function Sidebar() {
     sortItems,
     deleteExample,
     addExample,
+    duplicateCollection,
+    duplicateItem,
+    duplicateExample,
     activeTab,
     resolveTabSavedRequestId,
     forkCollection,
@@ -325,6 +328,9 @@ export function Sidebar() {
           handleExportFolder={handleExportFolder}
           handleExportRequest={handleExportRequest}
           addExample={addExample}
+          duplicateCollection={duplicateCollection}
+          duplicateItem={duplicateItem}
+          duplicateExample={duplicateExample}
           forkCollection={forkCollection}
           pullCollection={pullCollection}
           sortItems={sortItems}

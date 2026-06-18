@@ -65,7 +65,7 @@ export function CollectionRow({
           props.handleContextMenu({
             event,
             collectionId: collection.id,
-            itemId: null,
+            itemId: collection.id,
             itemType: "collection",
             itemName: collection.name,
           })
