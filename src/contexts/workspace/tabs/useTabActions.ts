@@ -217,7 +217,11 @@ export function useTabActions(args: TabActionsArgs) {
     });
   };
 
-  const openFolderTab = (collectionId: string, folderId: string) => {
+  const openFolderTab = (
+    collectionId: string,
+    folderId: string,
+    view: TabData["collectionView"] = "overview",
+  ) => {
     const col = currentWorkspace?.collections.find(
       (c) => c.id === collectionId,
     );
@@ -227,7 +231,14 @@ export function useTabActions(args: TabActionsArgs) {
     const existing = currentTabs.find(
       (t) => t.type === "folder" && t.folderId === folderId,
     );
-    if (existing) return setActiveTabId(existing.id);
+    if (existing) {
+      updateCurrentTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === existing.id ? { ...tab, collectionView: view } : tab,
+        ),
+      );
+      return setActiveTabId(existing.id);
+    }
 
     addTab({
       type: "folder",
@@ -239,6 +250,7 @@ export function useTabActions(args: TabActionsArgs) {
       preRequestScript: folder.preRequestScript,
       testScript: folder.testScript,
       description: folder.description,
+      collectionView: view,
     });
   };
 

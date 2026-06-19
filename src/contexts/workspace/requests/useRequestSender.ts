@@ -1,7 +1,5 @@
-import useSWRMutation from "swr/mutation";
+import { useState } from "react";
 
-import { sendHttpRequest } from "../../../lib/httpRequestSender";
-import { applyPathVariables } from "../../../utils/pathVariables";
 import type {
   Collection,
   Environment,
@@ -10,21 +8,9 @@ import type {
   HttpResponse,
   SavedRequest,
   TabData,
-  TestResult,
 } from "../core/types";
 import { createRequestErrorResponse } from "./createRequestErrorResponse";
-import {
-  getRequestAncestors,
-  interpolateVariables,
-  resolveRequestAuth,
-} from "./requestHelpers";
-import {
-  createScriptApi,
-  createScriptConsole,
-  createScriptResponse,
-  runScripts,
-} from "./scriptRuntime";
-import { validateRequestUrl } from "./validateRequestUrl";
+import { runWorkspaceRequest } from "./runWorkspaceRequest";
 
 interface RequestSenderArgs {
   activeEnvironment: Environment | undefined;
@@ -59,164 +45,48 @@ export function useRequestSender(args: RequestSenderArgs) {
     updateResponseCache,
   } = args;
 
-  const { trigger, isMutating, error } = useSWRMutation(
-    "api-request",
-    async (
-      _key: string,
-      { arg }: { arg: { requestTab: TabData; collections: Collection[] } },
-    ) => {
-      const requestTab = arg?.requestTab || activeTab;
-      if (!requestTab) return null;
-      const requestCollections = arg?.collections || collections;
-      const interpolate = (text: string) =>
-        interpolateVariables({
-          activeEnvironment,
-          activeTab: requestTab,
-          collections: requestCollections,
-          globalVariables,
-          responseCache,
-          text,
-        });
-      const headerMap: Record<string, string> = {};
-      requestTab.headers.forEach((h) => {
-        if (h.enabled === false || !h.key || !h.value) return;
-        headerMap[interpolate(h.key)] = interpolate(h.value);
-      });
-
-      const { authType: finalAuthType, bearerToken: finalBearerToken } =
-        resolveRequestAuth(requestTab, requestCollections);
-
-      if (finalAuthType === "bearer" && finalBearerToken) {
-        headerMap.Authorization = `Bearer ${interpolate(finalBearerToken)}`;
-      }
-
-      let reqBodyPayload: any = { type: "None" };
-      const currentBodyType = requestTab.bodyType || "raw";
-      if (currentBodyType === "raw") {
-        let bodyStr = requestTab.body.trim() === "" ? null : requestTab.body;
-        if (bodyStr) bodyStr = interpolate(bodyStr);
-        if (bodyStr) reqBodyPayload = { type: "Raw", content: bodyStr };
-      } else if (
-        currentBodyType === "form-data" ||
-        currentBodyType === "x-www-form-urlencoded"
-      ) {
-        const formData = requestTab.formData || [];
-        const items = formData
-          .filter((item) => item.enabled && item.key)
-          .map((item) => ({
-            key: interpolate(item.key),
-            value: item.type === "file" ? "" : interpolate(item.value),
-            type: item.type,
-            files: item.files,
-          }));
-
-        if (items.length > 0) {
-          reqBodyPayload = {
-            type:
-              currentBodyType === "form-data" ? "FormData" : "FormUrlEncoded",
-            items,
-          };
-        }
-      }
-
-      const pathVariables = requestTab.pathVariables?.map((variable) => ({
-        ...variable,
-        value: interpolate(variable.value),
-      }));
-      const requestUrl = applyPathVariables(
-        interpolate(requestTab.url),
-        pathVariables,
-      );
-      const urlError = validateRequestUrl(requestUrl);
-      if (urlError) {
-        throw new Error(urlError);
-      }
-
-      const res = await sendHttpRequest({
-        url: requestUrl,
-        method: requestTab.method,
-        headers: headerMap,
-        body: reqBodyPayload,
-      });
-      return res;
-    },
-  );
+  const [isMutating, setIsMutating] = useState(false);
+  const [error, setError] = useState<unknown>(null);
 
   const sendRequest = async () => {
     if (!activeTab) return;
+    setIsMutating(true);
+    setError(null);
     try {
       updateActiveTab({ response: null });
-      const testResults: TestResult[] = [];
-      const consoleLogs: string[] = [];
-      const customConsole = createScriptConsole(consoleLogs);
       const collectionContext = findCollectionForTab(activeTab, collections);
       const col = collectionContext?.collection || null;
       const collectionVariablesDraft = [...(col?.variables || [])];
-      const requestDraft = { ...activeTab, headers: [...activeTab.headers] };
-      const draftCollections = () =>
-        buildCollectionsWithVariableDraft(
-          collections,
-          collectionContext?.collectionId,
-          collectionVariablesDraft,
-        );
-      const ancestors = getRequestAncestors(activeTab, draftCollections());
-
-      const sy = createScriptApi({
+      const result = await runWorkspaceRequest({
+        activeEnvironment,
         activeEnvironmentId,
+        collectionId: collectionContext?.collectionId,
         collectionVariablesDraft,
+        collections,
         environments,
         globalVariables,
-        ancestors,
-        requestDraft,
-        testResults,
+        requestTab: activeTab,
+        responseCache,
         updateEnvironment,
-        updateGlobalVariables,
         updateFolder,
+        updateGlobalVariables,
       });
-
-      const allPreScripts = [
-        ...ancestors.map((a) => a.preRequestScript),
-        activeTab.preRequestScript,
-      ].filter((s) => s && s.trim());
-      const allTestScripts = [
-        ...ancestors.map((a) => a.testScript),
-        activeTab.testScript,
-      ].filter((s) => s && s.trim());
-      runScripts(
-        allPreScripts,
-        sy,
-        customConsole,
-        consoleLogs,
-        "PRE-SCRIPT ERROR",
-        "Pre-request script failed:",
-      );
-
-      const result = await trigger({
-        requestTab: requestDraft,
-        collections: draftCollections(),
-      });
-      if (!result) return;
-
-      sy.response = createScriptResponse(result);
-      runScripts(
-        allTestScripts,
-        sy,
-        customConsole,
-        consoleLogs,
-        "POST-SCRIPT ERROR",
-        "Post-response script failed:",
-      );
       if (collectionContext) {
         updateCollection(collectionContext.collectionId, {
           variables: collectionVariablesDraft,
         });
       }
       if (activeTab.savedRequestId) {
-        updateResponseCache(activeTab.savedRequestId, result);
+        updateResponseCache(activeTab.savedRequestId, result.response);
       }
-      updateActiveTab({ response: result, testResults, consoleLogs });
-      return result;
+      updateActiveTab({
+        consoleLogs: result.consoleLogs,
+        response: result.response,
+        testResults: result.testResults,
+      });
+      return result.response;
     } catch (err) {
+      setError(err);
       const message = err instanceof Error ? err.message : String(err);
       const response = createRequestErrorResponse(message);
       updateActiveTab({
@@ -224,21 +94,12 @@ export function useRequestSender(args: RequestSenderArgs) {
         consoleLogs: [`[REQUEST ERROR] ${message}`],
       });
       return response;
+    } finally {
+      setIsMutating(false);
     }
   };
 
   return { sendRequest, isMutating, error };
-}
-
-function buildCollectionsWithVariableDraft(
-  collections: Collection[],
-  collectionId: string | undefined,
-  variables: EnvironmentVariable[],
-) {
-  if (!collectionId) return collections;
-  return collections.map((collection) =>
-    collection.id === collectionId ? { ...collection, variables } : collection,
-  );
 }
 
 function findCollectionForTab(tab: TabData, collections: Collection[]) {

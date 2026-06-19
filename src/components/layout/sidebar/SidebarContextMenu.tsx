@@ -10,6 +10,7 @@ import {
   GitPullRequest,
   GitPullRequestArrow,
   ListOrdered,
+  Play,
   RefreshCw,
   Trash2,
 } from "lucide-react";
@@ -76,6 +77,15 @@ interface SidebarContextMenuProps {
   ) => Promise<boolean>;
   isOwner?: boolean;
   isViewer?: boolean;
+  openCollectionTab?: (
+    collectionId: string,
+    view?: "overview" | "authorization" | "scripts" | "variables" | "runs",
+  ) => void;
+  openFolderTab?: (
+    collectionId: string,
+    folderId: string,
+    view?: "overview" | "authorization" | "scripts" | "variables" | "runs",
+  ) => void;
 }
 
 export function SidebarContextMenu(props: SidebarContextMenuProps) {
@@ -159,6 +169,25 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
           props.setCtxMenu(null);
         }}
       />
+
+      {(ctxMenu.itemType === "collection" || ctxMenu.itemType === "folder") && (
+        <MenuButton
+          icon={Play}
+          label={`Run ${ctxMenu.itemType}`}
+          onClick={() => {
+            if (ctxMenu.itemType === "collection" && props.openCollectionTab) {
+              props.openCollectionTab(ctxMenu.collectionId, "runs");
+            } else if (
+              ctxMenu.itemType === "folder" &&
+              props.openFolderTab &&
+              ctxMenu.itemId
+            ) {
+              props.openFolderTab(ctxMenu.collectionId, ctxMenu.itemId, "runs");
+            }
+            props.setCtxMenu(null);
+          }}
+        />
+      )}
 
       {ctxMenu.itemType === "request" && (
         <>

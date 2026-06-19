@@ -2,12 +2,13 @@ import { useWorkspace } from "../../contexts/WorkspaceContext";
 import { AuthEditor } from "../request/auth/AuthEditor";
 import { CollectionVariablesEditor } from "../request/CollectionVariablesEditor";
 import { DocsEditor } from "../request/DocsEditor";
+import { CollectionRunner } from "../request/runs/CollectionRunner";
 import { ScriptsEditor } from "../request/scripts/ScriptsEditor";
 
 type Tab = "overview" | "authorization" | "scripts" | "variables" | "runs";
 
 export function CollectionFolderTabs() {
-  const { activeTab, updateActiveTab } = useWorkspace();
+  const { activeTab, collections, updateActiveTab } = useWorkspace();
 
   if (
     !activeTab ||
@@ -17,6 +18,9 @@ export function CollectionFolderTabs() {
   }
 
   const isCollection = activeTab.type === "collection";
+  const activeCollection = activeTab.collectionId
+    ? collections.find((item) => item.id === activeTab.collectionId)
+    : undefined;
   const activeView: Tab = activeTab.collectionView || "overview";
   const handleViewChange = (view: Tab) => {
     updateActiveTab({ collectionView: view });
@@ -27,7 +31,7 @@ export function CollectionFolderTabs() {
     { id: "authorization", label: "Authorization" },
     { id: "scripts", label: "Scripts" },
     { id: "variables", label: "Variables" },
-    { id: "runs", label: "Runs", hide: !isCollection },
+    { id: "runs", label: "Runs" },
   ];
 
   return (
@@ -120,10 +124,13 @@ export function CollectionFolderTabs() {
             <CollectionVariablesEditor />
           </div>
         )}
-        {activeView === "runs" && (
-          <div style={{ color: "var(--text-secondary)" }}>
-            <p>Collection Runner is not implemented yet.</p>
-          </div>
+        {activeView === "runs" && activeCollection && (
+          <CollectionRunner
+            collection={activeCollection}
+            folderId={
+              activeTab.type === "folder" ? activeTab.folderId : undefined
+            }
+          />
         )}
       </div>
     </div>

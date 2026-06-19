@@ -29,6 +29,7 @@ export function Sidebar() {
     addFolder,
     createBlankRequestInFolder,
     openCollectionTab,
+    openFolderTab,
     addTab,
     renameItem,
     sortItems,
@@ -319,6 +320,8 @@ export function Sidebar() {
               forkCollection={forkCollection}
               pullCollection={pullCollection}
               sortItems={sortItems}
+              openCollectionTab={openCollectionTab}
+              openFolderTab={openFolderTab}
               showToast={showToast}
               isWatched={watches.isWatched}
               toggleWatch={watches.toggleWatch}
