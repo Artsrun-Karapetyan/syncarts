@@ -8,7 +8,7 @@ use std::sync::{
 
 use tauri::webview::PageLoadEvent;
 
-use crate::commands::app_update::{is_app_update_configured, PendingAppUpdate, UPDATER_PUBKEY};
+use crate::commands::app_update::PendingAppUpdate;
 
 #[tauri::command]
 fn show_main_window(window: tauri::Window) -> Result<(), String> {
@@ -25,17 +25,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
-        .setup(|app| {
-            if is_app_update_configured() {
-                app.handle().plugin(
-                    tauri_plugin_updater::Builder::new()
-                        .pubkey(UPDATER_PUBKEY.expect("checked updater pubkey"))
-                        .build(),
-                )?;
-            }
-
-            Ok(())
-        })
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(PendingAppUpdate(std::sync::Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![
             commands::app_update::check_app_update::check_app_update,
