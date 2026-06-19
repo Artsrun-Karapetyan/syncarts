@@ -1,25 +1,15 @@
 use tauri::{AppHandle, State};
 use tauri_plugin_updater::UpdaterExt;
 
-use super::types::{AppUpdateMetadata, PendingAppUpdate, UPDATER_ENDPOINT, UPDATER_PUBKEY};
+use super::types::{AppUpdateMetadata, PendingAppUpdate};
 
 #[tauri::command]
 pub async fn check_app_update(
     app: AppHandle,
     pending_update: State<'_, PendingAppUpdate>,
 ) -> Result<Option<AppUpdateMetadata>, String> {
-    let endpoint =
-        UPDATER_ENDPOINT.ok_or_else(|| "Updater endpoint is not configured".to_string())?;
-    let pubkey =
-        UPDATER_PUBKEY.ok_or_else(|| "Updater public key is not configured".to_string())?;
-    let endpoint = url::Url::parse(endpoint).map_err(|error| error.to_string())?;
-
     let update = app
-        .updater_builder()
-        .endpoints(vec![endpoint])
-        .map_err(|error| error.to_string())?
-        .pubkey(pubkey)
-        .build()
+        .updater()
         .map_err(|error| error.to_string())?
         .check()
         .await
