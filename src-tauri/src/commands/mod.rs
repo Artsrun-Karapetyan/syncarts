@@ -1,3 +1,4 @@
+pub mod app_update;
 mod data_url;
 mod headers;
 pub mod make_request;
