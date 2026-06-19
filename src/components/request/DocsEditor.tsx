@@ -1,15 +1,7 @@
 import { useState } from "react";
 
-import {
-  type Folder,
-  type SavedRequest,
-  useWorkspace,
-} from "../../contexts/WorkspaceContext";
-import { FolderExamples } from "./docs/FolderExamples";
-import { RequestExamplesList } from "./docs/RequestExamplesList";
-import { CollectionDuplicateReport } from "./duplicates/CollectionDuplicateReport";
-
-type CollectionItem = Folder | SavedRequest;
+import { useWorkspace } from "../../contexts/WorkspaceContext";
+import { CollectionHealthReport } from "./health/CollectionHealthReport";
 
 export function DocsEditor() {
   const { activeTab, collections, updateActiveTab } = useWorkspace();
@@ -22,12 +14,6 @@ export function DocsEditor() {
   const isCollection = activeTab.type === "collection";
 
   const collection = collections.find((c) => c.id === activeTab.collectionId);
-
-  let collectionItemsForExamples: CollectionItem[] = [];
-
-  if (isCollection && collection) {
-    collectionItemsForExamples = collection.items;
-  }
 
   return (
     <div
@@ -86,35 +72,7 @@ export function DocsEditor() {
             )}
 
             {isCollection && collection && (
-              <CollectionDuplicateReport collection={collection} />
-            )}
-
-            {isCollection && collectionItemsForExamples.length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "var(--text-tertiary)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    marginBottom: 8,
-                  }}
-                >
-                  Saved Examples
-                </div>
-                {collectionItemsForExamples.map((item) =>
-                  item.type === "request" ? (
-                    <RequestExamplesList
-                      key={item.id}
-                      request={item}
-                      level={0}
-                    />
-                  ) : (
-                    <FolderExamples key={item.id} folder={item} level={0} />
-                  ),
-                )}
-              </div>
+              <CollectionHealthReport collection={collection} />
             )}
           </div>
         )}
