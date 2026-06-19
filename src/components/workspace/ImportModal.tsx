@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useWorkspace } from "../../contexts/WorkspaceContext";
 import { parseCurlCommand } from "../../utils/curlParser";
 import {
+  importOpenApiCollection,
   importPostmanCollection,
   importPostmanEnvironment,
 } from "../../utils/postmanParser";
@@ -112,6 +113,27 @@ export function ImportModal({
           return;
         }
 
+        if (typeof data.openapi === "string" && data.paths) {
+          const collectionData = importOpenApiCollection(trimmed);
+          const existingCollection = collections.find(
+            (c) => c.name === collectionData.name,
+          );
+          if (existingCollection) {
+            setDuplicateItem({
+              type: "collection",
+              data: collectionData,
+              originalName: collectionData.name,
+              proposedName: `${collectionData.name} (Copy)`,
+              existingId: existingCollection.id,
+            });
+            return;
+          }
+
+          importCollection(collectionData);
+          handleClose();
+          return;
+        }
+
         // Check if it's a Collection
         if (data.info && data.info.name) {
           const collectionData = importPostmanCollection(trimmed);
@@ -136,7 +158,7 @@ export function ImportModal({
       }
 
       throw new Error(
-        "Unrecognized format. Please provide valid cURL or Postman JSON.",
+        "Unrecognized format. Please provide valid cURL, Postman JSON, or OpenAPI JSON.",
       );
     } catch (err: any) {
       console.error("Import failed:", err);

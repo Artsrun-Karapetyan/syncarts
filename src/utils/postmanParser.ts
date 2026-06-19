@@ -3,6 +3,7 @@ import type {
   Environment,
   EnvironmentVariable,
 } from "../contexts/WorkspaceContext";
+import { parseOpenApiCollection } from "./openapi/openApiImportParser";
 import { stringifyPostmanCollection } from "./postman/postmanExportParser";
 import { parsePostmanCollection } from "./postman/postmanImportParser";
 
@@ -10,6 +11,12 @@ export function importPostmanCollection(
   jsonString: string,
 ): Omit<Collection, "id"> {
   return parsePostmanCollection(jsonString);
+}
+
+export function importOpenApiCollection(
+  jsonString: string,
+): Omit<Collection, "id"> {
+  return parseOpenApiCollection(jsonString);
 }
 
 export function exportToPostmanCollection(collection: Collection): string {

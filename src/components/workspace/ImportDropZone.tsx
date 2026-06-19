@@ -1,3 +1,5 @@
+import "./ImportDropZone.css";
+
 import { UploadCloud } from "lucide-react";
 
 interface ImportDropZoneProps {
@@ -22,35 +24,32 @@ export function ImportDropZone(props: ImportDropZoneProps) {
     onDrop,
     onFileSelect,
   } = props;
+  const openFilePicker = () => {
+    if (!isProcessing) fileInputRef.current?.click();
+  };
 
   return (
     <div
+      className="syncarts-import-drop-zone"
+      data-dragging={isDragging ? "true" : "false"}
+      data-processing={isProcessing ? "true" : "false"}
+      role="button"
+      tabIndex={isProcessing ? -1 : 0}
       onDragEnter={onDragEnter}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      onClick={() => !isProcessing && fileInputRef.current?.click()}
+      onClick={openFilePicker}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        openFilePicker();
+      }}
       style={{
-        border: `2px dashed ${isDragging ? "var(--accent-primary)" : "var(--border-color)"}`,
-        borderRadius: "var(--radius-md)",
-        padding: 48,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 12,
-        background: isDragging ? "var(--bg-tertiary)" : "transparent",
-        cursor: isProcessing ? "not-allowed" : "pointer",
         opacity: isProcessing ? 0.7 : 1,
-        transition: "all var(--transition-fast)",
       }}
     >
-      <UploadCloud
-        size={32}
-        style={{
-          color: isDragging ? "var(--accent-primary)" : "var(--text-tertiary)",
-        }}
-      />
+      <UploadCloud className="syncarts-import-drop-zone__icon" size={32} />
       <div style={{ textAlign: "center" }}>
         <div
           style={{
@@ -71,7 +70,7 @@ export function ImportDropZone(props: ImportDropZoneProps) {
               marginTop: 4,
             }}
           >
-            Supports Postman Collection (.json) and Environment (.json)
+            Supports Postman, OpenAPI, and Environment JSON
           </div>
         )}
       </div>

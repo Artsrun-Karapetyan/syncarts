@@ -1,0 +1,44 @@
+.syncarts-import-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px;
+  cursor: pointer;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  outline: none;
+  background: transparent;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.syncarts-import-drop-zone__icon {
+  color: var(--text-tertiary);
+  transition: color var(--transition-fast);
+}
+
+.syncarts-import-drop-zone:hover,
+.syncarts-import-drop-zone:focus-visible,
+.syncarts-import-drop-zone[data-dragging="true"] {
+  border-color: var(--accent-primary, #6366f1);
+  background: rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+  transform: translateY(-1px);
+}
+
+.syncarts-import-drop-zone:hover .syncarts-import-drop-zone__icon,
+.syncarts-import-drop-zone:focus-visible .syncarts-import-drop-zone__icon,
+.syncarts-import-drop-zone[data-dragging="true"]
+  .syncarts-import-drop-zone__icon {
+  color: var(--accent-primary, #6366f1);
+}
+
+.syncarts-import-drop-zone[data-processing="true"] {
+  cursor: not-allowed;
+  transform: none;
+}
