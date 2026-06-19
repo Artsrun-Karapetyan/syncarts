@@ -18,6 +18,8 @@ model User {
   ownedWorkspaces       Workspace[]
   workspaceMembers      WorkspaceMember[]
   authoredMergeRequests MergeRequest[]
+  notifications         Notification[]
+  notificationPreferences NotificationPreference[]
 
   @@map("users")
 }
@@ -264,4 +266,44 @@ model MergeRequest {
   @@index([sourceWorkspaceId, createdAt])
   @@index([authorId])
   @@map("merge_requests")
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  type        String
+  audience    String    @default("ALL") // DIRECT, WATCHING, ALL
+  title       String
+  message     String
+  entityType  String
+  entityId    String?
+  actorId     String?
+  actorName   String?
+  actorAvatarUrl String?
+  actionUrl   String?
+  actionLabel String?
+  metadata    Json?
+  isRead      Boolean   @default(false)
+  isArchived  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  readAt      DateTime?
+
+  @@index([userId, isArchived, isRead, createdAt])
+  @@index([userId, audience, createdAt])
+  @@index([workspaceId])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  channel   String   @default("IN_APP")
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, type, channel])
+  @@map("notification_preferences")
 }

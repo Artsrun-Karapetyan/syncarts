@@ -3,10 +3,13 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
 
 import type { PaginationOptions } from "../common/parsePaginationQuery.js";
+import { NotificationService } from "../notification/notification.service.js";
+import { NotificationAudience } from "../notification/notificationTypes.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { readWorkspaceData } from "../workspace/workspaceData.js";
 
@@ -18,7 +21,12 @@ const mergeRequestInclude = {
 
 @Injectable()
 export class MergeRequestService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Optional()
+    @Inject(NotificationService)
+    private readonly notifications?: NotificationService,
+  ) {}
 
   async createMergeRequest(data: {
     title: string;
@@ -58,7 +66,7 @@ export class MergeRequestService {
         collections.find((c: any) => c.id === data.targetCollectionId) || null;
     }
 
-    return this.prisma.mergeRequest.create({
+    const mergeRequest = await this.prisma.mergeRequest.create({
       data: {
         title: data.title,
         description: data.description,
@@ -72,6 +80,9 @@ export class MergeRequestService {
         status: "OPEN",
       },
     });
+
+    await this.notifyMergeRequestCreated(mergeRequest, targetWs.ownerId);
+    return mergeRequest;
   }
 
   async getMergeRequestsForWorkspace(
@@ -187,6 +198,38 @@ export class MergeRequestService {
       throw new ForbiddenException(
         "Only the target workspace owner can update this merge request",
       );
+    }
+  }
+
+  private async notifyMergeRequestCreated(
+    mergeRequest: { id: string; title: string; authorId: string },
+    targetOwnerId: string,
+  ) {
+    if (!this.notifications || targetOwnerId === mergeRequest.authorId) return;
+
+    const actor = await this.prisma.user.findUnique({
+      where: { id: mergeRequest.authorId },
+      select: { name: true, email: true },
+    });
+
+    try {
+      await this.notifications.createNotification({
+        userId: targetOwnerId,
+        workspaceId: undefined,
+        type: "MERGE_REQUEST_CREATED",
+        audience: NotificationAudience.Direct,
+        title: "Merge request created",
+        message: `${actor?.name || actor?.email || "Someone"} requested ${mergeRequest.title}`,
+        entityType: "merge_request",
+        entityId: mergeRequest.id,
+        actorId: mergeRequest.authorId,
+        actorName: actor?.name || actor?.email || null,
+        actionUrl: "/merge-requests",
+        actionLabel: "Review",
+        metadata: { mergeRequestId: mergeRequest.id },
+      });
+    } catch (error) {
+      console.warn("Failed to create merge request notification", error);
     }
   }
 }

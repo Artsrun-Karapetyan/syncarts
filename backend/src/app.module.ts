@@ -5,6 +5,7 @@ import { AuthModule } from "./auth/auth.module.js";
 import { RateLimitGuard } from "./common/rateLimit.guard.js";
 import { InviteModule } from "./invite/invite.module.js";
 import { MergeRequestModule } from "./merge-request/merge-request.module.js";
+import { NotificationModule } from "./notification/notification.module.js";
 import { PrismaModule } from "./prisma/prisma.module.js";
 import { WorkspaceModule } from "./workspace/workspace.module.js";
 
@@ -15,6 +16,7 @@ import { WorkspaceModule } from "./workspace/workspace.module.js";
     WorkspaceModule,
     InviteModule,
     MergeRequestModule,
+    NotificationModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: RateLimitGuard }],
 })

@@ -1,15 +1,15 @@
-import { useNavigate } from "@tanstack/react-router";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Eye, LayoutGrid, LogIn, Settings2, UserPlus } from "lucide-react";
+import { Eye, LayoutGrid, LogIn, UserPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { useStoredUser } from "../../lib/session";
 import { isTauriRuntime } from "../../lib/tauriRuntime";
 import { EnvironmentManager } from "../environment/EnvironmentManager";
+import { NotificationCenter } from "../notifications/NotificationCenter";
 import { Select } from "../ui/Select";
 import { InviteModal } from "../workspace/InviteModal";
 import { JoinWorkspaceModal } from "../workspace/JoinWorkspaceModal";
+import { TopBarProfileButton } from "./TopBarProfileButton";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 export function TopBar() {
@@ -21,8 +21,6 @@ export function TopBar() {
     setActiveEnvironmentId,
     activeEnvironment,
   } = useWorkspace();
-  const navigate = useNavigate();
-  const user = useStoredUser();
   const [isEnvManagerOpen, setIsEnvManagerOpen] = useState(false);
   const [isEnvQuickLookOpen, setIsEnvQuickLookOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -285,74 +283,9 @@ export function TopBar() {
           </button>
         </div>
 
-        {/* Profile */}
-        <div
-          role="button"
-          onClick={() => navigate({ to: "/profile" })}
-          data-tauri-drag-region="false"
-          style={
-            {
-              WebkitAppRegion: "no-drag",
-              borderRadius: 9999,
-              border: "1px solid var(--border-color)",
-              background: "var(--bg-primary)",
-              padding: "6px 16px 6px 6px",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              textDecoration: "none",
-              transition: "border-color var(--transition-fast)",
-              cursor: "pointer",
-            } as React.CSSProperties
-          }
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "var(--border-highlight)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "var(--border-color)";
-          }}
-        >
-          <div
-            data-tauri-drag-region="false"
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background:
-                "linear-gradient(145deg, rgba(99, 102, 241, 0.35), rgba(99, 102, 241, 0.1))",
-              border: "2px solid rgba(99, 102, 241, 0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 13,
-              fontWeight: 700,
-              color: "var(--text-primary)",
-              flexShrink: 0,
-            }}
-          >
-            <span data-tauri-drag-region="false">
-              {(
-                user?.name?.trim()?.[0] ??
-                user?.email?.[0] ??
-                "A"
-              ).toUpperCase()}
-            </span>
-          </div>
-          <div
-            data-tauri-drag-region="false"
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--text-primary)",
-            }}
-          >
-            {user?.name?.trim() || "Your profile"}
-          </div>
-          <Settings2
-            size={13}
-            style={{ color: "var(--text-tertiary)", marginLeft: 4 }}
-          />
-        </div>
+        <NotificationCenter />
+
+        <TopBarProfileButton />
       </div>
 
       <EnvironmentManager

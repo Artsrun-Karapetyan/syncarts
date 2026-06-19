@@ -17,6 +17,8 @@ export function createPrismaMock(overrides: Record<string, unknown> = {}) {
         ...overrides,
       }),
     mergeRequest: {},
+    notification: emptyDelegate,
+    notificationPreference: emptyDelegate,
     requestExample: emptyDelegate,
     session: {},
     user: {},
