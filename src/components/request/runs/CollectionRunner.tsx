@@ -1,4 +1,4 @@
-import { CheckCircle2, Play, XCircle } from "lucide-react";
+import { CheckCircle2, Play, Square, XCircle } from "lucide-react";
 
 import type { Collection } from "../../../contexts/WorkspaceContext";
 import { getCollectionRunItems } from "./collectionRunItems";
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function CollectionRunner({ collection, folderId }: Props) {
-  const { currentIndex, isRunning, results, runCollection } =
+  const { currentIndex, isRunning, results, runCollection, stopCollection } =
     useCollectionRunner();
   const items = getCollectionRunItems(collection, folderId);
   const passed = results.filter((result) => result.status === "passed").length;
@@ -46,19 +46,26 @@ export function CollectionRunner({ collection, folderId }: Props) {
             Runs {items.length} requests sequentially.
           </div>
         </div>
-        <button
-          className="btn btn-primary"
-          disabled={isRunning || items.length === 0}
-          onClick={() => void runCollection(collection.id, folderId)}
-          style={{ alignItems: "center", display: "flex", gap: 8 }}
-        >
-          <Play size={14} />
-          {isRunning
-            ? "Running..."
-            : folderId
-              ? "Run Folder"
-              : "Run Collection"}
-        </button>
+        {isRunning ? (
+          <button
+            className="btn btn-secondary"
+            onClick={stopCollection}
+            style={{ alignItems: "center", display: "flex", gap: 8 }}
+          >
+            <Square size={14} />
+            Stop
+          </button>
+        ) : (
+          <button
+            className="btn btn-primary"
+            disabled={items.length === 0}
+            onClick={() => void runCollection(collection.id, folderId)}
+            style={{ alignItems: "center", display: "flex", gap: 8 }}
+          >
+            <Play size={14} />
+            {folderId ? "Run Folder" : "Run Collection"}
+          </button>
+        )}
       </div>
 
       <div

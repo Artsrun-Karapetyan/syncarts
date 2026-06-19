@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { runWorkspaceRequest } from "../../../contexts/workspace/requests/runWorkspaceRequest";
 import { useWorkspace } from "../../../contexts/WorkspaceContext";
@@ -23,6 +23,11 @@ export function useCollectionRunner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<CollectionRunResult[]>([]);
+  const stopRequestedRef = useRef(false);
+
+  const stopCollection = () => {
+    stopRequestedRef.current = true;
+  };
 
   const runCollection = async (collectionId: string, folderId?: string) => {
     const collection = collections.find((item) => item.id === collectionId);
@@ -36,9 +41,11 @@ export function useCollectionRunner() {
     setCurrentIndex(0);
     setResults([]);
     setIsRunning(true);
+    stopRequestedRef.current = false;
 
     try {
       for (const [index, item] of items.entries()) {
+        if (stopRequestedRef.current) break;
         setCurrentIndex(index + 1);
         const startedAt = performance.now();
 
@@ -87,5 +94,5 @@ export function useCollectionRunner() {
     }
   };
 
-  return { currentIndex, isRunning, results, runCollection };
+  return { currentIndex, isRunning, results, runCollection, stopCollection };
 }
