@@ -7,6 +7,8 @@ import {
 } from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma.service.js";
+import { WatchService } from "../watch/watch.service.js";
+import { WatchEntityTypes } from "../watch/watchTypes.js";
 import { WorkspaceRealtimeService } from "./workspace-realtime.service.js";
 import { getWorkspaceAccess } from "./workspaceAccess.js";
 import { mapWorkspaceRequest } from "./workspaceDataReader.js";
@@ -20,6 +22,9 @@ export class WorkspaceRequestService {
     @Optional()
     @Inject(WorkspaceRealtimeService)
     private readonly realtime?: WorkspaceRealtimeService,
+    @Optional()
+    @Inject(WatchService)
+    private readonly watches?: WatchService,
   ) {}
 
   async getRequestForUser(
@@ -95,7 +100,45 @@ export class WorkspaceRequestService {
           ? workspace.updatedAt.toISOString()
           : undefined,
     });
+    await this.notifyRequestWatchers({
+      workspaceId,
+      requestId,
+      collectionId:
+        typeof input.collectionId === "string" ? input.collectionId : null,
+      requestName: payload.name || "Request",
+      userId,
+    });
     return payload;
+  }
+
+  private async notifyRequestWatchers(input: {
+    workspaceId: string;
+    requestId: string;
+    collectionId: string | null;
+    requestName: string;
+    userId: string;
+  }) {
+    if (!this.watches) return;
+
+    try {
+      await this.watches.notifyWatchers({
+        workspaceId: input.workspaceId,
+        actorId: input.userId,
+        entityType: WatchEntityTypes.Request,
+        entityId: input.requestId,
+        collectionId: input.collectionId,
+        type: "WATCHED_REQUEST_UPDATED",
+        title: "Watched request updated",
+        message: `${input.requestName} was updated`,
+        actionUrl: "/",
+        metadata: {
+          requestId: input.requestId,
+          collectionId: input.collectionId,
+        },
+      });
+    } catch (error) {
+      console.warn("Failed to create watch notification", error);
+    }
   }
 }
 

@@ -7,6 +7,7 @@ import { InviteModule } from "./invite/invite.module.js";
 import { MergeRequestModule } from "./merge-request/merge-request.module.js";
 import { NotificationModule } from "./notification/notification.module.js";
 import { PrismaModule } from "./prisma/prisma.module.js";
+import { WatchModule } from "./watch/watch.module.js";
 import { WorkspaceModule } from "./workspace/workspace.module.js";
 
 @Module({
@@ -17,6 +18,7 @@ import { WorkspaceModule } from "./workspace/workspace.module.js";
     InviteModule,
     MergeRequestModule,
     NotificationModule,
+    WatchModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: RateLimitGuard }],
 })

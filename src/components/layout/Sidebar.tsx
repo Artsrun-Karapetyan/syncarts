@@ -2,7 +2,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { exportCollectionFile } from "./sidebar/exportCollectionFile";
 import { SidebarCollections } from "./sidebar/SidebarCollections";
 import { SidebarContextMenu } from "./sidebar/SidebarContextMenu";
 import { SidebarDialogs } from "./sidebar/SidebarDialogs";
@@ -16,13 +15,10 @@ import type {
 } from "./sidebar/types";
 import { useOpenMergeRequestCount } from "./sidebar/useOpenMergeRequestCount";
 import { useSidebarDragHandlers } from "./sidebar/useSidebarDragHandlers";
+import { useSidebarExportHandlers } from "./sidebar/useSidebarExportHandlers";
 import { useSidebarHighlight } from "./sidebar/useSidebarHighlight";
-import {
-  filterCollections,
-  findFolder,
-  findRequest,
-  renameMatchingItem,
-} from "./sidebar/utils";
+import { useSidebarWatchActions } from "./sidebar/useSidebarWatchActions";
+import { filterCollections, renameMatchingItem } from "./sidebar/utils";
 
 export function Sidebar() {
   const {
@@ -98,6 +94,10 @@ export function Sidebar() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
+  const { handleExportCollection, handleExportFolder, handleExportRequest } =
+    useSidebarExportHandlers(collections);
+  const { handleToggleWorkspaceWatch, isWorkspaceWatched, watches } =
+    useSidebarWatchActions(activeWorkspaceId, showToast);
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -150,41 +150,6 @@ export function Sidebar() {
     addCollection(newColName.trim());
     setNewColName("");
     setIsAdding(false);
-  };
-
-  const handleExportCollection = async (collectionId: string) => {
-    const collection = collections.find((item) => item.id === collectionId);
-    if (!collection) return;
-    await exportCollectionFile(collection.name || "collection", collection);
-  };
-
-  const handleExportFolder = async (collectionId: string, folderId: string) => {
-    const collection = collections.find((item) => item.id === collectionId);
-    if (!collection) return;
-    const folder = findFolder(collection.items, folderId);
-    if (!folder) return;
-    await exportCollectionFile(folder.name || "folder", {
-      ...collection,
-      name: folder.name,
-      description: folder.description || "",
-      items: [folder],
-    });
-  };
-
-  const handleExportRequest = async (
-    collectionId: string,
-    requestId: string,
-  ) => {
-    const collection = collections.find((item) => item.id === collectionId);
-    if (!collection) return;
-    const request = findRequest(collection.items, requestId);
-    if (!request) return;
-    await exportCollectionFile(request.name || "request", {
-      ...collection,
-      name: request.name,
-      description: request.description || "",
-      items: [request],
-    });
   };
 
   const handleContextMenu = (request: ContextMenuRequest) => {
@@ -287,6 +252,10 @@ export function Sidebar() {
                   setIsAdding(true);
                 }
           }
+          onToggleWorkspaceWatch={
+            activeWorkspaceId ? handleToggleWorkspaceWatch : undefined
+          }
+          isWorkspaceWatched={isWorkspaceWatched}
         />
         <SidebarCollections
           collections={collections}
@@ -351,6 +320,8 @@ export function Sidebar() {
               pullCollection={pullCollection}
               sortItems={sortItems}
               showToast={showToast}
+              isWatched={watches.isWatched}
+              toggleWatch={watches.toggleWatch}
               isOwner={isOwner}
               isViewer={isViewer}
             />

@@ -13,6 +13,7 @@ export function createPrismaMock(overrides: Record<string, unknown> = {}) {
         workspaceGlobalVariable: emptyDelegate,
         workspaceFolder: emptyDelegate,
         workspaceRequest: emptyDelegate,
+        workspaceWatch: emptyDelegate,
         requestExample: emptyDelegate,
         ...overrides,
       }),
@@ -30,6 +31,7 @@ export function createPrismaMock(overrides: Record<string, unknown> = {}) {
     workspaceInvite: {},
     workspaceMember: {},
     workspaceRequest: emptyDelegate,
+    workspaceWatch: emptyDelegate,
     ...overrides,
   } as any;
 }

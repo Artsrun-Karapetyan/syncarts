@@ -20,6 +20,7 @@ model User {
   authoredMergeRequests MergeRequest[]
   notifications         Notification[]
   notificationPreferences NotificationPreference[]
+  workspaceWatches      WorkspaceWatch[]
 
   @@map("users")
 }
@@ -52,6 +53,7 @@ model Workspace {
   requests        WorkspaceRequest[]
   environments    WorkspaceEnvironment[]
   globalVariables WorkspaceGlobalVariable[]
+  watches         WorkspaceWatch[]
 
   @@index([ownerId])
   @@index([id, version])
@@ -306,4 +308,20 @@ model NotificationPreference {
 
   @@id([userId, type, channel])
   @@map("notification_preferences")
+}
+
+model WorkspaceWatch {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  entityType  String
+  entityId    String
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, workspaceId, entityType, entityId])
+  @@index([workspaceId, entityType, entityId])
+  @@index([userId, workspaceId])
+  @@map("workspace_watches")
 }

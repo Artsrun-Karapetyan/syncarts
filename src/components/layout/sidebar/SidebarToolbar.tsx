@@ -1,4 +1,11 @@
-import { Download, FilePlus2, FolderPlus, GitPullRequest } from "lucide-react";
+import {
+  Bell,
+  BellOff,
+  Download,
+  FilePlus2,
+  FolderPlus,
+  GitPullRequest,
+} from "lucide-react";
 
 import { MergeRequestBadge } from "./MergeRequestBadge";
 import { ToolbarButton } from "./ToolbarButton";
@@ -9,6 +16,8 @@ interface SidebarToolbarProps {
   onImport?: () => void;
   onNewRequest?: () => void;
   onNewCollection?: () => void;
+  onToggleWorkspaceWatch?: () => void;
+  isWorkspaceWatched?: boolean;
 }
 
 export function SidebarToolbar({
@@ -17,6 +26,8 @@ export function SidebarToolbar({
   onImport,
   onNewRequest,
   onNewCollection,
+  onToggleWorkspaceWatch,
+  isWorkspaceWatched = false,
 }: SidebarToolbarProps) {
   return (
     <div
@@ -39,6 +50,19 @@ export function SidebarToolbar({
         Collections
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        {onToggleWorkspaceWatch && (
+          <ToolbarButton
+            tooltip={
+              isWorkspaceWatched ? "Unwatch Workspace" : "Watch Workspace"
+            }
+            tooltipPos="right"
+            icon={isWorkspaceWatched ? BellOff : Bell}
+            onClick={onToggleWorkspaceWatch}
+            color={
+              isWorkspaceWatched ? "var(--status-put)" : "var(--text-tertiary)"
+            }
+          />
+        )}
         <ToolbarButton
           tooltip="Merge Requests"
           tooltipPos="right"

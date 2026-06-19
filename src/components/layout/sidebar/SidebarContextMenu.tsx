@@ -20,12 +20,14 @@ import { MenuButton } from "./MenuButton";
 import { MenuDivider } from "./MenuDivider";
 import { MenuSubmenu } from "./MenuSubmenu";
 import { NewFolderMenuInput } from "./NewFolderMenuInput";
+import { getWatchTarget } from "./sidebarWatchTarget";
 import type {
   CtxMenuState,
   DeleteTarget,
   MenuRef,
   MergeRequestTarget,
 } from "./types";
+import { WatchMenuButton } from "./WatchMenuButton";
 
 interface SidebarContextMenuProps {
   ctxMenu: CtxMenuState;
@@ -64,6 +66,14 @@ interface SidebarContextMenuProps {
     requestId: string,
     exampleId: string,
   ) => void;
+  isWatched: (
+    entityType: "collection" | "request",
+    entityId: string,
+  ) => boolean;
+  toggleWatch: (
+    entityType: "collection" | "request",
+    entityId: string,
+  ) => Promise<boolean>;
   isOwner?: boolean;
   isViewer?: boolean;
 }
@@ -74,6 +84,7 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
     (collection) => collection.id === ctxMenu.collectionId,
   );
   const isOwner = props.isOwner ?? true;
+  const watchTarget = getWatchTarget(ctxMenu);
 
   return createPortal(
     <div
@@ -104,6 +115,22 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
             props.setRenameValue(ctxMenu.itemName || "");
             props.setRenamingId(ctxMenu.itemId);
             props.setCtxMenu(null);
+          }}
+        />
+      )}
+
+      {watchTarget && (
+        <WatchMenuButton
+          entityType={watchTarget.entityType}
+          entityId={watchTarget.entityId}
+          isWatched={props.isWatched(
+            watchTarget.entityType,
+            watchTarget.entityId,
+          )}
+          onToggle={props.toggleWatch}
+          onDone={(message) => {
+            props.setCtxMenu(null);
+            props.showToast(message);
           }}
         />
       )}
