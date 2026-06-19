@@ -29,32 +29,38 @@ export function useNotifications(isOpen: boolean, tab: NotificationTab) {
     }
   }, []);
 
-  const refreshItems = useCallback(async () => {
-    if (!isOpen) return;
-    try {
-      setIsLoading(true);
-      setError(null);
-      setItems(await fetchNotifications(tab));
-    } catch (err) {
-      console.error("Failed to fetch notifications", err);
-      setError("Could not load notifications.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isOpen, tab]);
+  const refreshItems = useCallback(
+    async (showLoader = false) => {
+      if (!isOpen) return;
+      try {
+        if (showLoader) setIsLoading(true);
+        setError(null);
+        const nextItems = await fetchNotifications(tab);
+        setItems((current) =>
+          areNotificationListsEqual(current, nextItems) ? current : nextItems,
+        );
+      } catch (err) {
+        console.error("Failed to fetch notifications", err);
+        setError("Could not load notifications.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isOpen, tab],
+  );
 
   useEffect(() => {
     void refreshCounts();
   }, [refreshCounts]);
 
   useEffect(() => {
-    void refreshItems();
+    void refreshItems(items.length === 0);
   }, [refreshItems]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       void refreshCounts();
-      void refreshItems();
+      void refreshItems(false);
     }, 60_000);
     return () => window.clearInterval(interval);
   }, [refreshCounts, refreshItems]);
@@ -66,11 +72,11 @@ export function useNotifications(isOpen: boolean, tab: NotificationTab) {
     const source = new EventSource(url);
     source.onmessage = () => {
       void refreshCounts();
-      void refreshItems();
+      void refreshItems(false);
     };
     source.addEventListener("notifications_changed", () => {
       void refreshCounts();
-      void refreshItems();
+      void refreshItems(false);
     });
     source.onerror = (error) => {
       console.error("Notification realtime connection failed", error);
@@ -104,4 +110,23 @@ export function useNotifications(isOpen: boolean, tab: NotificationTab) {
     markRead,
     refreshItems,
   };
+}
+
+function areNotificationListsEqual(
+  current: NotificationItem[],
+  next: NotificationItem[],
+) {
+  if (current.length !== next.length) return false;
+
+  return current.every((item, index) => {
+    const nextItem = next[index];
+    return (
+      nextItem &&
+      item.id === nextItem.id &&
+      item.isRead === nextItem.isRead &&
+      item.title === nextItem.title &&
+      item.message === nextItem.message &&
+      item.createdAt === nextItem.createdAt
+    );
+  });
 }
