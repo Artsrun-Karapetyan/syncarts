@@ -72,7 +72,12 @@ export function ResponseBodyToolbar(props: ResponseBodyToolbarProps) {
   const handleSearch = (forward: boolean) => {
     if (!searchQuery || !bodyContainerRef.current) return;
     const container = bodyContainerRef.current;
-    const result = findNextInContainer(container, searchQuery, currentMatch, forward);
+    const result = findNextInContainer(
+      container,
+      searchQuery,
+      currentMatch,
+      forward,
+    );
     setMatchInfo({ count: result.totalMatches, current: result.matchIndex });
     setCurrentMatch(result.matchIndex);
   };
