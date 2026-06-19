@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   fetchNotificationCounts,
   fetchNotifications,
+  getNotificationEventsUrl,
   markNotificationRead,
   markNotificationsRead,
 } from "../api/notificationApi";
@@ -56,6 +57,26 @@ export function useNotifications(isOpen: boolean, tab: NotificationTab) {
       void refreshItems();
     }, 60_000);
     return () => window.clearInterval(interval);
+  }, [refreshCounts, refreshItems]);
+
+  useEffect(() => {
+    const url = getNotificationEventsUrl();
+    if (!url) return;
+
+    const source = new EventSource(url);
+    source.onmessage = () => {
+      void refreshCounts();
+      void refreshItems();
+    };
+    source.addEventListener("notifications_changed", () => {
+      void refreshCounts();
+      void refreshItems();
+    });
+    source.onerror = (error) => {
+      console.error("Notification realtime connection failed", error);
+    };
+
+    return () => source.close();
   }, [refreshCounts, refreshItems]);
 
   const markRead = async (id: string) => {

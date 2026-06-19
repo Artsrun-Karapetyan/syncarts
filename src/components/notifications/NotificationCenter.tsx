@@ -5,6 +5,7 @@ import { Bell } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { hasUnreadNotifications } from "./helpers/notificationHelpers";
+import { useNotificationAction } from "./hooks/useNotificationAction";
 import { useNotifications } from "./hooks/useNotifications";
 import { NotificationsPanel } from "./NotificationsPanel";
 import type {
@@ -18,6 +19,7 @@ export function NotificationCenter() {
   const [tab, setTab] = useState<NotificationTab>("direct");
   const rootRef = useRef<HTMLDivElement>(null);
   const notifications = useNotifications(isOpen, tab);
+  const { openNotificationTarget } = useNotificationAction();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -40,6 +42,7 @@ export function NotificationCenter() {
   const handleAction = async (item: NotificationItem) => {
     await notifications.markRead(item.id);
     setIsOpen(false);
+    if (openNotificationTarget(item)) return;
     if (item.actionUrl) navigate({ to: item.actionUrl as any });
   };
 

@@ -1,6 +1,12 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma.service.js";
+import { NotificationRealtimeService } from "./notification-realtime.service.js";
 import {
   type CreateNotificationInput,
   NotificationAudience,
@@ -10,26 +16,37 @@ export type NotificationTab = "direct" | "watching" | "all";
 
 @Injectable()
 export class NotificationService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Optional()
+    @Inject(NotificationRealtimeService)
+    private readonly realtime?: NotificationRealtimeService,
+  ) {}
 
   async createNotification(input: CreateNotificationInput) {
-    return this.prisma.notification.create({
+    const notification = await this.prisma.notification.create({
       data: {
         ...input,
         audience: input.audience ?? NotificationAudience.All,
       } as any,
     });
+    this.realtime?.emit(input.userId);
+    return notification;
   }
 
   async createNotifications(inputs: CreateNotificationInput[]) {
     if (inputs.length === 0) return { count: 0 };
-    return this.prisma.notification.createMany({
+    const result = await this.prisma.notification.createMany({
       data: inputs.map((input) => ({
         ...input,
         audience: input.audience ?? NotificationAudience.All,
       })) as any,
       skipDuplicates: false,
     });
+    for (const userId of new Set(inputs.map((input) => input.userId))) {
+      this.realtime?.emit(userId);
+    }
+    return result;
   }
 
   async listNotifications(userId: string, tab: NotificationTab, take = 50) {
@@ -65,6 +82,7 @@ export class NotificationService {
     if (result.count === 0) {
       throw new NotFoundException("Notification not found");
     }
+    this.realtime?.emit(userId);
     return { success: true };
   }
 
@@ -74,6 +92,7 @@ export class NotificationService {
       data: { isRead: true, readAt: new Date() },
     });
 
+    this.realtime?.emit(userId);
     return { success: true, count: result.count };
   }
 

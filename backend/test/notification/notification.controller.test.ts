@@ -7,12 +7,13 @@ import type { NotificationService } from "../../src/notification/notification.se
 
 describe("NotificationController", () => {
   const req = { authUser: { id: "user-1" } };
+  const realtime = { stream: () => ({}) } as any;
 
   test("list delegates with parsed query", async () => {
     const service = {
       listNotifications: mock(async () => [{ id: "n-1" }]),
     } as unknown as NotificationService;
-    const controller = new NotificationController(service);
+    const controller = new NotificationController(service, realtime);
 
     await expect(
       controller.list(req as any, { tab: "direct", take: "10" }),
@@ -28,7 +29,7 @@ describe("NotificationController", () => {
     const service = {
       markAllRead: mock(async () => ({ success: true, count: 2 })),
     } as unknown as NotificationService;
-    const controller = new NotificationController(service);
+    const controller = new NotificationController(service, realtime);
 
     await expect(
       controller.markAllRead(req as any, { tab: "watching" }),

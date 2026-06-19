@@ -7,6 +7,7 @@ import {
   Patch,
   Query,
   Request,
+  Sse,
   UseGuards,
 } from "@nestjs/common";
 import { z } from "zod";
@@ -18,6 +19,7 @@ import {
   NotificationService,
   type NotificationTab,
 } from "./notification.service.js";
+import { NotificationRealtimeService } from "./notification-realtime.service.js";
 
 const NotificationQuerySchema = z.object({
   tab: z.enum(["direct", "watching", "all"]).optional().default("all"),
@@ -44,6 +46,8 @@ export class NotificationController {
   constructor(
     @Inject(NotificationService)
     private readonly notificationService: NotificationService,
+    @Inject(NotificationRealtimeService)
+    private readonly realtime: NotificationRealtimeService,
   ) {}
 
   @Get()
@@ -59,6 +63,11 @@ export class NotificationController {
   @Get("counts")
   counts(@Request() req: AuthenticatedRequest) {
     return this.notificationService.getCounts(req.authUser.id);
+  }
+
+  @Sse("events")
+  events(@Request() req: AuthenticatedRequest) {
+    return this.realtime.stream(req.authUser.id);
   }
 
   @Patch("read-all")

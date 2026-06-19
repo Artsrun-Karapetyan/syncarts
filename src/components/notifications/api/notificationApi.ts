@@ -1,4 +1,4 @@
-import { api } from "../../../lib/api";
+import { api, API_URL, getToken } from "../../../lib/api";
 import type {
   NotificationCounts,
   NotificationItem,
@@ -24,4 +24,11 @@ export async function markNotificationRead(id: string, isRead = true) {
 
 export async function markNotificationsRead(tab: NotificationTab) {
   await api.patch("/notifications/read-all", { tab });
+}
+
+export function getNotificationEventsUrl() {
+  const token = getToken();
+  if (!token) return null;
+  const params = new URLSearchParams({ access_token: token });
+  return `${API_URL}/notifications/events?${params.toString()}`;
 }
