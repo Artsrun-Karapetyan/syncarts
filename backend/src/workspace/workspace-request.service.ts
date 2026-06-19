@@ -64,6 +64,8 @@ export class WorkspaceRequestService {
 
     const { request, workspace } = await this.prisma.$transaction(
       async (transaction) => {
+        await ensureRequestParents(transaction, workspaceId, input);
+
         const updated = await replaceWorkspaceRequest(
           transaction,
           workspaceId,
@@ -145,6 +147,35 @@ export class WorkspaceRequestService {
 type RequestUpdateInput = {
   version?: number;
 } & Record<string, unknown>;
+
+async function ensureRequestParents(
+  client: any,
+  workspaceId: string,
+  input: RequestUpdateInput,
+) {
+  const collectionId =
+    typeof input.collectionId === "string" ? input.collectionId : null;
+  if (!collectionId) return;
+
+  const collection = await client.workspaceCollection.findUnique({
+    where: { workspaceId_id: { workspaceId, id: collectionId } },
+    select: { id: true },
+  });
+  if (!collection) {
+    throw new NotFoundException("Collection not found");
+  }
+
+  const folderId = typeof input.folderId === "string" ? input.folderId : null;
+  if (!folderId) return;
+
+  const folder = await client.workspaceFolder.findFirst({
+    where: { id: folderId, workspaceId, collectionId },
+    select: { id: true },
+  });
+  if (!folder) {
+    throw new NotFoundException("Folder not found");
+  }
+}
 
 function toRequestUpdateInput(value: unknown): RequestUpdateInput {
   if (typeof value !== "object" || value === null) {
