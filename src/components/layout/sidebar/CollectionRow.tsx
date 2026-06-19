@@ -24,6 +24,8 @@ export function CollectionRow({
     <div style={{ display: "flex", flexDirection: "column", marginBottom: 8 }}>
       <div
         className="sidebar-row"
+        data-sidebar-id={collection.id}
+        data-sidebar-kind="collection"
         draggable={
           props.dragHandlers.canDrag && props.renamingId !== collection.id
         }

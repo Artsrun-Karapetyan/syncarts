@@ -14,6 +14,7 @@ import {
   findSavedRequestByIdInCollections,
   requestSnapshot,
 } from "./tabHelpers";
+import { sortPinnedTabs, toggleTabPinned } from "./tabPinHelpers";
 import { reorderTabs } from "./tabReorderHelpers";
 import { normalizeTabsWithSavedRequests } from "./tabSyncHelpers";
 import { findExample, findFolder } from "./tabTreeFinders";
@@ -174,8 +175,12 @@ export function useTabActions(args: TabActionsArgs) {
     position: "before" | "after",
   ) => {
     updateCurrentTabs((prev) =>
-      reorderTabs(prev, sourceId, targetId, position),
+      sortPinnedTabs(reorderTabs(prev, sourceId, targetId, position)),
     );
+  };
+
+  const pinTab = (id: string) => {
+    updateCurrentTabs((prev) => toggleTabPinned(prev, id));
   };
 
   const openCollectionTab = (
@@ -329,6 +334,7 @@ export function useTabActions(args: TabActionsArgs) {
     saveRequestTabInPlace,
     setActiveTabId,
     moveTab,
+    pinTab,
     updateActiveTab,
     updateCurrentTabs,
   };

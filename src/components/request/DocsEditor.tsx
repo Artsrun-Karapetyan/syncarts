@@ -1,9 +1,13 @@
 import { useState } from "react";
 
-import type { Folder, SavedRequest } from "../../contexts/workspace/core/types";
-import { useWorkspace } from "../../contexts/WorkspaceContext";
+import {
+  type Folder,
+  type SavedRequest,
+  useWorkspace,
+} from "../../contexts/WorkspaceContext";
 import { FolderExamples } from "./docs/FolderExamples";
 import { RequestExamplesList } from "./docs/RequestExamplesList";
+import { CollectionDuplicateReport } from "./duplicates/CollectionDuplicateReport";
 
 type CollectionItem = Folder | SavedRequest;
 
@@ -79,6 +83,10 @@ export function DocsEditor() {
               <div style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
                 No description provided. Click Edit to add one.
               </div>
+            )}
+
+            {isCollection && collection && (
+              <CollectionDuplicateReport collection={collection} />
             )}
 
             {isCollection && collectionItemsForExamples.length > 0 && (

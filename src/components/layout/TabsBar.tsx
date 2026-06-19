@@ -1,4 +1,4 @@
-import { Plus, X } from "lucide-react";
+import { Pin, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useWorkspace } from "../../contexts/WorkspaceContext";
@@ -25,6 +25,7 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
     addTab,
     closeTab,
     moveTab,
+    pinTab,
     isTabDirty,
     resolveTabSavedRequestId,
   } = useWorkspace();
@@ -150,7 +151,7 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
                     });
                   }}
                   onAuxClick={(e) => {
-                    if (e.button === 1) {
+                    if (e.button === 1 && !tab.pinned) {
                       e.preventDefault();
                       onRequestCloseTab(tab.id);
                     }
@@ -163,7 +164,7 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
                     transition: "all var(--transition-fast)",
                     whiteSpace: "nowrap",
                     borderRight: "1px solid var(--border-color)",
-                    width: 140,
+                    width: tab.pinned ? 112 : 140,
                     padding: "0 10px",
                     fontSize: 12,
                     borderTop: isActive
@@ -222,16 +223,23 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
                     if (dirtyDot) dirtyDot.style.opacity = "1";
                   }}
                 >
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      fontSize: 10,
-                      color: `var(--status-${tab.method?.toLowerCase() || "get"})`,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {tab.method}
-                  </span>
+                  {tab.pinned ? (
+                    <Pin
+                      size={12}
+                      style={{ color: "var(--accent-primary)", flexShrink: 0 }}
+                    />
+                  ) : (
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        fontSize: 10,
+                        color: `var(--status-${tab.method?.toLowerCase() || "get"})`,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {tab.method}
+                    </span>
+                  )}
                   <span
                     style={{
                       overflow: "hidden",
@@ -267,36 +275,38 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
                         }}
                       />
                     )}
-                    <div
-                      className="tab-close-btn"
-                      style={{
-                        padding: 4,
-                        borderRadius: 6,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        opacity: isActive && !isDirty ? 0.5 : 0,
-                        transition: "all var(--transition-fast)",
-                        position: "absolute",
-                        background: "transparent",
-                        color: "inherit",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRequestCloseTab(tab.id);
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          "var(--status-delete-bg)";
-                        e.currentTarget.style.color = "var(--status-delete)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.color = "inherit";
-                      }}
-                    >
-                      <X size={13} />
-                    </div>
+                    {!tab.pinned && (
+                      <div
+                        className="tab-close-btn"
+                        style={{
+                          padding: 4,
+                          borderRadius: 6,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          opacity: isActive && !isDirty ? 0.5 : 0,
+                          transition: "all var(--transition-fast)",
+                          position: "absolute",
+                          background: "transparent",
+                          color: "inherit",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRequestCloseTab(tab.id);
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background =
+                            "var(--status-delete-bg)";
+                          e.currentTarget.style.color = "var(--status-delete)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "inherit";
+                        }}
+                      >
+                        <X size={13} />
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -334,6 +344,7 @@ export function TabsBar({ onRequestCloseTab }: TabsBarProps) {
         menuRef={menuRef}
         addTab={addTab}
         closeTab={closeTab}
+        pinTab={pinTab}
         onRequestCloseTab={onRequestCloseTab}
         tabs={tabs}
       />

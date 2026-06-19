@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+import { type Dispatch, type SetStateAction, useRef } from "react";
 
 import type { Collection } from "../../../contexts/WorkspaceContext";
 import { CollectionRow } from "./CollectionRow";
@@ -10,6 +10,7 @@ import type {
   DeleteTarget,
   SidebarDragHandlers,
 } from "./types";
+import { useScrollHighlightedSidebarItem } from "./useScrollHighlightedSidebarItem";
 
 export interface SidebarCollectionsProps {
   collections: Collection[];
@@ -42,6 +43,16 @@ export interface SidebarCollectionsProps {
 }
 
 export function SidebarCollections(props: SidebarCollectionsProps) {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useScrollHighlightedSidebarItem({
+    highlightedCollectionId: props.highlightedCollectionId,
+    highlightedExampleId: props.highlightedExampleId,
+    highlightedFolderId: props.highlightedFolderId,
+    highlightedRequestId: props.highlightedRequestId,
+    scrollContainerRef,
+  });
+
   return (
     <div
       style={{
@@ -56,6 +67,7 @@ export function SidebarCollections(props: SidebarCollectionsProps) {
         onChange={props.setCollectionSearch}
       />
       <div
+        ref={scrollContainerRef}
         style={{
           flex: 1,
           overflow: "auto",

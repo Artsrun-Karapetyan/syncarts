@@ -81,6 +81,7 @@ export interface TabData {
   collectionId?: string;
   folderId?: string;
   exampleId?: string;
+  pinned?: boolean;
   collectionView?:
     | "overview"
     | "authorization"

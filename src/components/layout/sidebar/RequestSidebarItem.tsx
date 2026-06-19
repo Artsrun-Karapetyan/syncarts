@@ -40,6 +40,8 @@ export function RequestSidebarItem({
     <>
       <div
         className="sidebar-row"
+        data-sidebar-id={item.id}
+        data-sidebar-kind="request"
         draggable={dragHandlers.canDrag && renamingId !== item.id}
         style={dragRowStyle({
           base: itemRowStyle(isHighlighted),
@@ -139,6 +141,8 @@ export function RequestSidebarItem({
               <div
                 key={example.id}
                 className="sidebar-row"
+                data-sidebar-id={example.id}
+                data-sidebar-kind="example"
                 draggable={dragHandlers.canDrag && renamingId !== example.id}
                 style={dragRowStyle({
                   base: {
