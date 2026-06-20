@@ -20,7 +20,10 @@ export function TopBar() {
     activeEnvironmentId,
     setActiveEnvironmentId,
     activeEnvironment,
+    workspaces,
   } = useWorkspace();
+  const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
+  const isLocalWorkspace = activeWorkspace?.type === "local";
   const [isEnvManagerOpen, setIsEnvManagerOpen] = useState(false);
   const [isEnvQuickLookOpen, setIsEnvQuickLookOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -146,14 +149,16 @@ export function TopBar() {
             <LogIn size={14} style={{ marginRight: 6 }} />
             Join
           </button>
-          <button
-            className="btn"
-            style={{ height: 28, padding: "0 12px", fontSize: 13 }}
-            onClick={() => setIsInviteOpen(true)}
-          >
-            <UserPlus size={14} style={{ marginRight: 6 }} />
-            Invite
-          </button>
+          {!isLocalWorkspace && (
+            <button
+              className="btn"
+              style={{ height: 28, padding: "0 12px", fontSize: 13 }}
+              onClick={() => setIsInviteOpen(true)}
+            >
+              <UserPlus size={14} style={{ marginRight: 6 }} />
+              Invite
+            </button>
+          )}
         </div>
 
         {/* Environment Selector */}
