@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseCurlCommand } from "./curlParser";
+import { parseCurlCommand } from "@/utils/curlParser";
 
 describe("parseCurlCommand extra cases", () => {
   test("parses user agent, cookie, and basic auth flags", () => {

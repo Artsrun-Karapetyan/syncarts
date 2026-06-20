@@ -1,10 +1,10 @@
-import "./CollectionHealthIssueRow.css";
+import "@/components/request/health/CollectionHealthIssueRow.css";
 
 import { AlertTriangle, ChevronRight, ExternalLink } from "lucide-react";
 
-import type { HealthRequestLocation } from "./collectionHealthRequestLocations";
-import type { CollectionHealthIssue } from "./collectionHealthTypes";
-import { getCollectionHealthIssueTargetTab } from "./getCollectionHealthIssueTargetTab";
+import type { HealthRequestLocation } from "@/components/request/health/collectionHealthRequestLocations";
+import type { CollectionHealthIssue } from "@/components/request/health/collectionHealthTypes";
+import { getCollectionHealthIssueTargetTab } from "@/components/request/health/getCollectionHealthIssueTargetTab";
 
 interface Props {
   collectionId: string;

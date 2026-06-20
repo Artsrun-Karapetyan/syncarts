@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { AppShell } from "../components/layout/AppShell";
-import { MergeRequestsScreen } from "../components/workspace/MergeRequestsScreen";
-import { getAuthToken } from "../lib/auth";
+import { AppShell } from "@/components/layout/AppShell";
+import { MergeRequestsScreen } from "@/components/workspace/MergeRequestsScreen";
+import { getAuthToken } from "@/lib/auth";
 
 export const Route = createFileRoute("/merge-requests")({
   component: MergeRequestsPage,

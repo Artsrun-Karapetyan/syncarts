@@ -1,7 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
-import type { Workspace } from "../core/types";
-import { isMemberWorkspace, isSharedWorkspace } from "./sharing";
+import type { Workspace } from "@/contexts/workspace/core/types";
+import {
+  isMemberWorkspace,
+  isSharedWorkspace,
+} from "@/contexts/workspace/sync/sharing";
 
 const workspace: Workspace = {
   id: "workspace-1",

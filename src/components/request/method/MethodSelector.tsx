@@ -1,10 +1,10 @@
-import "./MethodSelector.css";
+import "@/components/request/method/MethodSelector.css";
 
 import { ChevronDown, Circle } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 

@@ -1,39 +1,37 @@
 import { useEffect, useRef, useState } from "react";
 
-import {
-  getWorkspaceSecrets,
-  setWorkspaceSecrets,
-} from "../../../lib/secretsVault";
-import { useCollectionActions } from "../collections/useCollectionActions";
-import { useCollectionMoveActions } from "../collections/useCollectionMoveActions";
-import { useExampleActions } from "../collections/useExampleActions";
-import { useEnvironmentActions } from "../environment/useEnvironmentActions";
-import { useRequestSender } from "../requests/useRequestSender";
-import {
-  createDefaultActiveEnvByWorkspace,
-  createDefaultActiveTabByWorkspace,
-  createDefaultTabsByWorkspace,
-  createDefaultWorkspaces,
-} from "../storage/initializers";
-import { useLocalStorage } from "../storage/useLocalStorage";
-import {
-  canSyncWorkspace,
-  getSyncSignature,
-  getWorkspaceSyncPayload,
-} from "../sync/syncHelpers";
-import { useLegacyWorkspaceMigration } from "../sync/useLegacyWorkspaceMigration";
-import { useLocalWorkspaceSync } from "../sync/useLocalWorkspaceSync";
-import { useWorkspaceSync } from "../sync/useWorkspaceSync";
-import { useTabActions } from "../tabs/useTabActions";
+import { useCollectionActions } from "@/contexts/workspace/collections/useCollectionActions";
+import { useCollectionMoveActions } from "@/contexts/workspace/collections/useCollectionMoveActions";
+import { useExampleActions } from "@/contexts/workspace/collections/useExampleActions";
 import type {
   HttpResponse,
   SavedRequest,
   TabData,
   Workspace,
   WorkspaceContextState,
-} from "./types";
-import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
-import { useWorkspaceCrudActions } from "./useWorkspaceCrudActions";
+} from "@/contexts/workspace/core/types";
+import { useKeyboardShortcuts } from "@/contexts/workspace/core/useKeyboardShortcuts";
+import { useOfflineWorkspaceMigration } from "@/contexts/workspace/core/useOfflineWorkspaceMigration";
+import { useWorkspaceCrudActions } from "@/contexts/workspace/core/useWorkspaceCrudActions";
+import { useEnvironmentActions } from "@/contexts/workspace/environment/useEnvironmentActions";
+import { useRequestSender } from "@/contexts/workspace/requests/useRequestSender";
+import {
+  createDefaultActiveEnvByWorkspace,
+  createDefaultActiveTabByWorkspace,
+  createDefaultTabsByWorkspace,
+  createDefaultWorkspaces,
+} from "@/contexts/workspace/storage/initializers";
+import { useLocalStorage } from "@/contexts/workspace/storage/useLocalStorage";
+import {
+  canSyncWorkspace,
+  getSyncSignature,
+  getWorkspaceSyncPayload,
+} from "@/contexts/workspace/sync/syncHelpers";
+import { useLegacyWorkspaceMigration } from "@/contexts/workspace/sync/useLegacyWorkspaceMigration";
+import { useLocalWorkspaceSync } from "@/contexts/workspace/sync/useLocalWorkspaceSync";
+import { useWorkspaceSync } from "@/contexts/workspace/sync/useWorkspaceSync";
+import { useTabActions } from "@/contexts/workspace/tabs/core/useTabActions";
+import { getWorkspaceSecrets, setWorkspaceSecrets } from "@/lib/secretsVault";
 
 export function useWorkspaceController(userId: string): WorkspaceContextState {
   const localDefaultWorkspaceId = `local-${userId}`;
@@ -41,7 +39,9 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     Workspace[]
   >(
     `syncarts-workspaces-v3-${userId}`,
-    createDefaultWorkspaces(userId, localDefaultWorkspaceId),
+    userId === "offline"
+      ? []
+      : createDefaultWorkspaces(userId, localDefaultWorkspaceId),
   );
   const [activeWorkspaceId, setActiveWorkspaceId, activeWorkspaceHydrated] =
     useLocalStorage<string>(
@@ -120,6 +120,11 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
   useEffect(() => {
     if (!storageHydrated) return;
     if (workspaces.length > 0) return;
+
+    // For offline users, we don't automatically create a cloud workspace.
+    // We let them create a Local Folder workspace explicitly.
+    if (userId === "offline") return;
+
     const defaultWorkspace = createDefaultWorkspaces(
       userId,
       localDefaultWorkspaceId,
@@ -147,10 +152,18 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     setTabsByWorkspace,
     setWorkspaces,
     storageHydrated,
-    tabsByWorkspace,
     userId,
     workspaces.length,
   ]);
+
+  useOfflineWorkspaceMigration({
+    storageHydrated,
+    userId,
+    setWorkspaces,
+    setTabsByWorkspace,
+    setActiveTabIdByWorkspace,
+    setActiveEnvIdByWorkspace,
+  });
 
   const activeWorkspace =
     workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];

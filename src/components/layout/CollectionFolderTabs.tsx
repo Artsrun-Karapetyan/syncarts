@@ -1,9 +1,9 @@
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { AuthEditor } from "../request/auth/AuthEditor";
-import { CollectionVariablesEditor } from "../request/CollectionVariablesEditor";
-import { DocsEditor } from "../request/DocsEditor";
-import { CollectionRunner } from "../request/runs/CollectionRunner";
-import { ScriptsEditor } from "../request/scripts/ScriptsEditor";
+import { AuthEditor } from "@/components/request/auth/AuthEditor";
+import { CollectionVariablesEditor } from "@/components/request/CollectionVariablesEditor";
+import { DocsEditor } from "@/components/request/DocsEditor";
+import { CollectionRunner } from "@/components/request/runs/CollectionRunner";
+import { ScriptsEditor } from "@/components/request/scripts/ScriptsEditor";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type Tab = "overview" | "authorization" | "scripts" | "variables" | "runs";
 

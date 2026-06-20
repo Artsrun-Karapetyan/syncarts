@@ -1,7 +1,4 @@
-import type {
-  Folder,
-  SavedRequest,
-} from "../../../contexts/workspace/core/types";
+import type { Folder, SavedRequest } from "@/contexts/workspace/core/types";
 
 export function findRequestInItems(
   items: (Folder | SavedRequest)[],

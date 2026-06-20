@@ -1,5 +1,3 @@
-import { sendHttpRequest } from "../../../lib/httpRequestSender";
-import { applyPathVariables } from "../../../utils/pathVariables";
 import type {
   Collection,
   Environment,
@@ -7,19 +5,21 @@ import type {
   HttpResponse,
   TabData,
   TestResult,
-} from "../core/types";
+} from "@/contexts/workspace/core/types";
 import {
   getRequestAncestors,
   interpolateVariables,
   resolveRequestAuth,
-} from "./requestHelpers";
+} from "@/contexts/workspace/requests/requestHelpers";
 import {
   createScriptApi,
   createScriptConsole,
   createScriptResponse,
   runScripts,
-} from "./scriptRuntime";
-import { validateRequestUrl } from "./validateRequestUrl";
+} from "@/contexts/workspace/requests/scriptRuntime";
+import { validateRequestUrl } from "@/contexts/workspace/requests/validateRequestUrl";
+import { sendHttpRequest } from "@/lib/httpRequestSender";
+import { applyPathVariables } from "@/utils/pathVariables";
 
 export interface WorkspaceRequestRunResult {
   collectionId?: string;

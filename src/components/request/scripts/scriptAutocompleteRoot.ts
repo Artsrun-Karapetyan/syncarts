@@ -1,4 +1,7 @@
-import { item, type ScriptSuggestion } from "./scriptAutocompleteHelpers";
+import {
+  item,
+  type ScriptSuggestion,
+} from "@/components/request/scripts/scriptAutocompleteHelpers";
 
 export const ROOT_SUGGESTIONS: ScriptSuggestion[] = [
   item("pm", "pm", "variable", "Postman sandbox API", "Postman"),

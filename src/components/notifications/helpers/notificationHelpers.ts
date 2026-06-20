@@ -2,7 +2,7 @@ import type {
   NotificationCounts,
   NotificationItem,
   NotificationTab,
-} from "../types/notificationTypes";
+} from "@/components/notifications/types/notificationTypes";
 
 export const notificationTabs: Array<{
   id: NotificationTab;

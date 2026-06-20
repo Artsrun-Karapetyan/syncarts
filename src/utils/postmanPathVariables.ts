@@ -1,5 +1,5 @@
-import type { PathVariable } from "../contexts/WorkspaceContext";
-import { syncPathVariablesWithUrl } from "./pathVariables";
+import type { PathVariable } from "@/contexts/WorkspaceContext";
+import { syncPathVariablesWithUrl } from "@/utils/pathVariables";
 
 export function parsePostmanPathVariables(
   url: any,

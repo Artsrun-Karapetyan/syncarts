@@ -3,13 +3,13 @@ import { CheckCheck, Settings, X } from "lucide-react";
 import {
   getNotificationCount,
   notificationTabs,
-} from "./helpers/notificationHelpers";
-import { NotificationListItem } from "./NotificationListItem";
+} from "@/components/notifications/helpers/notificationHelpers";
+import { NotificationListItem } from "@/components/notifications/NotificationListItem";
 import type {
   NotificationCounts,
   NotificationItem,
   NotificationTab,
-} from "./types/notificationTypes";
+} from "@/components/notifications/types/notificationTypes";
 
 type NotificationsPanelProps = {
   counts: NotificationCounts;

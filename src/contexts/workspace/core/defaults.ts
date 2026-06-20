@@ -1,4 +1,4 @@
-import type { Collection, TabData } from "./types";
+import type { Collection, TabData } from "@/contexts/workspace/core/types";
 
 export const DEFAULT_COLLECTIONS: Collection[] = [
   {

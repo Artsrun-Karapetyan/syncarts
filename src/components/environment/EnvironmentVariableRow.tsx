@@ -1,9 +1,9 @@
 import { CheckSquare, Copy, Eye, EyeOff, Square, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import type { EnvironmentVariable } from "../../contexts/WorkspaceContext";
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { VariableTextInput } from "../request/variables/VariableTextInput";
+import { VariableTextInput } from "@/components/request/variables/VariableTextInput";
+import type { EnvironmentVariable } from "@/contexts/WorkspaceContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface EnvironmentVariableRowProps {
   variable: EnvironmentVariable;

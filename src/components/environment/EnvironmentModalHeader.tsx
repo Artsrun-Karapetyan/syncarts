@@ -1,6 +1,6 @@
 import { Globe, X } from "lucide-react";
 
-import type { Environment } from "../../contexts/WorkspaceContext";
+import type { Environment } from "@/contexts/WorkspaceContext";
 
 interface EnvironmentModalHeaderProps {
   isGlobals: boolean;

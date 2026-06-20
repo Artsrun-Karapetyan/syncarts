@@ -3,9 +3,9 @@ import { Check } from "lucide-react";
 import {
   formatNotificationTime,
   getActorInitial,
-} from "./helpers/notificationHelpers";
-import { NotificationTypeIcon } from "./NotificationTypeIcon";
-import type { NotificationItem } from "./types/notificationTypes";
+} from "@/components/notifications/helpers/notificationHelpers";
+import { NotificationTypeIcon } from "@/components/notifications/NotificationTypeIcon";
+import type { NotificationItem } from "@/components/notifications/types/notificationTypes";
 
 type NotificationListItemProps = {
   item: NotificationItem;

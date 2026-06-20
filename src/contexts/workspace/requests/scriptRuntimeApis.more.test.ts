@@ -1,12 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Environment, EnvironmentVariable } from "../core/types";
+import type {
+  Environment,
+  EnvironmentVariable,
+} from "@/contexts/workspace/core/types";
 import {
   createVariablesApi,
   replaceDraftVariables,
   sendRequest,
-} from "./scriptRuntimeApis";
-import { createScriptResponseBody } from "./scriptRuntimeResponse";
+} from "@/contexts/workspace/requests/scriptRuntimeApis";
+import { createScriptResponseBody } from "@/contexts/workspace/requests/scriptRuntimeResponse";
 
 describe("scriptRuntimeApis extra cases", () => {
   test("get resolves from ancestors, collection, and globals", () => {

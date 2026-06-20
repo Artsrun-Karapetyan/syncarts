@@ -1,4 +1,4 @@
-import "./ImportDropZone.css";
+import "@/components/workspace/ImportDropZone.css";
 
 import { UploadCloud } from "lucide-react";
 

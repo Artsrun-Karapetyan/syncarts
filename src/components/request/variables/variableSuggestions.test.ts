@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { EnvironmentVariable } from "../../../contexts/WorkspaceContext";
-import { getVariableSuggestions } from "./variableSuggestions";
+import { getVariableSuggestions } from "@/components/request/variables/variableSuggestions";
+import type { EnvironmentVariable } from "@/contexts/WorkspaceContext";
 
 const variable = (
   key: string,

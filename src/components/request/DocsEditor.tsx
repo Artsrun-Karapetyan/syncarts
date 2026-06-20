@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { CollectionHealthReport } from "./health/CollectionHealthReport";
+import { CollectionHealthReport } from "@/components/request/health/CollectionHealthReport";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export function DocsEditor() {
   const { activeTab, collections, updateActiveTab } = useWorkspace();

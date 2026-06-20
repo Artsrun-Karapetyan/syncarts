@@ -1,4 +1,4 @@
-import type { SavedRequest } from "../../../contexts/workspace/core/types";
+import type { SavedRequest } from "@/contexts/workspace/core/types";
 
 export type DuplicateKind = "exact" | "similar";
 

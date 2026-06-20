@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { useEffect } from "react";
 
-import { isTauriRuntime } from "../../lib/tauriRuntime";
+import { isTauriRuntime } from "@/lib/tauriRuntime";
 
 export function DeepLinkHandler() {
   const navigate = useNavigate();

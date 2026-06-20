@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 
-import type { Folder } from "../../../contexts/workspace/core/types";
-import { RequestExamplesList } from "./RequestExamplesList";
+import { RequestExamplesList } from "@/components/request/docs/RequestExamplesList";
+import type { Folder } from "@/contexts/workspace/core/types";
 
 interface Props {
   folder: Folder;

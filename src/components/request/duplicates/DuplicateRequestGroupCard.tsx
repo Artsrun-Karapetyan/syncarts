@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
 
-import type { DuplicateRequestGroup } from "./requestDuplicateTypes";
+import type { DuplicateRequestGroup } from "@/components/request/duplicates/requestDuplicateTypes";
 
 interface Props {
   collectionId: string;

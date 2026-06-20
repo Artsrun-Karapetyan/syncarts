@@ -1,9 +1,9 @@
 import { Plus } from "lucide-react";
 
-import type { EnvironmentVariable } from "../../contexts/WorkspaceContext";
-import { DynamicGlobalRow } from "./DynamicGlobalRow";
-import { EnvironmentHeaderCell } from "./EnvironmentHeaderCell";
-import { EnvironmentVariableRow } from "./EnvironmentVariableRow";
+import { DynamicGlobalRow } from "@/components/environment/DynamicGlobalRow";
+import { EnvironmentHeaderCell } from "@/components/environment/EnvironmentHeaderCell";
+import { EnvironmentVariableRow } from "@/components/environment/EnvironmentVariableRow";
+import type { EnvironmentVariable } from "@/contexts/WorkspaceContext";
 
 interface EnvironmentVariablesTableProps {
   isGlobals: boolean;

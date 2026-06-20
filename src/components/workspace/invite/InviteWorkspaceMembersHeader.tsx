@@ -1,4 +1,4 @@
-import type { Workspace } from "../../../contexts/WorkspaceContext";
+import type { Workspace } from "@/contexts/WorkspaceContext";
 
 interface InviteWorkspaceMembersHeaderProps {
   activeWorkspaceId: string;

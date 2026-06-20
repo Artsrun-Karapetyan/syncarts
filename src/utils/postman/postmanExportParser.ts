@@ -2,8 +2,8 @@ import type {
   Collection,
   Folder,
   SavedRequest,
-} from "../../contexts/WorkspaceContext";
-import { buildPostmanPathVariables } from "../postmanPathVariables";
+} from "@/contexts/WorkspaceContext";
+import { buildPostmanPathVariables } from "@/utils/postmanPathVariables";
 
 export function stringifyPostmanCollection(collection: Collection): string {
   const postmanFormat: any = {

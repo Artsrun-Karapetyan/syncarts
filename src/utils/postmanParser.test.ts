@@ -4,7 +4,7 @@ import {
   exportToPostmanCollection,
   importPostmanCollection,
   importPostmanEnvironment,
-} from "./postmanParser";
+} from "@/utils/postmanParser";
 
 describe("importPostmanEnvironment", () => {
   test("imports enabled Postman environment variables", () => {

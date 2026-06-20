@@ -1,7 +1,7 @@
 import type { RefObject } from "react";
 
-import type { TabData } from "../../../contexts/WorkspaceContext";
-import { WorkspaceSaveButtonGroup } from "./WorkspaceSaveButtonGroup";
+import { WorkspaceSaveButtonGroup } from "@/components/layout/workspace/WorkspaceSaveButtonGroup";
+import type { TabData } from "@/contexts/WorkspaceContext";
 
 interface WorkspaceHeaderActionsProps {
   activeTab: TabData;

@@ -1,8 +1,8 @@
 import { CheckCircle2, Play, Square, XCircle } from "lucide-react";
 
-import type { Collection } from "../../../contexts/WorkspaceContext";
-import { getCollectionRunItems } from "./collectionRunItems";
-import { useCollectionRunner } from "./useCollectionRunner";
+import { getCollectionRunItems } from "@/components/request/runs/collectionRunItems";
+import { useCollectionRunner } from "@/components/request/runs/useCollectionRunner";
+import type { Collection } from "@/contexts/WorkspaceContext";
 
 interface Props {
   collection: Collection;

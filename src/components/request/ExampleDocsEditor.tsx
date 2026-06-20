@@ -2,8 +2,8 @@ import JsonView from "@uiw/react-json-view";
 import { darkTheme } from "@uiw/react-json-view/dark";
 import { useState } from "react";
 
-import type { SavedExample } from "../../contexts/workspace/core/types";
-import { useWorkspace } from "../../contexts/WorkspaceContext";
+import type { SavedExample } from "@/contexts/workspace/core/types";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface Props {
   example: SavedExample;

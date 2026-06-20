@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Collection, Workspace } from "../core/types";
 import {
   createPulledForkCollection,
   getWorkspaceCollections,
   replaceCollectionInWorkspace,
-} from "./collectionPullHelpers";
+} from "@/contexts/workspace/collections/collectionPullHelpers";
+import type { Collection, Workspace } from "@/contexts/workspace/core/types";
 
 describe("collection pull helpers", () => {
   test("pull keeps fork identity and replaces source-backed content", () => {

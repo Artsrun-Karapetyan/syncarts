@@ -1,4 +1,4 @@
-import type { CollectionHealthIssueCode } from "./collectionHealthTypes";
+import type { CollectionHealthIssueCode } from "@/components/request/health/collectionHealthTypes";
 
 export function getCollectionHealthIssueTargetTab(
   code: CollectionHealthIssueCode,

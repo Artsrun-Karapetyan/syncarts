@@ -1,7 +1,7 @@
 import { Users } from "lucide-react";
 
-import type { Workspace } from "../../../contexts/WorkspaceContext";
-import { InviteWorkspaceMembersBlock } from "./InviteWorkspaceMembersBlock";
+import { InviteWorkspaceMembersBlock } from "@/components/workspace/invite/InviteWorkspaceMembersBlock";
+import type { Workspace } from "@/contexts/WorkspaceContext";
 
 interface InviteMembersListProps {
   activeWorkspaceId: string;

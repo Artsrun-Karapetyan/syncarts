@@ -1,4 +1,4 @@
-import { CurlHighlightedText } from "./CurlHighlightedText";
+import { CurlHighlightedText } from "@/components/request/code/CurlHighlightedText";
 
 interface CurlLineProps {
   isFirstLine: boolean;

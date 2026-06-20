@@ -1,5 +1,9 @@
-import type { Environment, EnvironmentVariable, TabData } from "../core/types";
-import { createScriptResponseBody } from "./scriptRuntimeResponse";
+import type {
+  Environment,
+  EnvironmentVariable,
+  TabData,
+} from "@/contexts/workspace/core/types";
+import { createScriptResponseBody } from "@/contexts/workspace/requests/scriptRuntimeResponse";
 
 export function createRequestHeadersApi(requestDraft: TabData) {
   return {

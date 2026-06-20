@@ -2,11 +2,11 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, UnlistenFn } from "@tauri-apps/api/event";
 import { useEffect, useRef } from "react";
 
-import type { Workspace } from "../core/types";
+import type { Workspace } from "@/contexts/workspace/core/types";
 import {
   readWorkspaceFromLocalFs,
   writeWorkspaceToLocalFs,
-} from "./localFsSyncHelpers";
+} from "@/contexts/workspace/sync/localFsSyncHelpers";
 
 type SetWorkspaces = (
   value: Workspace[] | ((prev: Workspace[]) => Workspace[]),

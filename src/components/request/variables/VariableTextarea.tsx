@@ -1,12 +1,12 @@
 import type { CSSProperties } from "react";
 import { useRef } from "react";
 
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { UrlVariablePopover } from "../url/UrlVariablePopover";
-import { useVariableAutocomplete } from "./useVariableAutocomplete";
-import { useVariableHover } from "./useVariableHover";
-import { VariableAutocompletePopover } from "./VariableAutocompletePopover";
-import { renderVariableHighlight } from "./variableHighlight";
+import { UrlVariablePopover } from "@/components/request/url/UrlVariablePopover";
+import { useVariableAutocomplete } from "@/components/request/variables/useVariableAutocomplete";
+import { useVariableHover } from "@/components/request/variables/useVariableHover";
+import { VariableAutocompletePopover } from "@/components/request/variables/VariableAutocompletePopover";
+import { renderVariableHighlight } from "@/components/request/variables/variableHighlight";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface VariableTextareaProps {
   className?: string;

@@ -1,7 +1,7 @@
 import { Download, X } from "lucide-react";
 import { useState } from "react";
 
-import { useAppUpdate } from "./useAppUpdate";
+import { useAppUpdate } from "@/components/update/useAppUpdate";
 
 export function AppUpdateBanner() {
   const { error, installUpdate, status, update } = useAppUpdate();

@@ -1,6 +1,6 @@
 import { FileText } from "lucide-react";
 
-import type { SavedRequest } from "../../../contexts/workspace/core/types";
+import type { SavedRequest } from "@/contexts/workspace/core/types";
 
 interface Props {
   request: SavedRequest;

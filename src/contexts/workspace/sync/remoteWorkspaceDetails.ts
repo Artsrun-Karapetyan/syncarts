@@ -1,5 +1,5 @@
-import { api } from "../../../lib/api";
-import type { Workspace } from "../core/types";
+import type { Workspace } from "@/contexts/workspace/core/types";
+import { api } from "@/lib/api";
 
 interface DetailHydrationArgs {
   dirtyWorkspaceIdsRef: React.MutableRefObject<Set<string>>;

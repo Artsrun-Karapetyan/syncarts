@@ -1,9 +1,9 @@
 import { Ban, GitMerge } from "lucide-react";
 
-import { MergeRequestChangeSummary } from "./MergeRequestChangeSummary";
-import { getMergeRequestChanges } from "./mergeRequestDiff";
-import { MergeRequestDiffItem } from "./MergeRequestDiffItem";
-import { MergeRequestError } from "./MergeRequestError";
+import { MergeRequestChangeSummary } from "@/components/workspace/merge-requests/MergeRequestChangeSummary";
+import { getMergeRequestChanges } from "@/components/workspace/merge-requests/mergeRequestDiff";
+import { MergeRequestDiffItem } from "@/components/workspace/merge-requests/MergeRequestDiffItem";
+import { MergeRequestError } from "@/components/workspace/merge-requests/MergeRequestError";
 
 interface MergeRequestChangesProps {
   canReview: boolean;

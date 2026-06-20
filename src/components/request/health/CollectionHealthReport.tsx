@@ -1,13 +1,13 @@
 import { Activity, CheckCircle2 } from "lucide-react";
 
-import type { Collection } from "../../../contexts/WorkspaceContext";
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { analyzeCollectionHealth } from "./collectionHealthAnalyzer";
-import { CollectionHealthIssueRow } from "./CollectionHealthIssueRow";
-import { CollectionHealthMetricCard } from "./CollectionHealthMetricCard";
-import { getCollectionHealthRequestLocations } from "./collectionHealthRequestLocations";
-import { getCollectionHealthLabel } from "./getCollectionHealthLabel";
-import { getCollectionHealthScoreColor } from "./getCollectionHealthScoreColor";
+import { analyzeCollectionHealth } from "@/components/request/health/collectionHealthAnalyzer";
+import { CollectionHealthIssueRow } from "@/components/request/health/CollectionHealthIssueRow";
+import { CollectionHealthMetricCard } from "@/components/request/health/CollectionHealthMetricCard";
+import { getCollectionHealthRequestLocations } from "@/components/request/health/collectionHealthRequestLocations";
+import { getCollectionHealthLabel } from "@/components/request/health/getCollectionHealthLabel";
+import { getCollectionHealthScoreColor } from "@/components/request/health/getCollectionHealthScoreColor";
+import type { Collection } from "@/contexts/WorkspaceContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface Props {
   collection: Collection;

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { detectResponseLanguage } from "./responseLanguage";
+import { detectResponseLanguage } from "@/components/response/shared/responseLanguage";
 
 describe("detectResponseLanguage edge cases", () => {
   test("detects xml content type and parsed json fallback", () => {

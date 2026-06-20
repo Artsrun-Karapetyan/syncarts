@@ -4,10 +4,10 @@ import { useState } from "react";
 import {
   formatDiffValue,
   type MergeRequestDiffItem as DiffItem,
-} from "./mergeRequestDiff";
-import { MergeRequestFolderBadge } from "./MergeRequestFolderBadge";
-import { MergeRequestMethodBadge } from "./MergeRequestMethodBadge";
-import { TableDiffView } from "./TableDiffView";
+} from "@/components/workspace/merge-requests/mergeRequestDiff";
+import { MergeRequestFolderBadge } from "@/components/workspace/merge-requests/MergeRequestFolderBadge";
+import { MergeRequestMethodBadge } from "@/components/workspace/merge-requests/MergeRequestMethodBadge";
+import { TableDiffView } from "@/components/workspace/merge-requests/TableDiffView";
 
 interface MergeRequestDiffItemProps {
   item: DiffItem;

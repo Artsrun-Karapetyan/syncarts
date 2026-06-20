@@ -6,8 +6,8 @@ import type {
   HeaderItem,
   SavedExample,
   SavedRequest,
-} from "../../contexts/WorkspaceContext";
-import { parsePostmanPathVariables } from "../postmanPathVariables";
+} from "@/contexts/WorkspaceContext";
+import { parsePostmanPathVariables } from "@/utils/postmanPathVariables";
 
 export function parsePostmanCollection(
   jsonString: string,

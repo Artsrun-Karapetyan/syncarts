@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Collection } from "../../contexts/WorkspaceContext";
-import { stringifyPostmanCollection } from "./postmanExportParser";
+import type { Collection } from "@/contexts/WorkspaceContext";
+import { stringifyPostmanCollection } from "@/utils/postman/postmanExportParser";
 
 describe("stringifyPostmanCollection", () => {
   test("exports request url parts, auth, headers, body, and path variables", () => {

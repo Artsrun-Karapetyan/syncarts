@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Folder, SavedRequest, TabData } from "../core/types";
 import {
   addExampleToItems,
   addRequestToFolder,
@@ -8,7 +7,12 @@ import {
   hasRequestInTarget,
   sortItemsByTarget,
   updateRequestInItems,
-} from "./collectionItemHelpers";
+} from "@/contexts/workspace/collections/collectionItemHelpers";
+import type {
+  Folder,
+  SavedRequest,
+  TabData,
+} from "@/contexts/workspace/core/types";
 
 const request = (id: string, name = id): SavedRequest => ({
   type: "request",

@@ -1,10 +1,10 @@
+import type { CollectionRunItem } from "@/components/request/runs/collectionRunTypes";
 import type {
   Collection,
   Folder,
   SavedRequest,
   TabData,
-} from "../../../contexts/WorkspaceContext";
-import type { CollectionRunItem } from "./collectionRunTypes";
+} from "@/contexts/WorkspaceContext";
 
 export function getCollectionRunItems(
   collection: Collection,

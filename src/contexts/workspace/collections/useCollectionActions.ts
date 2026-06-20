@@ -1,10 +1,3 @@
-import type {
-  Collection,
-  Folder,
-  SavedRequest,
-  TabData,
-  Workspace,
-} from "../core/types";
 import {
   addRequestToFolder,
   duplicateItemInItems,
@@ -15,9 +8,16 @@ import {
   renameItemInItems,
   sortItemsByTarget,
   updateRequestInItems,
-} from "./collectionItemHelpers";
-import { getUniqueCollectionName } from "./collectionNameHelpers";
-import { pullForkCollection } from "./collectionPullHelpers";
+} from "@/contexts/workspace/collections/collectionItemHelpers";
+import { getUniqueCollectionName } from "@/contexts/workspace/collections/collectionNameHelpers";
+import { pullForkCollection } from "@/contexts/workspace/collections/collectionPullHelpers";
+import type {
+  Collection,
+  Folder,
+  SavedRequest,
+  TabData,
+  Workspace,
+} from "@/contexts/workspace/core/types";
 
 interface CollectionActionsArgs {
   activeWorkspaceId: string;

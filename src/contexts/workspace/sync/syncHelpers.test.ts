@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test";
 
-import type { Workspace } from "../core/types";
+import type { Workspace } from "@/contexts/workspace/core/types";
 import {
   canSyncWorkspace,
   getRemoteSyncPayload,
   getWorkspaceSyncPayload,
   mapRemoteWorkspace,
-} from "./syncHelpers";
+} from "@/contexts/workspace/sync/syncHelpers";
 
 const workspace: Workspace = {
   id: "workspace-1",

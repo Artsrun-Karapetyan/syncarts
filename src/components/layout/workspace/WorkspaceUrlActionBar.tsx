@@ -1,9 +1,9 @@
 import { Code2, Download } from "lucide-react";
 import type { RefObject } from "react";
 
-import { MethodSelector } from "../../request/method/MethodSelector";
-import { UrlBar } from "../../request/url/UrlBar";
-import { WorkspaceSendButton } from "./WorkspaceSendButton";
+import { WorkspaceSendButton } from "@/components/layout/workspace/WorkspaceSendButton";
+import { MethodSelector } from "@/components/request/method/MethodSelector";
+import { UrlBar } from "@/components/request/url/UrlBar";
 
 interface WorkspaceUrlActionBarProps {
   handleSendAndDownload: () => void;

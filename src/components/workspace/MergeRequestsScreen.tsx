@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { api } from "../../lib/api";
-import { useStoredUser } from "../../lib/session";
-import { MergeRequestDetails } from "./merge-requests/MergeRequestDetails";
-import { MergeRequestsSidebar } from "./merge-requests/MergeRequestsSidebar";
-import { MergeRequestsTopBar } from "./merge-requests/MergeRequestsTopBar";
+import { MergeRequestDetails } from "@/components/workspace/merge-requests/MergeRequestDetails";
+import { MergeRequestsSidebar } from "@/components/workspace/merge-requests/MergeRequestsSidebar";
+import { MergeRequestsTopBar } from "@/components/workspace/merge-requests/MergeRequestsTopBar";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { api } from "@/lib/api";
+import { useStoredUser } from "@/lib/session";
 
 export function MergeRequestsScreen() {
   const [mrs, setMrs] = useState<any[]>([]);

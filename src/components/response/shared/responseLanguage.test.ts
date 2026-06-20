@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { detectResponseLanguage } from "./responseLanguage";
+import { detectResponseLanguage } from "@/components/response/shared/responseLanguage";
 
 describe("detectResponseLanguage", () => {
   test("uses content-type before body sniffing", () => {

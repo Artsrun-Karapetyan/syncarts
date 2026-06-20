@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Folder, SavedRequest } from "../../contexts/WorkspaceContext";
-import { parseOpenApiCollection } from "./openApiImportParser";
+import type { Folder, SavedRequest } from "@/contexts/WorkspaceContext";
+import { parseOpenApiCollection } from "@/utils/openapi/openApiImportParser";
 
 describe("parseOpenApiCollection", () => {
   test("imports OpenAPI paths as requests grouped by tag", () => {

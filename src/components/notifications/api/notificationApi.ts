@@ -1,9 +1,9 @@
-import { api, API_URL, getToken } from "../../../lib/api";
 import type {
   NotificationCounts,
   NotificationItem,
   NotificationTab,
-} from "../types/notificationTypes";
+} from "@/components/notifications/types/notificationTypes";
+import { api, API_URL, getToken } from "@/lib/api";
 
 export async function fetchNotifications(tab: NotificationTab) {
   const params = new URLSearchParams({ tab, take: "50" });

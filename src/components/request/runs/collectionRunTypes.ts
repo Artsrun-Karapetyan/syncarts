@@ -3,7 +3,7 @@ import type {
   SavedRequest,
   TabData,
   TestResult,
-} from "../../../contexts/WorkspaceContext";
+} from "@/contexts/WorkspaceContext";
 
 export interface CollectionRunItem {
   folderId: string | null;

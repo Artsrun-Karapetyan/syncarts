@@ -4,7 +4,7 @@ import type { DragEvent } from "react";
 import type {
   SidebarMoveEntity,
   SidebarMoveTarget,
-} from "../../../contexts/WorkspaceContext";
+} from "@/contexts/WorkspaceContext";
 
 export type SidebarItemType = "collection" | "folder" | "request" | "example";
 

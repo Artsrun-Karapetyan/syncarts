@@ -1,7 +1,4 @@
-import type {
-  HeaderItem,
-  SavedRequest,
-} from "../../../contexts/WorkspaceContext";
+import type { HeaderItem, SavedRequest } from "@/contexts/WorkspaceContext";
 
 const VARIABLE_REGEX = /\{\{([^}]+)\}\}/g;
 

@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   buildPostmanPathVariables,
   parsePostmanPathVariables,
-} from "./postmanPathVariables";
+} from "@/utils/postmanPathVariables";
 
 describe("postmanPathVariables", () => {
   test("parsePostmanPathVariables merges variables from url object", () => {

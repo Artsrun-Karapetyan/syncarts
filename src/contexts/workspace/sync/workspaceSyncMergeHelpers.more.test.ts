@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Workspace } from "../core/types";
+import type { Workspace } from "@/contexts/workspace/core/types";
 import {
   mergeInitialRemoteWorkspace,
   mergePolledRemoteWorkspace,
-} from "./workspaceSyncMergeHelpers";
+} from "@/contexts/workspace/sync/workspaceSyncMergeHelpers";
 
 const remoteWorkspaceData = {
   id: "remote",

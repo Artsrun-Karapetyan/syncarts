@@ -1,16 +1,16 @@
+import { findRequestDuplicateGroups } from "@/components/request/duplicates/requestDuplicateDetector";
+import type {
+  CollectionHealthIssue,
+  CollectionHealthReport,
+} from "@/components/request/health/collectionHealthTypes";
+import { extractRequestVariables } from "@/components/request/health/extractRequestVariables";
+import { resolveDynamicVariable } from "@/components/request/variables/variableResolution";
 import type {
   Collection,
   EnvironmentVariable,
   Folder,
   SavedRequest,
-} from "../../../contexts/WorkspaceContext";
-import { findRequestDuplicateGroups } from "../duplicates/requestDuplicateDetector";
-import { resolveDynamicVariable } from "../variables/variableResolution";
-import type {
-  CollectionHealthIssue,
-  CollectionHealthReport,
-} from "./collectionHealthTypes";
-import { extractRequestVariables } from "./extractRequestVariables";
+} from "@/contexts/WorkspaceContext";
 
 interface RequestContext {
   inheritedTestScript: string;

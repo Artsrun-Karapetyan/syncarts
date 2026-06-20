@@ -8,9 +8,9 @@ import type {
   HttpResponse,
   SavedRequest,
   TabData,
-} from "../core/types";
-import { createRequestErrorResponse } from "./createRequestErrorResponse";
-import { runWorkspaceRequest } from "./runWorkspaceRequest";
+} from "@/contexts/workspace/core/types";
+import { createRequestErrorResponse } from "@/contexts/workspace/requests/createRequestErrorResponse";
+import { runWorkspaceRequest } from "@/contexts/workspace/requests/runWorkspaceRequest";
 
 interface RequestSenderArgs {
   activeEnvironment: Environment | undefined;

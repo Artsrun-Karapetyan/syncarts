@@ -1,10 +1,10 @@
 import { CheckSquare, Plus, Square, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { SelectionArea } from "../ui/SelectionArea";
-import { syncRowKeys } from "./rowKeys";
-import { VariableTextInput } from "./variables/VariableTextInput";
+import { syncRowKeys } from "@/components/request/rowKeys";
+import { VariableTextInput } from "@/components/request/variables/VariableTextInput";
+import { SelectionArea } from "@/components/ui/SelectionArea/SelectionArea";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export function HeadersEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();

@@ -1,6 +1,6 @@
 import type { CSSProperties, DragEvent } from "react";
 
-import type { RowDropPosition } from "./rowReorder";
+import type { RowDropPosition } from "@/components/request/rowReorder";
 
 export interface RowDropTarget {
   id: string;

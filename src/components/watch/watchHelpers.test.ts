@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { buildWatchMap, isEntityWatched, watchKey } from "./watchHelpers";
+import {
+  buildWatchMap,
+  isEntityWatched,
+  watchKey,
+} from "@/components/watch/watchHelpers";
 
 describe("watchHelpers", () => {
   test("builds stable watch keys", () => {

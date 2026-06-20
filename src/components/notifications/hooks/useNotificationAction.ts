@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import type { NotificationItem } from "../types/notificationTypes";
+import type { NotificationItem } from "@/components/notifications/types/notificationTypes";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type PendingTarget = {
   workspaceId: string;

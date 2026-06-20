@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { toFetchBody } from "./httpRequestSender";
+import { toFetchBody } from "@/lib/httpRequestSender";
 
 describe("httpRequestSender", () => {
   test("builds browser fetch bodies", () => {

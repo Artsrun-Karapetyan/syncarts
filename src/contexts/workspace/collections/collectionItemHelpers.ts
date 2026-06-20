@@ -3,7 +3,7 @@ import type {
   SavedExample,
   SavedRequest,
   TabData,
-} from "../core/types";
+} from "@/contexts/workspace/core/types";
 
 export function hasRequestInTarget(
   items: (Folder | SavedRequest)[],

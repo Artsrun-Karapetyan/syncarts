@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { formatApiError, shouldClearAuthSession } from "./api";
+import { formatApiError, shouldClearAuthSession } from "@/lib/api";
 
 describe("formatApiError", () => {
   test("formats zod field errors from Nest bad requests", () => {

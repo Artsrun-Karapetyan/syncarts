@@ -6,12 +6,13 @@ import {
   getNotificationEventsUrl,
   markNotificationRead,
   markNotificationsRead,
-} from "../api/notificationApi";
+} from "@/components/notifications/api/notificationApi";
 import type {
   NotificationCounts,
   NotificationItem,
   NotificationTab,
-} from "../types/notificationTypes";
+} from "@/components/notifications/types/notificationTypes";
+import { getAuthToken } from "@/lib/auth";
 
 const emptyCounts: NotificationCounts = { direct: 0, watching: 0, all: 0 };
 
@@ -22,6 +23,7 @@ export function useNotifications(isOpen: boolean, tab: NotificationTab) {
   const [error, setError] = useState<string | null>(null);
 
   const refreshCounts = useCallback(async () => {
+    if (!getAuthToken()) return;
     try {
       setCounts(await fetchNotificationCounts());
     } catch (err) {
@@ -31,7 +33,7 @@ export function useNotifications(isOpen: boolean, tab: NotificationTab) {
 
   const refreshItems = useCallback(
     async (showLoader = false) => {
-      if (!isOpen) return;
+      if (!isOpen || !getAuthToken()) return;
       try {
         if (showLoader) setIsLoading(true);
         setError(null);
@@ -66,6 +68,7 @@ export function useNotifications(isOpen: boolean, tab: NotificationTab) {
   }, [refreshCounts, refreshItems]);
 
   useEffect(() => {
+    if (!getAuthToken()) return;
     const url = getNotificationEventsUrl();
     if (!url) return;
 

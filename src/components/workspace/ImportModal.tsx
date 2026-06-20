@@ -1,22 +1,22 @@
 import { X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { parseCurlCommand } from "../../utils/curlParser";
+import { ImportDivider } from "@/components/workspace/import/ImportDivider";
+import { ImportPasteForm } from "@/components/workspace/import/ImportPasteForm";
+import { ImportStatusMessage } from "@/components/workspace/import/ImportStatusMessage";
+import type { ImportStatus } from "@/components/workspace/import/importTypes";
+import { ImportDropZone } from "@/components/workspace/ImportDropZone";
+import {
+  type DuplicateImportItem,
+  ImportDuplicatePrompt,
+} from "@/components/workspace/ImportDuplicatePrompt";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { parseCurlCommand } from "@/utils/curlParser";
 import {
   importOpenApiCollection,
   importPostmanCollection,
   importPostmanEnvironment,
-} from "../../utils/postmanParser";
-import { ImportDivider } from "./import/ImportDivider";
-import { ImportPasteForm } from "./import/ImportPasteForm";
-import { ImportStatusMessage } from "./import/ImportStatusMessage";
-import type { ImportStatus } from "./import/importTypes";
-import { ImportDropZone } from "./ImportDropZone";
-import {
-  type DuplicateImportItem,
-  ImportDuplicatePrompt,
-} from "./ImportDuplicatePrompt";
+} from "@/utils/postmanParser";
 
 interface ImportModalProps {
   isOpen: boolean;

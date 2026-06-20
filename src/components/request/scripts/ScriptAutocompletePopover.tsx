@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import type { ScriptSuggestion } from "./scriptAutocompleteData";
-import { ScriptSuggestionKindBadge } from "./ScriptSuggestionKindBadge";
+import type { ScriptSuggestion } from "@/components/request/scripts/scriptAutocompleteData";
+import { ScriptSuggestionKindBadge } from "@/components/request/scripts/ScriptSuggestionKindBadge";
 
 interface ScriptAutocompletePopoverProps {
   activeIndex: number;

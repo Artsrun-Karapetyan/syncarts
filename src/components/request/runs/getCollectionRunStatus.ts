@@ -1,4 +1,4 @@
-import type { TestResult } from "../../../contexts/WorkspaceContext";
+import type { TestResult } from "@/contexts/WorkspaceContext";
 
 export function getCollectionRunStatus(
   status: number,

@@ -1,4 +1,4 @@
-import type { SavedRequest } from "../../../contexts/WorkspaceContext";
+import type { SavedRequest } from "@/contexts/WorkspaceContext";
 
 export type CollectionHealthIssueCode =
   | "duplicate-request"

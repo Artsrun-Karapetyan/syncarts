@@ -5,7 +5,7 @@ import {
   extractPathVariableKeys,
   syncPathVariablesWithUrl,
   upsertPathVariable,
-} from "./pathVariables";
+} from "@/utils/pathVariables";
 
 describe("pathVariables", () => {
   test("extracts unique path variable keys from url path only", () => {

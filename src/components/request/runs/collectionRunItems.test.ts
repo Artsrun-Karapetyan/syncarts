@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { SavedRequest } from "../../../contexts/WorkspaceContext";
-import { getCollectionRunItems } from "./collectionRunItems";
+import { getCollectionRunItems } from "@/components/request/runs/collectionRunItems";
+import type { SavedRequest } from "@/contexts/WorkspaceContext";
 
 describe("getCollectionRunItems", () => {
   test("flattens collection requests in sidebar order", () => {

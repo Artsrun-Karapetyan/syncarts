@@ -13,10 +13,10 @@ export interface HttpResponse {
   time_ms: number;
 }
 
-import type { useCollectionActions } from "../collections/useCollectionActions";
-import type { useEnvironmentActions } from "../environment/useEnvironmentActions";
-import type { useRequestSender } from "../requests/useRequestSender";
-import type { useTabActions } from "../tabs/useTabActions";
+import type { useCollectionActions } from "@/contexts/workspace/collections/useCollectionActions";
+import type { useEnvironmentActions } from "@/contexts/workspace/environment/useEnvironmentActions";
+import type { useRequestSender } from "@/contexts/workspace/requests/useRequestSender";
+import type { useTabActions } from "@/contexts/workspace/tabs/core/useTabActions";
 
 export type TabActions = ReturnType<typeof useTabActions>;
 export type CollectionActions = ReturnType<typeof useCollectionActions>;

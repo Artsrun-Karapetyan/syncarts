@@ -10,16 +10,16 @@ import {
 } from "lucide-react";
 import { type RefObject, useEffect, useState } from "react";
 
-import { Select } from "../../ui/Select";
-import type { ResponseJsonThemeId } from "../shared/responseJsonThemes";
-import { responseJsonThemeOptions } from "../shared/responseJsonThemes";
-import type { ResponseLanguage } from "../shared/responseLanguage";
-import type { BodyFormat } from "../shared/responseTypes";
 import {
   findNextInContainer,
   formatButtonClass,
   toolButtonClass,
-} from "./responseBodyToolbarHelpers";
+} from "@/components/response/body/responseBodyToolbarHelpers";
+import type { ResponseJsonThemeId } from "@/components/response/shared/responseJsonThemes";
+import { responseJsonThemeOptions } from "@/components/response/shared/responseJsonThemes";
+import type { ResponseLanguage } from "@/components/response/shared/responseLanguage";
+import type { BodyFormat } from "@/components/response/shared/responseTypes";
+import { Select } from "@/components/ui/Select/Select";
 
 interface ResponseBodyToolbarProps {
   bodyContainerRef: RefObject<HTMLDivElement | null>;

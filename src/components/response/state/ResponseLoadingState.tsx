@@ -1,4 +1,4 @@
-import "./ResponseLoadingState.css";
+import "@/components/response/state/ResponseLoadingState.css";
 
 import { Loader2 } from "lucide-react";
 

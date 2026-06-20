@@ -1,16 +1,16 @@
 import { Pin, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { TabsBarContextMenu } from "./TabsBarContextMenu";
+import { TabsBarContextMenu } from "@/components/layout/TabsBarContextMenu";
 import {
   getTabDropPosition,
   readTabDragData,
   tabDropShadow,
   type TabDropTarget,
   writeTabDragData,
-} from "./tabsDragHelpers";
-import { useActiveTabSidebarHighlight } from "./useActiveTabSidebarHighlight";
+} from "@/components/layout/tabsDragHelpers";
+import { useActiveTabSidebarHighlight } from "@/components/layout/useActiveTabSidebarHighlight";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface TabsBarProps {
   onRequestCloseTab: (tabId: string) => void;

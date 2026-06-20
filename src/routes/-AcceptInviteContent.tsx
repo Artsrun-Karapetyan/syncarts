@@ -2,8 +2,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useWorkspace } from "../contexts/WorkspaceContext";
-import { api } from "../lib/api";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { api } from "@/lib/api";
 
 export function AcceptInviteContent({ token }: { token: string }) {
   const navigate = useNavigate();

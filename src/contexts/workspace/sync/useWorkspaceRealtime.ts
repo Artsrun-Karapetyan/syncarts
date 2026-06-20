@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 
-import { api } from "../../../lib/api";
-import type { SavedRequest, Workspace } from "../core/types";
+import type { SavedRequest, Workspace } from "@/contexts/workspace/core/types";
 import {
   createWorkspaceEventSource,
   replaceRealtimeRequest,
   type WorkspaceRealtimeEvent,
-} from "./workspaceRealtimeHelpers";
+} from "@/contexts/workspace/sync/workspaceRealtimeHelpers";
+import { api } from "@/lib/api";
 
 type SetWorkspaces = (
   value: Workspace[] | ((prev: Workspace[]) => Workspace[]),

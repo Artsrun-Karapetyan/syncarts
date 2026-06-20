@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { reorderRows } from "./rowReorder";
+import { reorderRows } from "@/components/request/rowReorder";
 
 describe("reorderRows", () => {
   test("moves a row before another row", () => {

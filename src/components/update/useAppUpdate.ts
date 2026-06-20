@@ -1,9 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 
-import { isTauriRuntime } from "../../lib/tauriRuntime";
-import type { AppUpdateMetadata, AppUpdateStatus } from "./appUpdateTypes";
-import { isUpdaterConfigError } from "./isUpdaterConfigError";
+import type {
+  AppUpdateMetadata,
+  AppUpdateStatus,
+} from "@/components/update/appUpdateTypes";
+import { isUpdaterConfigError } from "@/components/update/isUpdaterConfigError";
+import { isTauriRuntime } from "@/lib/tauriRuntime";
 
 export function useAppUpdate() {
   const [update, setUpdate] = useState<AppUpdateMetadata | null>(null);

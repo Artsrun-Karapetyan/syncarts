@@ -1,10 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Environment, EnvironmentVariable, TabData } from "../core/types";
+import type {
+  Environment,
+  EnvironmentVariable,
+  TabData,
+} from "@/contexts/workspace/core/types";
 import {
   createRequestHeadersApi,
   createVariablesApi,
-} from "./scriptRuntimeApis";
+} from "@/contexts/workspace/requests/scriptRuntimeApis";
 
 function requestDraft(): TabData {
   return {

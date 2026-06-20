@@ -1,6 +1,6 @@
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
-import type { ImportStatus } from "./importTypes";
+import type { ImportStatus } from "@/components/workspace/import/importTypes";
 
 interface ImportStatusMessageProps {
   message: string;

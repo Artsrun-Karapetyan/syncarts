@@ -1,7 +1,7 @@
 import { Ban, GitMerge, GitPullRequest } from "lucide-react";
 
-import { formatMergeRequestCreatedAt } from "./mergeRequestDate";
-import { MergeRequestsSidebarEmptyText } from "./MergeRequestsSidebarEmptyText";
+import { formatMergeRequestCreatedAt } from "@/components/workspace/merge-requests/mergeRequestDate";
+import { MergeRequestsSidebarEmptyText } from "@/components/workspace/merge-requests/MergeRequestsSidebarEmptyText";
 
 interface MergeRequestsSidebarProps {
   loading: boolean;

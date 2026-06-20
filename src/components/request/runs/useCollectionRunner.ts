@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 
-import { runWorkspaceRequest } from "../../../contexts/workspace/requests/runWorkspaceRequest";
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { getCollectionRunItems } from "./collectionRunItems";
-import type { CollectionRunResult } from "./collectionRunTypes";
-import { getCollectionRunStatus } from "./getCollectionRunStatus";
+import { getCollectionRunItems } from "@/components/request/runs/collectionRunItems";
+import type { CollectionRunResult } from "@/components/request/runs/collectionRunTypes";
+import { getCollectionRunStatus } from "@/components/request/runs/getCollectionRunStatus";
+import { runWorkspaceRequest } from "@/contexts/workspace/requests/runWorkspaceRequest";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export function useCollectionRunner() {
   const {

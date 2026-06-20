@@ -1,15 +1,18 @@
 import { useRef, useState } from "react";
 
-import { getRequestAncestors } from "../../../contexts/workspace/requests/requestHelpers";
-import { resolveRequestAuth } from "../../../contexts/workspace/requests/requestHelpers";
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { Select } from "../../ui/Select";
+import {
+  AuthTokenInput,
+  type HoveredVariable,
+} from "@/components/request/auth/AuthTokenInput";
+import { AuthVariablePopover } from "@/components/request/auth/AuthVariablePopover";
 import {
   resolveScopedVariable,
   upsertActiveVariableValue,
-} from "../variables/variableResolution";
-import { AuthTokenInput, type HoveredVariable } from "./AuthTokenInput";
-import { AuthVariablePopover } from "./AuthVariablePopover";
+} from "@/components/request/variables/variableResolution";
+import { Select } from "@/components/ui/Select/Select";
+import { getRequestAncestors } from "@/contexts/workspace/requests/requestHelpers";
+import { resolveRequestAuth } from "@/contexts/workspace/requests/requestHelpers";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type AuthType = "inherit" | "none" | "bearer";
 

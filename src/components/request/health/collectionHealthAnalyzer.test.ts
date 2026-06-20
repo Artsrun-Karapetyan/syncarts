@@ -1,10 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type {
-  Collection,
-  SavedRequest,
-} from "../../../contexts/WorkspaceContext";
-import { analyzeCollectionHealth } from "./collectionHealthAnalyzer";
+import { analyzeCollectionHealth } from "@/components/request/health/collectionHealthAnalyzer";
+import type { Collection, SavedRequest } from "@/contexts/WorkspaceContext";
 
 describe("analyzeCollectionHealth", () => {
   test("reports request quality warnings", () => {

@@ -1,24 +1,27 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { SidebarCollections } from "./sidebar/SidebarCollections";
-import { SidebarContextMenu } from "./sidebar/SidebarContextMenu";
-import { SidebarDialogs } from "./sidebar/SidebarDialogs";
-import { SIDEBAR_ROOT_STYLE } from "./sidebar/sidebarStyles";
-import { SidebarToolbar } from "./sidebar/SidebarToolbar";
+import { SidebarCollections } from "@/components/layout/sidebar/collections/SidebarCollections";
+import { SidebarContextMenu } from "@/components/layout/sidebar/context-menu/SidebarContextMenu";
+import { SidebarDialogs } from "@/components/layout/sidebar/context-menu/SidebarDialogs";
+import { useSidebarDragHandlers } from "@/components/layout/sidebar/drag-drop/useSidebarDragHandlers";
+import { useSidebarExportHandlers } from "@/components/layout/sidebar/export/useSidebarExportHandlers";
+import { useSidebarHighlight } from "@/components/layout/sidebar/hooks/useSidebarHighlight";
+import { SIDEBAR_ROOT_STYLE } from "@/components/layout/sidebar/sidebarStyles";
+import { SidebarToolbar } from "@/components/layout/sidebar/toolbar/SidebarToolbar";
+import { useOpenMergeRequestCount } from "@/components/layout/sidebar/toolbar/useOpenMergeRequestCount";
+import { useSidebarWatchActions } from "@/components/layout/sidebar/toolbar/useSidebarWatchActions";
 import type {
   ContextMenuRequest,
   CtxMenuState,
   DeleteTarget,
   MergeRequestTarget,
-} from "./sidebar/types";
-import { useOpenMergeRequestCount } from "./sidebar/useOpenMergeRequestCount";
-import { useSidebarDragHandlers } from "./sidebar/useSidebarDragHandlers";
-import { useSidebarExportHandlers } from "./sidebar/useSidebarExportHandlers";
-import { useSidebarHighlight } from "./sidebar/useSidebarHighlight";
-import { useSidebarWatchActions } from "./sidebar/useSidebarWatchActions";
-import { filterCollections, renameMatchingItem } from "./sidebar/utils";
+} from "@/components/layout/sidebar/types";
+import {
+  filterCollections,
+  renameMatchingItem,
+} from "@/components/layout/sidebar/utils/utils";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export function Sidebar() {
   const {

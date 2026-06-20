@@ -5,7 +5,7 @@ import {
   getActorInitial,
   getNotificationCount,
   hasUnreadNotifications,
-} from "./notificationHelpers";
+} from "@/components/notifications/helpers/notificationHelpers";
 
 describe("notificationHelpers", () => {
   test("reads tab counts", () => {

@@ -3,7 +3,7 @@ import {
   FormDataItem,
   HeaderItem,
   TabData,
-} from "../contexts/WorkspaceContext";
+} from "@/contexts/WorkspaceContext";
 
 interface ParsedBody {
   body: string;

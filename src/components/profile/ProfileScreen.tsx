@@ -2,13 +2,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 
-import { type AuthUser, getMe, logout, updateMe } from "../../lib/api";
-import { clearAuthToken, getAuthToken } from "../../lib/auth";
-import {
-  clearStoredUser,
-  getStoredUser,
-  setStoredUser,
-} from "../../lib/session";
+import { type AuthUser, getMe, logout, updateMe } from "@/lib/api";
+import { clearAuthToken, getAuthToken } from "@/lib/auth";
+import { clearStoredUser, getStoredUser, setStoredUser } from "@/lib/session";
 
 export function ProfileScreen() {
   const navigate = useNavigate();

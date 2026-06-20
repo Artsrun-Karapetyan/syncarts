@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { POSTMAN_MEMBERS } from "./scriptAutocompletePostmanMembers";
-import { ROOT_SUGGESTIONS } from "./scriptAutocompleteRoot";
-import { STANDARD_MEMBERS } from "./scriptAutocompleteStandardMembers";
+import { POSTMAN_MEMBERS } from "@/components/request/scripts/scriptAutocompletePostmanMembers";
+import { ROOT_SUGGESTIONS } from "@/components/request/scripts/scriptAutocompleteRoot";
+import { STANDARD_MEMBERS } from "@/components/request/scripts/scriptAutocompleteStandardMembers";
 
 describe("script autocomplete member data", () => {
   test("includes expected root and standard JavaScript suggestions", () => {

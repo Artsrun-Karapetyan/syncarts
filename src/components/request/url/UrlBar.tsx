@@ -1,21 +1,21 @@
-import "./UrlBar.css";
+import "@/components/request/url/UrlBar.css";
 
 import { useEffect, useRef } from "react";
 
+import { parseQueryParamsFromUrl } from "@/components/request/url/urlQueryParams";
+import { UrlVariablePopover } from "@/components/request/url/UrlVariablePopover";
+import { useVariableAutocomplete } from "@/components/request/variables/useVariableAutocomplete";
+import { useVariableHover } from "@/components/request/variables/useVariableHover";
+import { VariableAutocompletePopover } from "@/components/request/variables/VariableAutocompletePopover";
+import { getVariableColors } from "@/components/request/variables/variableHighlight";
+import { resolveScopedVariable } from "@/components/request/variables/variableResolution";
 import {
   getRequestAncestors,
   resolveChainVariable,
-} from "../../../contexts/workspace/requests/requestHelpers";
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { parseCurlCommand } from "../../../utils/curlParser";
-import { syncPathVariablesWithUrl } from "../../../utils/pathVariables";
-import { useVariableAutocomplete } from "../variables/useVariableAutocomplete";
-import { useVariableHover } from "../variables/useVariableHover";
-import { VariableAutocompletePopover } from "../variables/VariableAutocompletePopover";
-import { getVariableColors } from "../variables/variableHighlight";
-import { resolveScopedVariable } from "../variables/variableResolution";
-import { parseQueryParamsFromUrl } from "./urlQueryParams";
-import { UrlVariablePopover } from "./UrlVariablePopover";
+} from "@/contexts/workspace/requests/requestHelpers";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { parseCurlCommand } from "@/utils/curlParser";
+import { syncPathVariablesWithUrl } from "@/utils/pathVariables";
 
 const AUTO_REQUEST_NAMES = new Set(["Untitled Request", "New Request"]);
 const PATH_VARIABLE_REGEX = /(^|\/):([A-Za-z_][A-Za-z0-9_]*)/g;

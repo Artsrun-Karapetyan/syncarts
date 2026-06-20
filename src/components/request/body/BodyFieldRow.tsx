@@ -2,20 +2,17 @@ import { CheckSquare, GripVertical, Square, Trash2 } from "lucide-react";
 import type { DragEvent } from "react";
 import { useRef } from "react";
 
-import type {
-  BodyType,
-  FormDataItem,
-} from "../../../contexts/WorkspaceContext";
-import { Select } from "../../ui/Select";
+import { FileValueEditor } from "@/components/request/body/FileValueEditor";
 import {
   ROW_DRAG_HANDLE_STYLE,
   rowDropBackground,
   rowDropShadow,
   type RowDropTarget,
   writeRowDragData,
-} from "../rowDrag";
-import { VariableTextInput } from "../variables/VariableTextInput";
-import { FileValueEditor } from "./FileValueEditor";
+} from "@/components/request/rowDrag";
+import { VariableTextInput } from "@/components/request/variables/VariableTextInput";
+import { Select } from "@/components/ui/Select/Select";
+import type { BodyType, FormDataItem } from "@/contexts/WorkspaceContext";
 
 interface BodyFieldRowProps {
   bodyType: BodyType;

@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import { isTauriRuntime } from "./tauriRuntime";
+import { isTauriRuntime } from "@/lib/tauriRuntime";
 
 const IDB_SECRETS_KEY = "__syncarts_secrets__";
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Collection } from "../../../contexts/workspace/core/types";
-import { findRequestDuplicateGroups } from "./requestDuplicateDetector";
+import { findRequestDuplicateGroups } from "@/components/request/duplicates/requestDuplicateDetector";
+import type { Collection } from "@/contexts/workspace/core/types";
 
 describe("findRequestDuplicateGroups", () => {
   test("finds exact duplicates with sorted query params", () => {

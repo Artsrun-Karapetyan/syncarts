@@ -2,7 +2,7 @@ import type {
   Environment,
   EnvironmentVariable,
   Workspace,
-} from "../core/types";
+} from "@/contexts/workspace/core/types";
 
 interface EnvironmentActionsArgs {
   activeEnvironmentId: string | null;

@@ -2,13 +2,13 @@ import { Link } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useRef, useState } from "react";
 
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { ChainingPickerModal } from "../chaining/ChainingPickerModal";
-import { UrlVariablePopover } from "../url/UrlVariablePopover";
-import { useVariableAutocomplete } from "./useVariableAutocomplete";
-import { useVariableHover } from "./useVariableHover";
-import { VariableAutocompletePopover } from "./VariableAutocompletePopover";
-import { renderVariableHighlight } from "./variableHighlight";
+import { ChainingPickerModal } from "@/components/request/chaining/ChainingPickerModal";
+import { UrlVariablePopover } from "@/components/request/url/UrlVariablePopover";
+import { useVariableAutocomplete } from "@/components/request/variables/useVariableAutocomplete";
+import { useVariableHover } from "@/components/request/variables/useVariableHover";
+import { VariableAutocompletePopover } from "@/components/request/variables/VariableAutocompletePopover";
+import { renderVariableHighlight } from "@/components/request/variables/variableHighlight";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface VariableTextInputProps {
   className?: string;

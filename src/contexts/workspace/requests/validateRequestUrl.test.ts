@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { validateRequestUrl } from "./validateRequestUrl";
+import { validateRequestUrl } from "@/contexts/workspace/requests/validateRequestUrl";
 
 describe("validateRequestUrl", () => {
   test("accepts http and https urls", () => {

@@ -1,4 +1,7 @@
-import type { WatchEntityType, WorkspaceWatch } from "./watchTypes";
+import type {
+  WatchEntityType,
+  WorkspaceWatch,
+} from "@/components/watch/watchTypes";
 
 export function watchKey(entityType: WatchEntityType, entityId: string) {
   return `${entityType}:${entityId}`;

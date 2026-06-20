@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import type { VariableSuggestion } from "./variableAutocompleteTypes";
-import { VariableSourceBadge } from "./VariableSourceBadge";
+import type { VariableSuggestion } from "@/components/request/variables/variableAutocompleteTypes";
+import { VariableSourceBadge } from "@/components/request/variables/VariableSourceBadge";
 
 interface VariableAutocompletePopoverProps {
   activeIndex: number;

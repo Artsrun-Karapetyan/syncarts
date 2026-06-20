@@ -4,10 +4,10 @@ import CodeEditor from "@uiw/react-textarea-code-editor";
 import { BookTemplate } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { ScriptAutocompletePopover } from "./ScriptAutocompletePopover";
-import { ScriptSnippetsDrawer } from "./ScriptSnippetsDrawer";
-import { useScriptAutocomplete } from "./useScriptAutocomplete";
+import { ScriptAutocompletePopover } from "@/components/request/scripts/ScriptAutocompletePopover";
+import { ScriptSnippetsDrawer } from "@/components/request/scripts/ScriptSnippetsDrawer";
+import { useScriptAutocomplete } from "@/components/request/scripts/useScriptAutocomplete";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type HistoryState = {
   past: string[];

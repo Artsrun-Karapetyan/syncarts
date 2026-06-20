@@ -1,4 +1,4 @@
-import type { Folder, SavedRequest } from "../../contexts/WorkspaceContext";
+import type { Folder, SavedRequest } from "@/contexts/WorkspaceContext";
 
 export type OpenApiTaggedRequest = SavedRequest & { tagName?: string };
 

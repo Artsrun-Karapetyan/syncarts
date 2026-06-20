@@ -2,7 +2,7 @@ import { File, Plus, X } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import type { FormDataItem } from "../../../contexts/WorkspaceContext";
+import type { FormDataItem } from "@/contexts/WorkspaceContext";
 
 interface FileValueEditorProps {
   handleUpdateFormData: (id: string, updates: Partial<FormDataItem>) => void;

@@ -1,7 +1,7 @@
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
-import { RequestTabs } from "../../request/tabs/RequestTabs";
-import { ResponseViewer } from "../../response/ResponseViewer";
+import { RequestTabs } from "@/components/request/tabs/RequestTabs";
+import { ResponseViewer } from "@/components/response/ResponseViewer";
 
 interface WorkspaceRequestPanelsProps {
   splitDirection: "horizontal" | "vertical";

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
 
-import type { Workspace } from "../core/types";
+import type { Workspace } from "@/contexts/workspace/core/types";
 import {
   getSyncSignature,
   normalizeLegacyWorkspaces,
   shouldSkipLegacyDefaultRemote,
-} from "./syncHelpers";
+} from "@/contexts/workspace/sync/syncHelpers";
 
 const localDefault: Workspace = {
   id: "local-default",

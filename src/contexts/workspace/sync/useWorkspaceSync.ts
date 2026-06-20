@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
 
-import { api } from "../../../lib/api";
-import type { Workspace } from "../core/types";
-import { hydrateRemoteWorkspaceDetails } from "./remoteWorkspaceDetails";
+import type { Workspace } from "@/contexts/workspace/core/types";
+import { hydrateRemoteWorkspaceDetails } from "@/contexts/workspace/sync/remoteWorkspaceDetails";
 import {
   canSyncWorkspace,
   getSyncSignature,
@@ -10,13 +9,15 @@ import {
   mapRemoteWorkspace,
   normalizeLegacyWorkspaces,
   shouldSkipLegacyDefaultRemote,
-} from "./syncHelpers";
-import { useWorkspaceRealtime } from "./useWorkspaceRealtime";
+} from "@/contexts/workspace/sync/syncHelpers";
+import { useWorkspaceRealtime } from "@/contexts/workspace/sync/useWorkspaceRealtime";
 import {
   mergeInitialRemoteWorkspace,
   mergePolledRemoteWorkspace,
   removeUnavailableRemoteWorkspaces,
-} from "./workspaceSyncMergeHelpers";
+} from "@/contexts/workspace/sync/workspaceSyncMergeHelpers";
+import { api } from "@/lib/api";
+import { getAuthToken } from "@/lib/auth";
 
 type SetWorkspaces = (
   value: Workspace[] | ((prev: Workspace[]) => Workspace[]),
@@ -55,6 +56,7 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
   }, [workspaces]);
 
   const reloadWorkspaces = async () => {
+    if (!getAuthToken()) return;
     try {
       const res: any = await api.get("/workspaces");
       const remoteWorkspaces = (res.data || []).filter(
@@ -127,7 +129,7 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
   });
 
   useEffect(() => {
-    if (!storageHydrated) return;
+    if (!storageHydrated || !getAuthToken()) return;
 
     let isMounted = true;
     api
@@ -203,6 +205,7 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
     if (workspaces.length === 0) return;
 
     const timeoutId = setTimeout(() => {
+      if (!getAuthToken()) return;
       workspaces.forEach((workspace) => {
         if (deletedWorkspaceIdsRef.current.has(workspace.id)) return;
         if (!canSyncWorkspace(workspace, userId)) return;
@@ -256,9 +259,10 @@ export function useWorkspaceSync(args: WorkspaceSyncArgs) {
   }, [workspaces, activeWorkspaceId, storageHydrated, userId]);
 
   useEffect(() => {
-    if (!storageHydrated) return;
+    if (!storageHydrated || !getAuthToken()) return;
 
     const intervalId = window.setInterval(() => {
+      if (!getAuthToken()) return;
       api
         .get("/workspaces")
         .then(async (res: any) => {

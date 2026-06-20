@@ -1,16 +1,16 @@
 import type {
-  Collection,
-  Folder,
-  SavedRequest,
-} from "../../../contexts/workspace/core/types";
-import type {
   DuplicateRequestGroup,
   DuplicateRequestMatch,
-} from "./requestDuplicateTypes";
+} from "@/components/request/duplicates/requestDuplicateTypes";
 import {
   getExactDuplicateKey,
   getSimilarDuplicateKey,
-} from "./requestDuplicateUrl";
+} from "@/components/request/duplicates/requestDuplicateUrl";
+import type {
+  Collection,
+  Folder,
+  SavedRequest,
+} from "@/contexts/workspace/core/types";
 
 export function findRequestDuplicateGroups(
   collection: Collection,

@@ -1,13 +1,13 @@
-import "./styles/global.css";
+import "@/styles/global.css";
 
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { invoke } from "@tauri-apps/api/core";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { isTauriRuntime } from "./lib/tauriRuntime";
+import { isTauriRuntime } from "@/lib/tauriRuntime";
 // Import the generated route tree
-import { routeTree } from "./routeTree.gen";
+import { routeTree } from "@/routeTree.gen";
 
 const disableTextAutoCorrection = () => {
   const selector = 'input, textarea, [contenteditable="true"]';

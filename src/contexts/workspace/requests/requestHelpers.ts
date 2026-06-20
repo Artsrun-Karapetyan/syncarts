@@ -1,4 +1,4 @@
-import { resolveDynamicVariable } from "../../../components/request/variables/variableResolution";
+import { resolveDynamicVariable } from "@/components/request/variables/variableResolution";
 import type {
   Collection,
   Environment,
@@ -6,8 +6,8 @@ import type {
   Folder,
   SavedRequest,
   TabData,
-} from "../core/types";
-import { findSavedRequestByIdInCollections } from "../tabs/tabHelpers";
+} from "@/contexts/workspace/core/types";
+import { findSavedRequestByIdInCollections } from "@/contexts/workspace/tabs/helpers/tabHelpers";
 
 export function getRequestAncestors(
   activeTab: TabData | undefined,

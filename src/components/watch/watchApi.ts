@@ -1,5 +1,8 @@
-import { api } from "../../lib/api";
-import type { WatchEntityType, WorkspaceWatch } from "./watchTypes";
+import type {
+  WatchEntityType,
+  WorkspaceWatch,
+} from "@/components/watch/watchTypes";
+import { api } from "@/lib/api";
 
 export async function fetchWorkspaceWatches(workspaceId: string) {
   const params = new URLSearchParams({ workspaceId });

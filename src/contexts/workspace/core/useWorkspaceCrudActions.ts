@@ -1,7 +1,8 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 
-import { api } from "../../../lib/api";
-import type { TabData, Workspace } from "./types";
+import type { TabData, Workspace } from "@/contexts/workspace/core/types";
+import { api } from "@/lib/api";
+import { getAuthToken } from "@/lib/auth";
 
 interface UseWorkspaceCrudActionsArgs {
   activeWorkspaceId: string;
@@ -86,14 +87,19 @@ export function useWorkspaceCrudActions(args: UseWorkspaceCrudActionsArgs) {
     syncingWorkspaceIdsRef.current.delete(id);
     delete lastSyncedSignaturesRef.current[id];
 
-    try {
-      await api.delete(`/workspaces/${id}`).catch((err) => {
-        if (err.response?.status !== 404) throw err;
-      });
-    } catch (err) {
-      console.error("[SYNC] DELETE failed:", err);
-      deletedWorkspaceIdsRef.current.delete(id);
-      throw err;
+    const workspaceToDelete = workspaces.find((w) => w.id === id);
+    const isLocal = workspaceToDelete?.type === "local" || !getAuthToken();
+
+    if (!isLocal) {
+      try {
+        await api.delete(`/workspaces/${id}`).catch((err) => {
+          if (err.response?.status !== 404) throw err;
+        });
+      } catch (err) {
+        console.error("[SYNC] DELETE failed:", err);
+        deletedWorkspaceIdsRef.current.delete(id);
+        throw err;
+      }
     }
 
     setWorkspaces((prev) => {

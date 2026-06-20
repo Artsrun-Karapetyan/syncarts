@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseCurlCommand } from "./curlParser";
+import { parseCurlCommand } from "@/utils/curlParser";
 
 describe("parseCurlCommand", () => {
   test("returns null for non-curl input", () => {

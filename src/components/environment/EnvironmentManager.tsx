@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import {
-  EnvironmentVariable,
-  useWorkspace,
-} from "../../contexts/WorkspaceContext";
-import { importPostmanEnvironment } from "../../utils/postmanParser";
-import { EnvironmentModalHeader } from "./EnvironmentModalHeader";
-import { EnvironmentSidebar } from "./EnvironmentSidebar";
-import { EnvironmentVariablesTable } from "./EnvironmentVariablesTable";
+import { EnvironmentModalHeader } from "@/components/environment/EnvironmentModalHeader";
+import { EnvironmentSidebar } from "@/components/environment/EnvironmentSidebar";
+import { EnvironmentVariablesTable } from "@/components/environment/EnvironmentVariablesTable";
+import { EnvironmentVariable, useWorkspace } from "@/contexts/WorkspaceContext";
+import { importPostmanEnvironment } from "@/utils/postmanParser";
 
 interface Props {
   isOpen: boolean;

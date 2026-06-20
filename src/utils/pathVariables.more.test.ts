@@ -5,7 +5,7 @@ import {
   extractPathVariableKeys,
   syncPathVariablesWithUrl,
   upsertPathVariable,
-} from "./pathVariables";
+} from "@/utils/pathVariables";
 
 describe("pathVariables extra cases", () => {
   test("ignores query-string colon values and leaves missing values untouched", () => {

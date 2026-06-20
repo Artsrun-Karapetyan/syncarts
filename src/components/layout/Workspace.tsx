@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { CollectionFolderTabs } from "./CollectionFolderTabs";
-import { saveResponseToFile } from "./responseFile";
-import { TabsBar } from "./TabsBar";
-import { WorkspaceEmptyState } from "./workspace/WorkspaceEmptyState";
-import { WorkspaceRequestHeader } from "./workspace/WorkspaceRequestHeader";
-import { WorkspaceRequestPanels } from "./workspace/WorkspaceRequestPanels";
+import { CollectionFolderTabs } from "@/components/layout/CollectionFolderTabs";
+import { saveResponseToFile } from "@/components/layout/responseFile";
+import { TabsBar } from "@/components/layout/TabsBar";
+import { WorkspaceEmptyState } from "@/components/layout/workspace/WorkspaceEmptyState";
+import { WorkspaceRequestHeader } from "@/components/layout/workspace/WorkspaceRequestHeader";
+import { WorkspaceRequestPanels } from "@/components/layout/workspace/WorkspaceRequestPanels";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export function Workspace() {
   const {
@@ -22,6 +22,7 @@ export function Workspace() {
     closeTab,
     setActiveTabId,
     isTabDirty,
+    workspaces,
   } = useWorkspace();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
@@ -177,7 +178,45 @@ export function Workspace() {
       {/* Tabs */}
       <TabsBar onRequestCloseTab={requestCloseTab} />
 
-      {!activeTab ? (
+      {workspaces.length === 0 ? (
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 16,
+            color: "var(--text-secondary)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 24,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+            }}
+          >
+            Welcome to SyncArts
+          </div>
+          <div style={{ fontSize: 14 }}>
+            Create a Local Folder workspace to get started, or sign in to use
+            Cloud Sync.
+          </div>
+          <button
+            className="btn btn-primary"
+            onClick={() =>
+              document
+                .querySelector<HTMLButtonElement>(
+                  '.select-container [role="button"]',
+                )
+                ?.click()
+            }
+          >
+            Create Workspace
+          </button>
+        </div>
+      ) : !activeTab ? (
         <WorkspaceEmptyState onAddTab={(data) => addTab(data)} />
       ) : activeTab.type === "request" ||
         activeTab.type === "example" ||

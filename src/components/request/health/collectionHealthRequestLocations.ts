@@ -2,7 +2,7 @@ import type {
   Collection,
   Folder,
   SavedRequest,
-} from "../../../contexts/WorkspaceContext";
+} from "@/contexts/WorkspaceContext";
 
 export interface HealthRequestLocation {
   folderId: string | null;

@@ -1,9 +1,9 @@
 import { AlertTriangle } from "lucide-react";
 
-import type { Collection } from "../../../contexts/workspace/core/types";
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { DuplicateRequestGroupCard } from "./DuplicateRequestGroupCard";
-import { findRequestDuplicateGroups } from "./requestDuplicateDetector";
+import { DuplicateRequestGroupCard } from "@/components/request/duplicates/DuplicateRequestGroupCard";
+import { findRequestDuplicateGroups } from "@/components/request/duplicates/requestDuplicateDetector";
+import type { Collection } from "@/contexts/workspace/core/types";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface Props {
   collection: Collection;

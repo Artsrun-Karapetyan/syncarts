@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Workspace } from "../core/types";
-import { replaceRealtimeRequest } from "./workspaceRealtimeHelpers";
+import type { Workspace } from "@/contexts/workspace/core/types";
+import { replaceRealtimeRequest } from "@/contexts/workspace/sync/workspaceRealtimeHelpers";
 
 describe("workspace realtime helpers", () => {
   test("replaces an updated request in place", () => {

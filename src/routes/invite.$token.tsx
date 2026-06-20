@@ -1,7 +1,7 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
 
-import { AppShell } from "../components/layout/AppShell";
-import { AcceptInviteContent } from "./-AcceptInviteContent";
+import { AppShell } from "@/components/layout/AppShell";
+import { AcceptInviteContent } from "@/routes/-AcceptInviteContent";
 
 export const Route = createFileRoute("/invite/$token")({
   component: AcceptInviteView,

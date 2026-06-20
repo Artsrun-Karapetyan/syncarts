@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { getCollectionRunStatus } from "./getCollectionRunStatus";
+import { getCollectionRunStatus } from "@/components/request/runs/getCollectionRunStatus";
 
 describe("getCollectionRunStatus", () => {
   test("passes successful responses without failed tests", () => {

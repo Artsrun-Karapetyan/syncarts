@@ -1,17 +1,17 @@
-import "./Notifications.css";
+import "@/components/notifications/Notifications.css";
 
 import { useNavigate } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { hasUnreadNotifications } from "./helpers/notificationHelpers";
-import { useNotificationAction } from "./hooks/useNotificationAction";
-import { useNotifications } from "./hooks/useNotifications";
-import { NotificationsPanel } from "./NotificationsPanel";
+import { hasUnreadNotifications } from "@/components/notifications/helpers/notificationHelpers";
+import { useNotificationAction } from "@/components/notifications/hooks/useNotificationAction";
+import { useNotifications } from "@/components/notifications/hooks/useNotifications";
+import { NotificationsPanel } from "@/components/notifications/NotificationsPanel";
 import type {
   NotificationItem,
   NotificationTab,
-} from "./types/notificationTypes";
+} from "@/components/notifications/types/notificationTypes";
 
 export function NotificationCenter() {
   const navigate = useNavigate();

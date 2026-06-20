@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import { ImportModal } from "../workspace/ImportModal";
+import { ImportModal } from "@/components/workspace/ImportModal";
 
 export function GlobalDropZone({ children }: { children: React.ReactNode }) {
   const [isDragging, setIsDragging] = useState(false);

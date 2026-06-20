@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   getScriptSuggestions,
   type ScriptSuggestion,
-} from "./scriptAutocompleteData";
+} from "@/components/request/scripts/scriptAutocompleteData";
 
 interface ScriptAutocompleteState {
   caretIndex: number;

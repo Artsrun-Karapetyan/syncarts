@@ -4,8 +4,8 @@ import type {
   Collection,
   Folder,
   SavedRequest,
-} from "../../contexts/WorkspaceContext";
-import { stringifyPostmanCollection } from "./postmanExportParser";
+} from "@/contexts/WorkspaceContext";
+import { stringifyPostmanCollection } from "@/utils/postman/postmanExportParser";
 
 function makeCollection(overrides: Partial<Collection>): Collection {
   return {

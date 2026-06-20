@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { fetchWorkspaceWatches, setWorkspaceWatch } from "./watchApi";
-import { buildWatchMap, watchKey } from "./watchHelpers";
-import type { WatchEntityType, WorkspaceWatch } from "./watchTypes";
+import {
+  fetchWorkspaceWatches,
+  setWorkspaceWatch,
+} from "@/components/watch/watchApi";
+import { buildWatchMap, watchKey } from "@/components/watch/watchHelpers";
+import type {
+  WatchEntityType,
+  WorkspaceWatch,
+} from "@/components/watch/watchTypes";
+import { getAuthToken } from "@/lib/auth";
 
 export function useWorkspaceWatches(workspaceId?: string | null) {
   const [watches, setWatches] = useState<WorkspaceWatch[]>([]);
 
   const refresh = useCallback(async () => {
-    if (!workspaceId) {
+    if (!workspaceId || !getAuthToken()) {
       setWatches([]);
       return;
     }

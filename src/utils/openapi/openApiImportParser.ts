@@ -6,11 +6,11 @@ import type {
   QueryParamItem,
   SavedExample,
   SavedRequest,
-} from "../../contexts/WorkspaceContext";
+} from "@/contexts/WorkspaceContext";
 import {
   groupOpenApiRequestsByTag,
   type OpenApiTaggedRequest,
-} from "./groupOpenApiRequestsByTag";
+} from "@/utils/openapi/groupOpenApiRequestsByTag";
 
 const HTTP_METHODS = [
   "get",

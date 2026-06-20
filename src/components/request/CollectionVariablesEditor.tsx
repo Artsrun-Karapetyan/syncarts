@@ -1,10 +1,7 @@
 import { CheckSquare, Plus, Square, Trash2 } from "lucide-react";
 
-import {
-  EnvironmentVariable,
-  useWorkspace,
-} from "../../contexts/WorkspaceContext";
-import { VariableTextInput } from "./variables/VariableTextInput";
+import { VariableTextInput } from "@/components/request/variables/VariableTextInput";
+import { EnvironmentVariable, useWorkspace } from "@/contexts/WorkspaceContext";
 
 export function CollectionVariablesEditor() {
   const { activeTab, collections, updateCollection, updateFolder } =

@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { createPortal } from "react-dom";
 
-import type { HoveredVariable } from "./AuthTokenInput";
+import type { HoveredVariable } from "@/components/request/auth/AuthTokenInput";
 
 interface AuthVariablePopoverProps {
   activeCollectionId?: string;

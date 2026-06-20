@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test";
 
-import { countMatches, getNextMatchIndex } from "./responseBodyToolbarHelpers";
+import {
+  countMatches,
+  getNextMatchIndex,
+} from "@/components/response/body/responseBodyToolbarHelpers";
 
 describe("responseBodyToolbarHelpers more cases", () => {
   it("trims the query before matching", () => {

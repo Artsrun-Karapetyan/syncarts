@@ -1,8 +1,8 @@
 import { GitPullRequest } from "lucide-react";
 
-import { MergeRequestChanges } from "./MergeRequestChanges";
-import { formatMergeRequestCreatedAt } from "./mergeRequestDate";
-import { MergeRequestStatusBadge } from "./MergeRequestStatusBadge";
+import { MergeRequestChanges } from "@/components/workspace/merge-requests/MergeRequestChanges";
+import { formatMergeRequestCreatedAt } from "@/components/workspace/merge-requests/mergeRequestDate";
+import { MergeRequestStatusBadge } from "@/components/workspace/merge-requests/MergeRequestStatusBadge";
 
 interface MergeRequestDetailsProps {
   canDelete: boolean;

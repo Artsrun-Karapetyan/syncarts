@@ -2,10 +2,10 @@ import type {
   Collection,
   Environment,
   EnvironmentVariable,
-} from "../contexts/WorkspaceContext";
-import { parseOpenApiCollection } from "./openapi/openApiImportParser";
-import { stringifyPostmanCollection } from "./postman/postmanExportParser";
-import { parsePostmanCollection } from "./postman/postmanImportParser";
+} from "@/contexts/WorkspaceContext";
+import { parseOpenApiCollection } from "@/utils/openapi/openApiImportParser";
+import { stringifyPostmanCollection } from "@/utils/postman/postmanExportParser";
+import { parsePostmanCollection } from "@/utils/postman/postmanImportParser";
 
 export function importPostmanCollection(
   jsonString: string,
