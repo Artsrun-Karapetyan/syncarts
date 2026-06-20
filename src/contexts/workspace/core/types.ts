@@ -172,6 +172,7 @@ export interface EnvironmentVariable {
   key: string;
   value: string;
   enabled: boolean;
+  type?: "default" | "secret";
   createdAt?: string;
   updatedAt?: string;
   version?: number;
@@ -266,6 +267,8 @@ export interface WorkspaceContextState
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   deleteEnvironment: (id: string) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
+  secrets: Record<string, string>;
+  updateSecret: (varId: string, value: string) => void;
   reloadWorkspaces: () => Promise<void>;
   tabs: TabData[];
   activeTabId: string | null;

@@ -38,6 +38,7 @@ export async function runWorkspaceRequest(args: {
   globalVariables: EnvironmentVariable[];
   requestTab: TabData;
   responseCache: Record<string, HttpResponse>;
+  secrets: Record<string, string>;
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   updateFolder: (collectionId: string, folderId: string, data: any) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
@@ -101,6 +102,7 @@ export async function runWorkspaceRequest(args: {
     globalVariables: args.globalVariables,
     requestTab: requestDraft,
     responseCache: args.responseCache,
+    secrets: args.secrets,
   });
 
   sy.response = createScriptResponse(response);
@@ -138,6 +140,7 @@ async function sendInterpolatedRequest(args: {
   globalVariables: EnvironmentVariable[];
   requestTab: TabData;
   responseCache: Record<string, HttpResponse>;
+  secrets: Record<string, string>;
 }) {
   const interpolate = (text: string) =>
     interpolateVariables({
@@ -146,6 +149,7 @@ async function sendInterpolatedRequest(args: {
       collections: args.collections,
       globalVariables: args.globalVariables,
       responseCache: args.responseCache,
+      secrets: args.secrets,
       text,
     });
   const headerMap: Record<string, string> = {};

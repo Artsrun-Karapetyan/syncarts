@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-import { api } from "../../../lib/api";
+import {
+  getWorkspaceSecrets,
+  setWorkspaceSecrets,
+} from "../../../lib/secretsVault";
 import { useCollectionActions } from "../collections/useCollectionActions";
 import { useCollectionMoveActions } from "../collections/useCollectionMoveActions";
 import { useExampleActions } from "../collections/useExampleActions";
@@ -29,6 +32,7 @@ import type {
   WorkspaceContextState,
 } from "./types";
 import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
+import { useWorkspaceCrudActions } from "./useWorkspaceCrudActions";
 
 export function useWorkspaceController(userId: string): WorkspaceContextState {
   const localDefaultWorkspaceId = `local-${userId}`;
@@ -65,6 +69,25 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
   >({});
   const updateResponseCache = (id: string, response: HttpResponse) => {
     setResponseCache((prev) => ({ ...prev, [id]: response }));
+  };
+
+  const [secrets, setSecrets] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!activeWorkspaceId) return;
+    getWorkspaceSecrets(activeWorkspaceId).then((data) => {
+      setSecrets(data);
+    });
+  }, [activeWorkspaceId]);
+
+  const updateSecret = (varId: string, value: string) => {
+    setSecrets((prev) => {
+      const next = { ...prev, [varId]: value };
+      setWorkspaceSecrets(activeWorkspaceId, next).catch((err) => {
+        console.error("Failed to persist workspace secrets", err);
+      });
+      return next;
+    });
   };
 
   const storageHydrated =
@@ -233,6 +256,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     updateGlobalVariables: environmentActions.updateGlobalVariables,
     updateResponseCache,
     responseCache,
+    secrets,
   });
 
   const { reloadWorkspaces } = useWorkspaceSync({
@@ -248,88 +272,22 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     workspaces,
   });
 
-  const createWorkspace = (
-    name: string,
-    collections: any[] = [],
-    environments: any[] = [],
-  ) => {
-    const newWsId = crypto.randomUUID();
-    dirtyWorkspaceIdsRef.current.add(newWsId);
-    setWorkspaces((prev) => [
-      ...prev,
-      { id: newWsId, name, collections, environments },
-    ]);
-    setTabsByWorkspace((prev) => ({ ...prev, [newWsId]: [] }));
-    setActiveTabIdByWorkspace((prev) => ({ ...prev, [newWsId]: null }));
-    setActiveEnvIdByWorkspace((prev) => ({ ...prev, [newWsId]: null }));
-    setActiveWorkspaceId(newWsId);
-    return newWsId;
-  };
-
-  const switchWorkspace = (id: string) => {
-    setActiveWorkspaceId(id);
-  };
-
-  const renameWorkspace = (id: string, newName: string) => {
-    if (id === localDefaultWorkspaceId) {
-      throw new Error("Cannot rename your default workspace.");
-    }
-    dirtyWorkspaceIdsRef.current.add(id);
-    setWorkspaces((prev) =>
-      prev.map((w) => (w.id === id ? { ...w, name: newName } : w)),
-    );
-  };
-
-  const removeWorkspace = async (id: string) => {
-    if (id === localDefaultWorkspaceId) {
-      throw new Error("Cannot delete your default workspace.");
-    }
-    const nextWorkspaceId =
-      workspaces.find((workspace) => workspace.id !== id)?.id ||
-      localDefaultWorkspaceId;
-    deletedWorkspaceIdsRef.current.add(id);
-    dirtyWorkspaceIdsRef.current.delete(id);
-    syncingWorkspaceIdsRef.current.delete(id);
-    delete lastSyncedSignaturesRef.current[id];
-
-    try {
-      await api.delete(`/workspaces/${id}`).catch((err) => {
-        if (err.response?.status !== 404) throw err;
-      });
-    } catch (err) {
-      console.error("[SYNC] DELETE failed:", err);
-      deletedWorkspaceIdsRef.current.delete(id);
-      throw err;
-    }
-
-    setWorkspaces((prev) => {
-      const next = prev.filter((workspace) => workspace.id !== id);
-      if (next.length > 0) return next;
-      return [
-        {
-          id: localDefaultWorkspaceId,
-          name: "My Workspace",
-          ownerId: userId,
-          collections: [],
-          environments: [],
-        },
-      ];
+  const { createWorkspace, switchWorkspace, renameWorkspace, removeWorkspace } =
+    useWorkspaceCrudActions({
+      activeWorkspaceId,
+      deletedWorkspaceIdsRef,
+      dirtyWorkspaceIdsRef,
+      lastSyncedSignaturesRef,
+      localDefaultWorkspaceId,
+      setActiveEnvIdByWorkspace,
+      setActiveTabIdByWorkspace,
+      setActiveWorkspaceId,
+      setTabsByWorkspace,
+      setWorkspaces,
+      syncingWorkspaceIdsRef,
+      userId,
+      workspaces,
     });
-    setTabsByWorkspace((prev) => {
-      const { [id]: _removedTabs, ...rest } = prev;
-      return rest;
-    });
-    setActiveTabIdByWorkspace((prev) => {
-      const { [id]: _removedActiveTab, ...rest } = prev;
-      return rest;
-    });
-    setActiveEnvIdByWorkspace((prev) => {
-      const { [id]: _removedActiveEnv, ...rest } = prev;
-      return rest;
-    });
-
-    if (activeWorkspaceId === id) setActiveWorkspaceId(nextWorkspaceId);
-  };
 
   const createBlankRequestInFolder = (
     collectionId: string,
@@ -379,6 +337,8 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     activeEnvironmentId,
     activeEnvironment,
     globalVariables,
+    secrets,
+    updateSecret,
     ...environmentActions,
     reloadWorkspaces,
     ...tabActions,

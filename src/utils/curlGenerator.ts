@@ -15,6 +15,7 @@ interface CurlGeneratorArgs {
   collections: Collection[];
   globalVariables: EnvironmentVariable[];
   request: TabData;
+  secrets?: Record<string, string>;
 }
 
 export function generateCurlCommand(args: CurlGeneratorArgs) {
@@ -25,6 +26,7 @@ export function generateCurlCommand(args: CurlGeneratorArgs) {
       activeTab: request,
       collections,
       globalVariables,
+      secrets: args.secrets,
       text,
     });
 

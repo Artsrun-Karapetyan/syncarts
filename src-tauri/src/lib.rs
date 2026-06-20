@@ -32,6 +32,9 @@ pub fn run() {
             commands::app_update::install_app_update::install_app_update,
             commands::make_request::make_request,
             commands::save_response_body::save_response_body,
+            commands::secrets::get_secret,
+            commands::secrets::set_secret,
+            commands::secrets::delete_secret,
             show_main_window
         ])
         .on_page_load({

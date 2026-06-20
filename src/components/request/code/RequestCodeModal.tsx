@@ -11,8 +11,13 @@ interface RequestCodeModalProps {
 }
 
 export function RequestCodeModal({ onClose }: RequestCodeModalProps) {
-  const { activeEnvironment, activeTab, collections, globalVariables } =
-    useWorkspace();
+  const {
+    activeEnvironment,
+    activeTab,
+    collections,
+    globalVariables,
+    secrets,
+  } = useWorkspace();
   const [copied, setCopied] = useState(false);
   const curlCommand = useMemo(() => {
     if (!activeTab) return "";
@@ -20,9 +25,10 @@ export function RequestCodeModal({ onClose }: RequestCodeModalProps) {
       activeEnvironment,
       collections,
       globalVariables,
+      secrets,
       request: activeTab,
     });
-  }, [activeEnvironment, activeTab, collections, globalVariables]);
+  }, [activeEnvironment, activeTab, collections, globalVariables, secrets]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

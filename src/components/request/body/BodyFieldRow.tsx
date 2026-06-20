@@ -123,7 +123,7 @@ export function BodyFieldRow(props: BodyFieldRowProps) {
           className="input"
           style={{
             ...inputStyle,
-            paddingRight: props.bodyType === "form-data" ? 60 : undefined,
+            paddingRight: props.bodyType === "form-data" ? 80 : undefined,
           }}
           placeholder="Key"
           value={props.item.key}
@@ -137,6 +137,8 @@ export function BodyFieldRow(props: BodyFieldRowProps) {
             style={{
               position: "absolute",
               right: 4,
+              top: "50%",
+              transform: "translateY(-50%)",
               zIndex: 5,
               display: "flex",
               alignItems: "center",

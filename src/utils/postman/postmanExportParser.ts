@@ -28,7 +28,7 @@ export function stringifyPostmanCollection(collection: Collection): string {
   if (collection.variables && collection.variables.length > 0) {
     postmanFormat.variable = collection.variables.map((variable) => ({
       key: variable.key,
-      value: variable.value,
+      value: variable.type === "secret" ? "" : variable.value,
       type: "string",
       disabled: !variable.enabled,
     }));
@@ -50,7 +50,7 @@ function exportItem(item: Folder | SavedRequest): any {
     if (item.variables && item.variables.length > 0) {
       folderExport.variable = item.variables.map((variable) => ({
         key: variable.key,
-        value: variable.value,
+        value: variable.type === "secret" ? "" : variable.value,
         type: "string",
         disabled: !variable.enabled,
       }));

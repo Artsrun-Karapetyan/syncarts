@@ -26,6 +26,7 @@ interface RequestSenderArgs {
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
   responseCache: Record<string, HttpResponse>;
   updateResponseCache: (id: string, response: HttpResponse) => void;
+  secrets: Record<string, string>;
 }
 
 export function useRequestSender(args: RequestSenderArgs) {
@@ -43,6 +44,7 @@ export function useRequestSender(args: RequestSenderArgs) {
     updateGlobalVariables,
     responseCache,
     updateResponseCache,
+    secrets,
   } = args;
 
   const [isMutating, setIsMutating] = useState(false);
@@ -67,6 +69,7 @@ export function useRequestSender(args: RequestSenderArgs) {
         globalVariables,
         requestTab: activeTab,
         responseCache,
+        secrets,
         updateEnvironment,
         updateFolder,
         updateGlobalVariables,

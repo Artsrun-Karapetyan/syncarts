@@ -102,6 +102,7 @@ export function interpolateVariables(args: {
   collections: Collection[];
   globalVariables: EnvironmentVariable[];
   responseCache?: Record<string, any>;
+  secrets?: Record<string, string>;
   text: string;
 }) {
   const {
@@ -110,6 +111,7 @@ export function interpolateVariables(args: {
     collections,
     globalVariables,
     responseCache,
+    secrets,
     text,
   } = args;
   if (!text) return text;
@@ -152,7 +154,9 @@ export function interpolateVariables(args: {
       if (v) {
         const nextSkip = new Set(skipSources);
         nextSkip.add(scope.source);
-        return interpolateString(v.value, nextSkip);
+        const resolvedValue =
+          v.type === "secret" && secrets ? secrets[v.id] || "" : v.value;
+        return interpolateString(resolvedValue, nextSkip);
       }
     }
     return null;

@@ -51,14 +51,20 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
   const [newValue, setNewValue] = useState(hoveredVar.value || "");
   const handleSave = () => onSave(hoveredVar.name, newValue);
 
-  const { activeEnvironment, activeTab, collections, globalVariables } =
-    useWorkspace();
+  const {
+    activeEnvironment,
+    activeTab,
+    collections,
+    globalVariables,
+    secrets,
+  } = useWorkspace();
   const resolvedValue = hoveredVar.value
     ? interpolateVariables({
         activeEnvironment,
         activeTab,
         collections,
         globalVariables,
+        secrets,
         text: hoveredVar.value,
       })
     : "";

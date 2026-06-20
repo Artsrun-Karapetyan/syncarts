@@ -42,7 +42,7 @@ export function EnvironmentVariablesTable({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "40px 1fr 1fr 40px",
+          gridTemplateColumns: "40px 1fr 1fr 100px 40px",
           gap: 0,
           alignItems: "center",
           background: "var(--bg-tertiary)",
@@ -54,6 +54,7 @@ export function EnvironmentVariablesTable({
         <EnvironmentHeaderCell />
         <EnvironmentHeaderCell border>Variable</EnvironmentHeaderCell>
         <EnvironmentHeaderCell border>Initial Value</EnvironmentHeaderCell>
+        <EnvironmentHeaderCell border>Type</EnvironmentHeaderCell>
         <EnvironmentHeaderCell border />
       </div>
       {isGlobals &&

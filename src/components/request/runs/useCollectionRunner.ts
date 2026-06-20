@@ -19,6 +19,7 @@ export function useCollectionRunner() {
     updateFolder,
     updateGlobalVariables,
     updateResponseCache,
+    secrets,
   } = useWorkspace();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -60,6 +61,7 @@ export function useCollectionRunner() {
             globalVariables,
             requestTab: item.tab,
             responseCache: responseCacheDraft,
+            secrets,
             updateEnvironment,
             updateFolder,
             updateGlobalVariables,
