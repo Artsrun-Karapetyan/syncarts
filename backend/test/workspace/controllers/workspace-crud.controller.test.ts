@@ -1,6 +1,7 @@
 import "reflect-metadata";
 
 import { describe, expect, mock, test } from "bun:test";
+import { lastValueFrom, of } from "rxjs";
 
 import { WorkspaceController } from "../../../src/workspace/workspace.controller.js";
 import type { WorkspaceService } from "../../../src/workspace/workspace.service.js";
@@ -124,5 +125,72 @@ describe("WorkspaceController CRUD and Sync", () => {
 
     expect(mockService.syncWorkspace).toHaveBeenCalledWith("1", body, "user-1");
     expect(result).toEqual({ synced: true } as any);
+  });
+
+  test("getRequest delegates to workspaceRequestService.getRequestForUser", async () => {
+    const mockService = {} as any;
+    const requestServiceMock = {
+      getRequestForUser: mock(async () => ({ id: "req-1" })),
+    } as any;
+    const controller = new WorkspaceController(
+      mockService,
+      requestServiceMock,
+      {} as any,
+    );
+
+    const result = await controller.getRequest(req, "ws-1", "req-1");
+    expect(requestServiceMock.getRequestForUser).toHaveBeenCalledWith(
+      "ws-1",
+      "req-1",
+      "user-1",
+    );
+    expect(result).toEqual({ id: "req-1" } as any);
+  });
+
+  test("updateRequest delegates to workspaceRequestService.updateRequestForUser", async () => {
+    const mockService = {} as any;
+    const requestServiceMock = {
+      updateRequestForUser: mock(async () => ({ id: "req-1", version: 2 })),
+    } as any;
+    const controller = new WorkspaceController(
+      mockService,
+      requestServiceMock,
+      {} as any,
+    );
+
+    const body = { collectionId: "c-1", version: 1 };
+    const result = await controller.updateRequest(req, "ws-1", "req-1", body);
+
+    expect(requestServiceMock.updateRequestForUser).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      requestId: "req-1",
+      userId: "user-1",
+      data: body,
+    });
+    expect(result).toEqual({ id: "req-1", version: 2 } as any);
+  });
+
+  test("events returns an observable that verifies access and streams", async () => {
+    const mockService = {
+      ensureWorkspaceAccess: mock(async () => true),
+    } as any;
+    const realtimeService = {
+      stream: mock(() => of({ data: "event" })),
+    } as any;
+    const controller = new WorkspaceController(
+      mockService,
+      {} as any,
+      realtimeService,
+    );
+
+    const obs$ = controller.events(req, "ws-1");
+    const result = await lastValueFrom(obs$);
+
+    expect(mockService.ensureWorkspaceAccess).toHaveBeenCalledWith(
+      "ws-1",
+      "user-1",
+    );
+    expect(realtimeService.stream).toHaveBeenCalledWith("ws-1");
+    expect(result).toEqual({ data: "event" } as any);
   });
 });

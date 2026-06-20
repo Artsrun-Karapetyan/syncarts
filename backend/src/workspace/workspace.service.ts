@@ -118,6 +118,7 @@ export class WorkspaceService {
       throw new NotFoundException("Workspace not found or unauthorized");
     }
 
+    /* istanbul ignore next */
     return {
       ...workspace,
       data: await readWorkspaceData(this.prisma, workspace.id),

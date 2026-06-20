@@ -64,4 +64,20 @@ describe("MergeRequestController CRUD", () => {
     );
     expect(result).toEqual({ id: "mr-1" } as any);
   });
+  test("remove delegates to mrService.deleteMergeRequest", async () => {
+    const mockService = {
+      deleteMergeRequest: mock(async (_id: string, _userId: string) => ({
+        id: "mr-1",
+      })),
+    } as unknown as MergeRequestService;
+
+    const controller = new MergeRequestController(mockService);
+    const result = await controller.remove(req, "mr-1");
+
+    expect(mockService.deleteMergeRequest).toHaveBeenCalledWith(
+      "mr-1",
+      "user-1",
+    );
+    expect(result).toEqual({ id: "mr-1" } as any);
+  });
 });
