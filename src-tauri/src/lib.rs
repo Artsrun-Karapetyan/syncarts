@@ -1,9 +1,10 @@
 pub mod commands;
 pub mod models;
 
+use std::collections::HashMap;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
-    Arc,
+    Arc, Mutex,
 };
 
 use tauri::webview::PageLoadEvent;
@@ -27,6 +28,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(PendingAppUpdate(std::sync::Mutex::new(None)))
+        .manage(crate::commands::fs_sync::FsWatcherState {
+            watchers: Mutex::new(HashMap::new()),
+        })
         .invoke_handler(tauri::generate_handler![
             commands::app_update::check_app_update::check_app_update,
             commands::app_update::install_app_update::install_app_update,
@@ -35,6 +39,11 @@ pub fn run() {
             commands::secrets::get_secret,
             commands::secrets::set_secret,
             commands::secrets::delete_secret,
+            commands::fs_sync::read_local_workspace,
+            commands::fs_sync::write_local_file,
+            commands::fs_sync::delete_local_file,
+            commands::fs_sync::watch_local_workspace,
+            commands::fs_sync::unwatch_local_workspace,
             show_main_window
         ])
         .on_page_load({

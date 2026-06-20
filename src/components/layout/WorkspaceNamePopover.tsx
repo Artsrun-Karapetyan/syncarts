@@ -45,6 +45,10 @@ interface WorkspaceNamePopoverProps {
   onCancel: () => void;
   onSubmit: () => void;
   onValueChange: (value: string) => void;
+  workspaceType?: "cloud" | "local";
+  onWorkspaceTypeChange?: (type: "cloud" | "local") => void;
+  localPath?: string;
+  onSelectLocalPath?: () => void;
 }
 
 export function WorkspaceNamePopover(props: WorkspaceNamePopoverProps) {
@@ -58,6 +62,10 @@ export function WorkspaceNamePopover(props: WorkspaceNamePopoverProps) {
     onCancel,
     onSubmit,
     onValueChange,
+    workspaceType,
+    onWorkspaceTypeChange,
+    localPath,
+    onSelectLocalPath,
   } = props;
 
   return createPortal(
@@ -85,6 +93,76 @@ export function WorkspaceNamePopover(props: WorkspaceNamePopoverProps) {
           if (e.key === "Escape") onCancel();
         }}
       />
+      {workspaceType && onWorkspaceTypeChange && (
+        <div
+          style={{ display: "flex", gap: 12, marginTop: 4, marginBottom: 4 }}
+        >
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 11,
+              color: "var(--text-secondary)",
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="radio"
+              checked={workspaceType === "cloud"}
+              onChange={() => onWorkspaceTypeChange("cloud")}
+            />
+            Team Sync (Cloud)
+          </label>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 11,
+              color: "var(--text-secondary)",
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="radio"
+              checked={workspaceType === "local"}
+              onChange={() => onWorkspaceTypeChange("local")}
+            />
+            Local Folder
+          </label>
+        </div>
+      )}
+      {workspaceType === "local" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            type="button"
+            className="btn"
+            style={{ fontSize: 11, padding: "4px 8px" }}
+            onClick={async () => {
+              try {
+                if (onSelectLocalPath) await onSelectLocalPath();
+              } catch (err) {
+                console.error("Failed to select folder:", err);
+              }
+            }}
+          >
+            {localPath ? "Change Folder" : "Select Folder"}
+          </button>
+          <div
+            style={{
+              fontSize: 10,
+              color: "var(--text-tertiary)",
+              flex: 1,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {localPath || "No folder selected"}
+          </div>
+        </div>
+      )}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
         <button className="btn" style={popoverButtonStyle} onClick={onCancel}>
           Cancel

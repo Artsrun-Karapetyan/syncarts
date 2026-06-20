@@ -43,6 +43,10 @@ export function WorkspaceSwitcher({
   const user = useStoredUser();
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
+  const [newWorkspaceType, setNewWorkspaceType] = useState<"cloud" | "local">(
+    "cloud",
+  );
+  const [newWorkspacePath, setNewWorkspacePath] = useState<string>("");
   const [isRenamingWorkspace, setIsRenamingWorkspace] = useState(false);
   const [renameWorkspaceName, setRenameWorkspaceName] = useState("");
   const [isDeleteWorkspaceOpen, setIsDeleteWorkspaceOpen] = useState(false);
@@ -59,9 +63,20 @@ export function WorkspaceSwitcher({
   );
   const isActiveMemberWorkspace = isMemberWorkspace(activeWorkspace, user?.id);
   const submitCreateWorkspace = () => {
-    if (newWorkspaceName.trim()) createWorkspace(newWorkspaceName.trim());
+    if (newWorkspaceType === "local" && !newWorkspacePath) return; // Wait for folder selection
+    if (newWorkspaceName.trim() || newWorkspaceType === "local") {
+      createWorkspace(
+        newWorkspaceName.trim(),
+        undefined,
+        undefined,
+        newWorkspaceType,
+        newWorkspacePath,
+      );
+    }
     setIsCreatingWorkspace(false);
     setNewWorkspaceName("");
+    setNewWorkspacePath("");
+    setNewWorkspaceType("cloud");
   };
   const submitRenameWorkspace = () => {
     if (activeWorkspace && renameWorkspaceName.trim()) {
@@ -167,6 +182,8 @@ export function WorkspaceSwitcher({
               setIsCreatingWorkspace(true);
               setIsRenamingWorkspace(false);
               setNewWorkspaceName("");
+              setNewWorkspacePath("");
+              setNewWorkspaceType("cloud");
             } else {
               switchWorkspace(val);
             }
@@ -244,6 +261,21 @@ export function WorkspaceSwitcher({
           }}
           onSubmit={submitCreateWorkspace}
           onValueChange={setNewWorkspaceName}
+          workspaceType={newWorkspaceType}
+          onWorkspaceTypeChange={setNewWorkspaceType}
+          localPath={newWorkspacePath}
+          onSelectLocalPath={async () => {
+            const { open } = await import("@tauri-apps/plugin-dialog");
+            const selected = await open({ directory: true, multiple: false });
+            if (selected && !Array.isArray(selected)) {
+              setNewWorkspacePath(selected as string);
+              // We could try to auto-name it based on folder name if name is empty
+              if (!newWorkspaceName) {
+                const parts = (selected as string).split(/[\\/]/);
+                setNewWorkspaceName(parts[parts.length - 1]);
+              }
+            }
+          }}
         />
       )}
 

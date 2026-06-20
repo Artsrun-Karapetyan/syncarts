@@ -190,6 +190,8 @@ export interface Environment {
 export interface Workspace {
   id: string;
   name: string;
+  type?: "cloud" | "local";
+  path?: string;
   ownerId?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -251,6 +253,8 @@ export interface WorkspaceContextState
     name: string,
     collections?: any[],
     environments?: any[],
+    type?: "cloud" | "local",
+    path?: string,
   ) => string;
   switchWorkspace: (id: string) => void;
   renameWorkspace: (id: string, newName: string) => void;

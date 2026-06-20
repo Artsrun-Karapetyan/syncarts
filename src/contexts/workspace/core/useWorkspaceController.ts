@@ -22,6 +22,7 @@ import {
   getWorkspaceSyncPayload,
 } from "../sync/syncHelpers";
 import { useLegacyWorkspaceMigration } from "../sync/useLegacyWorkspaceMigration";
+import { useLocalWorkspaceSync } from "../sync/useLocalWorkspaceSync";
 import { useWorkspaceSync } from "../sync/useWorkspaceSync";
 import { useTabActions } from "../tabs/useTabActions";
 import type {
@@ -269,6 +270,15 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     storageHydrated,
     syncingWorkspaceIdsRef,
     userId,
+    workspaces,
+  });
+
+  useLocalWorkspaceSync({
+    activeWorkspaceId,
+    deletedWorkspaceIdsRef,
+    dirtyWorkspaceIdsRef,
+    setWorkspaces,
+    storageHydrated,
     workspaces,
   });
 

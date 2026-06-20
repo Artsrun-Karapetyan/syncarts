@@ -44,12 +44,14 @@ export function useWorkspaceCrudActions(args: UseWorkspaceCrudActionsArgs) {
     name: string,
     collections: any[] = [],
     environments: any[] = [],
+    type?: "cloud" | "local",
+    path?: string,
   ) => {
     const newWsId = crypto.randomUUID();
     dirtyWorkspaceIdsRef.current.add(newWsId);
     setWorkspaces((prev) => [
       ...prev,
-      { id: newWsId, name, collections, environments },
+      { id: newWsId, name, collections, environments, type, path },
     ]);
     setTabsByWorkspace((prev) => ({ ...prev, [newWsId]: [] }));
     setActiveTabIdByWorkspace((prev) => ({ ...prev, [newWsId]: null }));
