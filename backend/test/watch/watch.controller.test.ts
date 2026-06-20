@@ -6,7 +6,7 @@ import { WatchController } from "../../src/watch/watch.controller.js";
 import type { WatchService } from "../../src/watch/watch.service.js";
 
 describe("WatchController", () => {
-  const req = { authUser: { id: "user-1" } };
+  const req = { authUser: { id: "user-1" } } as any;
 
   test("list delegates with workspace id", async () => {
     const service = {
@@ -16,7 +16,7 @@ describe("WatchController", () => {
 
     await expect(
       controller.list(req as any, { workspaceId: "ws" }),
-    ).resolves.toEqual([{ id: "watch-1" }]);
+    ).resolves.toEqual([{ id: "watch-1" }] as any);
     expect(service.listWatches).toHaveBeenCalledWith("user-1", "ws");
   });
 
@@ -34,7 +34,7 @@ describe("WatchController", () => {
 
     await expect(controller.set(req as any, body)).resolves.toEqual({
       enabled: true,
-    });
+    } as any);
     expect(service.setWatch).toHaveBeenCalledWith(
       "user-1",
       {

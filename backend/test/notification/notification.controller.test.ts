@@ -6,7 +6,7 @@ import { NotificationController } from "../../src/notification/notification.cont
 import type { NotificationService } from "../../src/notification/notification.service.js";
 
 describe("NotificationController", () => {
-  const req = { authUser: { id: "user-1" } };
+  const req = { authUser: { id: "user-1" } } as any;
   const realtime = { stream: () => ({}) } as any;
 
   test("list delegates with parsed query", async () => {
@@ -15,9 +15,11 @@ describe("NotificationController", () => {
     } as unknown as NotificationService;
     const controller = new NotificationController(service, realtime);
 
-    await expect(
-      controller.list(req as any, { tab: "direct", take: "10" }),
-    ).resolves.toEqual([{ id: "n-1" }]);
+    const result = await controller.list(req as any, {
+      tab: "direct",
+      take: "10",
+    });
+    expect(result).toEqual([{ id: "n-1" }] as any);
     expect(service.listNotifications).toHaveBeenCalledWith(
       "user-1",
       "direct",

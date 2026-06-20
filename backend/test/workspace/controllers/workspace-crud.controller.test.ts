@@ -6,7 +6,7 @@ import { WorkspaceController } from "../../../src/workspace/workspace.controller
 import type { WorkspaceService } from "../../../src/workspace/workspace.service.js";
 
 describe("WorkspaceController CRUD and Sync", () => {
-  const req = { authUser: { id: "user-1" } };
+  const req = { authUser: { id: "user-1" } } as any;
   const requestService = {} as any;
 
   test("create delegates to workspaceService.createWorkspace", async () => {
@@ -18,7 +18,11 @@ describe("WorkspaceController CRUD and Sync", () => {
       })),
     } as unknown as WorkspaceService;
 
-    const controller = new WorkspaceController(mockService, requestService);
+    const controller = new WorkspaceController(
+      mockService,
+      requestService,
+      {} as any,
+    );
     const result = await controller.create(req, { name: "My Workspace" });
 
     expect(mockService.createWorkspace).toHaveBeenCalledWith(
@@ -37,7 +41,11 @@ describe("WorkspaceController CRUD and Sync", () => {
       getWorkspacesForUser: mock(async (_userId: string) => [{ id: "1" }]),
     } as unknown as WorkspaceService;
 
-    const controller = new WorkspaceController(mockService, requestService);
+    const controller = new WorkspaceController(
+      mockService,
+      requestService,
+      {} as any,
+    );
     const result = await controller.findAll(req);
 
     expect(mockService.getWorkspacesForUser).toHaveBeenCalledWith("user-1");
@@ -51,7 +59,11 @@ describe("WorkspaceController CRUD and Sync", () => {
       })),
     } as unknown as WorkspaceService;
 
-    const controller = new WorkspaceController(mockService, requestService);
+    const controller = new WorkspaceController(
+      mockService,
+      requestService,
+      {} as any,
+    );
     const result = await controller.findOne(req, "2");
 
     expect(mockService.getWorkspaceForUser).toHaveBeenCalledWith("2", "user-1");
@@ -65,7 +77,11 @@ describe("WorkspaceController CRUD and Sync", () => {
       }),
     } as unknown as WorkspaceService;
 
-    const controller = new WorkspaceController(mockService, requestService);
+    const controller = new WorkspaceController(
+      mockService,
+      requestService,
+      {} as any,
+    );
 
     expect(controller.findOne(req, "3")).rejects.toThrow(
       "Workspace not found or unauthorized",
@@ -80,7 +96,11 @@ describe("WorkspaceController CRUD and Sync", () => {
       })),
     } as unknown as WorkspaceService;
 
-    const controller = new WorkspaceController(mockService, requestService);
+    const controller = new WorkspaceController(
+      mockService,
+      requestService,
+      {} as any,
+    );
     const result = await controller.delete(req, "1");
 
     expect(mockService.deleteWorkspace).toHaveBeenCalledWith("1", "user-1");
@@ -94,7 +114,11 @@ describe("WorkspaceController CRUD and Sync", () => {
       })),
     } as unknown as WorkspaceService;
 
-    const controller = new WorkspaceController(mockService, requestService);
+    const controller = new WorkspaceController(
+      mockService,
+      requestService,
+      {} as any,
+    );
     const body = { data: "test" };
     const result = await controller.syncData(req, "1", body);
 
