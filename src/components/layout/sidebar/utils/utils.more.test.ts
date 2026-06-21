@@ -199,9 +199,10 @@ describe("sidebar utils more cases", () => {
               {
                 id: "e-1",
                 name: "Example 1",
-                request: null as any,
-                response: null as any,
-              },
+                originalRequest: {
+                  url: "https://example.com/api/test?user=123",
+                },
+              } as any,
             ],
           },
         ],

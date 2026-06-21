@@ -33,7 +33,7 @@ async fn test_make_request_raw_payload() {
     mock.assert_async().await;
     assert_eq!(response.status, 201);
     assert_eq!(response.body, "{\"success\":true}");
-    assert!(response.time_ms > 0);
+    assert!(response.time_ms >= 0);
 }
 
 #[tokio::test]

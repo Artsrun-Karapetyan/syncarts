@@ -110,4 +110,14 @@ describe("parseCurlCommand extra cases", () => {
     expect(parsed?.formData?.[0].type).toBe("file");
     expect(parsed?.formData?.[0].files).toEqual(["test.txt"]);
   });
+
+  test("handles unclosed quotes without crashing", () => {
+    const result = parseCurlCommand("curl 'https://example.com/unclosed");
+    expect(result?.url).toBe("https://example.com/unclosed");
+  });
+
+  test("handles unclosed double quotes with escapes", () => {
+    const result = parseCurlCommand("curl \"https://example.com/escaped\\\"unclosed");
+    expect(result?.url).toBe("https://example.com/escaped\"unclosed");
+  });
 });

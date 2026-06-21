@@ -39,8 +39,5 @@ export function createTab(
     response: null,
     ...data,
   };
-  if (!newTab.savedRequestId && data?.id && data.id !== newTab.id) {
-    newTab.savedRequestId = data.id;
-  }
   return newTab;
 }
