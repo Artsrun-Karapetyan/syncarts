@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { parsePostmanPathVariables, buildPostmanPathVariables } from "./postmanPathVariables";
+
+import {
+  buildPostmanPathVariables,
+  parsePostmanPathVariables,
+} from "./postmanPathVariables";
 
 describe("postmanPathVariables extra cases", () => {
   test("parsePostmanPathVariables handles missing url variable array", () => {

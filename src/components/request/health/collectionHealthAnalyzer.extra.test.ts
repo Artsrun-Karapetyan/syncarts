@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { analyzeCollectionHealth } from "./collectionHealthAnalyzer";
 
 describe("collectionHealthAnalyzer extra cases", () => {
@@ -22,14 +23,16 @@ describe("collectionHealthAnalyzer extra cases", () => {
               url: "https://api.com/{{myVar}}",
               headers: [],
               body: "",
-              description: "test"
-            } as any
-          ]
-        }
-      ]
+              description: "test",
+            } as any,
+          ],
+        },
+      ],
     } as any);
 
-    expect(report.issues.find(i => i.code === "no-tests")).toBeUndefined();
-    expect(report.issues.find(i => i.code === "missing-variable")).toBeUndefined();
+    expect(report.issues.find((i) => i.code === "no-tests")).toBeUndefined();
+    expect(
+      report.issues.find((i) => i.code === "missing-variable"),
+    ).toBeUndefined();
   });
 });

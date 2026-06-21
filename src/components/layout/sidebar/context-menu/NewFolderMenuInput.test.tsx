@@ -1,7 +1,7 @@
-import { describe, expect, test, mock } from "bun:test";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, mock, test } from "bun:test";
+
 import { NewFolderMenuInput } from "./NewFolderMenuInput";
-import React from "react";
 
 describe("NewFolderMenuInput", () => {
   const defaultProps = {
@@ -19,7 +19,12 @@ describe("NewFolderMenuInput", () => {
 
   test("calls setNewFolderName on change", () => {
     const setNewFolderName = mock();
-    render(<NewFolderMenuInput {...defaultProps} setNewFolderName={setNewFolderName} />);
+    render(
+      <NewFolderMenuInput
+        {...defaultProps}
+        setNewFolderName={setNewFolderName}
+      />,
+    );
     const input = screen.getByRole("textbox");
     fireEvent.change(input, { target: { value: "New folder" } });
     expect(setNewFolderName).toHaveBeenCalledWith("New folder");
@@ -27,7 +32,12 @@ describe("NewFolderMenuInput", () => {
 
   test("calls handleFolderSubmit on Enter", () => {
     const handleFolderSubmit = mock();
-    render(<NewFolderMenuInput {...defaultProps} handleFolderSubmit={handleFolderSubmit} />);
+    render(
+      <NewFolderMenuInput
+        {...defaultProps}
+        handleFolderSubmit={handleFolderSubmit}
+      />,
+    );
     const input = screen.getByRole("textbox");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(handleFolderSubmit).toHaveBeenCalled();
@@ -41,7 +51,7 @@ describe("NewFolderMenuInput", () => {
         {...defaultProps}
         setIsCreatingFolder={setIsCreatingFolder}
         setCtxMenu={setCtxMenu}
-      />
+      />,
     );
     const input = screen.getByRole("textbox");
     fireEvent.keyDown(input, { key: "Escape" });
@@ -57,7 +67,7 @@ describe("NewFolderMenuInput", () => {
         {...defaultProps}
         handleFolderSubmit={handleFolderSubmit}
         setCtxMenu={setCtxMenu}
-      />
+      />,
     );
     const input = screen.getByRole("textbox");
     fireEvent.keyDown(input, { key: "A" });
@@ -72,11 +82,11 @@ describe("NewFolderMenuInput", () => {
         {...defaultProps}
         newFolderName="  Valid name  "
         handleFolderSubmit={handleFolderSubmit}
-      />
+      />,
     );
     const input = screen.getByRole("textbox");
     fireEvent.blur(input);
-    
+
     await waitFor(() => {
       expect(handleFolderSubmit).toHaveBeenCalled();
     });
@@ -91,11 +101,11 @@ describe("NewFolderMenuInput", () => {
         newFolderName="   "
         setIsCreatingFolder={setIsCreatingFolder}
         setCtxMenu={setCtxMenu}
-      />
+      />,
     );
     const input = screen.getByRole("textbox");
     fireEvent.blur(input);
-    
+
     await waitFor(() => {
       expect(setIsCreatingFolder).toHaveBeenCalledWith(false);
       expect(setCtxMenu).toHaveBeenCalledWith(null);

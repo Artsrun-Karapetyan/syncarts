@@ -8,13 +8,14 @@ const json = JSON.stringify({
         requestBody: {
           content: {
             "text/xml": {
-              example: "<xml></xml>"
-            }
-          }
-        }
-      }
-    }
-  }
+              example: "<xml></xml>",
+            },
+          },
+        },
+      },
+    },
+  },
 });
 const result = parseOpenApiCollection(json);
+// eslint-disable-next-line no-console
 console.log(JSON.stringify(result.items, null, 2));

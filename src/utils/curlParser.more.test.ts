@@ -117,7 +117,9 @@ describe("parseCurlCommand extra cases", () => {
   });
 
   test("handles unclosed double quotes with escapes", () => {
-    const result = parseCurlCommand("curl \"https://example.com/escaped\\\"unclosed");
-    expect(result?.url).toBe("https://example.com/escaped\"unclosed");
+    const result = parseCurlCommand(
+      'curl "https://example.com/escaped\\"unclosed',
+    );
+    expect(result?.url).toBe('https://example.com/escaped"unclosed');
   });
 });

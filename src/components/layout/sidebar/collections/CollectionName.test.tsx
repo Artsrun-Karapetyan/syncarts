@@ -1,14 +1,15 @@
-import { describe, expect, test, mock, beforeEach } from "bun:test";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { CollectionName } from "./CollectionName";
-import React from "react";
 
 describe("CollectionName", () => {
   const defaultCollection = {
     id: "col1",
     name: "Test Collection",
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    items: [],
   };
 
   const defaultProps = {
@@ -36,12 +37,9 @@ describe("CollectionName", () => {
     const forkedCollection = {
       ...defaultCollection,
       fork: {
-        sourceWorkspaceId: "ws1",
-        sourceCollectionId: "sc1",
-        sourceCollectionName: "Source",
-        sourceWorkspaceName: "Source WS",
+        originalWorkspaceId: "ws1",
+        originalCollectionId: "sc1",
         forkedAt: Date.now(),
-        lastSyncAt: Date.now(),
       },
     };
     render(<CollectionName {...defaultProps} collection={forkedCollection} />);
@@ -103,7 +101,7 @@ describe("CollectionName", () => {
       render(
         <div onClick={onClickParent}>
           <CollectionName {...renamingProps} />
-        </div>
+        </div>,
       );
       const input = screen.getByRole("textbox");
       fireEvent.click(input);

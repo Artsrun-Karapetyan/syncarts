@@ -1,5 +1,5 @@
-import { mock, afterEach } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import { afterEach, mock } from "bun:test";
 
 // Register happy-dom globally FIRST
 GlobalRegistrator.register();
@@ -13,9 +13,9 @@ afterEach(() => {
 });
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: mock().mockImplementation(query => ({
+  value: mock().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -33,7 +33,7 @@ class ResizeObserver {
   unobserve() {}
   disconnect() {}
 }
-Object.defineProperty(window, 'ResizeObserver', {
+Object.defineProperty(window, "ResizeObserver", {
   writable: true,
   value: ResizeObserver,
 });
@@ -44,13 +44,13 @@ class IntersectionObserver {
   unobserve() {}
   disconnect() {}
 }
-Object.defineProperty(window, 'IntersectionObserver', {
+Object.defineProperty(window, "IntersectionObserver", {
   writable: true,
   value: IntersectionObserver,
 });
 
 // Mock window.scrollTo
-Object.defineProperty(window, 'scrollTo', {
+Object.defineProperty(window, "scrollTo", {
   writable: true,
   value: mock(),
 });

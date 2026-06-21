@@ -1,12 +1,20 @@
+/* eslint-disable react/no-multi-comp */
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
-import React from "react";
 
 import { AppShell } from "./AppShell";
 
 mock.module("react-resizable-panels", () => ({
-  Panel: ({ children, defaultSize, minSize, maxSize, ...props }: any) => <div data-testid="panel" {...props}>{children}</div>,
-  PanelGroup: ({ children, direction, ...props }: any) => <div data-testid="panel-group" {...props}>{children}</div>,
+  Panel: ({ children, ...props }: any) => (
+    <div data-testid="panel" {...props}>
+      {children}
+    </div>
+  ),
+  PanelGroup: ({ children, ...props }: any) => (
+    <div data-testid="panel-group" {...props}>
+      {children}
+    </div>
+  ),
   PanelResizeHandle: () => <div data-testid="panel-resize-handle" />,
 }));
 
@@ -15,7 +23,9 @@ mock.module("@/components/layout/GlobalContextMenu", () => ({
 }));
 
 mock.module("@/components/layout/GlobalDropZone", () => ({
-  GlobalDropZone: ({ children }: any) => <div data-testid="global-dropzone">{children}</div>,
+  GlobalDropZone: ({ children }: any) => (
+    <div data-testid="global-dropzone">{children}</div>
+  ),
 }));
 
 mock.module("@/components/layout/Sidebar", () => ({
@@ -54,7 +64,7 @@ describe("AppShell", () => {
     render(
       <AppShell>
         <div data-testid="children">Child Content</div>
-      </AppShell>
+      </AppShell>,
     );
 
     const provider = screen.getByTestId("workspace-provider");
@@ -65,13 +75,13 @@ describe("AppShell", () => {
     expect(screen.getByTestId("global-dropzone")).toBeTruthy();
     expect(screen.getByTestId("update-banner")).toBeTruthy();
     expect(screen.getByTestId("global-ctx")).toBeTruthy();
-    
+
     const group = screen.getByTestId("panel-group");
     expect(group).toBeTruthy();
-    
+
     const panels = screen.getAllByTestId("panel");
     expect(panels.length).toBe(2);
-    
+
     expect(screen.getByTestId("panel-resize-handle")).toBeTruthy();
   });
 
@@ -81,7 +91,7 @@ describe("AppShell", () => {
     render(
       <AppShell>
         <div data-testid="children">Child Content</div>
-      </AppShell>
+      </AppShell>,
     );
 
     const provider = screen.getByTestId("workspace-provider");

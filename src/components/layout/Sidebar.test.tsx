@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, act } from "@testing-library/react";
+/* eslint-disable react/no-multi-comp */
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
-import React from "react";
+
+import { renameMatchingItem } from "@/components/layout/sidebar/utils/utils";
 
 import { Sidebar } from "./Sidebar";
-import { renameMatchingItem } from "@/components/layout/sidebar/utils/utils";
 
 const mockUseWorkspace = {
   collections: [{ id: "c1", name: "Col 1", items: [] }],
@@ -41,29 +42,65 @@ mock.module("@tanstack/react-router", () => ({
   useNavigate: () => mockNavigate,
 }));
 
-mock.module("@/components/layout/sidebar/collections/SidebarCollections", () => ({
-  SidebarCollections: (props: any) => (
-    <div data-testid="sidebar-collections" data-props={JSON.stringify({ ...props, dragHandlers: undefined })}>
-      <button onClick={props.handleAddCollection}>Trigger Add Collection</button>
-      <button onClick={() => props.handleContextMenu({ event: { preventDefault: mock(), stopPropagation: mock(), clientX: 10, clientY: 20 }, collectionId: "c1", itemType: "collection", itemId: "c1" })}>Trigger Ctx Menu</button>
-      <button onClick={props.handleRenameSubmit}>Trigger Rename</button>
-    </div>
-  ),
-}));
+mock.module(
+  "@/components/layout/sidebar/collections/SidebarCollections",
+  () => ({
+    SidebarCollections: (props: any) => (
+      <div
+        data-testid="sidebar-collections"
+        data-props={JSON.stringify({ ...props, dragHandlers: undefined })}
+      >
+        <button onClick={props.handleAddCollection}>
+          Trigger Add Collection
+        </button>
+        <button
+          onClick={() =>
+            props.handleContextMenu({
+              event: {
+                preventDefault: mock(),
+                stopPropagation: mock(),
+                clientX: 10,
+                clientY: 20,
+              },
+              collectionId: "c1",
+              itemType: "collection",
+              itemId: "c1",
+            })
+          }
+        >
+          Trigger Ctx Menu
+        </button>
+        <button onClick={props.handleRenameSubmit}>Trigger Rename</button>
+      </div>
+    ),
+  }),
+);
 
-mock.module("@/components/layout/sidebar/context-menu/SidebarContextMenu", () => ({
-  SidebarContextMenu: (props: any) => (
-    <div data-testid="sidebar-context-menu">
-      <button onClick={props.handleCreateFolder}>Create Folder Trigger</button>
-      <button onClick={props.handleFolderSubmit}>Folder Submit Trigger</button>
-      <button onClick={props.handleCreateRequest}>Create Request Trigger</button>
-    </div>
-  ),
-}));
+mock.module(
+  "@/components/layout/sidebar/context-menu/SidebarContextMenu",
+  () => ({
+    SidebarContextMenu: (props: any) => (
+      <div data-testid="sidebar-context-menu">
+        <button onClick={props.handleCreateFolder}>
+          Create Folder Trigger
+        </button>
+        <button onClick={props.handleFolderSubmit}>
+          Folder Submit Trigger
+        </button>
+        <button onClick={props.handleCreateRequest}>
+          Create Request Trigger
+        </button>
+      </div>
+    ),
+  }),
+);
 
 mock.module("@/components/layout/sidebar/context-menu/SidebarDialogs", () => ({
   SidebarDialogs: (props: any) => (
-    <div data-testid="sidebar-dialogs" data-target={props.deleteTarget ? props.deleteTarget.type : "null"}>
+    <div
+      data-testid="sidebar-dialogs"
+      data-target={props.deleteTarget ? props.deleteTarget.type : "null"}
+    >
       <button onClick={props.onConfirmDelete}>Confirm Delete</button>
       <button onClick={props.onCancelDelete}>Cancel Delete</button>
       <button onClick={props.onCloseImport}>Close Import</button>
@@ -73,13 +110,23 @@ mock.module("@/components/layout/sidebar/context-menu/SidebarDialogs", () => ({
   ),
 }));
 
-mock.module("@/components/layout/sidebar/drag-drop/useSidebarDragHandlers", () => ({
-  useSidebarDragHandlers: () => ({}),
-}));
+mock.module(
+  "@/components/layout/sidebar/drag-drop/useSidebarDragHandlers",
+  () => ({
+    useSidebarDragHandlers: () => ({}),
+  }),
+);
 
-mock.module("@/components/layout/sidebar/export/useSidebarExportHandlers", () => ({
-  useSidebarExportHandlers: () => ({ handleExportCollection: mock(), handleExportFolder: mock(), handleExportRequest: mock() }),
-}));
+mock.module(
+  "@/components/layout/sidebar/export/useSidebarExportHandlers",
+  () => ({
+    useSidebarExportHandlers: () => ({
+      handleExportCollection: mock(),
+      handleExportFolder: mock(),
+      handleExportRequest: mock(),
+    }),
+  }),
+);
 
 mock.module("@/components/layout/sidebar/hooks/useSidebarHighlight", () => ({
   useSidebarHighlight: () => ({}),
@@ -90,19 +137,33 @@ mock.module("@/components/layout/sidebar/toolbar/SidebarToolbar", () => ({
     <div data-testid="sidebar-toolbar">
       <button onClick={props.onMergeRequests}>Open MRs</button>
       {props.onImport && <button onClick={props.onImport}>Import</button>}
-      {props.onNewRequest && <button onClick={props.onNewRequest}>New Req</button>}
-      {props.onNewCollection && <button onClick={props.onNewCollection}>New Col</button>}
+      {props.onNewRequest && (
+        <button onClick={props.onNewRequest}>New Req</button>
+      )}
+      {props.onNewCollection && (
+        <button onClick={props.onNewCollection}>New Col</button>
+      )}
     </div>
   ),
 }));
 
-mock.module("@/components/layout/sidebar/toolbar/useOpenMergeRequestCount", () => ({
-  useOpenMergeRequestCount: () => 5,
-}));
+mock.module(
+  "@/components/layout/sidebar/toolbar/useOpenMergeRequestCount",
+  () => ({
+    useOpenMergeRequestCount: () => 5,
+  }),
+);
 
-mock.module("@/components/layout/sidebar/toolbar/useSidebarWatchActions", () => ({
-  useSidebarWatchActions: () => ({ handleToggleWorkspaceWatch: mock(), isWorkspaceWatched: false, watches: { isWatched: mock(), toggleWatch: mock() } }),
-}));
+mock.module(
+  "@/components/layout/sidebar/toolbar/useSidebarWatchActions",
+  () => ({
+    useSidebarWatchActions: () => ({
+      handleToggleWorkspaceWatch: mock(),
+      isWorkspaceWatched: false,
+      watches: { isWatched: mock(), toggleWatch: mock() },
+    }),
+  }),
+);
 
 mock.module("@/components/layout/sidebar/utils/utils", () => ({
   filterCollections: (c: any) => c,
@@ -146,11 +207,11 @@ describe("Sidebar", () => {
   });
 
   test("adds a new collection via toolbar and collections form", () => {
-    const { container } = render(<Sidebar />);
-    
+    render(<Sidebar />);
+
     // Clicking New Col sets isAdding=true
     fireEvent.click(screen.getByText("New Col"));
-    
+
     // Actually we need to change state to have newColName set, but since we mocked SidebarCollections
     // We can't directly type into it unless we simulate the prop call.
     // Instead, let's fire handleAddCollection from our dummy button. But first we need newColName.
@@ -161,19 +222,22 @@ describe("Sidebar", () => {
 
   test("opens context menu and handles folder creation", () => {
     render(<Sidebar />);
-    
+
     fireEvent.click(screen.getByText("Trigger Ctx Menu"));
     expect(screen.getByTestId("sidebar-context-menu")).toBeTruthy();
 
     fireEvent.click(screen.getByText("Create Folder Trigger"));
-    
+
     // Submit folder without name does nothing
     fireEvent.click(screen.getByText("Folder Submit Trigger"));
     expect(mockUseWorkspace.addFolder).not.toHaveBeenCalled();
-    
+
     // Create Request Trigger
     fireEvent.click(screen.getByText("Create Request Trigger"));
-    expect(mockUseWorkspace.createBlankRequestInFolder).toHaveBeenCalledWith("c1", null);
+    expect(mockUseWorkspace.createBlankRequestInFolder).toHaveBeenCalledWith(
+      "c1",
+      null,
+    );
   });
 
   test("handles rename submit from collections", () => {

@@ -12,14 +12,14 @@ const workspace: Workspace = {
   ownerId: "owner-1",
   collections: [],
   environments: [],
-  members: [{ userId: "member-1", role: "EDITOR" }],
+  members: [{ userId: "member-1", role: "EDITOR", workspaceId: "workspace-1" }],
 };
 
 describe("sharing", () => {
   it("detects shared workspaces", () => {
     expect(isSharedWorkspace(workspace)).toBe(true);
     expect(isSharedWorkspace({ ...workspace, members: [] })).toBe(false);
-    expect(isSharedWorkspace()).toBe(false);
+    expect(isSharedWorkspace(undefined)).toBe(false);
   });
 
   it("detects member workspaces for non-owners", () => {

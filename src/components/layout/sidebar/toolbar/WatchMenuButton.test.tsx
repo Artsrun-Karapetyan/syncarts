@@ -1,7 +1,7 @@
-import { describe, expect, test, mock } from "bun:test";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, mock, test } from "bun:test";
+
 import { WatchMenuButton } from "./WatchMenuButton";
-import React from "react";
 
 describe("WatchMenuButton", () => {
   const defaultProps = {
@@ -27,7 +27,7 @@ describe("WatchMenuButton", () => {
     const btn = screen.getByRole("button");
     fireEvent.click(btn);
     expect(defaultProps.onToggle).toHaveBeenCalledWith("collection", "1");
-    
+
     await waitFor(() => {
       expect(defaultProps.onDone).toHaveBeenCalledWith("Watching collection");
     });
@@ -38,7 +38,7 @@ describe("WatchMenuButton", () => {
     render(<WatchMenuButton {...defaultProps} onToggle={onToggle} />);
     const btn = screen.getByRole("button");
     fireEvent.click(btn);
-    
+
     await waitFor(() => {
       expect(defaultProps.onDone).toHaveBeenCalledWith("Watch failed");
     });

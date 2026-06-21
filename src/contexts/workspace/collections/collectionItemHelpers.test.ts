@@ -58,7 +58,7 @@ describe("collectionItemHelpers", () => {
         body: "{}",
         time_ms: 10,
       },
-    } as TabData;
+    } as any as TabData;
     const withExample = addExampleToItems(
       [request("request")],
       "request",
@@ -105,7 +105,7 @@ describe("collectionItemHelpers", () => {
         body: '{"id": 1}',
         time_ms: 45,
       },
-    } as TabData;
+    } as any as TabData;
 
     const withExample = addExampleToItems(
       [request("req1")],
@@ -188,7 +188,7 @@ describe("collectionItemHelpers", () => {
         body: "",
         time_ms: 10,
       },
-    } as TabData;
+    } as any as TabData;
 
     const withExample = addExampleToItems(
       [request("req1")],

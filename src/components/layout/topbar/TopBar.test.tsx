@@ -1,6 +1,6 @@
+/* eslint-disable react/no-multi-comp */
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
-import React from "react";
 
 import { TopBar } from "./TopBar";
 
@@ -8,8 +8,16 @@ import { TopBar } from "./TopBar";
 
 const mockUseWorkspace = {
   activeWorkspaceId: "w1",
-  environments: [{ id: "env1", name: "Dev", variables: [{ id: "v1", key: "URL", value: "localhost", enabled: true }] }],
-  globalVariables: [{ id: "g1", key: "GLOBAL_VAR", value: "123", enabled: true }],
+  environments: [
+    {
+      id: "env1",
+      name: "Dev",
+      variables: [{ id: "v1", key: "URL", value: "localhost", enabled: true }],
+    },
+  ],
+  globalVariables: [
+    { id: "g1", key: "GLOBAL_VAR", value: "123", enabled: true },
+  ],
   activeEnvironmentId: null as string | null,
   setActiveEnvironmentId: mock(),
   activeEnvironment: null as any,
@@ -50,14 +58,28 @@ mock.module("@/components/environment/EnvironmentManager", () => ({
   ),
 }));
 
-mock.module("@/components/layout/topbar/TopBarProfileButton", () => ({ TopBarProfileButton: () => <div data-testid="profile-btn" /> }));
-mock.module("@/components/layout/workspace-switcher/WorkspaceSwitcher", () => ({ WorkspaceSwitcher: () => <div data-testid="workspace-switcher" /> }));
-mock.module("@/components/notifications/NotificationCenter", () => ({ NotificationCenter: () => <div data-testid="notification-center" /> }));
+mock.module("@/components/layout/topbar/TopBarProfileButton", () => ({
+  TopBarProfileButton: () => <div data-testid="profile-btn" />,
+}));
+mock.module("@/components/layout/workspace-switcher/WorkspaceSwitcher", () => ({
+  WorkspaceSwitcher: () => <div data-testid="workspace-switcher" />,
+}));
+mock.module("@/components/notifications/NotificationCenter", () => ({
+  NotificationCenter: () => <div data-testid="notification-center" />,
+}));
 
 mock.module("@/components/ui/Select/Select", () => ({
   Select: (props: any) => (
-    <select data-testid="select" value={props.value} onChange={(e) => props.onChange(e.target.value)}>
-      {props.options.map((o: any) => <option key={o.value} value={o.value}>{o.label}</option>)}
+    <select
+      data-testid="select"
+      value={props.value}
+      onChange={(e) => props.onChange(e.target.value)}
+    >
+      {props.options.map((o: any) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
     </select>
   ),
 }));
@@ -123,52 +145,72 @@ describe("TopBar", () => {
   test("opens modals", () => {
     mockUseStoredUser.mockReturnValue({ id: "user" });
     render(<TopBar />);
-    
+
     fireEvent.click(screen.getByText("Join"));
-    expect(screen.getByTestId("join-modal").getAttribute("data-open")).toBe("true");
+    expect(screen.getByTestId("join-modal").getAttribute("data-open")).toBe(
+      "true",
+    );
     fireEvent.click(screen.getByText("Close Join"));
-    expect(screen.getByTestId("join-modal").getAttribute("data-open")).toBe("false");
+    expect(screen.getByTestId("join-modal").getAttribute("data-open")).toBe(
+      "false",
+    );
 
     fireEvent.click(screen.getByText("Invite"));
-    expect(screen.getByTestId("invite-modal").getAttribute("data-open")).toBe("true");
+    expect(screen.getByTestId("invite-modal").getAttribute("data-open")).toBe(
+      "true",
+    );
     fireEvent.click(screen.getByText("Close Invite"));
-    expect(screen.getByTestId("invite-modal").getAttribute("data-open")).toBe("false");
+    expect(screen.getByTestId("invite-modal").getAttribute("data-open")).toBe(
+      "false",
+    );
   });
 
   test("handles Environment Manager", () => {
     const { container } = render(<TopBar />);
     // Environment manager button is the grid icon next to select
-    const envManagerBtn = container.querySelector('[data-tooltip="Manage Environments"]') as HTMLElement;
-    
+    const envManagerBtn = container.querySelector(
+      '[data-tooltip="Manage Environments"]',
+    ) as HTMLElement;
+
     fireEvent.mouseEnter(envManagerBtn);
     expect(envManagerBtn.style.color).toBe("var(--text-primary)");
     fireEvent.mouseLeave(envManagerBtn);
     expect(envManagerBtn.style.color).toBe("var(--text-tertiary)");
 
     fireEvent.click(envManagerBtn);
-    expect(screen.getByTestId("env-manager").getAttribute("data-open")).toBe("true");
+    expect(screen.getByTestId("env-manager").getAttribute("data-open")).toBe(
+      "true",
+    );
     fireEvent.click(screen.getByText("Close Env Manager"));
-    expect(screen.getByTestId("env-manager").getAttribute("data-open")).toBe("false");
+    expect(screen.getByTestId("env-manager").getAttribute("data-open")).toBe(
+      "false",
+    );
   });
 
   test("handles select change", () => {
     render(<TopBar />);
     const select = screen.getByTestId("select");
-    
+
     fireEvent.change(select, { target: { value: "none" } });
     expect(mockUseWorkspace.setActiveEnvironmentId).toHaveBeenCalledWith(null);
 
     fireEvent.change(select, { target: { value: "globals" } });
-    expect(mockUseWorkspace.setActiveEnvironmentId).toHaveBeenCalledWith("globals");
+    expect(mockUseWorkspace.setActiveEnvironmentId).toHaveBeenCalledWith(
+      "globals",
+    );
 
     fireEvent.change(select, { target: { value: "env1" } });
-    expect(mockUseWorkspace.setActiveEnvironmentId).toHaveBeenCalledWith("env1");
+    expect(mockUseWorkspace.setActiveEnvironmentId).toHaveBeenCalledWith(
+      "env1",
+    );
   });
 
   test("toggles quick look for no environment", () => {
     const { container } = render(<TopBar />);
-    const quickLookBtn = container.querySelector('[data-tooltip="Environment Quick Look"]') as HTMLElement;
-    
+    const quickLookBtn = container.querySelector(
+      '[data-tooltip="Environment Quick Look"]',
+    ) as HTMLElement;
+
     fireEvent.mouseEnter(quickLookBtn);
     expect(quickLookBtn.style.color).toBe("var(--text-primary)");
     fireEvent.mouseLeave(quickLookBtn);
@@ -188,8 +230,10 @@ describe("TopBar", () => {
   test("toggles quick look for globals", () => {
     mockUseWorkspace.activeEnvironmentId = "globals";
     const { container } = render(<TopBar />);
-    const quickLookBtn = container.querySelector('[data-tooltip="Environment Quick Look"]') as HTMLElement;
-    
+    const quickLookBtn = container.querySelector(
+      '[data-tooltip="Environment Quick Look"]',
+    ) as HTMLElement;
+
     fireEvent.click(quickLookBtn);
     expect(screen.getAllByText("Globals").length).toBeGreaterThan(0);
     expect(screen.getByText("GLOBAL_VAR")).toBeTruthy();
@@ -198,10 +242,13 @@ describe("TopBar", () => {
 
   test("toggles quick look for specific environment", () => {
     mockUseWorkspace.activeEnvironmentId = "env1";
-    mockUseWorkspace.activeEnvironment = mockUseWorkspace.environments[0] as any;
+    mockUseWorkspace.activeEnvironment = mockUseWorkspace
+      .environments[0] as any;
     const { container } = render(<TopBar />);
-    const quickLookBtn = container.querySelector('[data-tooltip="Environment Quick Look"]') as HTMLElement;
-    
+    const quickLookBtn = container.querySelector(
+      '[data-tooltip="Environment Quick Look"]',
+    ) as HTMLElement;
+
     fireEvent.click(quickLookBtn);
     expect(screen.getAllByText("Dev").length).toBeGreaterThan(0);
     expect(screen.getByText("URL")).toBeTruthy();
@@ -213,13 +260,15 @@ describe("TopBar", () => {
     const { container, unmount } = render(<TopBar />);
     expect(mockIsFullscreen).toHaveBeenCalled();
     expect(mockOnResized).toHaveBeenCalled();
-    
-    const dragRegion = container.querySelector('[data-tauri-drag-region]') as HTMLElement;
-    
+
+    const dragRegion = container.querySelector(
+      "[data-tauri-drag-region]",
+    ) as HTMLElement;
+
     // Left click on drag region initiates dragging
     fireEvent.mouseDown(dragRegion, { button: 0 });
     expect(mockStartDragging).toHaveBeenCalled();
-    
+
     mockStartDragging.mockClear();
 
     // Right click on drag region ignores

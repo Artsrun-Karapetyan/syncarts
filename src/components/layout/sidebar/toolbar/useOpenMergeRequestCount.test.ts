@@ -1,5 +1,6 @@
-import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
 import { renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { useOpenMergeRequestCount } from "./useOpenMergeRequestCount";
 
 const apiMock = {
@@ -42,9 +43,9 @@ describe("useOpenMergeRequestCount", () => {
   test("does not fetch if no auth token", async () => {
     mockToken = "";
     renderHook(() => useOpenMergeRequestCount("ws1"));
-    
+
     // give it a moment
-    await new Promise(r => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 10));
     expect(apiMock.get).not.toHaveBeenCalled();
   });
 
@@ -53,7 +54,7 @@ describe("useOpenMergeRequestCount", () => {
     const { result } = renderHook(() => useOpenMergeRequestCount("ws1"));
 
     // wait to ensure it doesn't crash
-    await new Promise(r => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 10));
     expect(result.current).toBe(0);
   });
 });

@@ -1,8 +1,8 @@
-import { describe, expect, test, mock } from "bun:test";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { MenuButton } from "./MenuButton";
-import React from "react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, mock, test } from "bun:test";
 import { Activity } from "lucide-react";
+
+import { MenuButton } from "./MenuButton";
 
 describe("MenuButton", () => {
   test("renders button with label and icon", () => {
@@ -13,7 +13,14 @@ describe("MenuButton", () => {
   });
 
   test("renders destructive button", () => {
-    render(<MenuButton icon={Activity} label="Delete" destructive onClick={mock()} />);
+    render(
+      <MenuButton
+        icon={Activity}
+        label="Delete"
+        destructive
+        onClick={mock()}
+      />,
+    );
     const btn = screen.getByRole("button");
     expect(btn.style.color).toBe("var(--status-delete)");
   });
@@ -29,20 +36,22 @@ describe("MenuButton", () => {
   test("handles mouse enter and leave for normal button", () => {
     render(<MenuButton icon={Activity} label="Test" onClick={mock()} />);
     const btn = screen.getByRole("button");
-    
+
     fireEvent.mouseEnter(btn);
     expect(btn.style.background).toBe("var(--bg-tertiary)");
-    
+
     fireEvent.mouseLeave(btn);
   });
 
   test("handles mouse enter and leave for destructive button", () => {
-    render(<MenuButton icon={Activity} label="Test" destructive onClick={mock()} />);
+    render(
+      <MenuButton icon={Activity} label="Test" destructive onClick={mock()} />,
+    );
     const btn = screen.getByRole("button");
-    
+
     fireEvent.mouseEnter(btn);
     expect(btn.style.background).toBe("var(--status-delete-bg)");
-    
+
     fireEvent.mouseLeave(btn);
   });
 });

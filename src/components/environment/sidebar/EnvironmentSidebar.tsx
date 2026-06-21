@@ -1,8 +1,8 @@
 import { Globe, Plus, Trash2, Upload } from "lucide-react";
 import type { RefObject } from "react";
 
-import { EnvironmentIconButton } from "@/components/environment/EnvironmentIconButton";
-import { EnvironmentNavItem } from "@/components/environment/EnvironmentNavItem";
+import { EnvironmentNavItem } from "@/components/environment/sidebar/EnvironmentNavItem";
+import { EnvironmentIconButton } from "@/components/environment/ui/EnvironmentIconButton";
 import type { Environment } from "@/contexts/WorkspaceContext";
 
 interface EnvironmentSidebarProps {

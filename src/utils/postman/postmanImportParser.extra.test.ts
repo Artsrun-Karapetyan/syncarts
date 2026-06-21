@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { parsePostmanCollection } from "./postmanImportParser";
 
 describe("postmanImportParser extra cases 2", () => {
@@ -9,10 +10,10 @@ describe("postmanImportParser extra cases 2", () => {
         {
           name: "Req",
           request: {
-            url: { raw: "https://api.com" }
-          }
-        }
-      ]
+            url: { raw: "https://api.com" },
+          },
+        },
+      ],
     });
     const result = parsePostmanCollection(json);
     const req = result.items[0] as any;
@@ -28,11 +29,11 @@ describe("postmanImportParser extra cases 2", () => {
           request: {
             url: "https://api.com",
             body: {
-              raw: "fallback_raw"
-            }
-          }
-        }
-      ]
+              raw: "fallback_raw",
+            },
+          },
+        },
+      ],
     });
     const result = parsePostmanCollection(json);
     const req = result.items[0] as any;

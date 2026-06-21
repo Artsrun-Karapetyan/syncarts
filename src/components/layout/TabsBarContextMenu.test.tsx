@@ -1,12 +1,15 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
-import React from "react";
 
 import { TabsBarContextMenu } from "./TabsBarContextMenu";
 
 describe("TabsBarContextMenu", () => {
   const defaultProps = {
-    ctxMenu: { x: 100, y: 200, tabToDuplicate: { id: "t1", name: "Tab 1", pinned: false } },
+    ctxMenu: {
+      x: 100,
+      y: 200,
+      tabToDuplicate: { id: "t1", name: "Tab 1", pinned: false },
+    },
     setCtxMenu: mock(),
     menuRef: { current: null },
     addTab: mock(),
@@ -29,7 +32,9 @@ describe("TabsBarContextMenu", () => {
   });
 
   test("returns null if ctxMenu is null", () => {
-    const { container } = render(<TabsBarContextMenu {...defaultProps} ctxMenu={null} />);
+    const { container } = render(
+      <TabsBarContextMenu {...defaultProps} ctxMenu={null} />,
+    );
     expect(container.firstChild).toBeNull();
   });
 
@@ -69,7 +74,7 @@ describe("TabsBarContextMenu", () => {
     render(<TabsBarContextMenu {...props} />);
     const btn = screen.getByText("Duplicate Tab");
     fireEvent.click(btn);
-    
+
     expect(defaultProps.addTab).toHaveBeenCalledWith({
       method: "GET",
       name: "Tab 1 (Copy)",
@@ -84,7 +89,9 @@ describe("TabsBarContextMenu", () => {
     };
     render(<TabsBarContextMenu {...props} />);
     fireEvent.click(screen.getByText("Duplicate Tab"));
-    expect(defaultProps.addTab).toHaveBeenCalledWith({ name: "Untitled Request (Copy)" });
+    expect(defaultProps.addTab).toHaveBeenCalledWith({
+      name: "Untitled Request (Copy)",
+    });
   });
 
   test("handles Pin Tab click", () => {
@@ -156,25 +163,27 @@ describe("TabsBarContextMenu", () => {
 
   test("hover states for CtxMenuItem", () => {
     render(<TabsBarContextMenu {...defaultProps} />);
-    const normalBtn = screen.getByText("New Request").parentElement?.parentElement as HTMLElement;
-    
+    const normalBtn = screen.getByText("New Request").parentElement
+      ?.parentElement as HTMLElement;
+
     // Normal button hover
     fireEvent.mouseEnter(normalBtn);
     expect(normalBtn.style.background).toBe("var(--bg-secondary)");
     expect(normalBtn.style.color).toBe("var(--text-primary)");
-    
+
     fireEvent.mouseLeave(normalBtn);
     expect(normalBtn.style.color).toBe("var(--text-secondary)");
   });
 
   test("hover states for danger CtxMenuItem", () => {
     render(<TabsBarContextMenu {...defaultProps} />);
-    const dangerBtn = screen.getByText("Force Close All Tabs").parentElement?.parentElement as HTMLElement;
-    
+    const dangerBtn = screen.getByText("Force Close All Tabs").parentElement
+      ?.parentElement as HTMLElement;
+
     fireEvent.mouseEnter(dangerBtn);
     expect(dangerBtn.style.background).toBe("var(--status-delete-bg)");
     expect(dangerBtn.style.color).toBe("var(--status-delete)");
-    
+
     fireEvent.mouseLeave(dangerBtn);
     expect(dangerBtn.style.color).toBe("var(--status-delete)");
   });

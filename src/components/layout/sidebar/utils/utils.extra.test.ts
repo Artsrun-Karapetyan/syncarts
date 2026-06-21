@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { findExamplePath } from "./utils";
 
 describe("sidebar utils extra cases 2", () => {
@@ -14,16 +15,20 @@ describe("sidebar utils extra cases 2", () => {
               {
                 type: "request",
                 id: "r1",
-                examples: [{ id: "ex1" }]
-              }
-            ]
-          }
-        ]
-      }
+                examples: [{ id: "ex1" }],
+              },
+            ],
+          },
+        ],
+      },
     ] as any[];
 
     const result = findExamplePath(collections, "ex1");
-    expect(result).toEqual({ collectionId: "c1", folderIds: ["f1"], requestId: "r1" });
+    expect(result).toEqual({
+      collectionId: "c1",
+      folderIds: ["f1"],
+      requestId: "r1",
+    });
   });
 
   test("findExamplePath returns null if not found", () => {

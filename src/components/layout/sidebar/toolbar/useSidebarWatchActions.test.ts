@@ -1,5 +1,6 @@
-import { describe, expect, test, mock, beforeEach } from "bun:test";
 import { renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { useSidebarWatchActions } from "./useSidebarWatchActions";
 
 const toggleWatch = mock();
@@ -21,7 +22,7 @@ describe("useSidebarWatchActions", () => {
   test("returns watch state and actions", () => {
     isWatched.mockReturnValue(true);
     const { result } = renderHook(() => useSidebarWatchActions("ws1", mock()));
-    
+
     expect(result.current.isWorkspaceWatched).toBe(true);
     expect(isWatched).toHaveBeenCalledWith("workspace", "ws1");
   });
@@ -34,10 +35,12 @@ describe("useSidebarWatchActions", () => {
   test("handleToggleWorkspaceWatch success", async () => {
     toggleWatch.mockResolvedValue(true);
     const showToast = mock();
-    const { result } = renderHook(() => useSidebarWatchActions("ws1", showToast));
-    
+    const { result } = renderHook(() =>
+      useSidebarWatchActions("ws1", showToast),
+    );
+
     result.current.handleToggleWorkspaceWatch();
-    
+
     await waitFor(() => {
       expect(showToast).toHaveBeenCalledWith("Watching workspace");
     });
@@ -46,10 +49,12 @@ describe("useSidebarWatchActions", () => {
   test("handleToggleWorkspaceWatch failure", async () => {
     toggleWatch.mockRejectedValue(new Error("Network Error"));
     const showToast = mock();
-    const { result } = renderHook(() => useSidebarWatchActions("ws1", showToast));
-    
+    const { result } = renderHook(() =>
+      useSidebarWatchActions("ws1", showToast),
+    );
+
     result.current.handleToggleWorkspaceWatch();
-    
+
     await waitFor(() => {
       expect(showToast).toHaveBeenCalledWith("Network Error");
     });
@@ -57,8 +62,10 @@ describe("useSidebarWatchActions", () => {
 
   test("handleToggleWorkspaceWatch no workspace", () => {
     const showToast = mock();
-    const { result } = renderHook(() => useSidebarWatchActions(null, showToast));
-    
+    const { result } = renderHook(() =>
+      useSidebarWatchActions(null, showToast),
+    );
+
     result.current.handleToggleWorkspaceWatch();
     expect(toggleWatch).not.toHaveBeenCalled();
   });

@@ -1,7 +1,7 @@
-import { describe, expect, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, test } from "bun:test";
+
 import { MergeRequestBadge } from "./MergeRequestBadge";
-import React from "react";
 
 describe("MergeRequestBadge", () => {
   test("renders count normally if <= 9", () => {

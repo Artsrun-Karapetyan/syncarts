@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { EnvironmentModalHeader } from "@/components/environment/EnvironmentModalHeader";
-import { EnvironmentSidebar } from "@/components/environment/EnvironmentSidebar";
-import { EnvironmentVariablesTable } from "@/components/environment/EnvironmentVariablesTable";
+import { EnvironmentSidebar } from "@/components/environment/sidebar/EnvironmentSidebar";
+import { EnvironmentVariablesTable } from "@/components/environment/table/EnvironmentVariablesTable";
+import { EnvironmentModalHeader } from "@/components/environment/ui/EnvironmentModalHeader";
 import { EnvironmentVariable, useWorkspace } from "@/contexts/WorkspaceContext";
 import { importPostmanEnvironment } from "@/utils/postmanParser";
 

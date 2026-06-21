@@ -1,7 +1,7 @@
-import { describe, expect, test, mock, beforeEach } from "bun:test";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { CreateMergeRequestModal } from "./CreateMergeRequestModal";
-import React from "react";
 
 const mockGet = mock();
 const mockPost = mock();
@@ -15,9 +15,7 @@ mock.module("@/lib/api", () => ({
 
 mock.module("@/contexts/WorkspaceContext", () => ({
   useWorkspace: () => ({
-    collections: [
-      { id: "col1", name: "Source Col" }
-    ],
+    collections: [{ id: "col1", name: "Source Col" }],
     activeWorkspaceId: "ws1",
   }),
 }));
@@ -49,14 +47,21 @@ describe("CreateMergeRequestModal", () => {
 
   test("disables submit button initially", () => {
     render(<CreateMergeRequestModal {...getProps()} />);
-    const btn = screen.getByRole("button", { name: "Create Merge Request" }) as HTMLButtonElement;
+    const btn = screen.getByRole("button", {
+      name: "Create Merge Request",
+    }) as HTMLButtonElement;
     expect(btn.disabled).toBeTrue();
   });
 
   test("enables submit when title is provided", () => {
     render(<CreateMergeRequestModal {...getProps()} />);
-    fireEvent.change(screen.getByPlaceholderText("e.g. Added new user endpoints"), { target: { value: "My MR" } });
-    const btn = screen.getByRole("button", { name: "Create Merge Request" }) as HTMLButtonElement;
+    fireEvent.change(
+      screen.getByPlaceholderText("e.g. Added new user endpoints"),
+      { target: { value: "My MR" } },
+    );
+    const btn = screen.getByRole("button", {
+      name: "Create Merge Request",
+    }) as HTMLButtonElement;
     expect(btn.disabled).toBeFalse();
   });
 
@@ -69,16 +74,25 @@ describe("CreateMergeRequestModal", () => {
 
   test("submits successfully", async () => {
     const props = getProps();
-    mockGet.mockResolvedValueOnce({ data: { data: { collections: [{ id: "tcol2", name: "Target Col" }] } } });
+    mockGet.mockResolvedValueOnce({
+      data: { data: { collections: [{ id: "tcol2", name: "Target Col" }] } },
+    });
     mockPost.mockResolvedValueOnce({});
 
     render(<CreateMergeRequestModal {...props} />);
-    
-    fireEvent.change(screen.getByPlaceholderText("e.g. Added new user endpoints"), { target: { value: "My MR" } });
-    fireEvent.change(screen.getByPlaceholderText("Describe what changed..."), { target: { value: "Desc" } });
-    
-    fireEvent.click(screen.getByRole("button", { name: "Create Merge Request" }));
-    
+
+    fireEvent.change(
+      screen.getByPlaceholderText("e.g. Added new user endpoints"),
+      { target: { value: "My MR" } },
+    );
+    fireEvent.change(screen.getByPlaceholderText("Describe what changed..."), {
+      target: { value: "Desc" },
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create Merge Request" }),
+    );
+
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalledWith("/workspaces/ws2");
       expect(mockPost).toHaveBeenCalledWith("/merge-requests", {
@@ -102,15 +116,23 @@ describe("CreateMergeRequestModal", () => {
     mockPost.mockResolvedValueOnce({});
 
     render(<CreateMergeRequestModal {...props} />);
-    
-    fireEvent.change(screen.getByPlaceholderText("e.g. Added new user endpoints"), { target: { value: "My MR" } });
-    
-    fireEvent.click(screen.getByRole("button", { name: "Create Merge Request" }));
-    
+
+    fireEvent.change(
+      screen.getByPlaceholderText("e.g. Added new user endpoints"),
+      { target: { value: "My MR" } },
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create Merge Request" }),
+    );
+
     await waitFor(() => {
-      expect(mockPost).toHaveBeenCalledWith("/merge-requests", expect.objectContaining({
-        targetData: undefined
-      }));
+      expect(mockPost).toHaveBeenCalledWith(
+        "/merge-requests",
+        expect.objectContaining({
+          targetData: undefined,
+        }),
+      );
       expect(props.onSuccess).toHaveBeenCalled();
     });
   });
@@ -118,14 +140,21 @@ describe("CreateMergeRequestModal", () => {
   test("handles submission error", async () => {
     const props = getProps();
     mockGet.mockResolvedValueOnce({ data: { data: { collections: [] } } });
-    mockPost.mockRejectedValueOnce({ response: { data: { message: "MR failed" } } });
+    mockPost.mockRejectedValueOnce({
+      response: { data: { message: "MR failed" } },
+    });
 
     render(<CreateMergeRequestModal {...props} />);
-    
-    fireEvent.change(screen.getByPlaceholderText("e.g. Added new user endpoints"), { target: { value: "My MR" } });
-    
-    fireEvent.click(screen.getByRole("button", { name: "Create Merge Request" }));
-    
+
+    fireEvent.change(
+      screen.getByPlaceholderText("e.g. Added new user endpoints"),
+      { target: { value: "My MR" } },
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create Merge Request" }),
+    );
+
     await waitFor(() => {
       expect(screen.getByText("MR failed")).toBeTruthy();
       expect(props.onSuccess).not.toHaveBeenCalled();
@@ -138,10 +167,15 @@ describe("CreateMergeRequestModal", () => {
     mockPost.mockRejectedValueOnce(new Error("Generic Network Error"));
 
     render(<CreateMergeRequestModal {...props} />);
-    
-    fireEvent.change(screen.getByPlaceholderText("e.g. Added new user endpoints"), { target: { value: "My MR" } });
-    fireEvent.click(screen.getByRole("button", { name: "Create Merge Request" }));
-    
+
+    fireEvent.change(
+      screen.getByPlaceholderText("e.g. Added new user endpoints"),
+      { target: { value: "My MR" } },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create Merge Request" }),
+    );
+
     await waitFor(() => {
       expect(screen.getByText("Generic Network Error")).toBeTruthy();
     });
@@ -150,14 +184,21 @@ describe("CreateMergeRequestModal", () => {
   test("shows error if source collection not found", async () => {
     const props = getProps();
     props.sourceCollectionId = "not-found";
-    
+
     render(<CreateMergeRequestModal {...props} />);
-    
-    fireEvent.change(screen.getByPlaceholderText("e.g. Added new user endpoints"), { target: { value: "My MR" } });
-    fireEvent.click(screen.getByRole("button", { name: "Create Merge Request" }));
-    
+
+    fireEvent.change(
+      screen.getByPlaceholderText("e.g. Added new user endpoints"),
+      { target: { value: "My MR" } },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create Merge Request" }),
+    );
+
     await waitFor(() => {
-      expect(screen.getByText("Source collection not found locally")).toBeTruthy();
+      expect(
+        screen.getByText("Source collection not found locally"),
+      ).toBeTruthy();
     });
   });
 });

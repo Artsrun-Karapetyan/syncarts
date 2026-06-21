@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { getWatchTarget } from "./sidebarWatchTarget";
+
 import type { CtxMenuState } from "@/components/layout/sidebar/types";
+
+import { getWatchTarget } from "./sidebarWatchTarget";
 
 describe("sidebarWatchTarget", () => {
   test("returns collection target", () => {
@@ -11,7 +13,10 @@ describe("sidebarWatchTarget", () => {
       collectionId: "c1",
       itemId: "c1",
     };
-    expect(getWatchTarget(ctx)).toEqual({ entityType: "collection", entityId: "c1" });
+    expect(getWatchTarget(ctx)).toEqual({
+      entityType: "collection",
+      entityId: "c1",
+    });
   });
 
   test("returns request target", () => {
@@ -22,7 +27,10 @@ describe("sidebarWatchTarget", () => {
       collectionId: "c1",
       itemId: "r1",
     };
-    expect(getWatchTarget(ctx)).toEqual({ entityType: "request", entityId: "r1" });
+    expect(getWatchTarget(ctx)).toEqual({
+      entityType: "request",
+      entityId: "r1",
+    });
   });
 
   test("returns null for other types", () => {

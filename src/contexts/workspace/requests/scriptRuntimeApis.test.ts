@@ -63,7 +63,7 @@ describe("scriptRuntimeApis", () => {
 
     expect(variables.get("token")).toBe("env");
     variables.set("token", "next");
-    expect(updatedEnv?.variables?.[0]).toMatchObject({
+    expect((updatedEnv as any)?.variables?.[0]).toMatchObject({
       key: "token",
       value: "next",
     });

@@ -62,19 +62,23 @@ describe("tabHelpers", () => {
       authType: "inherit",
       bodyType: "json",
       body: "{}",
-    } as TabData;
+    } as any as TabData;
 
     expect(
       buildSavedRequestFromTab(tab, "request-2", {
         ...savedRequest,
-        examples: [{ id: "example-1", name: "OK", status: 200 }],
+        examples: [
+          { id: "example-1", name: "OK", status: "OK", code: 200 } as any,
+        ],
       }),
     ).toMatchObject({
       type: "request",
       id: "request-2",
       name: "Create User",
       method: "POST",
-      examples: [{ id: "example-1", name: "OK", status: 200 }],
+      examples: [
+        { id: "example-1", name: "OK", status: "OK", code: 200 } as any,
+      ],
     });
   });
 

@@ -16,8 +16,8 @@ const workspace: Workspace = {
   environments: [],
   globalVariables: [],
   members: [
-    { userId: "editor-1", role: "EDITOR" },
-    { userId: "viewer-1", role: "VIEWER" },
+    { userId: "editor-1", role: "EDITOR", workspaceId: "workspace-1" },
+    { userId: "viewer-1", role: "VIEWER", workspaceId: "workspace-1" },
   ],
 };
 

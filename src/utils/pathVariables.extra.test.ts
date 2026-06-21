@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { applyPathVariables, syncPathVariablesWithUrl, upsertPathVariable } from "./pathVariables";
+
+import {
+  applyPathVariables,
+  syncPathVariablesWithUrl,
+  upsertPathVariable,
+} from "./pathVariables";
 
 describe("pathVariables extra cases 2", () => {
   test("syncPathVariablesWithUrl with no variables keeps existing keys", () => {
@@ -17,7 +22,9 @@ describe("pathVariables extra cases 2", () => {
   });
 
   test("upsertPathVariable updates existing value but keeps description if not provided", () => {
-    const initial = [{ id: "1", key: "id", value: "old", description: "old_desc" }];
+    const initial = [
+      { id: "1", key: "id", value: "old", description: "old_desc" },
+    ];
     const result = upsertPathVariable(initial, "id", "new");
     expect(result[0].value).toBe("new");
     expect(result[0].description).toBe("old_desc");
@@ -26,5 +33,10 @@ describe("pathVariables extra cases 2", () => {
   test("applyPathVariables with empty url or no variables", () => {
     expect(applyPathVariables("", [])).toBe("");
     expect(applyPathVariables("http://test", [])).toBe("http://test");
+  });
+
+  test("applyPathVariables returns match if variable exists but value is empty", () => {
+    const vars = [{ id: "1", key: "id", value: "", description: "" }];
+    expect(applyPathVariables("/:id", vars)).toBe("/:id");
   });
 });

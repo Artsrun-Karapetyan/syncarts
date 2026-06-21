@@ -7,16 +7,14 @@ import type {
 } from "@/contexts/WorkspaceContext";
 import { stringifyPostmanCollection } from "@/utils/postman/postmanExportParser";
 
-function makeCollection(overrides: Partial<Collection>): Collection {
+function makeCollection(overrides: any): Collection {
   return {
     id: "col-1",
     name: "Col 1",
-    collections: [],
     items: [],
     variables: [],
-    environments: [],
     ...overrides,
-  };
+  } as any;
 }
 
 describe("postmanExportParser extra cases", () => {
@@ -28,7 +26,7 @@ describe("postmanExportParser extra cases", () => {
           key: "url",
           value: "https://api.test",
           enabled: true,
-          type: "string",
+          type: "string" as any,
         },
       ],
       preRequestScript: "console.log('pre')",
@@ -63,7 +61,7 @@ describe("postmanExportParser extra cases", () => {
           key: "f-var",
           value: "f-val",
           enabled: false,
-          type: "string",
+          type: "string" as any,
         },
       ],
       preRequestScript: "console.log('f-pre')",
@@ -90,6 +88,7 @@ describe("postmanExportParser extra cases", () => {
       url: "invalid-url-no-protocol.com/api/test?q=1", // Hits fallback URL parser
       headers: [],
       bodyType: "form-data",
+      body: "",
       formData: [
         {
           id: "fd1",
@@ -102,7 +101,6 @@ describe("postmanExportParser extra cases", () => {
       ],
       queryParams: [
         {
-          id: "q1",
           key: "query1",
           value: "val1",
           enabled: true,
@@ -148,6 +146,7 @@ describe("postmanExportParser extra cases", () => {
       url: "https://api.com",
       headers: [],
       bodyType: "x-www-form-urlencoded",
+      body: "",
       formData: [
         { id: "fd1", key: "f", value: "v", type: "text", enabled: false },
       ],

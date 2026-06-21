@@ -1,15 +1,15 @@
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, test } from "bun:test";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { MenuSubmenu } from "./MenuSubmenu";
-import React from "react";
 import { Activity } from "lucide-react";
+
+import { MenuSubmenu } from "./MenuSubmenu";
 
 describe("MenuSubmenu", () => {
   test("renders closed submenu with label", () => {
     render(
       <MenuSubmenu icon={Activity} label="Submenu">
         <div>Child</div>
-      </MenuSubmenu>
+      </MenuSubmenu>,
     );
     expect(screen.getByText("Submenu")).toBeTruthy();
     expect(screen.queryByText("Child")).toBeNull();
@@ -19,13 +19,13 @@ describe("MenuSubmenu", () => {
     const { container } = render(
       <MenuSubmenu icon={Activity} label="Submenu">
         <div>Child Content</div>
-      </MenuSubmenu>
+      </MenuSubmenu>,
     );
     const div = container.firstChild as HTMLDivElement;
-    
+
     fireEvent.mouseEnter(div);
     expect(screen.getByText("Child Content")).toBeTruthy();
-    
+
     fireEvent.mouseLeave(div);
     expect(screen.queryByText("Child Content")).toBeNull();
   });
@@ -34,13 +34,13 @@ describe("MenuSubmenu", () => {
     render(
       <MenuSubmenu icon={Activity} label="Submenu">
         <div>Child Content</div>
-      </MenuSubmenu>
+      </MenuSubmenu>,
     );
     const btn = screen.getByRole("button");
-    
+
     fireEvent.click(btn);
     expect(screen.getByText("Child Content")).toBeTruthy();
-    
+
     fireEvent.click(btn);
     expect(screen.queryByText("Child Content")).toBeNull();
   });

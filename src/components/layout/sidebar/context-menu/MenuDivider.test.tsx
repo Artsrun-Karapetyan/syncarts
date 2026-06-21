@@ -1,7 +1,7 @@
-import { describe, expect, test } from "bun:test";
 import { render } from "@testing-library/react";
+import { describe, expect, test } from "bun:test";
+
 import { MenuDivider } from "./MenuDivider";
-import React from "react";
 
 describe("MenuDivider", () => {
   test("renders a divider", () => {

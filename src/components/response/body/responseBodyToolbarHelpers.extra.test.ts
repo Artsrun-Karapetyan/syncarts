@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { getNextMatchIndex, toolButtonClass, countMatches, formatButtonClass } from "./responseBodyToolbarHelpers";
+
+import {
+  countMatches,
+  formatButtonClass,
+  getNextMatchIndex,
+  toolButtonClass,
+} from "./responseBodyToolbarHelpers";
 
 describe("responseBodyToolbarHelpers extra cases", () => {
   test("getNextMatchIndex edge cases", () => {

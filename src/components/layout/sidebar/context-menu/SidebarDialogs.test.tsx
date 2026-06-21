@@ -1,19 +1,23 @@
-import { describe, expect, test, mock } from "bun:test";
+/* eslint-disable react/no-multi-comp */
 import { render, screen } from "@testing-library/react";
+import { describe, expect, mock, test } from "bun:test";
+
 import { SidebarDialogs } from "./SidebarDialogs";
-import React from "react";
 
 // Mock subcomponents
 mock.module("@/components/workspace/ImportModal", () => ({
-  ImportModal: (props: any) => props.isOpen ? <div data-testid="import-modal">Import</div> : null,
+  ImportModal: (props: any) =>
+    props.isOpen ? <div data-testid="import-modal">Import</div> : null,
 }));
 
 mock.module("@/components/ui/ConfirmModal/ConfirmModal", () => ({
-  ConfirmModal: (props: any) => props.isOpen ? <div data-testid="confirm-modal">{props.title}</div> : null,
+  ConfirmModal: (props: any) =>
+    props.isOpen ? <div data-testid="confirm-modal">{props.title}</div> : null,
 }));
 
 mock.module("@/components/workspace/CreateMergeRequestModal", () => ({
-  CreateMergeRequestModal: (props: any) => props.isOpen ? <div data-testid="merge-modal">Merge</div> : null,
+  CreateMergeRequestModal: (props: any) =>
+    props.isOpen ? <div data-testid="merge-modal">Merge</div> : null,
 }));
 
 mock.module("@/components/layout/sidebar/SidebarToast", () => ({
@@ -44,19 +48,39 @@ describe("SidebarDialogs", () => {
   });
 
   test("renders ConfirmModal with correct title for collection", () => {
-    render(<SidebarDialogs {...defaultProps} deleteTarget={{ type: "collection", id: "1" }} />);
+    render(
+      <SidebarDialogs
+        {...defaultProps}
+        deleteTarget={{ type: "collection", id: "1" }}
+      />,
+    );
     expect(screen.getByTestId("confirm-modal")).toBeTruthy();
     expect(screen.getByText("Delete Collection")).toBeTruthy();
   });
 
   test("renders ConfirmModal with correct title for example", () => {
-    render(<SidebarDialogs {...defaultProps} deleteTarget={{ type: "example", id: "1", collectionId: "1", requestId: "1" }} />);
+    render(
+      <SidebarDialogs
+        {...defaultProps}
+        deleteTarget={{
+          type: "example",
+          id: "1",
+          collectionId: "1",
+          requestId: "1",
+        }}
+      />,
+    );
     expect(screen.getByTestId("confirm-modal")).toBeTruthy();
     expect(screen.getByText("Delete Example")).toBeTruthy();
   });
 
   test("renders ConfirmModal with correct title for item", () => {
-    render(<SidebarDialogs {...defaultProps} deleteTarget={{ type: "item", id: "1", collectionId: "1" }} />);
+    render(
+      <SidebarDialogs
+        {...defaultProps}
+        deleteTarget={{ type: "item", id: "1", collectionId: "1" }}
+      />,
+    );
     expect(screen.getByTestId("confirm-modal")).toBeTruthy();
     expect(screen.getByText("Delete Item")).toBeTruthy();
   });
@@ -65,8 +89,12 @@ describe("SidebarDialogs", () => {
     render(
       <SidebarDialogs
         {...defaultProps}
-        mergeRequestTarget={{ sourceCollectionId: "1", targetWorkspaceId: "2", targetCollectionId: "3" }}
-      />
+        mergeRequestTarget={{
+          sourceCollectionId: "1",
+          targetWorkspaceId: "2",
+          targetCollectionId: "3",
+        }}
+      />,
     );
     expect(screen.getByTestId("merge-modal")).toBeTruthy();
   });

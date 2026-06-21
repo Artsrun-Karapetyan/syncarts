@@ -1,7 +1,8 @@
-import { describe, expect, test, mock, beforeEach } from "bun:test";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { useSidebarDragHandlers } from "./useSidebarDragHandlers";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { SIDEBAR_DRAG_DATA_TYPE } from "./sidebarDragHelpers";
+import { useSidebarDragHandlers } from "./useSidebarDragHandlers";
 
 describe("useSidebarDragHandlers", () => {
   const defaultArgs = {
@@ -20,25 +21,32 @@ describe("useSidebarDragHandlers", () => {
   });
 
   test("disables drag if search is active", () => {
-    const { result } = renderHook(() => useSidebarDragHandlers({ ...defaultArgs, collectionSearch: "test" }));
+    const { result } = renderHook(() =>
+      useSidebarDragHandlers({ ...defaultArgs, collectionSearch: "test" }),
+    );
     expect(result.current.canDrag).toBe(false);
   });
 
-  const createEvent = (props = {}) => ({
-    preventDefault: mock(),
-    stopPropagation: mock(),
-    dataTransfer: {
-      setData: mock(),
-      getData: mock(),
-    },
-    ...props,
-  } as any);
+  const createEvent = (props = {}) =>
+    ({
+      preventDefault: mock(),
+      stopPropagation: mock(),
+      dataTransfer: {
+        setData: mock(),
+        getData: mock(),
+      },
+      ...props,
+    }) as any;
 
   test("handles drag start", () => {
     const { result } = renderHook(() => useSidebarDragHandlers(defaultArgs));
     const event = createEvent();
-    const entity = { type: "folder" as const, collectionId: "c1", itemId: "f1" };
-    
+    const entity = {
+      type: "folder" as const,
+      collectionId: "c1",
+      itemId: "f1",
+    };
+
     act(() => {
       result.current.onDragStart(entity, event);
     });
@@ -48,9 +56,11 @@ describe("useSidebarDragHandlers", () => {
   });
 
   test("handles drag start ignored if disabled", () => {
-    const { result } = renderHook(() => useSidebarDragHandlers({ ...defaultArgs, collectionSearch: "t" }));
+    const { result } = renderHook(() =>
+      useSidebarDragHandlers({ ...defaultArgs, collectionSearch: "t" }),
+    );
     const event = createEvent();
-    
+
     act(() => {
       result.current.onDragStart({} as any, event);
     });
@@ -61,65 +71,107 @@ describe("useSidebarDragHandlers", () => {
 
   test("handles drag over", () => {
     const { result } = renderHook(() => useSidebarDragHandlers(defaultArgs));
-    const event = createEvent({ clientY: 50, currentTarget: { getBoundingClientRect: () => ({ top: 0, height: 100 }) } });
-    const entity = { type: "folder" as const, collectionId: "c1", itemId: "f1" };
-    const target = { type: "folder" as const, collectionId: "c1", itemId: "f2" };
-    
+    const event = createEvent({
+      clientY: 50,
+      currentTarget: { getBoundingClientRect: () => ({ top: 0, height: 100 }) },
+    });
+    const entity = {
+      type: "folder" as const,
+      collectionId: "c1",
+      itemId: "f1",
+    };
+    const target = {
+      type: "folder" as const,
+      collectionId: "c1",
+      itemId: "f2",
+    };
+
     act(() => {
       result.current.onDragStart(entity, event);
     });
-    
+
     act(() => {
       result.current.onDragOver(target, event);
     });
 
     expect(event.preventDefault).toHaveBeenCalled();
-    expect(result.current.dropTarget).toEqual({ ...target, position: "inside" });
+    expect(result.current.dropTarget).toEqual({
+      ...target,
+      position: "inside",
+    });
   });
 
   test("handles drop", () => {
     const { result } = renderHook(() => useSidebarDragHandlers(defaultArgs));
-    const event = createEvent({ clientY: 50, currentTarget: { getBoundingClientRect: () => ({ top: 0, height: 100 }) } });
-    const entity = { type: "folder" as const, collectionId: "c1", itemId: "f1" };
-    const target = { type: "folder" as const, collectionId: "c1", itemId: "f2" };
-    
+    const event = createEvent({
+      clientY: 50,
+      currentTarget: { getBoundingClientRect: () => ({ top: 0, height: 100 }) },
+    });
+    const entity = {
+      type: "folder" as const,
+      collectionId: "c1",
+      itemId: "f1",
+    };
+    const target = {
+      type: "folder" as const,
+      collectionId: "c1",
+      itemId: "f2",
+    };
+
     act(() => {
       result.current.onDragStart(entity, event);
     });
-    
+
     act(() => {
       result.current.onDrop(target, event);
     });
 
     expect(event.preventDefault).toHaveBeenCalled();
-    expect(defaultArgs.moveSidebarItem).toHaveBeenCalledWith(entity, { ...target, position: "inside" });
+    expect(defaultArgs.moveSidebarItem).toHaveBeenCalledWith(entity, {
+      ...target,
+      position: "inside",
+    });
     expect(result.current.draggingEntity).toBeNull();
   });
 
   test("handles drop with external data", () => {
     const { result } = renderHook(() => useSidebarDragHandlers(defaultArgs));
-    const entity = { type: "folder" as const, collectionId: "c1", itemId: "f1" };
+    const entity = {
+      type: "folder" as const,
+      collectionId: "c1",
+      itemId: "f1",
+    };
     const event = createEvent({
       dataTransfer: {
         setData: mock(),
-        getData: (type: string) => type === SIDEBAR_DRAG_DATA_TYPE ? JSON.stringify(entity) : null
+        getData: (type: string) =>
+          type === SIDEBAR_DRAG_DATA_TYPE ? JSON.stringify(entity) : null,
       },
-      clientY: 50, 
-      currentTarget: { getBoundingClientRect: () => ({ top: 0, height: 100 }) }
+      clientY: 50,
+      currentTarget: { getBoundingClientRect: () => ({ top: 0, height: 100 }) },
     });
-    const target = { type: "folder" as const, collectionId: "c1", itemId: "f2" };
-    
+    const target = {
+      type: "folder" as const,
+      collectionId: "c1",
+      itemId: "f2",
+    };
+
     act(() => {
       result.current.onDrop(target, event);
     });
 
-    expect(defaultArgs.moveSidebarItem).toHaveBeenCalledWith(entity, { ...target, position: "inside" });
+    expect(defaultArgs.moveSidebarItem).toHaveBeenCalledWith(entity, {
+      ...target,
+      position: "inside",
+    });
   });
 
   test("handles drop ignored if search active", () => {
-    const { result } = renderHook(() => useSidebarDragHandlers({ ...defaultArgs, collectionSearch: "t" }));
+    const { result } = renderHook(() =>
+      useSidebarDragHandlers({ ...defaultArgs, collectionSearch: "t" }),
+    );
     const event = createEvent();
-    
+
     act(() => {
       result.current.onDrop({} as any, event);
     });
@@ -131,13 +183,17 @@ describe("useSidebarDragHandlers", () => {
   test("handles drag end", () => {
     const { result } = renderHook(() => useSidebarDragHandlers(defaultArgs));
     const event = createEvent();
-    const entity = { type: "folder" as const, collectionId: "c1", itemId: "f1" };
-    
+    const entity = {
+      type: "folder" as const,
+      collectionId: "c1",
+      itemId: "f1",
+    };
+
     act(() => {
       result.current.onDragStart(entity, event);
     });
     expect(result.current.draggingEntity).not.toBeNull();
-    
+
     act(() => {
       result.current.onDragEnd();
     });
@@ -146,14 +202,21 @@ describe("useSidebarDragHandlers", () => {
 
   test("handles drag over collection and expands", () => {
     const { result } = renderHook(() => useSidebarDragHandlers(defaultArgs));
-    const event = createEvent({ clientY: 50, currentTarget: { getBoundingClientRect: () => ({ top: 0, height: 100 }) } });
-    const entity = { type: "folder" as const, collectionId: "c1", itemId: "f1" };
+    const event = createEvent({
+      clientY: 50,
+      currentTarget: { getBoundingClientRect: () => ({ top: 0, height: 100 }) },
+    });
+    const entity = {
+      type: "folder" as const,
+      collectionId: "c1",
+      itemId: "f1",
+    };
     const target = { type: "collection" as const, collectionId: "c2" };
-    
+
     act(() => {
       result.current.onDragStart(entity, event);
     });
-    
+
     act(() => {
       result.current.onDragOver(target, event);
     });
@@ -165,14 +228,25 @@ describe("useSidebarDragHandlers", () => {
 
   test("handles drag over folder and expands", () => {
     const { result } = renderHook(() => useSidebarDragHandlers(defaultArgs));
-    const event = createEvent({ clientY: 50, currentTarget: { getBoundingClientRect: () => ({ top: 0, height: 100 }) } });
-    const entity = { type: "folder" as const, collectionId: "c1", itemId: "f1" };
-    const target = { type: "folder" as const, collectionId: "c2", itemId: "f2" };
-    
+    const event = createEvent({
+      clientY: 50,
+      currentTarget: { getBoundingClientRect: () => ({ top: 0, height: 100 }) },
+    });
+    const entity = {
+      type: "folder" as const,
+      collectionId: "c1",
+      itemId: "f1",
+    };
+    const target = {
+      type: "folder" as const,
+      collectionId: "c2",
+      itemId: "f2",
+    };
+
     act(() => {
       result.current.onDragStart(entity, event);
     });
-    
+
     act(() => {
       result.current.onDragOver(target, event);
     });

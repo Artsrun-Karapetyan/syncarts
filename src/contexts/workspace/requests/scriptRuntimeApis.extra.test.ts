@@ -1,4 +1,5 @@
-import { describe, expect, test, mock } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
+
 import { createVariablesApi, upsertVariable } from "./scriptRuntimeApis";
 
 describe("scriptRuntimeApis extra cases", () => {
@@ -13,7 +14,7 @@ describe("scriptRuntimeApis extra cases", () => {
       environments: [{ id: "env1", variables: [] } as any],
       globalVariables: [],
       updateEnvironment,
-      updateGlobalVariables
+      updateGlobalVariables,
     });
 
     api.set("key1", "val1");

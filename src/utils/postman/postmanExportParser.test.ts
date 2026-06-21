@@ -23,7 +23,6 @@ describe("stringifyPostmanCollection", () => {
           pathVariables: [
             { id: "path", key: "id", value: "42", description: "User id" },
           ],
-          response: null,
         },
       ],
     };

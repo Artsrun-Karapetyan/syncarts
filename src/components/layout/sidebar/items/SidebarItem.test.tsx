@@ -1,7 +1,7 @@
-import { describe, expect, test, mock } from "bun:test";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, mock, test } from "bun:test";
+
 import { SidebarItem } from "./SidebarItem";
-import React from "react";
 // Mock WorkspaceContext
 mock.module("@/contexts/WorkspaceContext", () => ({
   useWorkspace: () => ({
@@ -39,7 +39,12 @@ describe("SidebarItem", () => {
   };
 
   test("renders RequestSidebarItem when item type is request", () => {
-    const item = { type: "request", id: "r1", name: "My Request", method: "GET" } as any;
+    const item = {
+      type: "request",
+      id: "r1",
+      name: "My Request",
+      method: "GET",
+    } as any;
     render(<SidebarItem {...defaultProps} item={item} />);
     expect(screen.getByText("My Request")).toBeTruthy();
   });

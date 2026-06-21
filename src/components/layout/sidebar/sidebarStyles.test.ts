@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SIDEBAR_ROOT_STYLE, SIDEBAR_SCROLL_STYLE } from "./sidebarStyles";
 
 describe("sidebarStyles", () => {

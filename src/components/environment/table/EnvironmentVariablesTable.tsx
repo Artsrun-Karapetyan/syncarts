@@ -1,8 +1,8 @@
 import { Plus } from "lucide-react";
 
-import { DynamicGlobalRow } from "@/components/environment/DynamicGlobalRow";
-import { EnvironmentHeaderCell } from "@/components/environment/EnvironmentHeaderCell";
-import { EnvironmentVariableRow } from "@/components/environment/EnvironmentVariableRow";
+import { DynamicGlobalRow } from "@/components/environment/table/DynamicGlobalRow";
+import { EnvironmentHeaderCell } from "@/components/environment/table/EnvironmentHeaderCell";
+import { EnvironmentVariableRow } from "@/components/environment/table/EnvironmentVariableRow";
 import type { EnvironmentVariable } from "@/contexts/WorkspaceContext";
 
 interface EnvironmentVariablesTableProps {

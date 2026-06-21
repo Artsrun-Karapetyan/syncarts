@@ -73,7 +73,7 @@ describe("collectionItemHelpers extra cases", () => {
 
     const result = removeRequestFromItems(items, "request");
     // Should remove both top level and deeply nested
-    expect((result[0] as Folder).items[0].items).toEqual([]);
+    expect(((result[0] as Folder).items[0] as Folder).items).toEqual([]);
     expect(result.length).toBe(1);
   });
 
@@ -88,7 +88,7 @@ describe("collectionItemHelpers extra cases", () => {
     ];
 
     const result = addRequestToFolder(items, "target", request);
-    expect((result[0] as Folder).items[0].items).toHaveLength(1);
+    expect(((result[0] as Folder).items[0] as Folder).items).toHaveLength(1);
   });
 
   test("addExampleToItems adds example to nested folder request", () => {

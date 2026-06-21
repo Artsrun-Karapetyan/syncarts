@@ -74,10 +74,10 @@ describe("collection pull helpers", () => {
   test("getWorkspaceCollections supports full and normalized API responses", () => {
     const collections = [{ id: "collection", name: "API", items: [] }];
 
-    expect(getWorkspaceCollections({ collections })).toBe(collections);
-    expect(getWorkspaceCollections({ data: { collections } })).toBe(
+    expect(getWorkspaceCollections({ collections } as any)).toBe(collections);
+    expect(getWorkspaceCollections({ data: { collections } } as any)).toBe(
       collections,
     );
-    expect(getWorkspaceCollections({})).toEqual([]);
+    expect(getWorkspaceCollections({} as any)).toEqual([]);
   });
 });
