@@ -9,7 +9,7 @@ import { useWorkspace } from "./useWorkspace";
 
 // Dummy component that consumes useWorkspace
 function Consumer() {
-  const ws = useWorkspace();
+  const ws = useWorkspace() as any;
   return <div data-testid="ws-name">{ws.activeWorkspace?.name || "none"}</div>;
 }
 
