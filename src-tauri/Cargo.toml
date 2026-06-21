@@ -29,3 +29,8 @@ tauri-plugin-dialog = "2.7.1"
 tauri-plugin-updater = "2"
 keyring = "4.1.1"
 notify = "8.2.0"
+
+[dev-dependencies]
+mockito = "1.4"
+tempfile = "3.10"
+tokio = { version = "1", features = ["rt", "macros", "rt-multi-thread"] }

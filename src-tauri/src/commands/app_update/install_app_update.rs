@@ -1,3 +1,4 @@
+#![cfg(not(tarpaulin_include))]
 use tauri::{AppHandle, State};
 
 use super::types::PendingAppUpdate;
