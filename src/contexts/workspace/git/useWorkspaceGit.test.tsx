@@ -69,7 +69,7 @@ describe("useWorkspaceGit", () => {
   });
 
   test("checkoutBranch calls Tauri invoke and refreshes", async () => {
-    mockInvoke.mockImplementation(async (cmd, args) => {
+    mockInvoke.mockImplementation(async (cmd, _args) => {
       if (cmd === "git_check_repo") return true;
       if (cmd === "git_get_current_branch") return "feature";
       if (cmd === "git_get_branches")
@@ -89,7 +89,7 @@ describe("useWorkspaceGit", () => {
 
     expect(result.current.currentBranch).toBe("feature");
 
-    let checkoutResult;
+    let checkoutResult: boolean | undefined;
     await act(async () => {
       checkoutResult = await result.current.checkoutBranch("main");
     });
@@ -116,14 +116,14 @@ describe("useWorkspaceGit", () => {
       await new Promise((r) => setTimeout(r, 10));
     });
 
-    let pullResult;
+    let pullResult: boolean | undefined;
     await act(async () => {
       pullResult = await result.current.pullChanges();
     });
     expect(pullResult).toBe(true);
     expect(mockInvoke).toHaveBeenCalledWith("git_pull", { path: "/mock/path" });
 
-    let pushResult;
+    let pushResult: boolean | undefined;
     await act(async () => {
       pushResult = await result.current.pushChanges();
     });

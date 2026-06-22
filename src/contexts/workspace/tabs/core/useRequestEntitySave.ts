@@ -45,7 +45,7 @@ export function useRequestEntitySave(args: RequestEntitySaveArgs) {
     );
     args.rememberTabSnapshot(tab.id, updatedRequest);
     args.saveRequest(saved.collectionId, saved.folderId, updatedRequest, {
-      markDirty: false,
+      markDirty: args.currentWorkspace?.type === "local",
     });
     void syncRequestEntity(args, {
       collectionId: saved.collectionId,

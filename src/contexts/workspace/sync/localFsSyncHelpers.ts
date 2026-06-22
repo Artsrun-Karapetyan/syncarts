@@ -25,7 +25,7 @@ export async function writeWorkspaceToLocalFs(workspace: Workspace) {
 
   // syncarts.json
   filesToWrite.push({
-    relative_path: "syncarts.json",
+    relative_path: ".syncarts/syncarts.json",
     content: JSON.stringify(
       {
         id: workspace.id,
@@ -38,26 +38,14 @@ export async function writeWorkspaceToLocalFs(workspace: Workspace) {
     ),
   });
 
-  // Wipe old collections and environments before writing
-  try {
-    await invoke("delete_local_dir", {
-      basePath: workspace.path,
-      relativePath: "collections",
-    });
-    await invoke("delete_local_dir", {
-      basePath: workspace.path,
-      relativePath: "environments",
-    });
-  } catch {
-    // Ignore
-  }
+
 
   // environments
   const usedEnvNames = new Set<string>();
   for (const env of workspace.environments || []) {
     const safeName = getUniqueName(sanitizeFilename(env.name), usedEnvNames);
     filesToWrite.push({
-      relative_path: `environments/${safeName}.env.json`,
+      relative_path: `.syncarts/environments/${safeName}.env.json`,
       content: JSON.stringify(env, null, 2),
     });
   }
@@ -66,7 +54,7 @@ export async function writeWorkspaceToLocalFs(workspace: Workspace) {
   const usedColNames = new Set<string>();
   for (const col of workspace.collections || []) {
     const safeName = getUniqueName(sanitizeFilename(col.name), usedColNames);
-    const colPath = `collections/${safeName}`;
+    const colPath = `.syncarts/collections/${safeName}`;
 
     filesToWrite.push({
       relative_path: `${colPath}/collection.json`,
@@ -87,6 +75,30 @@ export async function writeWorkspaceToLocalFs(workspace: Workspace) {
     });
 
     writeItemsRecursive(col.items, colPath, filesToWrite);
+  }
+
+  // Wipe old files that are no longer needed
+  try {
+    const existingFiles: LocalFile[] = await invoke("read_local_workspace", {
+      path: workspace.path,
+    });
+    
+    const filesToWritePaths = new Set(filesToWrite.map((f) => f.relative_path));
+    
+    for (const existing of existingFiles) {
+      if (
+        (existing.relative_path.startsWith(".syncarts/collections/") ||
+          existing.relative_path.startsWith(".syncarts/environments/")) &&
+        !filesToWritePaths.has(existing.relative_path)
+      ) {
+        await invoke("delete_local_file", {
+          basePath: workspace.path,
+          relativePath: existing.relative_path,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Failed to cleanup old files:", err);
   }
 
   // Optimize: we can just write them all
@@ -150,7 +162,7 @@ export async function readWorkspaceFromLocalFs(
     if (!files || files.length === 0) return null;
 
     const workspaceSyncartsFile = files.find(
-      (f) => f.relative_path === "syncarts.json",
+      (f) => f.relative_path === ".syncarts/syncarts.json",
     );
 
     let workspaceData: any = {};
@@ -175,7 +187,7 @@ export async function readWorkspaceFromLocalFs(
     // Load Environments
     const envFiles = files.filter(
       (f) =>
-        f.relative_path.startsWith("environments/") &&
+        f.relative_path.startsWith(".syncarts/environments/") &&
         f.relative_path.endsWith(".env.json"),
     );
     workspace.environments = envFiles.map((f) => JSON.parse(f.content));
@@ -183,7 +195,7 @@ export async function readWorkspaceFromLocalFs(
     // Load Collections
     const colFiles = files.filter(
       (f) =>
-        f.relative_path.startsWith("collections/") &&
+        f.relative_path.startsWith(".syncarts/collections/") &&
         f.relative_path.endsWith("collection.json"),
     );
 

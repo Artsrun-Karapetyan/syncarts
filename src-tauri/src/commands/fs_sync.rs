@@ -22,17 +22,17 @@ pub fn read_local_workspace(path: String) -> Result<Vec<LocalFile>, String> {
     let mut files = Vec::new();
     
     // Read syncarts.json
-    let syncarts_path = base_path.join("syncarts.json");
+    let syncarts_path = base_path.join(".syncarts").join("syncarts.json");
     if syncarts_path.exists() && syncarts_path.is_file() {
         if let Ok(content) = fs::read_to_string(&syncarts_path) {
             files.push(LocalFile {
-                relative_path: "syncarts.json".to_string(),
+                relative_path: ".syncarts/syncarts.json".to_string(),
                 content,
             });
         }
     }
 
-    let mut dirs_to_visit = vec![base_path.join("collections"), base_path.join("environments")];
+    let mut dirs_to_visit = vec![base_path.join(".syncarts").join("collections"), base_path.join(".syncarts").join("environments")];
 
     while let Some(current_dir) = dirs_to_visit.pop() {
         if !current_dir.exists() || !current_dir.is_dir() {
@@ -112,9 +112,9 @@ pub fn watch_local_workspace(app: AppHandle, state: State<'_, FsWatcherState>, p
                 let mut relevant = false;
                 for p in event.paths.iter() {
                     let path_str = p.to_string_lossy().replace("\\", "/");
-                    if path_str.contains("/collections/") || 
-                       path_str.contains("/environments/") || 
-                       path_str.ends_with("syncarts.json") {
+                    if path_str.contains("/.syncarts/collections/") || 
+                       path_str.contains("/.syncarts/environments/") || 
+                       path_str.ends_with(".syncarts/syncarts.json") {
                         relevant = true;
                         break;
                     }
