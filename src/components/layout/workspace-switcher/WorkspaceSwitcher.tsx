@@ -11,6 +11,7 @@ import {
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getAuthToken } from "@/lib/auth";
 import { useStoredUser } from "@/lib/session";
+import { GitBranchSelector } from "@/components/layout/sidebar/workspace/GitBranchSelector";
 
 type WorkspaceSwitcherProps = {
   mode?: "sidebar" | "topbar";
@@ -262,9 +263,10 @@ export function WorkspaceSwitcher({
             ) : null
           }
           compact={mode === "topbar"}
-          style={mode === "topbar" ? { width: 280 } : undefined}
+          style={mode === "topbar" ? { width: 180 } : undefined}
         />
       </div>
+      <GitBranchSelector mode={mode} />
 
       {isCreatingWorkspace && (
         <WorkspaceNamePopover

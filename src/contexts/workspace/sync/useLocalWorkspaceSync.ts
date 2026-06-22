@@ -58,18 +58,26 @@ export function useLocalWorkspaceSync({
         const fsWorkspace = await readWorkspaceFromLocalFs(
           currentWorkspace.path!,
         );
-        if (fsWorkspace) {
-          setWorkspaces((prev) =>
-            prev.map((w) =>
-              w.id === activeWorkspaceId
+        setWorkspaces((prev) =>
+          prev.map((w) => {
+            if (w.id === activeWorkspaceId) {
+              return fsWorkspace
                 ? { ...fsWorkspace, id: activeWorkspaceId }
-                : w,
-            ),
-          );
-        }
+                : {
+                    ...w,
+                    collections: [],
+                    environments: [],
+                    globalVariables: [],
+                  };
+            }
+            return w;
+          }),
+        );
 
         // Start watching for FS changes (from Git pull, etc)
         await invoke("watch_local_workspace", { path: currentWorkspace.path });
+
+        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
         unlisten = await listen("fs_event", async (event: any) => {
           const payload = event.payload as {
@@ -80,19 +88,28 @@ export function useLocalWorkspaceSync({
           if (payload.workspace === currentWorkspace.path) {
             if (isSyncingRef.current) return; // ignore our own writes
 
-            // Reload workspace from FS
-            const updatedFsWorkspace = await readWorkspaceFromLocalFs(
-              currentWorkspace.path!,
-            );
-            if (updatedFsWorkspace) {
-              setWorkspaces((prev) =>
-                prev.map((w) =>
-                  w.id === activeWorkspaceId
-                    ? { ...updatedFsWorkspace, id: activeWorkspaceId }
-                    : w,
-                ),
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(async () => {
+              // Reload workspace from FS
+              const updatedFsWorkspace = await readWorkspaceFromLocalFs(
+                currentWorkspace.path!,
               );
-            }
+              setWorkspaces((prev) =>
+                prev.map((w) => {
+                  if (w.id === activeWorkspaceId) {
+                    return updatedFsWorkspace
+                      ? { ...updatedFsWorkspace, id: activeWorkspaceId }
+                      : {
+                          ...w,
+                          collections: [],
+                          environments: [],
+                          globalVariables: [],
+                        };
+                  }
+                  return w;
+                }),
+              );
+            }, 300);
           }
         });
       } catch (err) {

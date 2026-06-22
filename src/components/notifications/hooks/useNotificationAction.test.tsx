@@ -1,10 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, mock, test } from "bun:test";
-import React from "react";
 
 let mockActiveWorkspaceId = "w1";
-let switchWorkspaceCalled: string | null = null;
-let openCollectionTabCalled: string | null = null;
+let switchWorkspaceCalled: any = null;
+let openCollectionTabCalled: any = null;
 let openRequestTabCalled: any[] = [];
 
 mock.module("@/contexts/WorkspaceContext", () => ({

@@ -7,6 +7,17 @@ export interface LocalFile {
   content: string;
 }
 
+function getUniqueName(desiredName: string, usedNames: Set<string>): string {
+  let name = desiredName;
+  let counter = 1;
+  while (usedNames.has(name.toLowerCase())) {
+    name = `${desiredName} ${counter}`;
+    counter++;
+  }
+  usedNames.add(name.toLowerCase());
+  return name;
+}
+
 export async function writeWorkspaceToLocalFs(workspace: Workspace) {
   if (!workspace.path || workspace.type !== "local") return;
 
@@ -27,17 +38,35 @@ export async function writeWorkspaceToLocalFs(workspace: Workspace) {
     ),
   });
 
+  // Wipe old collections and environments before writing
+  try {
+    await invoke("delete_local_dir", {
+      basePath: workspace.path,
+      relativePath: "collections",
+    });
+    await invoke("delete_local_dir", {
+      basePath: workspace.path,
+      relativePath: "environments",
+    });
+  } catch {
+    // Ignore
+  }
+
   // environments
+  const usedEnvNames = new Set<string>();
   for (const env of workspace.environments || []) {
+    const safeName = getUniqueName(sanitizeFilename(env.name), usedEnvNames);
     filesToWrite.push({
-      relative_path: `environments/${sanitizeFilename(env.name)}_${env.id}.env.json`,
+      relative_path: `environments/${safeName}.env.json`,
       content: JSON.stringify(env, null, 2),
     });
   }
 
   // collections
+  const usedColNames = new Set<string>();
   for (const col of workspace.collections || []) {
-    const colPath = `collections/${sanitizeFilename(col.name)}_${col.id}`;
+    const safeName = getUniqueName(sanitizeFilename(col.name), usedColNames);
+    const colPath = `collections/${safeName}`;
 
     filesToWrite.push({
       relative_path: `${colPath}/collection.json`,
@@ -79,9 +108,13 @@ function writeItemsRecursive(
   basePath: string,
   filesToWrite: LocalFile[],
 ) {
+  const usedNames = new Set<string>();
+
   for (const item of items) {
+    const safeName = getUniqueName(sanitizeFilename(item.name), usedNames);
+
     if (item.type === "folder") {
-      const folderPath = `${basePath}/${sanitizeFilename(item.name)}_${item.id}`;
+      const folderPath = `${basePath}/${safeName}`;
       filesToWrite.push({
         relative_path: `${folderPath}/folder.json`,
         content: JSON.stringify(
@@ -102,7 +135,7 @@ function writeItemsRecursive(
       writeItemsRecursive(item.items || [], folderPath, filesToWrite);
     } else if (item.type === "request") {
       filesToWrite.push({
-        relative_path: `${basePath}/${sanitizeFilename(item.name)}_${item.id}.req.json`,
+        relative_path: `${basePath}/${safeName}.req.json`,
         content: JSON.stringify(item, null, 2),
       });
     }
@@ -119,9 +152,19 @@ export async function readWorkspaceFromLocalFs(
     const workspaceSyncartsFile = files.find(
       (f) => f.relative_path === "syncarts.json",
     );
-    if (!workspaceSyncartsFile) return null;
 
-    const workspaceData = JSON.parse(workspaceSyncartsFile.content);
+    let workspaceData: any = {};
+    if (workspaceSyncartsFile) {
+      workspaceData = JSON.parse(workspaceSyncartsFile.content);
+    } else {
+      if (files.length === 0) return null;
+      workspaceData = {
+        id: path, // Fallback ID
+        name: path.split("/").pop() || "Local Workspace",
+        type: "local",
+      };
+    }
+
     const workspace: Workspace = {
       ...workspaceData,
       path,
@@ -197,5 +240,6 @@ function buildItemsRecursive(files: LocalFile[], parentDir: string): any[] {
 }
 
 function sanitizeFilename(name: string) {
-  return name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+  // eslint-disable-next-line no-control-regex
+  return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_").trim() || "unnamed";
 }

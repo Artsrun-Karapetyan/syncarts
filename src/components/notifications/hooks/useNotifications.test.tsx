@@ -5,7 +5,7 @@ import React from "react";
 let mockAuthToken: string | null = "valid-token";
 let fetchCountsCalled = false;
 let fetchNotificationsCalled = false;
-let markReadCalledId: string | null = null;
+let markReadCalledId: any = null;
 
 mock.module("@/lib/auth", () => ({
   getAuthToken: () => mockAuthToken,

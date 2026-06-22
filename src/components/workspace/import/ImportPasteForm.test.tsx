@@ -1,6 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, mock, test } from "bun:test";
-import React from "react";
 
 import { ImportPasteForm } from "./ImportPasteForm";
 
@@ -40,7 +39,9 @@ describe("ImportPasteForm", () => {
         inputText="curl val"
       />,
     );
-    const button = screen.getByRole("button", { name: "Importing..." });
+    const button = screen.getByRole("button", {
+      name: "Importing...",
+    }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
   });
 });

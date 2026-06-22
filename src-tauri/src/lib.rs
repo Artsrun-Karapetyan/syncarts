@@ -42,8 +42,13 @@ pub fn run() {
             commands::fs_sync::read_local_workspace,
             commands::fs_sync::write_local_file,
             commands::fs_sync::delete_local_file,
+            commands::fs_sync::delete_local_dir,
             commands::fs_sync::watch_local_workspace,
             commands::fs_sync::unwatch_local_workspace,
+            commands::git::git_check_repo,
+            commands::git::git_get_current_branch,
+            commands::git::git_get_branches,
+            commands::git::git_checkout_branch,
             show_main_window
         ])
         .on_page_load({

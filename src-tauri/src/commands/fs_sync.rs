@@ -20,9 +20,24 @@ pub fn read_local_workspace(path: String) -> Result<Vec<LocalFile>, String> {
     }
 
     let mut files = Vec::new();
-    let mut dirs_to_visit = vec![base_path.to_path_buf()];
+    
+    // Read syncarts.json
+    let syncarts_path = base_path.join("syncarts.json");
+    if syncarts_path.exists() && syncarts_path.is_file() {
+        if let Ok(content) = fs::read_to_string(&syncarts_path) {
+            files.push(LocalFile {
+                relative_path: "syncarts.json".to_string(),
+                content,
+            });
+        }
+    }
+
+    let mut dirs_to_visit = vec![base_path.join("collections"), base_path.join("environments")];
 
     while let Some(current_dir) = dirs_to_visit.pop() {
+        if !current_dir.exists() || !current_dir.is_dir() {
+            continue;
+        }
         if let Ok(entries) = fs::read_dir(&current_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
@@ -68,6 +83,15 @@ pub fn delete_local_file(base_path: String, relative_path: String) -> Result<(),
     Ok(())
 }
 
+#[tauri::command]
+pub fn delete_local_dir(base_path: String, relative_path: String) -> Result<(), String> {
+    let path = Path::new(&base_path).join(&relative_path);
+    if path.exists() && path.is_dir() {
+        fs::remove_dir_all(&path).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 pub struct FsWatcherState {
     pub watchers: Mutex<HashMap<String, RecommendedWatcher>>,
 }
@@ -85,18 +109,33 @@ pub fn watch_local_workspace(app: AppHandle, state: State<'_, FsWatcherState>, p
     let mut watcher = notify::recommended_watcher(move |res: Result<Event, notify::Error>| {
         match res {
             Ok(event) => {
-                let paths: Vec<String> = event.paths.iter().map(|p| p.to_string_lossy().to_string()).collect();
-                let _ = app_clone.emit("fs_event", serde_json::json!({
-                    "workspace": path_clone.clone(),
-                    "kind": format!("{:?}", event.kind),
-                    "paths": paths
-                }));
+                let mut relevant = false;
+                for p in event.paths.iter() {
+                    let path_str = p.to_string_lossy().replace("\\", "/");
+                    if path_str.contains("/collections/") || 
+                       path_str.contains("/environments/") || 
+                       path_str.ends_with("syncarts.json") {
+                        relevant = true;
+                        break;
+                    }
+                }
+
+                if relevant {
+                    let paths: Vec<String> = event.paths.iter().map(|p| p.to_string_lossy().to_string()).collect();
+                    let _ = app_clone.emit("fs_event", serde_json::json!({
+                        "workspace": path_clone.clone(),
+                        "kind": format!("{:?}", event.kind),
+                        "paths": paths
+                    }));
+                }
             },
             Err(e) => println!("watch error: {:?}", e),
         }
     }).map_err(|e| e.to_string())?;
 
-    watcher.watch(Path::new(&path), RecursiveMode::Recursive).map_err(|e| e.to_string())?;
+    let base = Path::new(&path);
+    watcher.watch(&base, RecursiveMode::Recursive).map_err(|e| format!("Failed to watch workspace: {}", e))?;
+
     watchers.insert(path, watcher);
 
     Ok(())
