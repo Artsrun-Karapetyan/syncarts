@@ -49,6 +49,9 @@ pub fn run() {
             commands::git::git_get_current_branch,
             commands::git::git_get_branches,
             commands::git::git_checkout_branch,
+            commands::git::git_get_sync_status,
+            commands::git::git_pull,
+            commands::git::git_push,
             show_main_window
         ])
         .on_page_load({

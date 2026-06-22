@@ -7,6 +7,13 @@ pub struct GitBranch {
     pub is_remote: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct GitSyncStatus {
+    pub ahead: u32,
+    pub behind: u32,
+    pub upstream: Option<String>,
+}
+
 #[tauri::command]
 pub async fn git_check_repo(path: String) -> Result<bool, String> {
     let output = Command::new("git")
@@ -125,3 +132,98 @@ pub async fn git_checkout_branch(path: String, branch: String) -> Result<bool, S
         Err(e) => Err(format!("Failed to execute git checkout: {}", e)),
     }
 }
+
+#[tauri::command]
+pub async fn git_get_sync_status(path: String) -> Result<GitSyncStatus, String> {
+    let _ = Command::new("git")
+        .current_dir(&path)
+        .arg("fetch")
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .output()
+        .await;
+
+    let upstream_out = Command::new("git")
+        .current_dir(&path)
+        .arg("rev-parse")
+        .arg("--abbrev-ref")
+        .arg("--symbolic-full-name")
+        .arg("@{u}")
+        .output()
+        .await;
+
+    let upstream = match upstream_out {
+        Ok(out) if out.status.success() => {
+            let u = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if u.is_empty() { None } else { Some(u) }
+        }
+        _ => None,
+    };
+
+    if let Some(up) = &upstream {
+        let count_out = Command::new("git")
+            .current_dir(&path)
+            .arg("rev-list")
+            .arg("--left-right")
+            .arg("--count")
+            .arg(format!("HEAD...{}", up))
+            .output()
+            .await;
+
+        if let Ok(out) = count_out {
+            if out.status.success() {
+                let counts = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                let parts: Vec<&str> = counts.split_whitespace().collect();
+                if parts.len() == 2 {
+                    let ahead = parts[0].parse::<u32>().unwrap_or(0);
+                    let behind = parts[1].parse::<u32>().unwrap_or(0);
+                    return Ok(GitSyncStatus { ahead, behind, upstream: Some(up.clone()) });
+                }
+            }
+        }
+    }
+
+    Ok(GitSyncStatus { ahead: 0, behind: 0, upstream: None })
+}
+
+#[tauri::command]
+pub async fn git_pull(path: String) -> Result<bool, String> {
+    let output = Command::new("git")
+        .current_dir(&path)
+        .arg("pull")
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .output()
+        .await;
+
+    match output {
+        Ok(out) => {
+            if out.status.success() {
+                Ok(true)
+            } else {
+                Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
+            }
+        }
+        Err(e) => Err(format!("Failed to execute git pull: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn git_push(path: String) -> Result<bool, String> {
+    let output = Command::new("git")
+        .current_dir(&path)
+        .arg("push")
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .output()
+        .await;
+
+    match output {
+        Ok(out) => {
+            if out.status.success() {
+                Ok(true)
+            } else {
+                Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
+            }
+        }
+        Err(e) => Err(format!("Failed to execute git push: {}", e)),
+    }
+}
+

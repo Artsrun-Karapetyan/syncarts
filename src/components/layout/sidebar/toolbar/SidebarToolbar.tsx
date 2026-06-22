@@ -12,7 +12,7 @@ import { ToolbarButton } from "@/components/layout/sidebar/toolbar/ToolbarButton
 
 interface SidebarToolbarProps {
   openMrCount: number;
-  onMergeRequests: () => void;
+  onMergeRequests?: () => void;
   onImport?: () => void;
   onNewRequest?: () => void;
   onNewCollection?: () => void;
@@ -63,20 +63,22 @@ export function SidebarToolbar({
             }
           />
         )}
-        <ToolbarButton
-          tooltip="Merge Requests"
-          tooltipPos="right"
-          icon={GitPullRequest}
-          onClick={onMergeRequests}
-          color={openMrCount > 0 ? "#00f0ff" : undefined}
-          background={openMrCount > 0 ? "rgba(0, 240, 255, 0.1)" : undefined}
-          hoverColor={openMrCount > 0 ? "#00f0ff" : "#b000ff"}
-          hoverBackground={
-            openMrCount > 0 ? "rgba(0, 240, 255, 0.2)" : "var(--bg-tertiary)"
-          }
-        >
-          {openMrCount > 0 && <MergeRequestBadge count={openMrCount} />}
-        </ToolbarButton>
+        {onMergeRequests && (
+          <ToolbarButton
+            tooltip="Merge Requests"
+            tooltipPos="right"
+            icon={GitPullRequest}
+            onClick={onMergeRequests}
+            color={openMrCount > 0 ? "#00f0ff" : undefined}
+            background={openMrCount > 0 ? "rgba(0, 240, 255, 0.1)" : undefined}
+            hoverColor={openMrCount > 0 ? "#00f0ff" : "#b000ff"}
+            hoverBackground={
+              openMrCount > 0 ? "rgba(0, 240, 255, 0.2)" : "var(--bg-tertiary)"
+            }
+          >
+            {openMrCount > 0 && <MergeRequestBadge count={openMrCount} />}
+          </ToolbarButton>
+        )}
         {onImport && (
           <ToolbarButton
             tooltip="Import (or drop file anywhere)"

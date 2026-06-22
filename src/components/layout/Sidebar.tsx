@@ -226,6 +226,7 @@ export function Sidebar() {
   };
 
   const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
+  const isLocalWorkspace = activeWorkspace?.type === "local";
   const isOwner =
     !activeWorkspace?.ownerId || activeWorkspace.ownerId === userId;
   const isViewer =
@@ -245,7 +246,9 @@ export function Sidebar() {
       >
         <SidebarToolbar
           openMrCount={openMrCount}
-          onMergeRequests={() => navigate({ to: "/merge-requests" })}
+          onMergeRequests={
+            isLocalWorkspace ? undefined : () => navigate({ to: "/merge-requests" })
+          }
           onImport={isViewer ? undefined : () => setIsImportModalOpen(true)}
           onNewRequest={isViewer ? undefined : () => addTab()}
           onNewCollection={
@@ -257,7 +260,7 @@ export function Sidebar() {
                 }
           }
           onToggleWorkspaceWatch={
-            activeWorkspaceId ? handleToggleWorkspaceWatch : undefined
+            activeWorkspaceId && !isLocalWorkspace ? handleToggleWorkspaceWatch : undefined
           }
           isWorkspaceWatched={isWorkspaceWatched}
         />
@@ -330,6 +333,7 @@ export function Sidebar() {
               toggleWatch={watches.toggleWatch}
               isOwner={isOwner}
               isViewer={isViewer}
+              isLocalWorkspace={isLocalWorkspace}
             />
           );
         })()}

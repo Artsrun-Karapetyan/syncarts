@@ -77,6 +77,7 @@ interface SidebarContextMenuProps {
   ) => Promise<boolean>;
   isOwner?: boolean;
   isViewer?: boolean;
+  isLocalWorkspace?: boolean;
   openCollectionTab?: (
     collectionId: string,
     view?: "overview" | "authorization" | "scripts" | "variables" | "runs",
@@ -94,6 +95,7 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
     (collection) => collection.id === ctxMenu.collectionId,
   );
   const isOwner = props.isOwner ?? true;
+  const isLocalWorkspace = props.isLocalWorkspace ?? false;
   const watchTarget = getWatchTarget(ctxMenu);
 
   return createPortal(
@@ -129,7 +131,7 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
         />
       )}
 
-      {watchTarget && (
+      {watchTarget && !isLocalWorkspace && (
         <WatchMenuButton
           entityType={watchTarget.entityType}
           entityId={watchTarget.entityId}
@@ -254,7 +256,7 @@ export function SidebarContextMenu(props: SidebarContextMenuProps) {
         </>
       )}
 
-      {ctxMenu.itemType === "collection" && (
+      {ctxMenu.itemType === "collection" && !isLocalWorkspace && (
         <>
           <MenuDivider />
           <MenuSubmenu

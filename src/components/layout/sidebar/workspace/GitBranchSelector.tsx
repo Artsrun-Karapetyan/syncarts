@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useWorkspaceGit } from "@/contexts/workspace/git/useWorkspaceGit";
 
 import { BranchItem } from "./BranchItem";
+import { GitSyncButton } from "./GitSyncButton";
 
 export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
   const {
@@ -76,19 +77,29 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
     b.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const localBranches = filteredBranches.filter((b) => !b.is_remote);
-  const remoteBranches = filteredBranches.filter((b) => b.is_remote);
+  const localBranches = filteredBranches
+    .filter((b) => !b.is_remote)
+    .sort((a, b) => {
+      if (a.name === currentBranch) return -1;
+      if (b.name === currentBranch) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+  const remoteBranches = filteredBranches
+    .filter((b) => b.is_remote)
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div
       ref={containerRef}
       style={{
         display: "flex",
-        flexDirection: "column",
+        flexDirection: "row",
         gap: 8,
         marginTop: mode === "sidebar" ? 4 : 0,
         flexShrink: 0,
         position: "relative",
+        width: "100%",
       }}
     >
       <div
@@ -97,8 +108,9 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
         tabIndex={0}
         onClick={() => !isCheckingOut && setIsOpen(!isOpen)}
         style={{
+          flex: 1,
           userSelect: "none",
-          width: mode === "topbar" ? 140 : "100%",
+          width: mode === "topbar" ? 140 : "auto",
           display: "flex",
           alignItems: "center",
           gap: 8,
@@ -137,12 +149,21 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
             whiteSpace: "nowrap",
             flex: 1,
             textAlign: "left",
+            marginRight: isCheckingOut ? 20 : 0,
           }}
         >
           {isLoading ? "Loading..." : currentBranch || "Select Branch"}
         </span>
-        {isCheckingOut && <Loader2 size={13} className="animate-spin" />}
+        {isCheckingOut && (
+          <Loader2
+            size={13}
+            className="animate-spin"
+            style={{ position: "absolute", right: mode === "topbar" ? 12 : 16 }}
+          />
+        )}
       </div>
+
+      <GitSyncButton mode={mode} />
 
       {isOpen &&
         createPortal(
