@@ -2,7 +2,7 @@ import type {
   Folder,
   SavedExample,
   SavedRequest,
-} from "../../../contexts/workspace/core/types";
+} from "@/contexts/workspace/core/types";
 
 export function findExampleInItems(
   items: (Folder | SavedRequest)[],

@@ -44,4 +44,27 @@ This guide documents the architecture, commands, and decisions made during the d
   - Components rendered via `createPortal` (like the `Select` dropdown) exist outside the normal DOM tree.
   - To prevent Modals (like `SaveDialog`) from incorrectly closing due to 'click outside' events when a portal element is clicked, portal components must use identifiable classes (e.g., `.syncarts-select-dropdown`) which are explicitly ignored by the modal's pointerdown handlers.
 
+## 6. Sidebar Keyboard Navigation
+- **Hook:** `useSidebarKeyboardNavigation` (`src/components/layout/sidebar/hooks/useSidebarKeyboardNavigation.ts`)
+- **Arrow keys (Up/Down):** Navigate between visible `.sidebar-row` elements with wrap-around.
+- **Enter:** Triggers a click on the focused row (opens request, toggles folder/collection).
+- **Search → ArrowDown:** Jumps focus from the search input to the first sidebar item.
+- All sidebar rows (`CollectionRow`, `FolderSidebarItem`, `RequestSidebarItem`) have `tabIndex={0}` for focusability.
+- Focused rows are highlighted via `.sidebar-row:focus` CSS in `global.css`.
+- Test helpers (`createContainer`, `fireKey`) are extracted to `testHelpers.ts` per the one-function-per-file rule.
+
+## 7. Sidebar Toggle Expand/Collapse
+- Clicking a collection or folder row now **toggles** its expanded state (previously it only opened).
+- `CollectionRow.onClick` toggles `expandedCollections[id]` instead of only setting it to `true`.
+- `FolderSidebarItem.onClick` toggles `expandedFolders[id]` the same way.
+- `RequestSidebarItem.onClick` toggles `isExamplesOpen` when examples exist.
+- To prevent `useSidebarHighlight` from forcibly re-expanding a just-collapsed folder, `openCollectionTab` and `openFolderTab` in `useTabActions` now skip `updateCurrentTabs` if the `collectionView` hasn't changed.
+
+## 8. Performance: Memoized Tab Helpers
+- `findSavedRequestById` and `resolveTabSavedRequestId` in `useTabActions.ts` are wrapped in `useCallback` to prevent unnecessary re-renders of the sidebar highlight system.
+
+## 9. Topbar Workspace Switcher Fix
+- `GitBranchSelector` was taking `width: 100%` in topbar mode, pushing the workspace `Select` off-screen.
+- Fixed by setting `width: "auto"` for topbar mode so both elements coexist side-by-side.
+
 *(This guide will be updated as new components and features are built).*

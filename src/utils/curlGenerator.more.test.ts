@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Collection, TabData } from "../contexts/WorkspaceContext";
-import { generateCurlCommand } from "./curlGenerator";
+import type { Collection, TabData } from "@/contexts/WorkspaceContext";
+import { generateCurlCommand } from "@/utils/curlGenerator";
 
 function request(overrides: Partial<TabData>): TabData {
   return {

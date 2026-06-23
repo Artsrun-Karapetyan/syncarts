@@ -13,13 +13,15 @@ describe("AuthController profile/session", () => {
     createdAt: new Date(),
   };
 
+  const req = { authUser } as any;
+
   test("me delegates to authService.me", async () => {
     const mockAuthService = {
       me: mock(async (user: any) => user),
     } as unknown as AuthService;
 
     const controller = new AuthController(mockAuthService);
-    const result = await controller.me({ authUser });
+    const result = await controller.me(req);
 
     expect(mockAuthService.me).toHaveBeenCalledWith(authUser);
     expect(result).toBe(authUser);
@@ -33,7 +35,7 @@ describe("AuthController profile/session", () => {
     const controller = new AuthController(mockAuthService);
     const body = { name: "Updated Name" };
 
-    const result = await controller.updateMe({ authUser }, body);
+    const result = await controller.updateMe(req, body);
 
     expect(mockAuthService.updateMe).toHaveBeenCalledWith(authUser, body);
     expect(result.name).toBe("Updated Name");

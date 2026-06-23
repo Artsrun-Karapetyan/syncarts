@@ -1,10 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Environment, EnvironmentVariable, TabData } from "../core/types";
+import type {
+  Environment,
+  EnvironmentVariable,
+  TabData,
+} from "@/contexts/workspace/core/types";
 import {
   createRequestHeadersApi,
   createVariablesApi,
-} from "./scriptRuntimeApis";
+} from "@/contexts/workspace/requests/scriptRuntimeApis";
 
 function requestDraft(): TabData {
   return {
@@ -59,7 +63,7 @@ describe("scriptRuntimeApis", () => {
 
     expect(variables.get("token")).toBe("env");
     variables.set("token", "next");
-    expect(updatedEnv?.variables?.[0]).toMatchObject({
+    expect((updatedEnv as any)?.variables?.[0]).toMatchObject({
       key: "token",
       value: "next",
     });

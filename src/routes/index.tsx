@@ -1,27 +1,18 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 
-import { AppShell } from "../components/layout/AppShell";
-import { Workspace } from "../components/layout/Workspace";
-import { getAuthToken } from "../lib/auth";
+import { AppShell } from "@/components/layout/AppShell";
+import { Workspace } from "@/components/layout/Workspace";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
-  const navigate = useNavigate();
-  const token = getAuthToken();
-
-  useEffect(() => {
-    if (!token) {
-      void navigate({ to: "/login" });
-    }
-  }, [navigate, token]);
-
-  if (!token) {
-    return null;
-  }
+  // We no longer redirect to /login immediately.
+  // Users can use local workspaces without a token.
+  // if (!token) {
+  //   void navigate({ to: "/login" });
+  // }
 
   return (
     <AppShell>

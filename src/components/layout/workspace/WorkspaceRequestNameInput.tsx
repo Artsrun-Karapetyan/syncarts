@@ -1,6 +1,6 @@
 import { Edit2 } from "lucide-react";
 
-import type { TabData } from "../../../contexts/WorkspaceContext";
+import type { TabData } from "@/contexts/WorkspaceContext";
 
 interface WorkspaceRequestNameInputProps {
   activeTab: TabData;

@@ -1,8 +1,8 @@
 import { GitPullRequest, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { api } from "../../lib/api";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { api } from "@/lib/api";
 
 interface CreateMergeRequestModalProps {
   isOpen: boolean;

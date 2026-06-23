@@ -4,12 +4,12 @@ import { FileJson, Search, X } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
+import { responseJsonThemes } from "@/components/response/shared/responseJsonThemes";
 import {
   type Folder,
   type SavedRequest,
   useWorkspace,
-} from "../../../contexts/WorkspaceContext";
-import { responseJsonThemes } from "../../response/shared/responseJsonThemes";
+} from "@/contexts/WorkspaceContext";
 
 interface ChainingPickerModalProps {
   onClose: () => void;

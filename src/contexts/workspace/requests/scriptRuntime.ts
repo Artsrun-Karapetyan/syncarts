@@ -5,15 +5,15 @@ import type {
   HttpResponse,
   TabData,
   TestResult,
-} from "../core/types";
+} from "@/contexts/workspace/core/types";
 import {
   createRequestHeadersApi,
   createVariablesApi,
   replaceDraftVariables,
   sendRequest,
   upsertVariable,
-} from "./scriptRuntimeApis";
-import { createScriptResponseBody } from "./scriptRuntimeResponse";
+} from "@/contexts/workspace/requests/scriptRuntimeApis";
+import { createScriptResponseBody } from "@/contexts/workspace/requests/scriptRuntimeResponse";
 
 export function createScriptConsole(consoleLogs: string[]) {
   return {

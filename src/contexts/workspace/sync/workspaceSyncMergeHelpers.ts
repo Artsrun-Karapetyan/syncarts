@@ -1,10 +1,10 @@
-import type { Workspace } from "../core/types";
+import type { Workspace } from "@/contexts/workspace/core/types";
 import {
   getRemoteSyncPayload,
   getSyncSignature,
   getWorkspaceSyncPayload,
   mapRemoteWorkspace,
-} from "./syncHelpers";
+} from "@/contexts/workspace/sync/syncHelpers";
 
 interface WorkspaceSyncMergeArgs {
   deletedWorkspaceIdsRef: React.MutableRefObject<Set<string>>;

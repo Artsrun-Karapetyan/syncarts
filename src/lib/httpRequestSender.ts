@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { HttpResponse } from "../contexts/workspace/core/types";
-import { isTauriRuntime } from "./tauriRuntime";
+import type { HttpResponse } from "@/contexts/workspace/core/types";
+import { isTauriRuntime } from "@/lib/tauriRuntime";
 
 export type RequestBodyPayload =
   | { type: "None" }

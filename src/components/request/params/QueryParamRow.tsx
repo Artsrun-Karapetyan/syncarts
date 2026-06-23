@@ -2,15 +2,15 @@ import { CheckSquare, GripVertical, Square, Trash2 } from "lucide-react";
 import type { DragEvent } from "react";
 import { useRef } from "react";
 
-import type { QueryParamItem } from "../../../contexts/WorkspaceContext";
 import {
   ROW_DRAG_HANDLE_STYLE,
   rowDropBackground,
   rowDropShadow,
   type RowDropTarget,
   writeRowDragData,
-} from "../rowDrag";
-import { VariableTextInput } from "../variables/VariableTextInput";
+} from "@/components/request/rowDrag";
+import { VariableTextInput } from "@/components/request/variables/VariableTextInput";
+import type { QueryParamItem } from "@/contexts/WorkspaceContext";
 
 interface QueryParamRowProps {
   active: boolean;

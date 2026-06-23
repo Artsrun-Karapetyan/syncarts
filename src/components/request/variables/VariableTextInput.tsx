@@ -2,13 +2,13 @@ import { Link } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useRef, useState } from "react";
 
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { ChainingPickerModal } from "../chaining/ChainingPickerModal";
-import { UrlVariablePopover } from "../url/UrlVariablePopover";
-import { useVariableAutocomplete } from "./useVariableAutocomplete";
-import { useVariableHover } from "./useVariableHover";
-import { VariableAutocompletePopover } from "./VariableAutocompletePopover";
-import { renderVariableHighlight } from "./variableHighlight";
+import { ChainingPickerModal } from "@/components/request/chaining/ChainingPickerModal";
+import { UrlVariablePopover } from "@/components/request/url/UrlVariablePopover";
+import { useVariableAutocomplete } from "@/components/request/variables/useVariableAutocomplete";
+import { useVariableHover } from "@/components/request/variables/useVariableHover";
+import { VariableAutocompletePopover } from "@/components/request/variables/VariableAutocompletePopover";
+import { renderVariableHighlight } from "@/components/request/variables/variableHighlight";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface VariableTextInputProps {
   className?: string;
@@ -17,7 +17,7 @@ interface VariableTextInputProps {
   style?: CSSProperties;
   value: string;
   onChange: (value: string) => void;
-  onPaste?: (event: React.ClipboardEvent<HTMLInputElement>) => void;
+  onPaste?: (event: React.ClipboardEvent<any>) => void;
   selectionId?: string;
   isSelected?: boolean;
 }
@@ -46,7 +46,22 @@ export function VariableTextInput(props: VariableTextInputProps) {
   const hover = useVariableHover(overlayRef);
   const [isChainingOpen, setIsChainingOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const externalPaddingRight = style?.paddingRight
+    ? parseInt(style.paddingRight.toString(), 10)
+    : 0;
+  const linkIconRight = externalPaddingRight ? externalPaddingRight + 4 : 4;
+  const totalPaddingRight = disabled
+    ? externalPaddingRight
+    : externalPaddingRight + 28;
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault(); // maintain single-line submission behavior
+    }
+    autocomplete.handleKeyDown(event as any);
+  };
 
   return (
     <div
@@ -55,9 +70,11 @@ export function VariableTextInput(props: VariableTextInputProps) {
         position: "relative",
         width: style?.width || "100%",
         flex: style?.flex,
-        display: "flex",
+        display: "grid",
         background: isSelected ? "rgba(99, 102, 241, 0.15)" : "transparent",
         transition: "background 0.15s ease",
+        maxHeight: isFocused ? 120 : undefined,
+        overflowY: isFocused ? "auto" : "hidden",
       }}
     >
       <div
@@ -65,14 +82,15 @@ export function VariableTextInput(props: VariableTextInputProps) {
         className={className}
         style={{
           ...style,
-          position: "absolute",
-          inset: 0,
+          gridArea: "1 / 1",
           color: value ? "var(--text-primary)" : "var(--text-tertiary)",
           overflow: "hidden",
-          whiteSpace: "pre",
+          whiteSpace: isFocused ? "pre-wrap" : "pre",
+          wordBreak: isFocused ? "break-all" : "normal",
           zIndex: 1,
           userSelect: isFocused ? "auto" : "none",
           background: "transparent",
+          paddingRight: totalPaddingRight,
         }}
         aria-hidden="true"
         onClick={() => inputRef.current?.focus()}
@@ -87,19 +105,27 @@ export function VariableTextInput(props: VariableTextInputProps) {
               responseCache,
             })
           : placeholder}
+        {/* Trailing newline ensures div height matches textarea exactly when focused */}
+        {isFocused && "\n"}
       </div>
-      <input
+      <textarea
         ref={inputRef}
         className={`${className} variable-input-proxy`}
         style={{
           ...style,
-          position: "relative",
+          gridArea: "1 / 1",
           color: "transparent",
           caretColor: "var(--text-primary)",
           background: "transparent",
           pointerEvents: isFocused ? "auto" : "none",
           zIndex: 2,
+          resize: "none",
+          overflow: "hidden",
+          whiteSpace: isFocused ? "pre-wrap" : "pre",
+          wordBreak: isFocused ? "break-all" : "normal",
+          paddingRight: totalPaddingRight,
         }}
+        rows={1}
         placeholder=""
         value={value}
         disabled={disabled}
@@ -108,21 +134,21 @@ export function VariableTextInput(props: VariableTextInputProps) {
           setIsFocused(false);
           autocomplete.handleBlur();
         }}
-        onChange={autocomplete.handleChange}
-        onClick={autocomplete.handleClick}
+        onChange={(e) => autocomplete.handleChange(e as any)}
+        onClick={(e) => autocomplete.handleClick(e as any)}
         onFocus={(e) => {
           setIsFocused(true);
-          autocomplete.handleFocus(e);
+          autocomplete.handleFocus(e as any);
         }}
-        onMouseMove={hover.handleMouseMove}
-        onMouseLeave={hover.handleMouseLeave}
-        onKeyDown={(event) => {
-          autocomplete.handleKeyDown(event);
-        }}
-        onKeyUp={autocomplete.handleKeyUp}
+        onMouseMove={(e) => hover.handleMouseMove(e as any)}
+        onMouseLeave={() => hover.handleMouseLeave()}
+        onKeyDown={handleKeyDown}
+        onKeyUp={(e) => autocomplete.handleKeyUp(e as any)}
         onScroll={(event) => {
-          if (overlayRef.current)
+          if (overlayRef.current) {
+            overlayRef.current.scrollTop = event.currentTarget.scrollTop;
             overlayRef.current.scrollLeft = event.currentTarget.scrollLeft;
+          }
         }}
         spellCheck={false}
       />
@@ -132,9 +158,10 @@ export function VariableTextInput(props: VariableTextInputProps) {
           onClick={() => setIsChainingOpen(true)}
           style={{
             position: "absolute",
-            right: 4,
-            top: "50%",
-            transform: "translateY(-50%)",
+            right: linkIconRight,
+            top: isFocused && value.length > 50 ? 8 : "50%",
+            transform:
+              isFocused && value.length > 50 ? "none" : "translateY(-50%)",
             background: "none",
             border: "none",
             cursor: "pointer",
@@ -169,7 +196,7 @@ export function VariableTextInput(props: VariableTextInputProps) {
           onSelect={(suggestion) =>
             autocomplete.insertSuggestion(
               suggestion,
-              document.activeElement as HTMLInputElement,
+              document.activeElement as HTMLTextAreaElement,
             )
           }
         />

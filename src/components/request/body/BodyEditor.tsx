@@ -2,20 +2,20 @@ import { Plus } from "lucide-react";
 import type { DragEvent } from "react";
 import { useState } from "react";
 
-import {
-  BodyType,
-  FormDataItem,
-  useWorkspace,
-} from "../../../contexts/WorkspaceContext";
-import { SelectionArea } from "../../ui/SelectionArea";
+import { BodyFieldRow } from "@/components/request/body/BodyFieldRow";
 import {
   getRowDropPosition,
   readRowDragData,
   type RowDropTarget,
-} from "../rowDrag";
-import { reorderRows } from "../rowReorder";
-import { VariableTextarea } from "../variables/VariableTextarea";
-import { BodyFieldRow } from "./BodyFieldRow";
+} from "@/components/request/rowDrag";
+import { reorderRows } from "@/components/request/rowReorder";
+import { VariableTextarea } from "@/components/request/variables/VariableTextarea";
+import { SelectionArea } from "@/components/ui/SelectionArea/SelectionArea";
+import {
+  BodyType,
+  FormDataItem,
+  useWorkspace,
+} from "@/contexts/WorkspaceContext";
 
 export function BodyEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();

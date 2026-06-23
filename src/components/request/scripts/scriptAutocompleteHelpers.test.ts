@@ -4,7 +4,7 @@ import {
   headerSuggestions,
   item,
   variableStoreSuggestions,
-} from "./scriptAutocompleteHelpers";
+} from "@/components/request/scripts/scriptAutocompleteHelpers";
 
 describe("scriptAutocompleteHelpers", () => {
   test("creates suggestion items with stable fields", () => {

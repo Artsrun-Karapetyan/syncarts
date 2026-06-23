@@ -1,4 +1,4 @@
-import type { PathVariable } from "../contexts/WorkspaceContext";
+import type { PathVariable } from "@/contexts/WorkspaceContext";
 
 const PATH_VARIABLE_REGEX = /(^|\/):([A-Za-z_][A-Za-z0-9_]*)/g;
 

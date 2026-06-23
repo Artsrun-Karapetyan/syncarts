@@ -1,12 +1,12 @@
+import { resolveScopedVariable } from "@/components/request/variables/variableResolution";
 import {
   getRequestAncestors,
   resolveChainVariable,
-} from "../../../contexts/workspace/requests/requestHelpers";
+} from "@/contexts/workspace/requests/requestHelpers";
 import type {
   Environment,
   EnvironmentVariable,
-} from "../../../contexts/WorkspaceContext";
-import { resolveScopedVariable } from "./variableResolution";
+} from "@/contexts/WorkspaceContext";
 
 export function getVariableColors(
   sourceType: string | undefined,

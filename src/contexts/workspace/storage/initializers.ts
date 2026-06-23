@@ -1,4 +1,4 @@
-import type { TabData, Workspace } from "../core/types";
+import type { TabData, Workspace } from "@/contexts/workspace/core/types";
 
 export function createDefaultWorkspaces(
   userId: string,

@@ -5,7 +5,7 @@ import type {
   SidebarMoveEntity,
   SidebarMoveTarget,
   Workspace,
-} from "../core/types";
+} from "@/contexts/workspace/core/types";
 
 type SidebarTreeItem = Folder | SavedRequest;
 

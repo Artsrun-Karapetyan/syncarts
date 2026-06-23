@@ -1,5 +1,5 @@
-import { isSharedWorkspace } from "../../../contexts/workspace/sync/sharing";
-import type { Workspace } from "../../../contexts/WorkspaceContext";
+import { isSharedWorkspace } from "@/contexts/workspace/sync/sharing";
+import type { Workspace } from "@/contexts/WorkspaceContext";
 
 interface InviteWorkspaceSelectorLabelProps {
   activeWorkspaceId: string;

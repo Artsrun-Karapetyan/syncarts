@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test";
 
-import { ensureTrailingBlank, parseParamsFromUrl } from "./paramsEditorHelpers";
+import {
+  ensureTrailingBlank,
+  parseParamsFromUrl,
+} from "@/components/request/params/paramsEditorHelpers";
 
 describe("paramsEditorHelpers edge cases", () => {
   it("keeps an existing trailing blank row", () => {

@@ -13,10 +13,10 @@ export interface HttpResponse {
   time_ms: number;
 }
 
-import type { useCollectionActions } from "../collections/useCollectionActions";
-import type { useEnvironmentActions } from "../environment/useEnvironmentActions";
-import type { useRequestSender } from "../requests/useRequestSender";
-import type { useTabActions } from "../tabs/useTabActions";
+import type { useCollectionActions } from "@/contexts/workspace/collections/useCollectionActions";
+import type { useEnvironmentActions } from "@/contexts/workspace/environment/useEnvironmentActions";
+import type { useRequestSender } from "@/contexts/workspace/requests/useRequestSender";
+import type { useTabActions } from "@/contexts/workspace/tabs/core/useTabActions";
 
 export type TabActions = ReturnType<typeof useTabActions>;
 export type CollectionActions = ReturnType<typeof useCollectionActions>;
@@ -81,6 +81,7 @@ export interface TabData {
   collectionId?: string;
   folderId?: string;
   exampleId?: string;
+  pinned?: boolean;
   collectionView?:
     | "overview"
     | "authorization"
@@ -171,6 +172,7 @@ export interface EnvironmentVariable {
   key: string;
   value: string;
   enabled: boolean;
+  type?: "default" | "secret";
   createdAt?: string;
   updatedAt?: string;
   version?: number;
@@ -188,6 +190,8 @@ export interface Environment {
 export interface Workspace {
   id: string;
   name: string;
+  type?: "cloud" | "local";
+  path?: string;
   ownerId?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -249,6 +253,8 @@ export interface WorkspaceContextState
     name: string,
     collections?: any[],
     environments?: any[],
+    type?: "cloud" | "local",
+    path?: string,
   ) => string;
   switchWorkspace: (id: string) => void;
   renameWorkspace: (id: string, newName: string) => void;
@@ -265,6 +271,8 @@ export interface WorkspaceContextState
   updateEnvironment: (id: string, data: Partial<Environment>) => void;
   deleteEnvironment: (id: string) => void;
   updateGlobalVariables: (variables: EnvironmentVariable[]) => void;
+  secrets: Record<string, string>;
+  updateSecret: (varId: string, value: string) => void;
   reloadWorkspaces: () => Promise<void>;
   tabs: TabData[];
   activeTabId: string | null;

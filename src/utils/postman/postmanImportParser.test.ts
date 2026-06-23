@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { parsePostmanCollection } from "./postmanImportParser";
+import { parsePostmanCollection } from "@/utils/postman/postmanImportParser";
 
 describe("parsePostmanCollection", () => {
   test("parses request metadata, query params, scripts, and examples", () => {

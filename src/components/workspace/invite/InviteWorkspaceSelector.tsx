@@ -1,5 +1,5 @@
-import type { Workspace } from "../../../contexts/WorkspaceContext";
-import { InviteWorkspaceSelectorLabel } from "./InviteWorkspaceSelectorLabel";
+import { InviteWorkspaceSelectorLabel } from "@/components/workspace/invite/InviteWorkspaceSelectorLabel";
+import type { Workspace } from "@/contexts/WorkspaceContext";
 
 interface InviteWorkspaceSelectorProps {
   activeWorkspaceId: string;

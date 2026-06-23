@@ -1,4 +1,4 @@
-import type { HttpResponse } from "../core/types";
+import type { HttpResponse } from "@/contexts/workspace/core/types";
 
 export function createRequestErrorResponse(message: string): HttpResponse {
   return {

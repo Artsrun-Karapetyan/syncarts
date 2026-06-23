@@ -1,4 +1,4 @@
-import type { ScriptSuggestion } from "./scriptAutocompleteData";
+import type { ScriptSuggestion } from "@/components/request/scripts/scriptAutocompleteData";
 
 export function ScriptSuggestionKindBadge({
   kind,

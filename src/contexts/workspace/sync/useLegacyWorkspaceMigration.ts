@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
-import type { TabData, Workspace } from "../core/types";
-import { normalizeLegacyWorkspaces } from "./syncHelpers";
+import type { TabData, Workspace } from "@/contexts/workspace/core/types";
+import { normalizeLegacyWorkspaces } from "@/contexts/workspace/sync/syncHelpers";
 
 type SetValue<T> = (value: T | ((val: T) => T)) => void;
 

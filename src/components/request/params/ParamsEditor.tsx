@@ -2,24 +2,27 @@ import { Plus } from "lucide-react";
 import type { DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
+import { ParamSectionTitle } from "@/components/request/params/ParamSectionTitle";
 import {
-  PathVariable,
-  QueryParamItem,
-  useWorkspace,
-} from "../../../contexts/WorkspaceContext";
-import { syncPathVariablesWithUrl } from "../../../utils/pathVariables";
-import { SelectionArea } from "../../ui/SelectionArea";
+  createEmptyParam,
+  parseParamsFromUrl,
+} from "@/components/request/params/paramsEditorHelpers";
+import { PathVariableRow } from "@/components/request/params/PathVariableRow";
+import { QueryParamRow } from "@/components/request/params/QueryParamRow";
 import {
   getRowDropPosition,
   readRowDragData,
   type RowDropTarget,
-} from "../rowDrag";
-import { syncRowKeys } from "../rowKeys";
-import { reorderRows } from "../rowReorder";
-import { ParamSectionTitle } from "./ParamSectionTitle";
-import { createEmptyParam, parseParamsFromUrl } from "./paramsEditorHelpers";
-import { PathVariableRow } from "./PathVariableRow";
-import { QueryParamRow } from "./QueryParamRow";
+} from "@/components/request/rowDrag";
+import { syncRowKeys } from "@/components/request/rowKeys";
+import { reorderRows } from "@/components/request/rowReorder";
+import { SelectionArea } from "@/components/ui/SelectionArea/SelectionArea";
+import {
+  PathVariable,
+  QueryParamItem,
+  useWorkspace,
+} from "@/contexts/WorkspaceContext";
+import { syncPathVariablesWithUrl } from "@/utils/pathVariables";
 
 export function ParamsEditor() {
   const { activeTab, updateActiveTab } = useWorkspace();

@@ -2,8 +2,8 @@ import { Plus } from "lucide-react";
 import { RefObject, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { interpolateVariables } from "../../../contexts/workspace/requests/requestHelpers";
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
+import { interpolateVariables } from "@/contexts/workspace/requests/requestHelpers";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type HoveredUrlVariable = {
   kind: "environment" | "path";
@@ -51,14 +51,20 @@ export function UrlVariablePopover(props: UrlVariablePopoverProps) {
   const [newValue, setNewValue] = useState(hoveredVar.value || "");
   const handleSave = () => onSave(hoveredVar.name, newValue);
 
-  const { activeEnvironment, activeTab, collections, globalVariables } =
-    useWorkspace();
+  const {
+    activeEnvironment,
+    activeTab,
+    collections,
+    globalVariables,
+    secrets,
+  } = useWorkspace();
   const resolvedValue = hoveredVar.value
     ? interpolateVariables({
         activeEnvironment,
         activeTab,
         collections,
         globalVariables,
+        secrets,
         text: hoveredVar.value,
       })
     : "";

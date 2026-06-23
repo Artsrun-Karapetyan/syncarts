@@ -1,6 +1,6 @@
 import { UserMinus } from "lucide-react";
 
-import { Select } from "../../ui/Select";
+import { Select } from "@/components/ui/Select/Select";
 
 interface InviteMemberActionsProps {
   canManageMembers: boolean;

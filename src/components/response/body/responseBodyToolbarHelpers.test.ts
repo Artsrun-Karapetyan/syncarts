@@ -5,7 +5,7 @@ import {
   formatButtonClass,
   getNextMatchIndex,
   toolButtonClass,
-} from "./responseBodyToolbarHelpers";
+} from "@/components/response/body/responseBodyToolbarHelpers";
 
 describe("responseBodyToolbarHelpers", () => {
   it("counts non-overlapping matches case-insensitively", () => {

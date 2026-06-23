@@ -4,7 +4,7 @@ import {
   createEmptyParam,
   ensureTrailingBlank,
   parseParamsFromUrl,
-} from "./paramsEditorHelpers";
+} from "@/components/request/params/paramsEditorHelpers";
 
 describe("paramsEditorHelpers", () => {
   it("creates an enabled empty param", () => {

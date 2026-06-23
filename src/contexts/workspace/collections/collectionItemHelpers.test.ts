@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Folder, SavedRequest, TabData } from "../core/types";
 import {
   addExampleToItems,
   addRequestToFolder,
@@ -8,7 +7,12 @@ import {
   hasRequestInTarget,
   sortItemsByTarget,
   updateRequestInItems,
-} from "./collectionItemHelpers";
+} from "@/contexts/workspace/collections/collectionItemHelpers";
+import type {
+  Folder,
+  SavedRequest,
+  TabData,
+} from "@/contexts/workspace/core/types";
 
 const request = (id: string, name = id): SavedRequest => ({
   type: "request",
@@ -54,7 +58,7 @@ describe("collectionItemHelpers", () => {
         body: "{}",
         time_ms: 10,
       },
-    } as TabData;
+    } as any as TabData;
     const withExample = addExampleToItems(
       [request("request")],
       "request",
@@ -101,7 +105,7 @@ describe("collectionItemHelpers", () => {
         body: '{"id": 1}',
         time_ms: 45,
       },
-    } as TabData;
+    } as any as TabData;
 
     const withExample = addExampleToItems(
       [request("req1")],
@@ -184,7 +188,7 @@ describe("collectionItemHelpers", () => {
         body: "",
         time_ms: 10,
       },
-    } as TabData;
+    } as any as TabData;
 
     const withExample = addExampleToItems(
       [request("req1")],

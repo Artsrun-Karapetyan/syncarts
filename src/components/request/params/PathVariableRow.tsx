@@ -1,5 +1,5 @@
-import type { PathVariable } from "../../../contexts/WorkspaceContext";
-import { VariableTextInput } from "../variables/VariableTextInput";
+import { VariableTextInput } from "@/components/request/variables/VariableTextInput";
+import type { PathVariable } from "@/contexts/WorkspaceContext";
 
 interface PathVariableRowProps {
   active: boolean;

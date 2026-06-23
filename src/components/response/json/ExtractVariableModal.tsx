@@ -2,8 +2,8 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
-import { findSavedRequestByIdInCollections } from "../../../contexts/workspace/tabs/tabHelpers";
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
+import { findSavedRequestByIdInCollections } from "@/contexts/workspace/tabs/helpers/tabHelpers";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface ExtractVariableModalProps {
   jsonPath: string[];

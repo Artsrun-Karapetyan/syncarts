@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { formatDiffValue, getMergeRequestChanges } from "./mergeRequestDiff";
+import {
+  formatDiffValue,
+  getMergeRequestChanges,
+} from "@/components/workspace/merge-requests/mergeRequestDiff";
 
 describe("getMergeRequestChanges", () => {
   test("detects added, deleted, and modified collection items", () => {

@@ -1,7 +1,7 @@
 import { Search, X } from "lucide-react";
 import type { RefObject } from "react";
 
-import { SNIPPET_GROUPS } from "./scriptSnippets";
+import { SNIPPET_GROUPS } from "@/components/request/scripts/scriptSnippets";
 
 interface ScriptSnippetsDrawerProps {
   drawerRef: RefObject<HTMLDivElement | null>;

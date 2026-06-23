@@ -1,9 +1,9 @@
+import { moveSidebarEntityInWorkspace } from "@/contexts/workspace/collections/collectionMoveHelpers";
 import type {
   SidebarMoveEntity,
   SidebarMoveTarget,
   Workspace,
-} from "../core/types";
-import { moveSidebarEntityInWorkspace } from "./collectionMoveHelpers";
+} from "@/contexts/workspace/core/types";
 
 interface CollectionMoveActionsArgs {
   activeWorkspaceId: string;

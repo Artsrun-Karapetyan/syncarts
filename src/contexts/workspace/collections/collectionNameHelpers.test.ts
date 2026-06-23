@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Collection } from "../core/types";
-import { getUniqueCollectionName } from "./collectionNameHelpers";
+import { getUniqueCollectionName } from "@/contexts/workspace/collections/collectionNameHelpers";
+import type { Collection } from "@/contexts/workspace/core/types";
 
 const collection = (name: string): Collection => ({
   id: name,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Workspace } from "../core/types";
-import { moveSidebarEntityInWorkspace } from "./collectionMoveHelpers";
+import { moveSidebarEntityInWorkspace } from "@/contexts/workspace/collections/collectionMoveHelpers";
+import type { Workspace } from "@/contexts/workspace/core/types";
 
 const example = (id: string) => ({
   id,

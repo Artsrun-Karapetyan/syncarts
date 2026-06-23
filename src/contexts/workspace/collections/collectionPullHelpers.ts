@@ -1,5 +1,5 @@
-import { api } from "../../../lib/api";
-import type { Collection, Workspace } from "../core/types";
+import type { Collection, Workspace } from "@/contexts/workspace/core/types";
+import { api } from "@/lib/api";
 
 export function createPulledForkCollection(
   forkCollection: Collection,

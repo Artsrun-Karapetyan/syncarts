@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { cleanClickedUrl } from "./cleanClickedUrl";
+import { cleanClickedUrl } from "@/components/response/shared/cleanClickedUrl";
 
 describe("cleanClickedUrl", () => {
   test("cleans quoted clicked urls", () => {

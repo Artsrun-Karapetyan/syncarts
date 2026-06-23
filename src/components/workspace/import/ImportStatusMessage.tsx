@@ -1,6 +1,6 @@
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
-import type { ImportStatus } from "./importTypes";
+import type { ImportStatus } from "@/components/workspace/import/importTypes";
 
 interface ImportStatusMessageProps {
   message: string;
@@ -13,6 +13,7 @@ export function ImportStatusMessage({
 }: ImportStatusMessageProps) {
   return (
     <div
+      data-testid="status-msg"
       style={{
         padding: "12px 16px",
         borderRadius: "var(--radius-md)",

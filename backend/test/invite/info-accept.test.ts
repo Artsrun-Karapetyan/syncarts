@@ -55,7 +55,7 @@ describe("InviteService getInviteInfo/acceptInvite", () => {
 
     expect(result.workspaces).toEqual([
       { id: "legacy-workspace", name: "Legacy Workspace" },
-    ]);
+    ] as any);
   });
 
   test("acceptInvite adds memberships and deletes direct invite", async () => {
@@ -93,7 +93,7 @@ describe("InviteService getInviteInfo/acceptInvite", () => {
     });
     expect(created).toEqual([
       { userId: "user", workspaceId: "workspace", role: "EDITOR" },
-    ]);
+    ] as any);
     expect(deletedToken).toBe("invite");
   });
 

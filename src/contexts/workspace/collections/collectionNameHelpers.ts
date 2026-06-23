@@ -1,4 +1,4 @@
-import type { Collection } from "../core/types";
+import type { Collection } from "@/contexts/workspace/core/types";
 
 export function getUniqueCollectionName(
   collections: Collection[],

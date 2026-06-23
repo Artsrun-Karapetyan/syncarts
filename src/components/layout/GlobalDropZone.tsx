@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import { ImportModal } from "../workspace/ImportModal";
+import { ImportModal } from "@/components/workspace/ImportModal";
 
 export function GlobalDropZone({ children }: { children: React.ReactNode }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -162,7 +162,7 @@ export function GlobalDropZone({ children }: { children: React.ReactNode }) {
               Drop file to import
             </div>
             <div style={{ fontSize: 15, color: "var(--text-secondary)" }}>
-              Supports Postman Collections, Environments, and cURL JSON
+              Supports Postman, OpenAPI, Environments, and cURL JSON
             </div>
           </div>
         </div>

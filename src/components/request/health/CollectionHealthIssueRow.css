@@ -1,0 +1,44 @@
+.collection-health-issue {
+  margin-top: 8px;
+}
+
+.collection-health-issue__summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 7px 10px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: 6px;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.collection-health-issue__summary::-webkit-details-marker {
+  display: none;
+}
+
+.collection-health-issue__summary:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.collection-health-issue__chevron {
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+}
+
+.collection-health-issue[open] .collection-health-issue__chevron {
+  transform: rotate(90deg);
+}
+
+.collection-health-issue__count {
+  margin-left: auto;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,6 +1,6 @@
-import type { Workspace } from "../../../contexts/WorkspaceContext";
-import { InviteMemberActions } from "./InviteMemberActions";
-import { InviteWorkspaceMembersHeader } from "./InviteWorkspaceMembersHeader";
+import { InviteMemberActions } from "@/components/workspace/invite/InviteMemberActions";
+import { InviteWorkspaceMembersHeader } from "@/components/workspace/invite/InviteWorkspaceMembersHeader";
+import type { Workspace } from "@/contexts/WorkspaceContext";
 
 interface InviteWorkspaceMembersBlockProps {
   activeWorkspaceId: string;

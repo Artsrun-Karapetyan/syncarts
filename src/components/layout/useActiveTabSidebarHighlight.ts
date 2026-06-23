@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import type { TabData } from "../../contexts/WorkspaceContext";
+import type { TabData } from "@/contexts/WorkspaceContext";
 
 interface UseActiveTabSidebarHighlightArgs {
   activeTab: TabData | undefined;

@@ -1,9 +1,9 @@
+import type { VariableSuggestion } from "@/components/request/variables/variableAutocompleteTypes";
+import { resolveDynamicVariable } from "@/components/request/variables/variableResolution";
 import type {
   Environment,
   EnvironmentVariable,
-} from "../../../contexts/WorkspaceContext";
-import type { VariableSuggestion } from "./variableAutocompleteTypes";
-import { resolveDynamicVariable } from "./variableResolution";
+} from "@/contexts/WorkspaceContext";
 
 export function getDynamicVariables(): VariableSuggestion[] {
   return [

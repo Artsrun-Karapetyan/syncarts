@@ -1,4 +1,4 @@
-import type { Workspace } from "../core/types";
+import type { Workspace } from "@/contexts/workspace/core/types";
 
 export function isSharedWorkspace(
   workspace: Pick<Workspace, "members" | "ownerId"> | undefined,

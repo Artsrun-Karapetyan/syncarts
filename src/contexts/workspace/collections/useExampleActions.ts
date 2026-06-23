@@ -1,10 +1,14 @@
-import type { SavedExample, TabData, Workspace } from "../core/types";
 import {
   addExampleToItems,
   deleteExampleFromItems,
   duplicateExampleInItems,
   updateExampleInItems,
-} from "./collectionItemHelpers";
+} from "@/contexts/workspace/collections/collectionItemHelpers";
+import type {
+  SavedExample,
+  TabData,
+  Workspace,
+} from "@/contexts/workspace/core/types";
 
 interface ExampleActionsArgs {
   activeTab: TabData | undefined;

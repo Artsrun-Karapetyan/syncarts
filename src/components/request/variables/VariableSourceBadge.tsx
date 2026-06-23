@@ -1,4 +1,4 @@
-import type { VariableSuggestion } from "./variableAutocompleteTypes";
+import type { VariableSuggestion } from "@/components/request/variables/variableAutocompleteTypes";
 
 export function VariableSourceBadge({
   source,

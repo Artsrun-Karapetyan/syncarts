@@ -1,12 +1,12 @@
 import type { RefObject } from "react";
 
-import type { TabData } from "../../../contexts/WorkspaceContext";
-import { RequestCodeModal } from "../../request/code/RequestCodeModal";
-import { SaveDialog } from "../../request/SaveDialog";
-import { UnsavedChangesModal } from "../../ui/UnsavedChangesModal";
-import { WorkspaceHeaderActions } from "./WorkspaceHeaderActions";
-import { WorkspaceRequestNameInput } from "./WorkspaceRequestNameInput";
-import { WorkspaceUrlActionBar } from "./WorkspaceUrlActionBar";
+import { WorkspaceHeaderActions } from "@/components/layout/workspace/WorkspaceHeaderActions";
+import { WorkspaceRequestNameInput } from "@/components/layout/workspace/WorkspaceRequestNameInput";
+import { WorkspaceUrlActionBar } from "@/components/layout/workspace/WorkspaceUrlActionBar";
+import { RequestCodeModal } from "@/components/request/code/RequestCodeModal";
+import { SaveDialog } from "@/components/request/SaveDialog";
+import { UnsavedChangesModal } from "@/components/ui/UnsavedChangesModal/UnsavedChangesModal";
+import type { TabData } from "@/contexts/WorkspaceContext";
 
 interface WorkspaceRequestHeaderProps {
   activeTab: TabData;

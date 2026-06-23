@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { getShortcutLabel } from "./jsonShortcut";
+import { getShortcutLabel } from "@/components/response/json/jsonShortcut";
 
 const originalNavigator = Object.getOwnPropertyDescriptor(
   globalThis,

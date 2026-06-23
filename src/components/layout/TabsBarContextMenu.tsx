@@ -1,5 +1,5 @@
 /* eslint-disable react/no-multi-comp */
-import { Copy, FilePlus, X, XCircle, XSquare } from "lucide-react";
+import { Copy, FilePlus, Pin, PinOff, X, XCircle, XSquare } from "lucide-react";
 
 interface TabsBarContextMenuProps {
   ctxMenu: { x: number; y: number; tabToDuplicate: any } | null;
@@ -7,6 +7,7 @@ interface TabsBarContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>;
   addTab: (data?: any) => void;
   closeTab: (id: string) => void;
+  pinTab: (id: string) => void;
   onRequestCloseTab: (id: string) => void;
   tabs: any[];
 }
@@ -72,6 +73,7 @@ export function TabsBarContextMenu({
   menuRef,
   addTab,
   closeTab,
+  pinTab,
   onRequestCloseTab,
   tabs,
 }: TabsBarContextMenuProps) {
@@ -111,6 +113,7 @@ export function TabsBarContextMenu({
         onClick={() => {
           const cloneData = { ...ctxMenu.tabToDuplicate };
           delete cloneData.id;
+          delete cloneData.pinned;
           delete cloneData.savedRequestId;
           delete cloneData.collectionId;
           delete cloneData.folderId;
@@ -119,6 +122,14 @@ export function TabsBarContextMenu({
             ...cloneData,
             name: `${cloneData.name || "Untitled Request"} (Copy)`,
           });
+          setCtxMenu(null);
+        }}
+      />
+      <CtxMenuItem
+        icon={ctxMenu.tabToDuplicate.pinned ? PinOff : Pin}
+        label={ctxMenu.tabToDuplicate.pinned ? "Unpin Tab" : "Pin Tab"}
+        onClick={() => {
+          pinTab(ctxMenu.tabToDuplicate.id);
           setCtxMenu(null);
         }}
       />
@@ -147,7 +158,7 @@ export function TabsBarContextMenu({
         label="Close Other Tabs"
         onClick={() => {
           tabs.forEach((t) => {
-            if (t.id !== ctxMenu.tabToDuplicate.id) {
+            if (t.id !== ctxMenu.tabToDuplicate.id && !t.pinned) {
               closeTab(t.id);
             }
           });
@@ -156,10 +167,10 @@ export function TabsBarContextMenu({
       />
       <CtxMenuItem
         icon={XSquare}
-        label="Close All Tabs"
+        label="Close Unpinned Tabs"
         onClick={() => {
           tabs.forEach((t) => {
-            onRequestCloseTab(t.id);
+            if (!t.pinned) onRequestCloseTab(t.id);
           });
           setCtxMenu(null);
         }}

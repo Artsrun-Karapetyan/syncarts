@@ -7,7 +7,7 @@ import { InviteController } from "../../../src/invite/invite.controller.js";
 import type { InviteService } from "../../../src/invite/invite.service.js";
 
 describe("InviteController", () => {
-  const req = { authUser: { id: "user-1" } };
+  const req = { authUser: { id: "user-1" } } as any;
 
   test("generateLink delegates to inviteService.generateInviteLink", async () => {
     const mockService = {

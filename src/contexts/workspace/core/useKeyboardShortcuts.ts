@@ -2,10 +2,12 @@ import { useEffect } from "react";
 
 export function useKeyboardShortcuts({
   addTab,
+  activeTabPinned,
   closeTab,
   activeTabId,
 }: {
   addTab: () => void;
+  activeTabPinned?: boolean;
   closeTab: (id: string) => void;
   activeTabId: string | null;
 }) {
@@ -29,7 +31,7 @@ export function useKeyboardShortcuts({
 
       if (cmdOrCtrl && e.key.toLowerCase() === "w") {
         e.preventDefault();
-        if (activeTabId) closeTab(activeTabId);
+        if (activeTabId && !activeTabPinned) closeTab(activeTabId);
       }
 
       // Prevent ESC from exiting macOS fullscreen
@@ -40,5 +42,5 @@ export function useKeyboardShortcuts({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [addTab, closeTab, activeTabId]);
+  }, [addTab, activeTabId, activeTabPinned, closeTab]);
 }

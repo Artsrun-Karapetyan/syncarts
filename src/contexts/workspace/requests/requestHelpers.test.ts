@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Collection, TabData } from "../core/types";
+import type { Collection, TabData } from "@/contexts/workspace/core/types";
 import {
   getRequestAncestors,
   interpolateVariables,
   resolveRequestAuth,
-} from "./requestHelpers";
+} from "@/contexts/workspace/requests/requestHelpers";
 
 function tab(overrides: Partial<TabData>): TabData {
   return {

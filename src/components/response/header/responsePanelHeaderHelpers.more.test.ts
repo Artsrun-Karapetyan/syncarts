@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { formatStatusText, getStatusClass } from "./responsePanelHeaderHelpers";
+import {
+  formatStatusText,
+  getStatusClass,
+} from "@/components/response/header/responsePanelHeaderHelpers";
 
 describe("responsePanelHeaderHelpers extra cases", () => {
   test("removes duplicated numeric prefix from status text", () => {

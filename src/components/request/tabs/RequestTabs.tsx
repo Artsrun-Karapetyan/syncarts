@@ -1,17 +1,17 @@
-import "./RequestTabs.css";
+import "@/components/request/tabs/RequestTabs.css";
 
 import { useEffect, useState } from "react";
 
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { extractPathVariableKeys } from "../../../utils/pathVariables";
-import { AuthEditor } from "../auth/AuthEditor";
-import { BodyEditor } from "../body/BodyEditor";
-import { findExampleInItems } from "../docs/findExampleInItems";
-import { DocsEditor } from "../DocsEditor";
-import { ExampleDocsEditor } from "../ExampleDocsEditor";
-import { HeadersEditor } from "../HeadersEditor";
-import { ParamsEditor } from "../params/ParamsEditor";
-import { ScriptsEditor } from "../scripts/ScriptsEditor";
+import { AuthEditor } from "@/components/request/auth/AuthEditor";
+import { BodyEditor } from "@/components/request/body/BodyEditor";
+import { findExampleInItems } from "@/components/request/docs/findExampleInItems";
+import { DocsEditor } from "@/components/request/DocsEditor";
+import { ExampleDocsEditor } from "@/components/request/ExampleDocsEditor";
+import { HeadersEditor } from "@/components/request/HeadersEditor";
+import { ParamsEditor } from "@/components/request/params/ParamsEditor";
+import { ScriptsEditor } from "@/components/request/scripts/ScriptsEditor";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { extractPathVariableKeys } from "@/utils/pathVariables";
 
 type Tab = "headers" | "body" | "auth" | "params" | "scripts" | "docs";
 

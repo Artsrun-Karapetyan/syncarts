@@ -77,7 +77,7 @@ describe("WorkspaceService create/list/sync", () => {
     ).resolves.toEqual({
       ...workspace,
       data: { collections: [], environments: [], globalVariables: [] },
-    });
+    } as any);
   });
 
   test("getWorkspaceForUser rejects missing and owned default workspace", async () => {

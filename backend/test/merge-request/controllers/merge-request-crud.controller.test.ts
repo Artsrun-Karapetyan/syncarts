@@ -6,7 +6,7 @@ import { MergeRequestController } from "../../../src/merge-request/merge-request
 import type { MergeRequestService } from "../../../src/merge-request/merge-request.service.js";
 
 describe("MergeRequestController CRUD", () => {
-  const req = { authUser: { id: "user-1" } };
+  const req = { authUser: { id: "user-1" } } as any;
 
   test("create delegates to mrService.createMergeRequest", async () => {
     const mockService = {
@@ -59,6 +59,22 @@ describe("MergeRequestController CRUD", () => {
     const result = await controller.findOne(req, "mr-1");
 
     expect(mockService.getMergeRequestById).toHaveBeenCalledWith(
+      "mr-1",
+      "user-1",
+    );
+    expect(result).toEqual({ id: "mr-1" } as any);
+  });
+  test("remove delegates to mrService.deleteMergeRequest", async () => {
+    const mockService = {
+      deleteMergeRequest: mock(async (_id: string, _userId: string) => ({
+        id: "mr-1",
+      })),
+    } as unknown as MergeRequestService;
+
+    const controller = new MergeRequestController(mockService);
+    const result = await controller.remove(req, "mr-1");
+
+    expect(mockService.deleteMergeRequest).toHaveBeenCalledWith(
       "mr-1",
       "user-1",
     );

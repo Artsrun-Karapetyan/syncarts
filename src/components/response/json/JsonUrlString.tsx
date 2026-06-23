@@ -1,6 +1,6 @@
 import JsonView from "@uiw/react-json-view";
 
-import { getShortcutLabel } from "./jsonShortcut";
+import { getShortcutLabel } from "@/components/response/json/jsonShortcut";
 
 const URL_PATTERN = /^https?:\/\/\S+$/i;
 

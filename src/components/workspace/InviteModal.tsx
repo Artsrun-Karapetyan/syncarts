@@ -2,16 +2,16 @@ import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { isMemberWorkspace } from "../../contexts/workspace/sync/sharing";
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { api } from "../../lib/api";
-import { useStoredUser } from "../../lib/session";
-import { InviteDivider } from "./invite/InviteDivider";
-import { InviteEmailForm } from "./invite/InviteEmailForm";
-import { InviteLinkSection } from "./invite/InviteLinkSection";
-import { InviteMembersList } from "./invite/InviteMembersList";
-import { InviteStatusMessage } from "./invite/InviteStatusMessage";
-import { InviteWorkspaceSelector } from "./invite/InviteWorkspaceSelector";
+import { InviteDivider } from "@/components/workspace/invite/InviteDivider";
+import { InviteEmailForm } from "@/components/workspace/invite/InviteEmailForm";
+import { InviteLinkSection } from "@/components/workspace/invite/InviteLinkSection";
+import { InviteMembersList } from "@/components/workspace/invite/InviteMembersList";
+import { InviteStatusMessage } from "@/components/workspace/invite/InviteStatusMessage";
+import { InviteWorkspaceSelector } from "@/components/workspace/invite/InviteWorkspaceSelector";
+import { isMemberWorkspace } from "@/contexts/workspace/sync/sharing";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { api } from "@/lib/api";
+import { useStoredUser } from "@/lib/session";
 
 interface Props {
   isOpen: boolean;

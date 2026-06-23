@@ -1,7 +1,7 @@
 import type { MouseEvent, MutableRefObject, ReactNode, RefObject } from "react";
 
-import { useVariableAutocomplete } from "../variables/useVariableAutocomplete";
-import { VariableAutocompletePopover } from "../variables/VariableAutocompletePopover";
+import { useVariableAutocomplete } from "@/components/request/variables/useVariableAutocomplete";
+import { VariableAutocompletePopover } from "@/components/request/variables/VariableAutocompletePopover";
 
 export interface HoveredVariable {
   name: string;

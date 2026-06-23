@@ -1,4 +1,4 @@
-import type { QueryParamItem } from "../../../contexts/WorkspaceContext";
+import type { QueryParamItem } from "@/contexts/WorkspaceContext";
 
 const EMPTY_PARAM: QueryParamItem = {
   key: "",

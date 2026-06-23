@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { getScriptSuggestions } from "./scriptAutocompleteData";
+import { getScriptSuggestions } from "@/components/request/scripts/scriptAutocompleteData";
 
 describe("getScriptSuggestions", () => {
   test("returns root suggestions filtered by prefix", () => {

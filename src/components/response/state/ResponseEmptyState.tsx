@@ -1,4 +1,4 @@
-import "./ResponseEmptyState.css";
+import "@/components/response/state/ResponseEmptyState.css";
 
 import { Send } from "lucide-react";
 

@@ -87,6 +87,9 @@ describe("WorkspaceService request entity sync", () => {
             };
           },
         },
+        workspaceCollection: {
+          findUnique: async () => ({ id: "collection" }),
+        },
         workspaceRequest: {
           updateMany: async (input: any) => {
             updateManyInput = input;
@@ -186,6 +189,9 @@ describe("WorkspaceService request entity sync", () => {
             members: [],
           }),
         },
+        workspaceCollection: {
+          findUnique: async () => ({ id: "collection" }),
+        },
         workspaceRequest: {
           updateMany: async () => ({ count: 0 }),
         },
@@ -200,6 +206,61 @@ describe("WorkspaceService request entity sync", () => {
         data: { collectionId: "collection", version: 1 },
       }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  test("updateRequestForUser rejects missing collections", async () => {
+    const service = new WorkspaceRequestService(
+      createPrismaMock({
+        workspace: {
+          findFirst: async () => ({
+            id: "workspace",
+            ownerId: "owner",
+            members: [],
+          }),
+        },
+        workspaceCollection: {
+          findUnique: async () => null,
+        },
+      }),
+    );
+
+    await expect(
+      service.updateRequestForUser({
+        workspaceId: "workspace",
+        requestId: "request",
+        userId: "owner",
+        data: { collectionId: "missing" },
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  test("updateRequestForUser rejects folders outside collection", async () => {
+    const service = new WorkspaceRequestService(
+      createPrismaMock({
+        workspace: {
+          findFirst: async () => ({
+            id: "workspace",
+            ownerId: "owner",
+            members: [],
+          }),
+        },
+        workspaceCollection: {
+          findUnique: async () => ({ id: "collection" }),
+        },
+        workspaceFolder: {
+          findFirst: async () => null,
+        },
+      }),
+    );
+
+    await expect(
+      service.updateRequestForUser({
+        workspaceId: "workspace",
+        requestId: "request",
+        userId: "owner",
+        data: { collectionId: "collection", folderId: "other-folder" },
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 
   test("updateRequestForUser blocks viewers", async () => {

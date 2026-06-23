@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createScriptResponseBody } from "./scriptRuntimeResponse";
+import { createScriptResponseBody } from "@/contexts/workspace/requests/scriptRuntimeResponse";
 
 describe("createScriptResponseBody", () => {
   test("exposes response readers and header assertions", () => {

@@ -1,13 +1,13 @@
 import { ReactNode } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
-import { WorkspaceProvider } from "../../contexts/WorkspaceContext";
-import { useStoredUser } from "../../lib/session";
-import { AppUpdateBanner } from "../update/AppUpdateBanner";
-import { GlobalContextMenu } from "./GlobalContextMenu";
-import { GlobalDropZone } from "./GlobalDropZone";
-import { Sidebar } from "./Sidebar";
-import { TopBar } from "./TopBar";
+import { GlobalContextMenu } from "@/components/layout/GlobalContextMenu";
+import { GlobalDropZone } from "@/components/layout/GlobalDropZone";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { TopBar } from "@/components/layout/topbar/TopBar";
+import { AppUpdateBanner } from "@/components/update/AppUpdateBanner";
+import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import { useStoredUser } from "@/lib/session";
 
 type AppShellProps = {
   children: ReactNode;
@@ -16,10 +16,10 @@ type AppShellProps = {
 export function AppShell({ children }: AppShellProps) {
   const user = useStoredUser();
 
-  if (!user) return null;
+  const userId = user?.id || "offline";
 
   return (
-    <WorkspaceProvider key={user.id} userId={user.id}>
+    <WorkspaceProvider key={userId} userId={userId}>
       <GlobalDropZone>
         <div
           style={{

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createTab } from "./tabFactory";
+import { createTab } from "@/contexts/workspace/tabs/core/tabFactory";
 
 describe("createTab", () => {
   test("creates a default request tab with editable request fields", () => {

@@ -1,14 +1,14 @@
 import JsonView from "@uiw/react-json-view";
 import CodeEditor from "@uiw/react-textarea-code-editor";
 
-import type { HttpResponse } from "../../../contexts/WorkspaceContext";
-import { JsonExtractWrappers } from "../json/JsonExtractWrappers";
+import { JsonExtractWrappers } from "@/components/response/json/JsonExtractWrappers";
 import {
   type ResponseJsonThemeId,
   responseJsonThemes,
-} from "../shared/responseJsonThemes";
-import type { ResponseLanguage } from "../shared/responseLanguage";
-import type { BodyFormat } from "../shared/responseTypes";
+} from "@/components/response/shared/responseJsonThemes";
+import type { ResponseLanguage } from "@/components/response/shared/responseLanguage";
+import type { BodyFormat } from "@/components/response/shared/responseTypes";
+import type { HttpResponse } from "@/contexts/WorkspaceContext";
 
 interface ResponseBodyContentProps {
   bodyFormat: BodyFormat;

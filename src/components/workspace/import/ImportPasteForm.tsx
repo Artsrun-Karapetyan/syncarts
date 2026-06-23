@@ -33,7 +33,7 @@ export function ImportPasteForm({
           resize: "none",
           borderRadius: "var(--radius-md)",
         }}
-        placeholder="Paste cURL command, Postman Collection, or Environment JSON..."
+        placeholder="Paste cURL command, Postman Collection, OpenAPI, or Environment JSON..."
         value={inputText}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {

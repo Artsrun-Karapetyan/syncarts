@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseQueryParamsFromUrl } from "./urlQueryParams";
+import { parseQueryParamsFromUrl } from "@/components/request/url/urlQueryParams";
 
 describe("parseQueryParamsFromUrl", () => {
   test("parses query params and keeps descriptions", () => {

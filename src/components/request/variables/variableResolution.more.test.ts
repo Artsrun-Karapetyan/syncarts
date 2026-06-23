@@ -4,7 +4,7 @@ import {
   resolveDynamicVariable,
   resolveScopedVariable,
   upsertActiveVariableValue,
-} from "./variableResolution";
+} from "@/components/request/variables/variableResolution";
 
 describe("variableResolution extra cases", () => {
   test("resolves dynamic variables and missing variables", () => {

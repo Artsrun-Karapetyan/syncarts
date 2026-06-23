@@ -2,17 +2,22 @@ import { Check, Copy, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
-import { generateCurlCommand } from "../../../utils/curlGenerator";
-import { CurlLine } from "./CurlLine";
+import { CurlLine } from "@/components/request/code/CurlLine";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { generateCurlCommand } from "@/utils/curlGenerator";
 
 interface RequestCodeModalProps {
   onClose: () => void;
 }
 
 export function RequestCodeModal({ onClose }: RequestCodeModalProps) {
-  const { activeEnvironment, activeTab, collections, globalVariables } =
-    useWorkspace();
+  const {
+    activeEnvironment,
+    activeTab,
+    collections,
+    globalVariables,
+    secrets,
+  } = useWorkspace();
   const [copied, setCopied] = useState(false);
   const curlCommand = useMemo(() => {
     if (!activeTab) return "";
@@ -20,9 +25,10 @@ export function RequestCodeModal({ onClose }: RequestCodeModalProps) {
       activeEnvironment,
       collections,
       globalVariables,
+      secrets,
       request: activeTab,
     });
-  }, [activeEnvironment, activeTab, collections, globalVariables]);
+  }, [activeEnvironment, activeTab, collections, globalVariables, secrets]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

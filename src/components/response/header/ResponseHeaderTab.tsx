@@ -1,4 +1,4 @@
-import type { ResponseTab } from "../shared/responseTypes";
+import type { ResponseTab } from "@/components/response/shared/responseTypes";
 
 interface ResponseHeaderTabProps {
   id: ResponseTab;

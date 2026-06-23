@@ -1,12 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Environment, EnvironmentVariable } from "../core/types";
+import type {
+  Environment,
+  EnvironmentVariable,
+} from "@/contexts/workspace/core/types";
 import {
   createVariablesApi,
   replaceDraftVariables,
   sendRequest,
-} from "./scriptRuntimeApis";
-import { createScriptResponseBody } from "./scriptRuntimeResponse";
+} from "@/contexts/workspace/requests/scriptRuntimeApis";
+import { createScriptResponseBody } from "@/contexts/workspace/requests/scriptRuntimeResponse";
 
 describe("scriptRuntimeApis extra cases", () => {
   test("get resolves from ancestors, collection, and globals", () => {
@@ -66,14 +69,14 @@ describe("scriptRuntimeApis extra cases", () => {
       collectionVariablesDraft: [],
       environments: [env],
       globalVariables: [],
-      updateEnvironment: (id, data) => {
+      updateEnvironment: (_, data) => {
         updatedEnv = data;
       },
       updateGlobalVariables: () => {},
     });
 
     variables.unset("k");
-    expect(updatedEnv?.variables).toHaveLength(0);
+    expect((updatedEnv as any)?.variables).toHaveLength(0);
   });
 
   test("replaceDraftVariables overwrites array in place", () => {
@@ -91,12 +94,12 @@ describe("scriptRuntimeApis extra cases", () => {
   test("sendRequest handles successful fetch", async () => {
     // Mock global fetch
     const originalFetch = global.fetch;
-    global.fetch = async () =>
+    global.fetch = (async () =>
       new Response("hello world", {
         status: 200,
         statusText: "OK",
         headers: { "x-custom": "test" },
-      });
+      })) as any;
 
     try {
       const response = await sendRequest({ url: "https://example.com" });
@@ -111,9 +114,9 @@ describe("scriptRuntimeApis extra cases", () => {
 
   test("sendRequest handles fetch errors", async () => {
     const originalFetch = global.fetch;
-    global.fetch = async () => {
+    global.fetch = (async () => {
       throw new Error("Network Error");
-    };
+    }) as any;
 
     try {
       await expect(sendRequest("https://error.com")).rejects.toThrow(

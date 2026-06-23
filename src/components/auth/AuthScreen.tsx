@@ -3,11 +3,14 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { AlertCircle } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 
-import { login, register } from "../../lib/api";
-import { getAuthToken, setAuthToken } from "../../lib/auth";
-import { setStoredUser } from "../../lib/session";
-import { isTauriRuntime } from "../../lib/tauriRuntime";
-import { type AuthMode, getAuthErrorMessage } from "./authErrorMessage";
+import {
+  type AuthMode,
+  getAuthErrorMessage,
+} from "@/components/auth/authErrorMessage";
+import { login, register } from "@/lib/api";
+import { getAuthToken, setAuthToken } from "@/lib/auth";
+import { setStoredUser } from "@/lib/session";
+import { isTauriRuntime } from "@/lib/tauriRuntime";
 
 type AuthScreenProps = {
   mode: AuthMode;
@@ -303,6 +306,36 @@ export function AuthScreen({ mode }: AuthScreenProps) {
               </Link>
             </span>
           )}
+        </div>
+
+        <div
+          style={{
+            marginTop: 16,
+            fontSize: 13,
+            textAlign: "center",
+          }}
+        >
+          <Link
+            to="/"
+            style={{
+              color: "var(--text-tertiary)",
+              textDecoration: "underline",
+              textDecorationColor: "transparent",
+              transition:
+                "text-decoration-color var(--transition-fast), color var(--transition-fast)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--text-secondary)";
+              e.currentTarget.style.textDecorationColor =
+                "var(--text-secondary)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--text-tertiary)";
+              e.currentTarget.style.textDecorationColor = "transparent";
+            }}
+          >
+            Continue without account
+          </Link>
         </div>
       </section>
     </main>

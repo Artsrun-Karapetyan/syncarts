@@ -7,6 +7,8 @@ import {
 } from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma.service.js";
+import { WatchService } from "../watch/watch.service.js";
+import { WatchEntityTypes } from "../watch/watchTypes.js";
 import { WorkspaceRealtimeService } from "./workspace-realtime.service.js";
 import { getWorkspaceAccess } from "./workspaceAccess.js";
 import { mapWorkspaceRequest } from "./workspaceDataReader.js";
@@ -20,6 +22,9 @@ export class WorkspaceRequestService {
     @Optional()
     @Inject(WorkspaceRealtimeService)
     private readonly realtime?: WorkspaceRealtimeService,
+    @Optional()
+    @Inject(WatchService)
+    private readonly watches?: WatchService,
   ) {}
 
   async getRequestForUser(
@@ -59,6 +64,8 @@ export class WorkspaceRequestService {
 
     const { request, workspace } = await this.prisma.$transaction(
       async (transaction) => {
+        await ensureRequestParents(transaction, workspaceId, input);
+
         const updated = await replaceWorkspaceRequest(
           transaction,
           workspaceId,
@@ -95,13 +102,80 @@ export class WorkspaceRequestService {
           ? workspace.updatedAt.toISOString()
           : undefined,
     });
+    await this.notifyRequestWatchers({
+      workspaceId,
+      requestId,
+      collectionId:
+        typeof input.collectionId === "string" ? input.collectionId : null,
+      requestName: payload.name || "Request",
+      userId,
+    });
     return payload;
+  }
+
+  private async notifyRequestWatchers(input: {
+    workspaceId: string;
+    requestId: string;
+    collectionId: string | null;
+    requestName: string;
+    userId: string;
+  }) {
+    if (!this.watches) return;
+
+    try {
+      await this.watches.notifyWatchers({
+        workspaceId: input.workspaceId,
+        actorId: input.userId,
+        entityType: WatchEntityTypes.Request,
+        entityId: input.requestId,
+        collectionId: input.collectionId,
+        type: "WATCHED_REQUEST_UPDATED",
+        title: "Watched request updated",
+        message: `${input.requestName} was updated`,
+        actionUrl: "/",
+        metadata: {
+          requestId: input.requestId,
+          collectionId: input.collectionId,
+        },
+      });
+    } catch (error) {
+      console.warn("Failed to create watch notification", error);
+    }
   }
 }
 
 type RequestUpdateInput = {
   version?: number;
 } & Record<string, unknown>;
+
+async function ensureRequestParents(
+  client: any,
+  workspaceId: string,
+  input: RequestUpdateInput,
+) {
+  const collectionId =
+    typeof input.collectionId === "string" ? input.collectionId : null;
+  if (!collectionId) return;
+
+  const collection = await client.workspaceCollection.findUnique({
+    where: { workspaceId_id: { workspaceId, id: collectionId } },
+    select: { id: true },
+  });
+  if (!collection) {
+    throw new NotFoundException("Collection not found");
+  }
+
+  const folderId = typeof input.folderId === "string" ? input.folderId : null;
+  if (!folderId) return;
+
+  const folder = await client.workspaceFolder.findFirst({
+    where: { id: folderId, workspaceId, collectionId },
+    select: { id: true },
+  });
+  if (!folder) {
+    throw new NotFoundException("Folder not found");
+  }
+}
 
 function toRequestUpdateInput(value: unknown): RequestUpdateInput {
   if (typeof value !== "object" || value === null) {

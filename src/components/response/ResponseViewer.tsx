@@ -1,24 +1,27 @@
-import "./ResponseViewer.css";
-import "../request/tabs/RequestTabs.css";
+import "@/components/response/ResponseViewer.css";
+import "@/components/request/tabs/RequestTabs.css";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useWorkspace } from "../../contexts/WorkspaceContext";
-import { ResponseBodyContent } from "./body/ResponseBodyContent";
-import { ResponseBodyToolbar } from "./body/ResponseBodyToolbar";
-import { ResponseHeadersList } from "./header/ResponseHeadersList";
-import { ResponsePanelHeader } from "./header/ResponsePanelHeader";
-import { ResponseTestResults } from "./header/ResponseTestResults";
-import { JsonContextMenu } from "./json/JsonContextMenu";
-import { cleanClickedUrl } from "./shared/cleanClickedUrl";
-import type { ResponseJsonThemeId } from "./shared/responseJsonThemes";
+import { ResponseBodyContent } from "@/components/response/body/ResponseBodyContent";
+import { ResponseBodyToolbar } from "@/components/response/body/ResponseBodyToolbar";
+import { ResponseHeadersList } from "@/components/response/header/ResponseHeadersList";
+import { ResponsePanelHeader } from "@/components/response/header/ResponsePanelHeader";
+import { ResponseTestResults } from "@/components/response/header/ResponseTestResults";
+import { JsonContextMenu } from "@/components/response/json/JsonContextMenu";
+import { cleanClickedUrl } from "@/components/response/shared/cleanClickedUrl";
+import type { ResponseJsonThemeId } from "@/components/response/shared/responseJsonThemes";
 import {
   detectResponseLanguage,
   type ResponseLanguage,
-} from "./shared/responseLanguage";
-import type { BodyFormat, ResponseTab } from "./shared/responseTypes";
-import { ResponseEmptyState } from "./state/ResponseEmptyState";
-import { ResponseLoadingState } from "./state/ResponseLoadingState";
+} from "@/components/response/shared/responseLanguage";
+import type {
+  BodyFormat,
+  ResponseTab,
+} from "@/components/response/shared/responseTypes";
+import { ResponseEmptyState } from "@/components/response/state/ResponseEmptyState";
+import { ResponseLoadingState } from "@/components/response/state/ResponseLoadingState";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export function ResponseViewer() {
   const { activeTab, addTab, addExample, error, isMutating, openExampleTab } =

@@ -1,12 +1,12 @@
 import { BookMarked, Clock, Zap } from "lucide-react";
 
-import type {
-  HttpResponse,
-  TestResult,
-} from "../../../contexts/WorkspaceContext";
-import type { ResponseTab } from "../shared/responseTypes";
-import { ResponseHeaderTab } from "./ResponseHeaderTab";
-import { formatStatusText, getStatusClass } from "./responsePanelHeaderHelpers";
+import { ResponseHeaderTab } from "@/components/response/header/ResponseHeaderTab";
+import {
+  formatStatusText,
+  getStatusClass,
+} from "@/components/response/header/responsePanelHeaderHelpers";
+import type { ResponseTab } from "@/components/response/shared/responseTypes";
+import type { HttpResponse, TestResult } from "@/contexts/WorkspaceContext";
 
 interface ResponsePanelHeaderProps {
   viewTab: ResponseTab;

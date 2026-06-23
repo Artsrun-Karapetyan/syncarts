@@ -1,3 +1,3 @@
-export type * from "./workspace/core/types";
-export * from "./workspace/core/useWorkspace";
-export * from "./workspace/core/WorkspaceProvider";
+export type * from "@/contexts/workspace/core/types";
+export * from "@/contexts/workspace/core/useWorkspace";
+export * from "@/contexts/workspace/core/WorkspaceProvider";

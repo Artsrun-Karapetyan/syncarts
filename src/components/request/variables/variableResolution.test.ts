@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   resolveScopedVariable,
   upsertActiveVariableValue,
-} from "./variableResolution";
+} from "@/components/request/variables/variableResolution";
 
 describe("variableResolution", () => {
   test("resolves environment before collection, folder, and globals", () => {

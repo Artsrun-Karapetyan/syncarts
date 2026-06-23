@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { WorkspaceContext } from "./context";
-import { useWorkspaceController } from "./useWorkspaceController";
+import { WorkspaceContext } from "@/contexts/workspace/core/context";
+import { useWorkspaceController } from "@/contexts/workspace/core/useWorkspaceController";
 
 export function WorkspaceProvider({
   children,

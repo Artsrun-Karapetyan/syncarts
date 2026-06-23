@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { SavedRequest, useWorkspace } from "../../contexts/WorkspaceContext";
-import { Select } from "../ui/Select";
+import { Select } from "@/components/ui/Select/Select";
+import { SavedRequest, useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface SaveDialogProps {
   onClose: () => void;

@@ -3,7 +3,7 @@ import {
   item,
   type ScriptSuggestion,
   variableStoreSuggestions,
-} from "./scriptAutocompleteHelpers";
+} from "@/components/request/scripts/scriptAutocompleteHelpers";
 
 export const POSTMAN_MEMBERS: Record<string, ScriptSuggestion[]> = {
   pm: [

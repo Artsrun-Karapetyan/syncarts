@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { SNIPPET_GROUPS } from "./scriptSnippets";
+import { SNIPPET_GROUPS } from "@/components/request/scripts/scriptSnippets";
 
 describe("SNIPPET_GROUPS", () => {
   test("contains variable, workflow, and test snippets with executable code", () => {

@@ -1,20 +1,21 @@
 import {
   interpolateVariables,
   resolveRequestAuth,
-} from "../contexts/workspace/requests/requestHelpers";
+} from "@/contexts/workspace/requests/requestHelpers";
 import type {
   Collection,
   Environment,
   EnvironmentVariable,
   TabData,
-} from "../contexts/WorkspaceContext";
-import { applyPathVariables } from "./pathVariables";
+} from "@/contexts/WorkspaceContext";
+import { applyPathVariables } from "@/utils/pathVariables";
 
 interface CurlGeneratorArgs {
   activeEnvironment?: Environment;
   collections: Collection[];
   globalVariables: EnvironmentVariable[];
   request: TabData;
+  secrets?: Record<string, string>;
 }
 
 export function generateCurlCommand(args: CurlGeneratorArgs) {
@@ -25,6 +26,7 @@ export function generateCurlCommand(args: CurlGeneratorArgs) {
       activeTab: request,
       collections,
       globalVariables,
+      secrets: args.secrets,
       text,
     });
 

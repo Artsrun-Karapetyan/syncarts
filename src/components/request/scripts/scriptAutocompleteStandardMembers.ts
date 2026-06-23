@@ -1,4 +1,7 @@
-import { item, type ScriptSuggestion } from "./scriptAutocompleteHelpers";
+import {
+  item,
+  type ScriptSuggestion,
+} from "@/components/request/scripts/scriptAutocompleteHelpers";
 
 export const STANDARD_MEMBERS: Record<string, ScriptSuggestion[]> = {
   console: [

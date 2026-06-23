@@ -5,7 +5,11 @@ const INDEXED_DB_STORE = "values";
 const INDEXED_DB_MARKER = "__syncarts_indexeddb__";
 const LOCAL_STORAGE_MAX_CHARS = 1_000_000;
 
-export function useLocalStorage<T>(key: string, initialValue: T) {
+export function useLocalStorage<T>(
+  key: string,
+  initialValue: T,
+  serializer: (val: T) => string = JSON.stringify,
+) {
   const hasIndexedDbValue = () => {
     try {
       return window.localStorage.getItem(key) === INDEXED_DB_MARKER;
@@ -56,7 +60,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     (value: T | ((val: T) => T)) => {
       setStoredValue((prev) => {
         const valueToStore = value instanceof Function ? value(prev) : value;
-        void persistValue(key, valueToStore).catch((error) => {
+        void persistValue(key, valueToStore, serializer).catch((error) => {
           console.error("Failed to persist local value", error);
         });
         return valueToStore;
@@ -68,8 +72,12 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   return [storedValue, setValue, isHydrated] as const;
 }
 
-async function persistValue<T>(key: string, value: T) {
-  const serialized = JSON.stringify(value);
+async function persistValue<T>(
+  key: string,
+  value: T,
+  serializer: (val: T) => string,
+) {
+  const serialized = serializer(value);
 
   if (serialized.length > LOCAL_STORAGE_MAX_CHARS) {
     await persistIndexedDbValue(key, serialized);

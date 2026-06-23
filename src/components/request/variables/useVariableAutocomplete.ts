@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 
-import { getRequestAncestors } from "../../../contexts/workspace/requests/requestHelpers";
-import { useWorkspace } from "../../../contexts/WorkspaceContext";
 import type {
   VariableAutocompleteState,
   VariableSuggestion,
-} from "./variableAutocompleteTypes";
-import { getVariableSuggestions } from "./variableSuggestions";
+} from "@/components/request/variables/variableAutocompleteTypes";
+import { getVariableSuggestions } from "@/components/request/variables/variableSuggestions";
+import { getRequestAncestors } from "@/contexts/workspace/requests/requestHelpers";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type TextControl = HTMLInputElement | HTMLTextAreaElement;
 

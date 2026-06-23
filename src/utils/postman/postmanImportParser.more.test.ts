@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { parsePostmanCollection } from "./postmanImportParser";
+import { parsePostmanCollection } from "@/utils/postman/postmanImportParser";
 
 describe("postmanImportParser extra cases", () => {
   test("throws on invalid collection", () => {
@@ -52,7 +52,7 @@ describe("postmanImportParser extra cases", () => {
       variable: [{ key: "cvar", value: "cval" }],
     });
     const parsed = parsePostmanCollection(json);
-    expect(parsed.variables[0]).toMatchObject({ key: "cvar", value: "cval" });
+    expect(parsed.variables?.[0]).toMatchObject({ key: "cvar", value: "cval" });
   });
 
   test("parses url encoded and form-data body", () => {

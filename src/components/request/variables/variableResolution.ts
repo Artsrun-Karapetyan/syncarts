@@ -1,7 +1,7 @@
 import type {
   Environment,
   EnvironmentVariable,
-} from "../../../contexts/WorkspaceContext";
+} from "@/contexts/WorkspaceContext";
 
 export interface ResolvedVariable {
   exists: boolean;

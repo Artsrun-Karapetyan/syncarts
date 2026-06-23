@@ -4,18 +4,26 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 
+import { NotificationService } from "../notification/notification.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import {
   normalizeWorkspaceData,
   replaceWorkspaceData,
 } from "../workspace/workspaceData.js";
 import { WorkspaceRoles } from "../workspace/workspaceRoles.js";
+import { notifyMemberAddedToWorkspaces } from "./inviteNotifications.js";
 
 @Injectable()
 export class InviteService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Optional()
+    @Inject(NotificationService)
+    private readonly notifications?: NotificationService,
+  ) {}
 
   private async syncWorkspaceSnapshots(
     workspaces: Array<{
@@ -180,7 +188,10 @@ export class InviteService {
       await this.syncWorkspaceSnapshots(targetWorkspaces, ownerId);
     }
 
-    await this.getAccessibleWorkspaces(targetWorkspaceIds, ownerId);
+    const workspaces = await this.getAccessibleWorkspaces(
+      targetWorkspaceIds,
+      ownerId,
+    );
 
     const userToAdd = await this.prisma.user.findUnique({ where: { email } });
     if (!userToAdd) {
@@ -188,6 +199,8 @@ export class InviteService {
         "User with this email not found. They must sign up first.",
       );
     }
+
+    const addedWorkspaceIds: string[] = [];
 
     await this.prisma.$transaction(async (transaction) => {
       for (const workspaceId of targetWorkspaceIds) {
@@ -211,7 +224,17 @@ export class InviteService {
             role: WorkspaceRoles.Editor,
           },
         });
+        addedWorkspaceIds.push(workspaceId);
       }
+    });
+
+    await notifyMemberAddedToWorkspaces({
+      notifications: this.notifications,
+      userId: userToAdd.id,
+      ownerId,
+      workspaces: workspaces.filter((workspace) =>
+        addedWorkspaceIds.includes(workspace.id),
+      ),
     });
 
     return { status: "added", workspaceIds: targetWorkspaceIds };

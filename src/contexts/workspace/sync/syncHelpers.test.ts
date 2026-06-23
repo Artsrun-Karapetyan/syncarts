@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test";
 
-import type { Workspace } from "../core/types";
+import type { Workspace } from "@/contexts/workspace/core/types";
 import {
   canSyncWorkspace,
   getRemoteSyncPayload,
   getWorkspaceSyncPayload,
   mapRemoteWorkspace,
-} from "./syncHelpers";
+} from "@/contexts/workspace/sync/syncHelpers";
 
 const workspace: Workspace = {
   id: "workspace-1",
@@ -16,8 +16,8 @@ const workspace: Workspace = {
   environments: [],
   globalVariables: [],
   members: [
-    { userId: "editor-1", role: "EDITOR" },
-    { userId: "viewer-1", role: "VIEWER" },
+    { userId: "editor-1", role: "EDITOR", workspaceId: "workspace-1" },
+    { userId: "viewer-1", role: "VIEWER", workspaceId: "workspace-1" },
   ],
 };
 

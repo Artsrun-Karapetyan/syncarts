@@ -1,7 +1,7 @@
-import { API_URL, getToken } from "../../../lib/api";
-import { updateRequestInItems } from "../collections/collectionItemHelpers";
-import type { SavedRequest, Workspace } from "../core/types";
-import { findSavedRequestByIdInCollections } from "../tabs/tabHelpers";
+import { updateRequestInItems } from "@/contexts/workspace/collections/collectionItemHelpers";
+import type { SavedRequest, Workspace } from "@/contexts/workspace/core/types";
+import { findSavedRequestByIdInCollections } from "@/contexts/workspace/tabs/helpers/tabHelpers";
+import { API_URL, getToken } from "@/lib/api";
 
 export type WorkspaceRealtimeEvent = {
   type: string;

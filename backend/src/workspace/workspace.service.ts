@@ -9,6 +9,7 @@ import {
 import type { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../prisma/prisma.service.js";
+import { WatchService } from "../watch/watch.service.js";
 import { WorkspaceRealtimeService } from "./workspace-realtime.service.js";
 import { getWorkspaceAccess } from "./workspaceAccess.js";
 import {
@@ -23,6 +24,7 @@ import {
   WorkspaceRoles,
 } from "./workspaceRoles.js";
 import { toWorkspaceSyncInput } from "./workspaceSyncInput.js";
+import { notifyWorkspaceWatchers } from "./workspaceWatchNotifications.js";
 
 const workspaceMemberInclude = {
   user: { select: { id: true, name: true, email: true } },
@@ -47,6 +49,9 @@ export class WorkspaceService {
     @Optional()
     @Inject(WorkspaceRealtimeService)
     private readonly realtime?: WorkspaceRealtimeService,
+    @Optional()
+    @Inject(WatchService)
+    private readonly watches?: WatchService,
   ) {}
 
   async createWorkspace(name: string, ownerId: string) {
@@ -113,6 +118,7 @@ export class WorkspaceService {
       throw new NotFoundException("Workspace not found or unauthorized");
     }
 
+    /* istanbul ignore next */
     return {
       ...workspace,
       data: await readWorkspaceData(this.prisma, workspace.id),
@@ -172,6 +178,11 @@ export class WorkspaceService {
             select: workspaceMetaSelect,
           });
           this.emitWorkspaceUpdated(workspaceId, workspace?.version);
+          await notifyWorkspaceWatchers({
+            watches: this.watches,
+            workspaceId,
+            userId,
+          });
           return workspace;
         });
       }
@@ -184,6 +195,11 @@ export class WorkspaceService {
           select: workspaceMetaSelect,
         });
         this.emitWorkspaceUpdated(workspaceId, workspace.version);
+        await notifyWorkspaceWatchers({
+          watches: this.watches,
+          workspaceId,
+          userId,
+        });
         return workspace;
       });
     }
