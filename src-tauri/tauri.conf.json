@@ -48,7 +48,9 @@
       }
     },
     "updater": {
-      "endpoints": [],
+      "endpoints": [
+        "https://github.com/Artsrun-Karapetyan/syncarts/releases/latest/download/latest.json"
+      ],
       "pubkey": ""
     }
   }
