@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import type {
   Collection,
@@ -50,19 +50,23 @@ export function useTabActions(args: TabActionsArgs) {
     }));
   };
 
-  const findSavedRequestById = (
-    requestId?: string,
-  ): SavedRequestLocation | null => {
-    return findSavedRequestByIdInCollections(collections, requestId);
-  };
+  const findSavedRequestById = useCallback(
+    (requestId?: string): SavedRequestLocation | null => {
+      return findSavedRequestByIdInCollections(collections, requestId);
+    },
+    [collections],
+  );
 
-  const resolveTabSavedRequestId = (tab?: TabData) => {
-    if (!tab || (tab.type && tab.type !== "request")) return undefined;
-    if (tab.savedRequestId && findSavedRequestById(tab.savedRequestId))
-      return tab.savedRequestId;
-    if (findSavedRequestById(tab.id)) return tab.id;
-    return undefined;
-  };
+  const resolveTabSavedRequestId = useCallback(
+    (tab?: TabData) => {
+      if (!tab || (tab.type && tab.type !== "request")) return undefined;
+      if (tab.savedRequestId && findSavedRequestById(tab.savedRequestId))
+        return tab.savedRequestId;
+      if (findSavedRequestById(tab.id)) return tab.id;
+      return undefined;
+    },
+    [findSavedRequestById],
+  );
 
   const rememberTabSnapshot = (tabId: string, request: Partial<TabData>) => {
     lastSavedTabSnapshotsRef.current[tabId] = requestSnapshot(request);
@@ -201,11 +205,13 @@ export function useTabActions(args: TabActionsArgs) {
       (t) => t.type === "collection" && t.collectionId === collectionId,
     );
     if (existing) {
-      updateCurrentTabs((prev) =>
-        prev.map((tab) =>
-          tab.id === existing.id ? { ...tab, collectionView: view } : tab,
-        ),
-      );
+      if (existing.collectionView !== view) {
+        updateCurrentTabs((prev) =>
+          prev.map((tab) =>
+            tab.id === existing.id ? { ...tab, collectionView: view } : tab,
+          ),
+        );
+      }
       return setActiveTabId(existing.id);
     }
 
@@ -238,11 +244,13 @@ export function useTabActions(args: TabActionsArgs) {
       (t) => t.type === "folder" && t.folderId === folderId,
     );
     if (existing) {
-      updateCurrentTabs((prev) =>
-        prev.map((tab) =>
-          tab.id === existing.id ? { ...tab, collectionView: view } : tab,
-        ),
-      );
+      if (existing.collectionView !== view) {
+        updateCurrentTabs((prev) =>
+          prev.map((tab) =>
+            tab.id === existing.id ? { ...tab, collectionView: view } : tab,
+          ),
+        );
+      }
       return setActiveTabId(existing.id);
     }
 

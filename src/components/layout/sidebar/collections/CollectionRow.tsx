@@ -27,6 +27,7 @@ export function CollectionRow({
         className="sidebar-row"
         data-sidebar-id={collection.id}
         data-sidebar-kind="collection"
+        tabIndex={0}
         draggable={
           props.dragHandlers.canDrag && props.renamingId !== collection.id
         }
@@ -57,11 +58,10 @@ export function CollectionRow({
         onDrop={(event) => props.dragHandlers.onDrop(entity, event)}
         onDragEnd={props.dragHandlers.onDragEnd}
         onClick={() => {
-          if (!expanded)
-            props.setExpandedCollections((prev) => ({
-              ...prev,
-              [collection.id]: true,
-            }));
+          props.setExpandedCollections((prev) => ({
+            ...prev,
+            [collection.id]: !prev[collection.id],
+          }));
           props.openCollectionTab(collection.id);
         }}
         onContextMenu={(event) => {

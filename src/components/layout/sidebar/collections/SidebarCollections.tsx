@@ -5,6 +5,7 @@ import { CollectionSearchInput } from "@/components/layout/sidebar/collections/C
 import { EmptyCollections } from "@/components/layout/sidebar/collections/EmptyCollections";
 import { NewCollectionInput } from "@/components/layout/sidebar/collections/NewCollectionInput";
 import { useScrollHighlightedSidebarItem } from "@/components/layout/sidebar/hooks/useScrollHighlightedSidebarItem";
+import { useSidebarKeyboardNavigation } from "@/components/layout/sidebar/hooks/useSidebarKeyboardNavigation";
 import type {
   ContextMenuRequest,
   DeleteTarget,
@@ -52,6 +53,8 @@ export function SidebarCollections(props: SidebarCollectionsProps) {
     highlightedRequestId: props.highlightedRequestId,
     scrollContainerRef,
   });
+
+  useSidebarKeyboardNavigation(scrollContainerRef);
 
   return (
     <div

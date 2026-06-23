@@ -286,3 +286,10 @@ select.input {
 .sidebar-row:hover .sidebar-action-icon {
   opacity: 1;
 }
+
+/* Sidebar Keyboard Focus */
+.sidebar-row:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+

@@ -42,6 +42,7 @@ export function FolderSidebarItem({
         className="sidebar-row"
         data-sidebar-id={item.id}
         data-sidebar-kind="folder"
+        tabIndex={0}
         draggable={dragHandlers.canDrag && renamingId !== item.id}
         style={dragRowStyle({
           base: itemRowStyle(isHighlighted),
@@ -54,8 +55,10 @@ export function FolderSidebarItem({
         onDrop={(event) => dragHandlers.onDrop(entity, event)}
         onDragEnd={dragHandlers.onDragEnd}
         onClick={() => {
-          if (!expandedFolders[item.id])
-            setExpandedFolders((prev) => ({ ...prev, [item.id]: true }));
+          setExpandedFolders((prev) => ({
+            ...prev,
+            [item.id]: !prev[item.id],
+          }));
           openFolderTab(collectionId, item.id);
         }}
         onContextMenu={(event) => {

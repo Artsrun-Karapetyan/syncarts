@@ -42,6 +42,7 @@ export function RequestSidebarItem({
         className="sidebar-row"
         data-sidebar-id={item.id}
         data-sidebar-kind="request"
+        tabIndex={0}
         draggable={dragHandlers.canDrag && renamingId !== item.id}
         style={dragRowStyle({
           base: itemRowStyle(isHighlighted),
@@ -53,7 +54,12 @@ export function RequestSidebarItem({
         onDragOver={(event) => dragHandlers.onDragOver(entity, event)}
         onDrop={(event) => dragHandlers.onDrop(entity, event)}
         onDragEnd={dragHandlers.onDragEnd}
-        onClick={() => openRequestTab(collectionId, parentFolderId, item.id)}
+        onClick={() => {
+          if (item.examples?.length) {
+            setIsExamplesOpen(!isExamplesOpen);
+          }
+          openRequestTab(collectionId, parentFolderId, item.id);
+        }}
         onContextMenu={(event) => {
           if (isViewer) return;
           onContextMenu({
@@ -143,6 +149,7 @@ export function RequestSidebarItem({
                 className="sidebar-row"
                 data-sidebar-id={example.id}
                 data-sidebar-kind="example"
+                tabIndex={0}
                 draggable={dragHandlers.canDrag && renamingId !== example.id}
                 style={dragRowStyle({
                   base: {
