@@ -99,7 +99,7 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
         marginTop: mode === "sidebar" ? 4 : 0,
         flexShrink: 0,
         position: "relative",
-        width: "100%",
+        width: mode === "topbar" ? "auto" : "100%",
       }}
     >
       <div
