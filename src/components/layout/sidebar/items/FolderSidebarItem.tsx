@@ -128,7 +128,7 @@ export function FolderSidebarItem({
           />
         )}
       </div>
-      {expandedFolders[item.id] && (
+      {isExpanded && (
         <div
           style={{
             borderLeft: "1px solid var(--border-color)",

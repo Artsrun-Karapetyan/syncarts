@@ -17,7 +17,8 @@ export function CollectionRow({
   collection,
   ...props
 }: SidebarCollectionsProps & { collection: Collection }) {
-  const expanded = props.expandedCollections[collection.id];
+  const expanded =
+    props.expandedCollections[collection.id] || !!props.collectionSearch;
   const entity = { type: "collection" as const, collectionId: collection.id };
 
   return (
