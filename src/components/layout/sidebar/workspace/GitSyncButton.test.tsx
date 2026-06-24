@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, mock, test } from "bun:test";
 import React from "react";
 
-const mockUseWorkspaceGit = mock(() => ({
+const mockUseWorkspaceGitContext = mock(() => ({
   isSyncing: false,
   syncStatus: null as any,
   pullChanges: mock(),
@@ -10,15 +10,15 @@ const mockUseWorkspaceGit = mock(() => ({
   refreshSyncStatus: mock(),
 }));
 
-mock.module("@/contexts/workspace/git/useWorkspaceGit", () => ({
-  useWorkspaceGit: mockUseWorkspaceGit,
+mock.module("@/contexts/workspace/git/WorkspaceGitContext", () => ({
+  useWorkspaceGitContext: mockUseWorkspaceGitContext,
 }));
 
 import { GitSyncButton } from "./GitSyncButton";
 
 describe("GitSyncButton", () => {
   test("returns null if syncStatus is missing", () => {
-    mockUseWorkspaceGit.mockReturnValue({
+    mockUseWorkspaceGitContext.mockReturnValue({
       isSyncing: false,
       syncStatus: null,
       pullChanges: mock(),
@@ -31,7 +31,7 @@ describe("GitSyncButton", () => {
 
   test("renders pull button when behind", () => {
     const pullChanges = mock();
-    mockUseWorkspaceGit.mockReturnValue({
+    mockUseWorkspaceGitContext.mockReturnValue({
       isSyncing: false,
       syncStatus: { ahead: 0, behind: 2, upstream: "origin/main" },
       pullChanges,
@@ -48,7 +48,7 @@ describe("GitSyncButton", () => {
 
   test("renders push button when ahead", () => {
     const pushChanges = mock();
-    mockUseWorkspaceGit.mockReturnValue({
+    mockUseWorkspaceGitContext.mockReturnValue({
       isSyncing: false,
       syncStatus: { ahead: 3, behind: 0, upstream: "origin/main" },
       pullChanges: mock(),
@@ -65,7 +65,7 @@ describe("GitSyncButton", () => {
 
   test("renders refresh button when in sync", () => {
     const refreshSyncStatus = mock();
-    mockUseWorkspaceGit.mockReturnValue({
+    mockUseWorkspaceGitContext.mockReturnValue({
       isSyncing: false,
       syncStatus: { ahead: 0, behind: 0, upstream: "origin/main" },
       pullChanges: mock(),
@@ -82,7 +82,7 @@ describe("GitSyncButton", () => {
 
   test("does not trigger actions when isSyncing is true", () => {
     const pullChanges = mock();
-    mockUseWorkspaceGit.mockReturnValue({
+    mockUseWorkspaceGitContext.mockReturnValue({
       isSyncing: true,
       syncStatus: { ahead: 0, behind: 2, upstream: "origin/main" },
       pullChanges,

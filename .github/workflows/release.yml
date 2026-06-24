@@ -79,6 +79,6 @@ jobs:
 
             🐧 [Download for Linux (.AppImage)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___amd64.AppImage)
             🐧 [Download for Linux (.deb)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___amd64.deb)
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

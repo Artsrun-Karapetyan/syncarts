@@ -2,7 +2,7 @@ import { Cloud, GitBranch, Laptop, Loader2, Search, X } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { useWorkspaceGit } from "@/contexts/workspace/git/useWorkspaceGit";
+import { useWorkspaceGitContext } from "@/contexts/workspace/git/WorkspaceGitContext";
 
 import { BranchItem } from "./BranchItem";
 import { GitSyncButton } from "./GitSyncButton";
@@ -16,7 +16,7 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
     isCheckingOut,
     error,
     checkoutBranch,
-  } = useWorkspaceGit();
+  } = useWorkspaceGitContext();
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -149,16 +149,16 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
             whiteSpace: "nowrap",
             flex: 1,
             textAlign: "left",
-            marginRight: isCheckingOut ? 20 : 0,
+            marginRight: 0,
           }}
         >
-          {isLoading ? "Loading..." : currentBranch || "Select Branch"}
+          {currentBranch || "Select Branch"}
         </span>
-        {isCheckingOut && (
+        {(isLoading || isCheckingOut) && (
           <Loader2
             size={13}
             className="animate-spin"
-            style={{ position: "absolute", right: mode === "topbar" ? 12 : 16 }}
+            style={{ flexShrink: 0, color: "var(--text-secondary)" }}
           />
         )}
       </div>
