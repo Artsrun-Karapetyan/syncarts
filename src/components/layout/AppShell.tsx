@@ -6,6 +6,7 @@ import { GlobalDropZone } from "@/components/layout/GlobalDropZone";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/topbar/TopBar";
 import { AppUpdateBanner } from "@/components/update/AppUpdateBanner";
+import { WorkspaceGitProvider } from "@/contexts/workspace/git/WorkspaceGitContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { useStoredUser } from "@/lib/session";
 
@@ -20,6 +21,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <WorkspaceProvider key={userId} userId={userId}>
+      <WorkspaceGitProvider>
       <GlobalDropZone>
         <div
           style={{
@@ -65,6 +67,7 @@ export function AppShell({ children }: AppShellProps) {
         <AppUpdateBanner />
         <GlobalContextMenu />
       </GlobalDropZone>
+      </WorkspaceGitProvider>
     </WorkspaceProvider>
   );
 }

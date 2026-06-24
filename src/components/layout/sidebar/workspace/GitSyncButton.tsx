@@ -5,11 +5,11 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-import { useWorkspaceGit } from "@/contexts/workspace/git/useWorkspaceGit";
+import { useWorkspaceGitContext } from "@/contexts/workspace/git/WorkspaceGitContext";
 
 export function GitSyncButton({ mode }: { mode?: "sidebar" | "topbar" }) {
   const { isSyncing, syncStatus, pullChanges, pushChanges, refreshSyncStatus } =
-    useWorkspaceGit();
+    useWorkspaceGitContext();
 
   if (!syncStatus) {
     return null;
@@ -77,7 +77,7 @@ export function GitSyncButton({ mode }: { mode?: "sidebar" | "topbar" }) {
     <div
       role="button"
       tabIndex={0}
-      onClick={() => !isSyncing && refreshSyncStatus()}
+      onClick={() => !isSyncing && refreshSyncStatus(true)}
       style={{
         display: "flex",
         alignItems: "center",

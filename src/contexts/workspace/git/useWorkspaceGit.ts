@@ -76,24 +76,29 @@ export function useWorkspaceGit(propWorkspacePath?: string) {
     return () => window.removeEventListener("focus", onFocus);
   }, [fetchGitState]);
 
-  const refreshSyncStatus = useCallback(async () => {
-    if (!workspacePath || !isGitRepo) return;
-    setIsSyncing(true);
-    try {
-      const status: GitSyncStatus = await invoke("git_get_sync_status", {
-        path: workspacePath,
-      });
-      setSyncStatus(status);
-    } catch (err) {
-      console.error("Failed to fetch git sync status", err);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [workspacePath, isGitRepo]);
+  const refreshSyncStatus = useCallback(
+    async (doFetch: boolean = false) => {
+      if (!workspacePath || !isGitRepo) return;
+      setIsSyncing(true);
+      try {
+        const status: GitSyncStatus = await invoke("git_get_sync_status", {
+          path: workspacePath,
+          doFetch,
+        });
+        setSyncStatus(status);
+      } catch (err) {
+        console.error("Failed to fetch git sync status", err);
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    [workspacePath, isGitRepo],
+  );
 
   useEffect(() => {
     if (isGitRepo) {
-      refreshSyncStatus();
+      // Instant local check on branch change, no network fetch
+      refreshSyncStatus(false);
     }
   }, [isGitRepo, currentBranch, refreshSyncStatus]);
 

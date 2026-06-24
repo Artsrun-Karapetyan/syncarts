@@ -1,15 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, mock, test } from "bun:test";
-import React from "react";
 
-// Mock the hook
 const mockUseWorkspaceGit = {
   isGitRepo: true,
-  currentBranch: "main",
+  currentBranch: "main" as string | null,
   branches: [
     { name: "main", is_remote: false },
     { name: "feature", is_remote: false },
-    { name: "bugfix", is_remote: true }
+    { name: "bugfix", is_remote: true },
   ],
   isLoading: false,
   isCheckingOut: false,
@@ -18,8 +16,8 @@ const mockUseWorkspaceGit = {
   refresh: mock(),
 };
 
-mock.module("@/contexts/workspace/git/useWorkspaceGit", () => ({
-  useWorkspaceGit: () => mockUseWorkspaceGit,
+mock.module("@/contexts/workspace/git/WorkspaceGitContext", () => ({
+  useWorkspaceGitContext: () => mockUseWorkspaceGit,
 }));
 
 import { GitBranchSelector } from "./GitBranchSelector";
@@ -49,7 +47,7 @@ describe("GitBranchSelector", () => {
     mockUseWorkspaceGit.branches = [
       { name: "main", is_remote: false },
       { name: "feature", is_remote: false },
-      { name: "bugfix", is_remote: true }
+      { name: "bugfix", is_remote: true },
     ]; // reset
   });
 

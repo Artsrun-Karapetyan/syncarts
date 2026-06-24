@@ -134,13 +134,15 @@ pub async fn git_checkout_branch(path: String, branch: String) -> Result<bool, S
 }
 
 #[tauri::command]
-pub async fn git_get_sync_status(path: String) -> Result<GitSyncStatus, String> {
-    let _ = Command::new("git")
-        .current_dir(&path)
-        .arg("fetch")
-        .env("GIT_TERMINAL_PROMPT", "0")
-        .output()
-        .await;
+pub async fn git_get_sync_status(path: String, do_fetch: Option<bool>) -> Result<GitSyncStatus, String> {
+    if do_fetch.unwrap_or(false) {
+        let _ = Command::new("git")
+            .current_dir(&path)
+            .arg("fetch")
+            .env("GIT_TERMINAL_PROMPT", "0")
+            .output()
+            .await;
+    }
 
     let upstream_out = Command::new("git")
         .current_dir(&path)
