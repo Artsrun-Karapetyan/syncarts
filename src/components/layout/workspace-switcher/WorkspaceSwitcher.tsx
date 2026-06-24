@@ -1,6 +1,7 @@
 import { Edit2, Folder, Trash2, Users } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import { GitBranchSelector } from "@/components/layout/sidebar/workspace/GitBranchSelector";
 import { WorkspaceNamePopover } from "@/components/layout/workspace-switcher/WorkspaceNamePopover";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { Select } from "@/components/ui/Select/Select";
@@ -11,7 +12,6 @@ import {
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getAuthToken } from "@/lib/auth";
 import { useStoredUser } from "@/lib/session";
-import { GitBranchSelector } from "@/components/layout/sidebar/workspace/GitBranchSelector";
 
 type WorkspaceSwitcherProps = {
   mode?: "sidebar" | "topbar";
@@ -241,24 +241,22 @@ export function WorkspaceSwitcher({
                 >
                   <Edit2 size={13} />
                 </button>
-                {workspaces.length > 1 && (
-                  <button
-                    type="button"
-                    className="tooltip-trigger"
-                    data-tooltip={
-                      isActiveMemberWorkspace
-                        ? "Leave Workspace"
-                        : "Delete Workspace"
-                    }
-                    style={miniActionStyle}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsDeleteWorkspaceOpen(true);
-                    }}
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="tooltip-trigger"
+                  data-tooltip={
+                    isActiveMemberWorkspace
+                      ? "Leave Workspace"
+                      : "Delete Workspace"
+                  }
+                  style={miniActionStyle}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDeleteWorkspaceOpen(true);
+                  }}
+                >
+                  <Trash2 size={13} />
+                </button>
               </div>
             ) : null
           }
