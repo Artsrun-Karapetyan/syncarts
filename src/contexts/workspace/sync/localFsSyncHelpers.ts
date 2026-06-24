@@ -23,12 +23,11 @@ export async function writeWorkspaceToLocalFs(workspace: Workspace) {
 
   const filesToWrite: LocalFile[] = [];
 
-  // syncarts.json
+  // syncarts.json — id is intentionally omitted; each user's localStorage ID is the source of truth
   filesToWrite.push({
     relative_path: ".syncarts/syncarts.json",
     content: JSON.stringify(
       {
-        id: workspace.id,
         name: workspace.name,
         type: workspace.type,
         globalVariables: workspace.globalVariables || [],
@@ -37,8 +36,6 @@ export async function writeWorkspaceToLocalFs(workspace: Workspace) {
       2,
     ),
   });
-
-
 
   // environments
   const usedEnvNames = new Set<string>();
@@ -82,9 +79,9 @@ export async function writeWorkspaceToLocalFs(workspace: Workspace) {
     const existingFiles: LocalFile[] = await invoke("read_local_workspace", {
       path: workspace.path,
     });
-    
+
     const filesToWritePaths = new Set(filesToWrite.map((f) => f.relative_path));
-    
+
     for (const existing of existingFiles) {
       if (
         (existing.relative_path.startsWith(".syncarts/collections/") ||
@@ -167,11 +164,14 @@ export async function readWorkspaceFromLocalFs(
 
     let workspaceData: any = {};
     if (workspaceSyncartsFile) {
-      workspaceData = JSON.parse(workspaceSyncartsFile.content);
+      const parsed = JSON.parse(workspaceSyncartsFile.content);
+      // Never read id from file — each user's localStorage id is the source of truth
+      const { id: _ignored, ...rest } = parsed;
+      void _ignored;
+      workspaceData = rest;
     } else {
       if (files.length === 0) return null;
       workspaceData = {
-        id: path, // Fallback ID
         name: path.split("/").pop() || "Local Workspace",
         type: "local",
       };
