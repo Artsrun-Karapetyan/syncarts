@@ -16,16 +16,45 @@ export function SelectionArea({
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [currentPos, setCurrentPos] = useState({ x: 0, y: 0 });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const scheduleClear = () => {
+    if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+    clearTimerRef.current = setTimeout(clearSelection, 4000);
+  };
+
+  const cancelClear = () => {
+    if (clearTimerRef.current) {
+      clearTimeout(clearTimerRef.current);
+      clearTimerRef.current = null;
+    }
+  };
 
   useEffect(() => {
     onSelectionChange?.(selectedIds);
   }, [selectedIds, onSelectionChange]);
 
+  // Clear on click outside
+  useEffect(() => {
+    if (selectedIds.size === 0) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) {
+        clearSelection();
+        cancelClear();
+      }
+    };
+    window.addEventListener("mousedown", handleMouseDown);
+    return () => window.removeEventListener("mousedown", handleMouseDown);
+  }, [selectedIds]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "c") {
         if (selectedIds.size > 0 && !isDragging) {
-          // Check if user is actively selecting text inside an input
           const activeEl = document.activeElement;
           if (
             activeEl &&
@@ -33,12 +62,15 @@ export function SelectionArea({
           ) {
             const input = activeEl as HTMLInputElement;
             if (input.selectionStart !== input.selectionEnd) {
-              return; // Let native copy handle it
+              return;
             }
           }
 
           e.preventDefault();
           onCopy?.(selectedIds);
+          // Clear after copy
+          clearSelection();
+          cancelClear();
         }
       }
     };
@@ -99,12 +131,13 @@ export function SelectionArea({
       setIsDragging(false);
       document.body.classList.remove("is-range-selecting");
 
-      // If we just clicked without dragging, clear selection
       if (
         Math.abs(e.clientX - startPos.x) < 5 &&
         Math.abs(e.clientY - startPos.y) < 5
       ) {
-        setSelectedIds(new Set());
+        clearSelection();
+      } else {
+        scheduleClear();
       }
     };
 
