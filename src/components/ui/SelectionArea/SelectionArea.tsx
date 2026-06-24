@@ -97,6 +97,7 @@ export function SelectionArea({
 
     const handleMouseUp = (e: MouseEvent) => {
       setIsDragging(false);
+      document.body.classList.remove("is-range-selecting");
 
       // If we just clicked without dragging, clear selection
       if (
@@ -110,6 +111,7 @@ export function SelectionArea({
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
     return () => {
+      document.body.classList.remove("is-range-selecting");
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
@@ -118,13 +120,14 @@ export function SelectionArea({
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // Only left click
 
-    // Allow clicking inputs without starting drag
+    // Allow clicking inputs/buttons without starting drag
     if (
       e.target instanceof HTMLInputElement ||
       e.target instanceof HTMLButtonElement
     ) {
       return;
     }
+
 
     const container = containerRef.current;
     if (!container) return;
@@ -133,6 +136,7 @@ export function SelectionArea({
     const x = e.clientX - rect.left + container.scrollLeft;
     const y = e.clientY - rect.top + container.scrollTop;
 
+    document.body.classList.add("is-range-selecting");
     setStartPos({ x, y });
     setCurrentPos({ x, y });
     setIsDragging(true);

@@ -292,7 +292,7 @@ export function TopBar() {
           </button>
         </div>
 
-        <NotificationCenter />
+        {!isLocalWorkspace && <NotificationCenter />}
 
         <TopBarProfileButton />
       </div>

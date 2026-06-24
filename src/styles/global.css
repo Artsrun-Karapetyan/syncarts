@@ -50,6 +50,17 @@ input, textarea, select {
   -webkit-text-fill-color: var(--text-primary);
 }
 
+/* While drag-selecting rows, suppress all native text selection */
+body.is-range-selecting,
+body.is-range-selecting * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+body.is-range-selecting ::selection {
+  background: transparent;
+}
+
 /* Typography */
 .font-mono {
   font-family: 'JetBrains Mono', monospace;
