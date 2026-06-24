@@ -340,9 +340,6 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
 
   useKeyboardShortcuts({
     addTab: tabActions.addTab,
-    activeTabPinned: activeTab?.pinned,
-    closeTab: tabActions.closeTab,
-    activeTabId,
   });
 
   return {

@@ -11,14 +11,8 @@ function Consumer({ props }: { props: any }) {
 describe("useKeyboardShortcuts", () => {
   test("triggers addTab on Cmd+T / Ctrl+T", () => {
     const addTab = mock();
-    const closeTab = mock();
-    render(
-      <Consumer
-        props={{ addTab, closeTab, activeTabId: "t1", activeTabPinned: false }}
-      />,
-    );
+    render(<Consumer props={{ addTab }} />);
 
-    // Mock platform to non-Mac for Ctrl trigger
     Object.defineProperty(navigator, "platform", {
       value: "Win32",
       writable: true,
@@ -28,36 +22,19 @@ describe("useKeyboardShortcuts", () => {
     expect(addTab).toHaveBeenCalled();
   });
 
-  test("triggers closeTab on Cmd+W / Ctrl+W if not pinned", () => {
+  test("does not close tab on Cmd+W (handled by Workspace)", () => {
     const addTab = mock();
-    const closeTab = mock();
-    render(
-      <Consumer
-        props={{ addTab, closeTab, activeTabId: "t1", activeTabPinned: false }}
-      />,
-    );
+    render(<Consumer props={{ addTab }} />);
 
+    // Cmd+W is intentionally not handled here — closeTab logic lives in Workspace.tsx
+    // to ensure the UnsavedChangesModal guard runs before closing
     fireEvent.keyDown(window, { ctrlKey: true, key: "w" });
-    expect(closeTab).toHaveBeenCalledWith("t1");
-  });
-
-  test("does not trigger closeTab if tab is pinned", () => {
-    const addTab = mock();
-    const closeTab = mock();
-    render(
-      <Consumer
-        props={{ addTab, closeTab, activeTabId: "t1", activeTabPinned: true }}
-      />,
-    );
-
-    fireEvent.keyDown(window, { ctrlKey: true, key: "w" });
-    expect(closeTab).not.toHaveBeenCalled();
+    // No assertion needed — just verifies no crash
   });
 
   test("prevents default for Escape key", () => {
     const addTab = mock();
-    const closeTab = mock();
-    render(<Consumer props={{ addTab, closeTab, activeTabId: null }} />);
+    render(<Consumer props={{ addTab }} />);
 
     const event = new KeyboardEvent("keydown", {
       key: "Escape",

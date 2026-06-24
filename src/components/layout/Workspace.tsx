@@ -98,7 +98,7 @@ export function Workspace() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "w") {
         e.preventDefault();
-        if (activeTab?.id) {
+        if (!showCloseDialog && !showSaveDialog && activeTab?.id) {
           requestCloseTab(activeTab.id);
         }
         return;
@@ -119,7 +119,7 @@ export function Workspace() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeTab, collections, requestCloseTab]);
+  }, [activeTab, collections, requestCloseTab, showCloseDialog, showSaveDialog]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 1100px)");

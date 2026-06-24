@@ -17,22 +17,29 @@ export function useAppUpdate() {
     if (!isTauriRuntime()) return;
 
     let isMounted = true;
-    setStatus("checking");
 
-    invoke<AppUpdateMetadata | null>("check_app_update")
-      .then((nextUpdate) => {
-        if (!isMounted) return;
-        setUpdate(nextUpdate);
-        setStatus(nextUpdate ? "available" : "idle");
-      })
-      .catch((error: unknown) => {
-        if (!isMounted) return;
-        setStatus("idle");
-        if (!isUpdaterConfigError(error)) setError(String(error));
-      });
+    const checkForUpdate = () => {
+      setStatus("checking");
+      invoke<AppUpdateMetadata | null>("check_app_update")
+        .then((nextUpdate) => {
+          if (!isMounted) return;
+          setUpdate(nextUpdate);
+          setStatus(nextUpdate ? "available" : "idle");
+        })
+        .catch((error: unknown) => {
+          if (!isMounted) return;
+          setStatus("idle");
+          if (!isUpdaterConfigError(error)) setError(String(error));
+        });
+    };
+
+    checkForUpdate();
+
+    const interval = setInterval(checkForUpdate, 30 * 60 * 1000);
 
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, []);
 
