@@ -27,13 +27,16 @@ jobs:
           - platform: "ubuntu-22.04"
             args: "--bundles appimage,deb"
             rustTargets: "x86_64-unknown-linux-gnu"
+          - platform: "ubuntu-22.04-arm"
+            args: "--bundles appimage,deb"
+            rustTargets: "aarch64-unknown-linux-gnu"
 
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
       - name: install linux dependencies
-        if: matrix.platform == 'ubuntu-22.04'
+        if: startsWith(matrix.platform, 'ubuntu-')
         run: |
           sudo apt-get update
           sudo apt-get install -y libssl-dev pkg-config build-essential libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
@@ -77,8 +80,10 @@ jobs:
             🍏 [Download for Mac (Apple M-Series)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/Syncarts___VERSION___aarch64.dmg)
             🍏 [Download for Mac (Intel)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/Syncarts___VERSION___x64.dmg)
 
-            🐧 [Download for Linux (.AppImage)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___amd64.AppImage)
-            🐧 [Download for Linux (.deb)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___amd64.deb)
+            🐧 [Download for Linux x64 (.AppImage)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___amd64.AppImage)
+            🐧 [Download for Linux x64 (.deb)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___amd64.deb)
+            🐧 [Download for Linux ARM64 (.AppImage)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___aarch64.AppImage)
+            🐧 [Download for Linux ARM64 (.deb)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___arm64.deb)
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
