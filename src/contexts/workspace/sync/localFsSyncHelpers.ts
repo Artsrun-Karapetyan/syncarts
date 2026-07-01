@@ -252,6 +252,14 @@ function buildItemsRecursive(files: LocalFile[], parentDir: string): any[] {
 }
 
 function sanitizeFilename(name: string) {
-  // eslint-disable-next-line no-control-regex
-  return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_").trim() || "unnamed";
+  const cleaned = name
+    // eslint-disable-next-line no-control-regex
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
+    // strip leading/trailing dots and whitespace — a trailing "." or " " makes an
+    // unwritable path segment on some filesystems and breaks the whole import
+    .replace(/^[.\s]+|[.\s]+$/g, "");
+  // "." / ".." (and anything that reduced to empty) are not valid path segments
+  return cleaned === "" || cleaned === "." || cleaned === ".."
+    ? "unnamed"
+    : cleaned;
 }

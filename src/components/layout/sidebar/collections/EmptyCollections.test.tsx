@@ -1,6 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, mock, test } from "bun:test";
 
+mock.module("@/contexts/workspace/git/WorkspaceGitContext", () => ({
+  useWorkspaceGitContext: () => ({ isGitRepo: false, currentBranch: null }),
+}));
+
 import { EmptyCollections } from "./EmptyCollections";
 
 describe("EmptyCollections", () => {

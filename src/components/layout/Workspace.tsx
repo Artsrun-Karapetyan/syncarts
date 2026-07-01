@@ -119,7 +119,13 @@ export function Workspace() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeTab, collections, requestCloseTab, showCloseDialog, showSaveDialog]);
+  }, [
+    activeTab,
+    collections,
+    requestCloseTab,
+    showCloseDialog,
+    showSaveDialog,
+  ]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 1100px)");

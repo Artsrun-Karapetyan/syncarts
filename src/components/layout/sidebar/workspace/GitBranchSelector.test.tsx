@@ -40,8 +40,8 @@ describe("GitBranchSelector", () => {
     mockUseWorkspaceGit.currentBranch = null;
     mockUseWorkspaceGit.branches = [];
     render(<GitBranchSelector />);
-    // Button should show Loading...
-    expect(screen.getByText("Loading...")).toBeDefined();
+    // With no current branch the button falls back to the placeholder label
+    expect(screen.getByText("Select Branch")).toBeDefined();
     mockUseWorkspaceGit.isLoading = false; // reset
     mockUseWorkspaceGit.currentBranch = "main"; // reset
     mockUseWorkspaceGit.branches = [

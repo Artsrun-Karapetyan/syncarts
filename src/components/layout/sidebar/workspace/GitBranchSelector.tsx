@@ -1,6 +1,5 @@
 import { Cloud, GitBranch, Laptop, Loader2, Search, X } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 
 import { useWorkspaceGitContext } from "@/contexts/workspace/git/WorkspaceGitContext";
 
@@ -21,35 +20,15 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
-  const btnRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
-  useLayoutEffect(() => {
-    if (!isOpen || !btnRef.current) return;
-
-    const updatePosition = () => {
-      const rect = btnRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      setDropdownPos({
-        top: rect.bottom + 6,
-        left: rect.left,
-        // Give the popover a nice fixed width if it's in the topbar, or match if it's sidebar
-        width: Math.max(rect.width, 280),
-      });
-    };
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
+  useEffect(() => {
+    if (!isOpen) return;
 
     const handleOutsideClick = (e: MouseEvent) => {
       if (
         containerRef.current &&
-        !containerRef.current.contains(e.target as Node) &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
+        !containerRef.current.contains(e.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -62,8 +41,6 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
     }, 10);
 
     return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
       document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, [isOpen]);
@@ -103,7 +80,6 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
       }}
     >
       <div
-        ref={btnRef as any}
         role="button"
         tabIndex={0}
         onClick={() => !isCheckingOut && setIsOpen(!isOpen)}
@@ -165,167 +141,170 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
 
       <GitSyncButton mode={mode} />
 
-      {isOpen &&
-        createPortal(
+      {isOpen && (
+        <div
+          className="animate-fade-in"
+          style={{
+            // ponytail: absolute inside relative container instead of a
+            // fixed-position portal — WebKitGTK (Tauri Linux) mis-hit-tests
+            // portaled fixed elements, so clicks fell through on Ubuntu.
+            position: "absolute",
+            top: "calc(100% + 6px)",
+            left: 0,
+            width: mode === "topbar" ? 280 : "100%",
+            minWidth: 280,
+            zIndex: 9999,
+            // ponytail: solid bg instead of backdrop-filter blur — blur repaints
+            // every frame and janks/eats clicks on Ubuntu (software rendering).
+            background: "rgb(20, 20, 20)",
+            border: "1px solid var(--border-highlight)",
+            userSelect: "none",
+            borderRadius: "10px",
+            boxShadow: "0 12px 40px rgba(0, 0, 0, 0.6)",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            maxHeight: 400,
+          }}
+        >
+          {/* Search Header */}
           <div
-            ref={dropdownRef}
-            className="animate-fade-in"
             style={{
-              position: "fixed",
-              top: `${dropdownPos.top}px`,
-              left: `${dropdownPos.left}px`,
-              width: `${dropdownPos.width}px`,
-              zIndex: 9999,
-              background: "rgba(15, 15, 15, 0.98)",
-              backdropFilter: "blur(16px)",
-              border: "1px solid var(--border-highlight)",
-              borderRadius: "10px",
-              boxShadow: "0 12px 40px rgba(0, 0, 0, 0.6)",
-              overflow: "hidden",
               display: "flex",
-              flexDirection: "column",
-              maxHeight: 400,
+              alignItems: "center",
+              padding: "10px 14px",
+              borderBottom: "1px solid var(--border-color)",
+              gap: 10,
             }}
           >
-            {/* Search Header */}
+            <Search size={16} color="var(--text-secondary)" />
+            <input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search branches..."
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: "none",
+                color: "var(--text-primary)",
+                fontSize: 13,
+                outline: "none",
+              }}
+            />
+          </div>
+
+          {/* Error Banner */}
+          {error && (
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
                 padding: "10px 14px",
-                borderBottom: "1px solid var(--border-color)",
-                gap: 10,
+                background: "rgba(239, 68, 68, 0.1)",
+                borderBottom: "1px solid rgba(239, 68, 68, 0.2)",
+                color: "#ef4444",
+                fontSize: 12,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 8,
               }}
             >
-              <Search size={16} color="var(--text-secondary)" />
-              <input
-                ref={searchInputRef}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search branches..."
-                style={{
-                  flex: 1,
-                  background: "transparent",
-                  border: "none",
-                  color: "var(--text-primary)",
-                  fontSize: 13,
-                  outline: "none",
-                }}
+              <X
+                size={14}
+                style={{ marginTop: 2, flexShrink: 0 }}
+                onClick={() => checkoutBranch(currentBranch!)}
+                cursor="pointer"
               />
+              <span style={{ flex: 1 }}>{error}</span>
             </div>
+          )}
 
-            {/* Error Banner */}
-            {error && (
-              <div
-                style={{
-                  padding: "10px 14px",
-                  background: "rgba(239, 68, 68, 0.1)",
-                  borderBottom: "1px solid rgba(239, 68, 68, 0.2)",
-                  color: "#ef4444",
-                  fontSize: 12,
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 8,
-                }}
-              >
-                <X
-                  size={14}
-                  style={{ marginTop: 2, flexShrink: 0 }}
-                  onClick={() => checkoutBranch(currentBranch!)}
-                  cursor="pointer"
-                />
-                <span style={{ flex: 1 }}>{error}</span>
+          {/* Branch List */}
+          <div style={{ overflowY: "auto", padding: "6px 0" }}>
+            {localBranches.length > 0 && (
+              <div style={{ marginBottom: 8 }}>
+                <div
+                  style={{
+                    padding: "6px 14px",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "var(--text-tertiary)",
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <Laptop size={12} /> Local Branches
+                </div>
+                {localBranches.map((b) => (
+                  <BranchItem
+                    key={`local-${b.name}`}
+                    branch={b.name}
+                    isActive={b.name === currentBranch}
+                    onClick={async () => {
+                      if (b.name !== currentBranch) {
+                        const success = await checkoutBranch(b.name);
+                        if (success) setIsOpen(false);
+                      } else {
+                        setIsOpen(false);
+                      }
+                    }}
+                  />
+                ))}
               </div>
             )}
 
-            {/* Branch List */}
-            <div style={{ overflowY: "auto", padding: "6px 0" }}>
-              {localBranches.length > 0 && (
-                <div style={{ marginBottom: 8 }}>
-                  <div
-                    style={{
-                      padding: "6px 14px",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "var(--text-tertiary)",
-                      textTransform: "uppercase",
-                      letterSpacing: 0.5,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <Laptop size={12} /> Local Branches
-                  </div>
-                  {localBranches.map((b) => (
-                    <BranchItem
-                      key={`local-${b.name}`}
-                      branch={b.name}
-                      isActive={b.name === currentBranch}
-                      onClick={async () => {
-                        if (b.name !== currentBranch) {
-                          const success = await checkoutBranch(b.name);
-                          if (success) setIsOpen(false);
-                        } else {
-                          setIsOpen(false);
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {remoteBranches.length > 0 && (
-                <div>
-                  <div
-                    style={{
-                      padding: "6px 14px",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "var(--text-tertiary)",
-                      textTransform: "uppercase",
-                      letterSpacing: 0.5,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <Cloud size={12} /> Remote Branches
-                  </div>
-                  {remoteBranches.map((b) => (
-                    <BranchItem
-                      key={`remote-${b.name}`}
-                      branch={b.name}
-                      isActive={b.name === currentBranch}
-                      onClick={async () => {
-                        if (b.name !== currentBranch) {
-                          const success = await checkoutBranch(b.name);
-                          if (success) setIsOpen(false);
-                        } else {
-                          setIsOpen(false);
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {filteredBranches.length === 0 && (
+            {remoteBranches.length > 0 && (
+              <div>
                 <div
                   style={{
-                    padding: "16px 14px",
-                    textAlign: "center",
-                    color: "var(--text-secondary)",
-                    fontSize: 13,
+                    padding: "6px 14px",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "var(--text-tertiary)",
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
                   }}
                 >
-                  No branches found
+                  <Cloud size={12} /> Remote Branches
                 </div>
-              )}
-            </div>
-          </div>,
-          document.body,
-        )}
+                {remoteBranches.map((b) => (
+                  <BranchItem
+                    key={`remote-${b.name}`}
+                    branch={b.name}
+                    isActive={b.name === currentBranch}
+                    onClick={async () => {
+                      if (b.name !== currentBranch) {
+                        const success = await checkoutBranch(b.name);
+                        if (success) setIsOpen(false);
+                      } else {
+                        setIsOpen(false);
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {filteredBranches.length === 0 && (
+              <div
+                style={{
+                  padding: "16px 14px",
+                  textAlign: "center",
+                  color: "var(--text-secondary)",
+                  fontSize: 13,
+                }}
+              >
+                No branches found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,10 +1,16 @@
 import { FolderPlus } from "lucide-react";
 
+import { useWorkspaceGitContext } from "@/contexts/workspace/git/WorkspaceGitContext";
+
 interface EmptyCollectionsProps {
   onClick: () => void;
 }
 
 export function EmptyCollections({ onClick }: EmptyCollectionsProps) {
+  // On a git workspace "empty" often just means the data lives on another branch,
+  // not that the user should start from scratch — hint at that instead.
+  const { isGitRepo, currentBranch } = useWorkspaceGitContext();
+
   return (
     <div
       onClick={onClick}
@@ -30,6 +36,14 @@ export function EmptyCollections({ onClick }: EmptyCollectionsProps) {
         No collections yet.
         <br />
         Click here to create one.
+        {isGitRepo && currentBranch && (
+          <>
+            <br />
+            <span style={{ opacity: 0.7 }}>
+              Nothing on “{currentBranch}” — data may live on another branch.
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

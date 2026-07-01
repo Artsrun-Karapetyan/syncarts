@@ -161,7 +161,6 @@ export function SelectionArea({
       return;
     }
 
-
     const container = containerRef.current;
     if (!container) return;
 

@@ -147,6 +147,24 @@ describe("writeWorkspaceToLocalFs", () => {
     );
   });
 
+  test("sanitizes collection names with trailing dots/spaces into valid paths", async () => {
+    mockInvoke.mockReset();
+    mockInvoke.mockResolvedValue(undefined);
+    const ws = makeWorkspace({
+      collections: [{ id: "col-1", name: "API v1. ", items: [] }],
+    });
+    await writeWorkspaceToLocalFs(ws);
+
+    const colCall = mockInvoke.mock.calls.find((c: any[]) =>
+      c[1]?.relativePath?.endsWith("collection.json"),
+    );
+    expect(colCall).toBeDefined();
+    // no trailing "." or " " before the path separator — that segment is unwritable
+    // on some filesystems and is exactly what broke import on Linux
+    expect(colCall![1].relativePath).toContain("collections/API v1/");
+    expect(colCall![1].relativePath).not.toContain(". /");
+  });
+
   test("handles invoke errors gracefully", async () => {
     mockInvoke.mockReset();
     mockInvoke.mockRejectedValue(new Error("disk full"));

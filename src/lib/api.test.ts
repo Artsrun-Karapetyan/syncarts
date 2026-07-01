@@ -1,4 +1,4 @@
-import { describe, expect, mock, test, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 
 const mockFetch = mock();
 global.fetch = mockFetch as any;
@@ -22,13 +22,13 @@ function makeErrorResponse(status: number, body: string) {
 }
 
 import {
+  api,
   formatApiError,
+  getMe,
   login,
   logout,
   register,
   shouldClearAuthSession,
-  api,
-  getMe,
   updateMe,
 } from "./api";
 
@@ -141,7 +141,12 @@ describe("logout", () => {
 describe("getMe", () => {
   test("fetches /auth/me with token", async () => {
     mockFetch.mockResolvedValue(
-      makeOkResponse({ id: "u1", email: "a@b.com", name: "Alice", createdAt: "" }),
+      makeOkResponse({
+        id: "u1",
+        email: "a@b.com",
+        name: "Alice",
+        createdAt: "",
+      }),
     );
     const result = await getMe("my-token");
     expect(result.id).toBe("u1");
@@ -152,7 +157,12 @@ describe("getMe", () => {
 describe("updateMe", () => {
   test("patches /auth/me", async () => {
     mockFetch.mockResolvedValue(
-      makeOkResponse({ id: "u1", email: "a@b.com", name: "Bob", createdAt: "" }),
+      makeOkResponse({
+        id: "u1",
+        email: "a@b.com",
+        name: "Bob",
+        createdAt: "",
+      }),
     );
     const result = await updateMe("token", { name: "Bob" });
     expect(result.name).toBe("Bob");

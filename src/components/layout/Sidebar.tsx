@@ -247,7 +247,9 @@ export function Sidebar() {
         <SidebarToolbar
           openMrCount={openMrCount}
           onMergeRequests={
-            isLocalWorkspace ? undefined : () => navigate({ to: "/merge-requests" })
+            isLocalWorkspace
+              ? undefined
+              : () => navigate({ to: "/merge-requests" })
           }
           onImport={isViewer ? undefined : () => setIsImportModalOpen(true)}
           onNewRequest={isViewer ? undefined : () => addTab()}
@@ -260,7 +262,9 @@ export function Sidebar() {
                 }
           }
           onToggleWorkspaceWatch={
-            activeWorkspaceId && !isLocalWorkspace ? handleToggleWorkspaceWatch : undefined
+            activeWorkspaceId && !isLocalWorkspace
+              ? handleToggleWorkspaceWatch
+              : undefined
           }
           isWorkspaceWatched={isWorkspaceWatched}
         />

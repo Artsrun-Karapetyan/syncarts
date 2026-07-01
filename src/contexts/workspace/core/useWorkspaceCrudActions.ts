@@ -49,7 +49,12 @@ export function useWorkspaceCrudActions(args: UseWorkspaceCrudActionsArgs) {
     path?: string,
   ) => {
     const newWsId = crypto.randomUUID();
-    dirtyWorkspaceIdsRef.current.add(newWsId);
+    // A new local workspace must be populated FROM disk first (a collaborator may
+    // already have collections there). Marking it dirty would let the write effect
+    // race the read and wipe those files. Only dirty it once the user edits it.
+    if (type !== "local") {
+      dirtyWorkspaceIdsRef.current.add(newWsId);
+    }
     setWorkspaces((prev) => [
       ...prev,
       { id: newWsId, name, collections, environments, type, path },

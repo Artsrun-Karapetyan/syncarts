@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, mock, test } from "bun:test";
 
 import { SidebarCollections } from "./SidebarCollections";
 
+mock.module("@/contexts/workspace/git/WorkspaceGitContext", () => ({
+  useWorkspaceGitContext: () => ({ isGitRepo: false, currentBranch: null }),
+}));
+
 // Mock WorkspaceContext for CollectionRow and its children
 mock.module("@/contexts/WorkspaceContext", () => ({
   useWorkspace: () => ({
