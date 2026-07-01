@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
@@ -29,6 +29,7 @@ export function useWorkspaceGit(propWorkspacePath?: string) {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<GitSyncStatus | null>(null);
+  const isFetchingRef = useRef(false);
 
   const fetchGitState = useCallback(async () => {
     if (!workspacePath) {
@@ -37,6 +38,12 @@ export function useWorkspaceGit(propWorkspacePath?: string) {
       setBranches([]);
       return;
     }
+
+    // WebKitGTK fires extra window focus events on Linux (e.g. focus shifts
+    // when the branch dropdown opens/closes), which raced this against
+    // checkoutBranch's own refresh and made checkout look flaky/stuck.
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
 
     setIsLoading(true);
     try {
@@ -64,6 +71,7 @@ export function useWorkspaceGit(propWorkspacePath?: string) {
       setError(err?.toString() || "Unknown error");
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }, [workspacePath]);
 

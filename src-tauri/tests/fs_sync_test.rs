@@ -10,17 +10,18 @@ fn test_fs_sync_flow() {
     let files = read_local_workspace(base_path.clone()).unwrap();
     assert_eq!(files.len(), 0);
 
-    // 2. Write a file
+    // 2. Write a file (read_local_workspace only scans .syncarts/collections
+    // and .syncarts/environments, so the fixture must live there)
     write_local_file(
         base_path.clone(),
-        "test_folder/my_file.json".to_string(),
+        ".syncarts/collections/test_folder/my_file.json".to_string(),
         "{\"hello\":\"world\"}".to_string(),
     ).unwrap();
 
     // 3. Write a non-json file (should be ignored)
     write_local_file(
         base_path.clone(),
-        "test_folder/my_file.txt".to_string(),
+        ".syncarts/collections/test_folder/my_file.txt".to_string(),
         "hello world".to_string(),
     ).unwrap();
 
@@ -31,7 +32,7 @@ fn test_fs_sync_flow() {
     assert_eq!(files[0].content, "{\"hello\":\"world\"}");
 
     // 5. Delete file
-    delete_local_file(base_path.clone(), "test_folder/my_file.json".to_string()).unwrap();
+    delete_local_file(base_path.clone(), ".syncarts/collections/test_folder/my_file.json".to_string()).unwrap();
 
     let files = read_local_workspace(base_path.clone()).unwrap();
     assert_eq!(files.len(), 0);

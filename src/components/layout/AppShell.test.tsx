@@ -48,6 +48,10 @@ mock.module("@/contexts/WorkspaceContext", () => ({
   ),
 }));
 
+mock.module("@/contexts/workspace/git/WorkspaceGitContext", () => ({
+  WorkspaceGitProvider: ({ children }: any) => <>{children}</>,
+}));
+
 const mockUseStoredUser = mock();
 mock.module("@/lib/session", () => ({
   useStoredUser: mockUseStoredUser,

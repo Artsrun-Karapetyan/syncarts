@@ -85,13 +85,18 @@ describe("FolderSidebarItem", () => {
     expect(defaultProps.setExpandedFolders).toHaveBeenCalled();
   });
 
-  test("does not set expanded if already expanded on row click", () => {
+  test("collapses folder when row is clicked while already expanded", () => {
+    let updater: any;
+    defaultProps.setExpandedFolders.mockImplementation((fn: any) => {
+      updater = fn;
+    });
     const { container } = render(
       <FolderSidebarItem {...defaultProps} expandedFolders={{ f1: true }} />,
     );
     const row = container.querySelector(".sidebar-row") as HTMLDivElement;
     fireEvent.click(row);
-    expect(defaultProps.setExpandedFolders).not.toHaveBeenCalled();
+    expect(defaultProps.setExpandedFolders).toHaveBeenCalled();
+    expect(updater({ f1: true })).toEqual({ f1: false });
   });
 
   test("calls onContextMenu on right click", () => {

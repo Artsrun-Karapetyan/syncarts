@@ -91,13 +91,15 @@ describe("CollectionRow", () => {
     expect(defaultProps.openCollectionTab).toHaveBeenCalledWith("col1");
   });
 
-  test("only opens tab if already expanded", () => {
+  test("collapses and still opens tab when row is clicked while expanded", () => {
     render(
       <CollectionRow {...defaultProps} expandedCollections={{ col1: true }} />,
     );
     const row = screen.getByText("Test Collection").closest(".sidebar-row")!;
     fireEvent.click(row);
-    expect(defaultProps.setExpandedCollections).not.toHaveBeenCalled();
+    expect(defaultProps.setExpandedCollections).toHaveBeenCalled();
+    const updater = defaultProps.setExpandedCollections.mock.calls[0][0];
+    expect(updater({ col1: true })).toEqual({ col1: false });
     expect(defaultProps.openCollectionTab).toHaveBeenCalledWith("col1");
   });
 

@@ -45,11 +45,12 @@ describe("writeWorkspaceToLocalFs", () => {
 
     const calls = mockInvoke.mock.calls;
     const syncartsCall = calls.find(
-      (c: any[]) => c[1]?.relativePath === "syncarts.json",
+      (c: any[]) => c[1]?.relativePath === ".syncarts/syncarts.json",
     );
     expect(syncartsCall).toBeDefined();
     const content = JSON.parse(syncartsCall![1].content);
-    expect(content.id).toBe("ws-1");
+    // id is intentionally omitted — localStorage id is the source of truth
+    expect(content.id).toBeUndefined();
     expect(content.name).toBe("My WS");
   });
 
@@ -69,7 +70,7 @@ describe("writeWorkspaceToLocalFs", () => {
 
     const calls = mockInvoke.mock.calls;
     const envCall = calls.find((c: any[]) =>
-      c[1]?.relativePath?.includes("environments/"),
+      c[1]?.relativePath?.includes(".syncarts/environments/"),
     );
     expect(envCall).toBeDefined();
     expect(envCall![1].relativePath).toContain("Dev.env.json");
@@ -189,8 +190,8 @@ describe("readWorkspaceFromLocalFs", () => {
       { relative_path: "other.json", content: "{}" },
     ]);
     const result = await readWorkspaceFromLocalFs("/some/path");
-    expect(result).toEqual({
-      id: "/some/path",
+    // id is intentionally absent — the caller stamps in the localStorage id
+    expect(result).toMatchObject({
       name: "path",
       type: "local",
       path: "/some/path",
@@ -203,13 +204,13 @@ describe("readWorkspaceFromLocalFs", () => {
     mockInvoke.mockReset();
     mockInvoke.mockResolvedValue([
       {
-        relative_path: "syncarts.json",
-        content: JSON.stringify({ id: "ws-1", name: "WS", type: "local" }),
+        relative_path: ".syncarts/syncarts.json",
+        content: JSON.stringify({ name: "WS", type: "local" }),
       },
     ]);
     const result = await readWorkspaceFromLocalFs("/my/path");
     expect(result).not.toBeNull();
-    expect(result!.id).toBe("ws-1");
+    expect(result!.name).toBe("WS");
     expect(result!.path).toBe("/my/path");
     expect(result!.collections).toEqual([]);
     expect(result!.environments).toEqual([]);
@@ -219,11 +220,11 @@ describe("readWorkspaceFromLocalFs", () => {
     mockInvoke.mockReset();
     mockInvoke.mockResolvedValue([
       {
-        relative_path: "syncarts.json",
-        content: JSON.stringify({ id: "ws-1", name: "WS" }),
+        relative_path: ".syncarts/syncarts.json",
+        content: JSON.stringify({ name: "WS" }),
       },
       {
-        relative_path: "environments/dev_env-1.env.json",
+        relative_path: ".syncarts/environments/dev_env-1.env.json",
         content: JSON.stringify({ id: "env-1", name: "Dev", variables: [] }),
       },
     ]);
@@ -236,15 +237,15 @@ describe("readWorkspaceFromLocalFs", () => {
     mockInvoke.mockReset();
     mockInvoke.mockResolvedValue([
       {
-        relative_path: "syncarts.json",
-        content: JSON.stringify({ id: "ws-1", name: "WS" }),
+        relative_path: ".syncarts/syncarts.json",
+        content: JSON.stringify({ name: "WS" }),
       },
       {
-        relative_path: "collections/my_col_col-1/collection.json",
+        relative_path: ".syncarts/collections/my_col_col-1/collection.json",
         content: JSON.stringify({ id: "col-1", name: "Col" }),
       },
       {
-        relative_path: "collections/my_col_col-1/my_req_r-1.req.json",
+        relative_path: ".syncarts/collections/my_col_col-1/my_req_r-1.req.json",
         content: JSON.stringify({
           type: "request",
           id: "r-1",
@@ -267,15 +268,15 @@ describe("readWorkspaceFromLocalFs", () => {
     mockInvoke.mockReset();
     mockInvoke.mockResolvedValue([
       {
-        relative_path: "syncarts.json",
-        content: JSON.stringify({ id: "ws-1", name: "WS" }),
+        relative_path: ".syncarts/syncarts.json",
+        content: JSON.stringify({ name: "WS" }),
       },
       {
-        relative_path: "collections/col_col-1/collection.json",
+        relative_path: ".syncarts/collections/col_col-1/collection.json",
         content: JSON.stringify({ id: "col-1", name: "Col" }),
       },
       {
-        relative_path: "collections/col_col-1/folder_f-1/folder.json",
+        relative_path: ".syncarts/collections/col_col-1/folder_f-1/folder.json",
         content: JSON.stringify({ id: "f-1", name: "Folder" }),
       },
     ]);
