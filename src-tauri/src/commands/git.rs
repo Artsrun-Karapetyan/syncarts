@@ -162,29 +162,34 @@ pub async fn git_get_sync_status(path: String, do_fetch: Option<bool>) -> Result
     };
 
     if let Some(up) = &upstream {
-        let count_out = Command::new("git")
-            .current_dir(&path)
-            .arg("rev-list")
-            .arg("--left-right")
-            .arg("--count")
-            .arg(format!("HEAD...{}", up))
-            .output()
-            .await;
-
-        if let Ok(out) = count_out {
-            if out.status.success() {
-                let counts = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                let parts: Vec<&str> = counts.split_whitespace().collect();
-                if parts.len() == 2 {
-                    let ahead = parts[0].parse::<u32>().unwrap_or(0);
-                    let behind = parts[1].parse::<u32>().unwrap_or(0);
-                    return Ok(GitSyncStatus { ahead, behind, upstream: Some(up.clone()) });
-                }
-            }
-        }
+        // Only count commits that touch .syncarts — this repo may contain unrelated
+        // app code, and the user only cares about sync status for their workspace data.
+        let ahead = count_commits_touching_path(&path, &format!("{}..HEAD", up)).await;
+        let behind = count_commits_touching_path(&path, &format!("HEAD..{}", up)).await;
+        return Ok(GitSyncStatus { ahead, behind, upstream: Some(up.clone()) });
     }
 
     Ok(GitSyncStatus { ahead: 0, behind: 0, upstream: None })
+}
+
+async fn count_commits_touching_path(repo_path: &str, range: &str) -> u32 {
+    let output = Command::new("git")
+        .current_dir(repo_path)
+        .arg("rev-list")
+        .arg("--count")
+        .arg(range)
+        .arg("--")
+        .arg(".syncarts")
+        .output()
+        .await;
+
+    match output {
+        Ok(out) if out.status.success() => String::from_utf8_lossy(&out.stdout)
+            .trim()
+            .parse::<u32>()
+            .unwrap_or(0),
+        _ => 0,
+    }
 }
 
 #[tauri::command]
