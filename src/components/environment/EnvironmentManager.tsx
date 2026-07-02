@@ -82,6 +82,12 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
     }
   };
 
+  const handleReplaceVariables = (next: EnvironmentVariable[]) => {
+    if (isGlobals) updateGlobalVariables(next);
+    else if (selectedEnv)
+      updateEnvironment(selectedEnv.id, { variables: next });
+  };
+
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -167,6 +173,7 @@ export function EnvironmentManager({ isOpen, onClose }: Props) {
                 handleAddVariable={handleAddVariable}
                 handleUpdateVariable={handleUpdateVariable}
                 handleDeleteVariable={handleDeleteVariable}
+                handleReplaceVariables={handleReplaceVariables}
               />
             ) : (
               <div

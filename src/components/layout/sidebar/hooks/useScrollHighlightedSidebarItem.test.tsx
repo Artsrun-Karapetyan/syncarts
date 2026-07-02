@@ -54,15 +54,19 @@ describe("useScrollHighlightedSidebarItem", () => {
     expect(rafMock).toHaveBeenCalled();
   });
 
-  test("scrolls target element into view", () => {
+  test("scrolls target into view vertically and restores horizontal scroll", () => {
     const div = document.createElement("div");
     const targetEl = document.createElement("div");
     targetEl.setAttribute("data-sidebar-kind", "collection");
     targetEl.setAttribute("data-sidebar-id", "c1");
-    targetEl.scrollIntoView = mock();
     div.appendChild(targetEl);
 
-    const ref = { current: div };
+    div.scrollLeft = 42;
+    const scrollIntoViewMock = mock(() => {
+      // simulate the browser also nudging horizontally
+      div.scrollLeft = 0;
+    });
+    targetEl.scrollIntoView = scrollIntoViewMock as any;
 
     renderHook(() =>
       useScrollHighlightedSidebarItem({
@@ -70,15 +74,14 @@ describe("useScrollHighlightedSidebarItem", () => {
         highlightedExampleId: null,
         highlightedFolderId: null,
         highlightedRequestId: null,
-        scrollContainerRef: ref,
+        scrollContainerRef: { current: div },
       }),
     );
 
     expect(rafMock).toHaveBeenCalled();
-    expect(targetEl.scrollIntoView).toHaveBeenCalledWith({
-      block: "nearest",
-      behavior: "smooth",
-    });
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ block: "nearest" });
+    // horizontal scroll must be restored after the vertical scroll
+    expect(div.scrollLeft).toBe(42);
   });
 
   test("does not scroll if target element not found", () => {

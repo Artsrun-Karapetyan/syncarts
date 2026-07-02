@@ -105,8 +105,9 @@ export function useWorkspaceGit(propWorkspacePath?: string) {
 
   useEffect(() => {
     if (isGitRepo) {
-      // Instant local check on branch change, no network fetch
-      refreshSyncStatus(false);
+      // On branch change, fetch from remote so behind/ahead reflects new commits
+      // without the user having to hit refresh manually.
+      refreshSyncStatus(true);
     }
   }, [isGitRepo, currentBranch, refreshSyncStatus]);
 

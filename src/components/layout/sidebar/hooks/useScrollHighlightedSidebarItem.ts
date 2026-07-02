@@ -1,5 +1,7 @@
 import { type RefObject, useEffect } from "react";
 
+import { scrollRowIntoViewVertically } from "@/components/layout/sidebar/hooks/scrollRowIntoViewVertically";
+
 interface Args {
   highlightedCollectionId: string | null;
   highlightedExampleId: string | null;
@@ -26,8 +28,9 @@ export function useScrollHighlightedSidebarItem(args: Args) {
     if (!target) return;
 
     const frame = requestAnimationFrame(() => {
-      const row = findSidebarRow(scrollContainerRef.current, target);
-      row?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      const container = scrollContainerRef.current;
+      const row = findSidebarRow(container, target);
+      scrollRowIntoViewVertically(container, row ?? null);
     });
 
     return () => cancelAnimationFrame(frame);

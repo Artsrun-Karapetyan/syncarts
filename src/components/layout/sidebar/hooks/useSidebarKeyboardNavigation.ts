@@ -1,5 +1,7 @@
 import { type RefObject, useEffect } from "react";
 
+import { scrollRowIntoViewVertically } from "@/components/layout/sidebar/hooks/scrollRowIntoViewVertically";
+
 export function useSidebarKeyboardNavigation(
   containerRef: RefObject<HTMLDivElement | null>,
 ) {
@@ -36,14 +38,21 @@ export function useSidebarKeyboardNavigation(
         const currentIndex = rows.indexOf(activeElement);
         if (currentIndex === -1) return;
 
+        let nextRow: HTMLElement | undefined;
         if (e.key === "ArrowDown") {
           const nextIndex =
             currentIndex < rows.length - 1 ? currentIndex + 1 : 0;
-          rows[nextIndex]?.focus({ preventScroll: true });
+          nextRow = rows[nextIndex];
         } else {
           const prevIndex =
             currentIndex > 0 ? currentIndex - 1 : rows.length - 1;
-          rows[prevIndex]?.focus({ preventScroll: true });
+          nextRow = rows[prevIndex];
+        }
+        if (nextRow) {
+          // preventScroll avoids the browser's focus scroll (which also moves
+          // horizontally); scroll vertically ourselves so the row stays visible.
+          nextRow.focus({ preventScroll: true });
+          scrollRowIntoViewVertically(container, nextRow);
         }
       } else if (e.key === "Enter") {
         e.preventDefault();

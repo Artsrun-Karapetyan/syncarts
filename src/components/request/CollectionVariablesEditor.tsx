@@ -1,11 +1,14 @@
 import { CheckSquare, Plus, Square, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 import { VariableTextInput } from "@/components/request/variables/VariableTextInput";
+import { SelectionArea } from "@/components/ui/SelectionArea/SelectionArea";
 import { EnvironmentVariable, useWorkspace } from "@/contexts/WorkspaceContext";
 
 export function CollectionVariablesEditor() {
   const { activeTab, collections, updateCollection, updateFolder } =
     useWorkspace();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   if (
     !activeTab ||
@@ -65,6 +68,52 @@ export function CollectionVariablesEditor() {
       ...variables,
       { id: crypto.randomUUID(), key: "", value: "", enabled: true },
     ]);
+  };
+
+  const handlePaste = (
+    index: number,
+    event: React.ClipboardEvent<HTMLElement>,
+  ) => {
+    const text = event.clipboardData.getData("text");
+    if (!text || (!text.includes("\t") && !text.includes("\n"))) return;
+
+    event.preventDefault();
+
+    const pastedRows = text.split("\n").filter((r) => r.trim());
+    const next = [...variables];
+
+    pastedRows.forEach((row, i) => {
+      const cols = row.split("\t");
+      const key = (cols[0] || "").trim();
+      const value = cols[1] || "";
+
+      if (i === 0 && next[index]) {
+        next[index] = { ...next[index], key, value };
+      } else {
+        next.splice(index + i, 0, {
+          id: crypto.randomUUID(),
+          key,
+          value,
+          enabled: true,
+        });
+      }
+    });
+
+    updateVariables(next);
+  };
+
+  const handleCopy = (ids: Set<string>) => {
+    const tsv = variables
+      .filter((v) => ids.has(`${v.id}-key`) || ids.has(`${v.id}-value`))
+      .map((v) => {
+        const parts: string[] = [];
+        if (ids.has(`${v.id}-key`)) parts.push(v.key || "");
+        if (ids.has(`${v.id}-value`)) parts.push(v.value || "");
+        return parts.join("\t");
+      })
+      .join("\n");
+
+    navigator.clipboard.writeText(tsv);
   };
 
   return (
@@ -155,7 +204,11 @@ export function CollectionVariablesEditor() {
             />
           </div>
 
-          {variables.map((v) => (
+          <SelectionArea
+            onSelectionChange={setSelectedIds}
+            onCopy={handleCopy}
+          >
+            {variables.map((v, idx) => (
             <div
               key={v.id}
               style={{
@@ -197,7 +250,10 @@ export function CollectionVariablesEditor() {
                 className="input"
                 value={v.key}
                 onChange={(value) => updateVariable(v.id, { key: value })}
+                onPaste={(e) => handlePaste(idx, e)}
                 placeholder="New Variable"
+                selectionId={`${v.id}-key`}
+                isSelected={selectedIds.has(`${v.id}-key`)}
                 style={{
                   width: "100%",
                   fontSize: 13,
@@ -210,7 +266,10 @@ export function CollectionVariablesEditor() {
                 className="input"
                 value={v.value}
                 onChange={(value) => updateVariable(v.id, { value })}
+                onPaste={(e) => handlePaste(idx, e)}
                 placeholder="Value"
+                selectionId={`${v.id}-value`}
+                isSelected={selectedIds.has(`${v.id}-value`)}
                 style={{
                   width: "100%",
                   fontSize: 13,
@@ -242,7 +301,8 @@ export function CollectionVariablesEditor() {
                 </button>
               </div>
             </div>
-          ))}
+            ))}
+          </SelectionArea>
 
           <button
             type="button"

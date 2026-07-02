@@ -9,12 +9,16 @@ interface EnvironmentVariableRowProps {
   variable: EnvironmentVariable;
   onUpdate: (varId: string, updates: Partial<EnvironmentVariable>) => void;
   onDelete: (varId: string) => void;
+  onPaste?: (event: React.ClipboardEvent<HTMLElement>) => void;
+  selectedIds?: Set<string>;
 }
 
 export function EnvironmentVariableRow({
   variable,
   onUpdate,
   onDelete,
+  onPaste,
+  selectedIds,
 }: EnvironmentVariableRowProps) {
   const { secrets, updateSecret } = useWorkspace();
   const [revealed, setRevealed] = useState(false);
@@ -67,14 +71,22 @@ export function EnvironmentVariableRow({
         placeholder="Variable Key"
         value={variable.key}
         onChange={(value) => onUpdate(variable.id, { key: value })}
+        onPaste={onPaste}
+        selectionId={`${variable.id}-key`}
+        isSelected={selectedIds?.has(`${variable.id}-key`)}
       />
       <div
+        data-selection-id={isSecret && !revealed ? `${variable.id}-value` : undefined}
         style={{
           position: "relative",
           width: "100%",
           margin: "-1px 0 0 -1px",
           display: "flex",
           border: "1px solid var(--border-color)",
+          background:
+            isSecret && !revealed && selectedIds?.has(`${variable.id}-value`)
+              ? "rgba(139, 92, 246, 0.15)"
+              : "transparent",
         }}
       >
         {isSecret && !revealed ? (
@@ -91,6 +103,7 @@ export function EnvironmentVariableRow({
             placeholder="Secret Value"
             value={displayValue}
             onChange={(e) => handleValueChange(e.target.value)}
+            onPaste={onPaste}
           />
         ) : (
           <VariableTextInput
@@ -105,6 +118,9 @@ export function EnvironmentVariableRow({
             placeholder="Value"
             value={displayValue}
             onChange={handleValueChange}
+            onPaste={onPaste}
+            selectionId={`${variable.id}-value`}
+            isSelected={selectedIds?.has(`${variable.id}-value`)}
           />
         )}
         {isSecret && (
