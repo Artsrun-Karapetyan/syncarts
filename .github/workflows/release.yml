@@ -60,17 +60,15 @@ jobs:
         run: bun install
 
       - name: configure updater
-        env:
-          TAURI_UPDATER_PUBKEY: ${{ secrets.TAURI_UPDATER_PUBKEY }}
         run: |
-          node -e 'const fs = require("fs"); const config = { bundle: { createUpdaterArtifacts: true }, plugins: { updater: { endpoints: [`https://github.com/${process.env.GITHUB_REPOSITORY}/releases/latest/download/latest.json`], pubkey: process.env.TAURI_UPDATER_PUBKEY } } }; fs.appendFileSync(process.env.GITHUB_ENV, `TAURI_CONFIG=${JSON.stringify(config)}\n`);'
+          node -e 'const fs = require("fs"); const config = { bundle: { createUpdaterArtifacts: true } }; fs.appendFileSync(process.env.GITHUB_ENV, `TAURI_CONFIG=${JSON.stringify(config)}\n`);'
 
       - name: build tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
           tagName: app-v__VERSION__
           releaseName: "Syncarts v__VERSION__"
