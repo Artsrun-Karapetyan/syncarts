@@ -189,10 +189,10 @@ export function Select({
                 typeof selectedOption.badge === "string"
                   ? {
                       flexShrink: 0,
-                      border: "1px solid rgba(99, 102, 241, 0.34)",
+                      border: "1px solid rgba(139, 92, 246, 0.34)",
                       borderRadius: 999,
                       padding: "2px 8px",
-                      background: "rgba(99, 102, 241, 0.12)",
+                      background: "rgba(139, 92, 246, 0.12)",
                       color: "var(--text-secondary)",
                       fontSize: 10,
                       fontWeight: 700,
@@ -306,10 +306,10 @@ export function Select({
                         typeof option.badge === "string"
                           ? {
                               flexShrink: 0,
-                              border: "1px solid rgba(99, 102, 241, 0.34)",
+                              border: "1px solid rgba(139, 92, 246, 0.34)",
                               borderRadius: 999,
                               padding: "2px 7px",
-                              background: "rgba(99, 102, 241, 0.12)",
+                              background: "rgba(139, 92, 246, 0.12)",
                               color: "var(--text-secondary)",
                               fontSize: 10,
                               fontWeight: 700,

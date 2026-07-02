@@ -1,21 +1,21 @@
 :root {
   /* Background Palette — Original dark theme */
-  --bg-primary: #141414;
-  --bg-secondary: #1e1e1e;
-  --bg-tertiary: #2a2a2a;
-  --bg-surface: rgba(30, 30, 30, 0.85);
-  --bg-glass: rgba(30, 30, 30, 0.6);
-  --bg-glass-hover: rgba(45, 45, 45, 0.7);
+  --bg-primary: #0d0d0d;
+  --bg-secondary: #161616;
+  --bg-tertiary: #222222;
+  --bg-surface: rgba(22, 22, 22, 0.85);
+  --bg-glass: rgba(22, 22, 22, 0.6);
+  --bg-glass-hover: rgba(38, 38, 38, 0.7);
 
   /* Text */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-tertiary: #64748b;
 
-  /* Accent — Indigo for interactive, Green for "Run/Send" */
-  --accent-primary: #6366f1;
-  --accent-primary-hover: #4f46e5;
-  --accent-glow: rgba(99, 102, 241, 0.4);
+  /* Accent — Purple (matches app logo), Green for "Run/Send" */
+  --accent-primary: #8b5cf6;
+  --accent-primary-hover: #7c3aed;
+  --accent-glow: rgba(139, 92, 246, 0.4);
   --accent-success: #22C55E;
   --accent-success-hover: #16A34A;
   --accent-success-glow: rgba(34, 197, 94, 0.3);

@@ -58,10 +58,10 @@ export function TopBarProfileButton() {
             height: 32,
             borderRadius: "50%",
             background: user
-              ? "linear-gradient(145deg, rgba(99, 102, 241, 0.35), rgba(99, 102, 241, 0.1))"
+              ? "linear-gradient(145deg, rgba(139, 92, 246, 0.35), rgba(139, 92, 246, 0.1))"
               : "rgba(255, 255, 255, 0.05)",
             border: user
-              ? "2px solid rgba(99, 102, 241, 0.2)"
+              ? "2px solid rgba(139, 92, 246, 0.2)"
               : "2px solid rgba(255, 255, 255, 0.1)",
             display: "flex",
             alignItems: "center",

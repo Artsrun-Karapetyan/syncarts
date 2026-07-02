@@ -71,7 +71,7 @@ export function VariableTextInput(props: VariableTextInputProps) {
         width: style?.width || "100%",
         flex: style?.flex,
         display: "grid",
-        background: isSelected ? "rgba(99, 102, 241, 0.15)" : "transparent",
+        background: isSelected ? "rgba(139, 92, 246, 0.15)" : "transparent",
         transition: "background 0.15s ease",
         maxHeight: isFocused ? 120 : undefined,
         overflowY: isFocused ? "auto" : "hidden",

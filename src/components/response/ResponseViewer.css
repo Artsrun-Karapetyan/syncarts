@@ -291,6 +291,6 @@
   box-shadow: var(--shadow-lg);
 }
 ::highlight(search-results) {
-  background-color: var(--accent-primary, #6366f1);
+  background-color: var(--accent-primary, #8b5cf6);
   color: #ffffff;
 }

@@ -262,7 +262,7 @@ export function WorkspaceSwitcher({
           }
           compact={mode === "topbar"}
           style={
-            mode === "topbar" ? { minWidth: 200, maxWidth: 260 } : undefined
+            mode === "topbar" ? { minWidth: 240, maxWidth: 312 } : undefined
           }
         />
       </div>

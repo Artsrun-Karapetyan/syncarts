@@ -22,7 +22,7 @@
 }
 
 .url-input-proxy::selection {
-  background: rgba(99, 102, 241, 0.46);
+  background: rgba(139, 92, 246, 0.46);
   color: transparent;
   -webkit-text-fill-color: transparent;
 }

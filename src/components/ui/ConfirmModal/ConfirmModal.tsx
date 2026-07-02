@@ -129,7 +129,7 @@ export function ConfirmModal({
               cursor: "pointer",
               boxShadow: isDestructive
                 ? "0 4px 12px rgba(239, 68, 68, 0.2)"
-                : "0 4px 12px rgba(99, 102, 241, 0.2)",
+                : "0 4px 12px rgba(139, 92, 246, 0.2)",
               transition: "opacity var(--transition-fast)",
             }}
             onMouseEnter={(e) => {

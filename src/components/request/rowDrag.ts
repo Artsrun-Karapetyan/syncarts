@@ -39,7 +39,7 @@ export function rowDropShadow(position: RowDropPosition) {
 }
 
 export function rowDropBackground(isDropTarget: boolean) {
-  return isDropTarget ? "rgba(99, 102, 241, 0.08)" : "transparent";
+  return isDropTarget ? "rgba(139, 92, 246, 0.08)" : "transparent";
 }
 
 export const ROW_DRAG_HANDLE_STYLE: CSSProperties = {

@@ -14,8 +14,14 @@ jobs:
     name: Release (${{ matrix.platform }})
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    # tauri-action deletes-then-uploads assets into a shared release; running the
+    # matrix jobs in parallel races on that delete → "Not Found". Serialize them.
+    concurrency:
+      group: release-upload-${{ github.ref }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - platform: "macos-latest"

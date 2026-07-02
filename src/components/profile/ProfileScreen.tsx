@@ -175,8 +175,8 @@ export function ProfileScreen() {
                 width: 58,
                 height: 58,
                 background:
-                  "linear-gradient(180deg, rgba(99, 102, 241, 0.28), rgba(99, 102, 241, 0.12))",
-                border: "2px solid rgba(99, 102, 241, 0.2)",
+                  "linear-gradient(180deg, rgba(139, 92, 246, 0.28), rgba(139, 92, 246, 0.12))",
+                border: "2px solid rgba(139, 92, 246, 0.2)",
               }}
             >
               {initial}

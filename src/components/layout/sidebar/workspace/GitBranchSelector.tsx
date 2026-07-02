@@ -86,7 +86,7 @@ export function GitBranchSelector({ mode }: { mode?: "sidebar" | "topbar" }) {
         style={{
           flex: 1,
           userSelect: "none",
-          width: mode === "topbar" ? 140 : "auto",
+          width: mode === "topbar" ? 168 : "auto",
           display: "flex",
           alignItems: "center",
           gap: 8,

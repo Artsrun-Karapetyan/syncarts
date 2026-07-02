@@ -180,8 +180,8 @@ export function SelectionArea({
     top: Math.min(startPos.y, currentPos.y),
     width: Math.abs(currentPos.x - startPos.x),
     height: Math.abs(currentPos.y - startPos.y),
-    backgroundColor: "rgba(99, 102, 241, 0.15)",
-    border: "1px solid rgba(99, 102, 241, 0.8)",
+    backgroundColor: "rgba(139, 92, 246, 0.15)",
+    border: "1px solid rgba(139, 92, 246, 0.8)",
     pointerEvents: "none",
     zIndex: 9999,
   };

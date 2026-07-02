@@ -84,7 +84,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
         height: "100vh",
         overflow: "hidden",
         background:
-          "radial-gradient(circle at top left, rgba(99, 102, 241, 0.2), transparent 32%), radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.14), transparent 30%), var(--bg-primary)",
+          "radial-gradient(circle at top left, rgba(139, 92, 246, 0.2), transparent 32%), radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.14), transparent 30%), var(--bg-primary)",
       }}
     >
       <div
@@ -94,7 +94,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           width: 260,
           height: 260,
           borderRadius: "50%",
-          background: "rgba(99, 102, 241, 0.12)",
+          background: "rgba(139, 92, 246, 0.12)",
           filter: "blur(70px)",
         }}
       />
