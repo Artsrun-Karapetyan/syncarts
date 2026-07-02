@@ -20,11 +20,12 @@ describe("useWorkspaceController", () => {
     expect(result.current.activeWorkspaceId).toBeDefined();
   });
 
-  test("initializes empty workspaces for offline user", () => {
+  test("initializes a default workspace for offline user", () => {
     const { result } = renderHook(() => useWorkspaceController("offline"));
 
     expect(result.current.userId).toBe("offline");
-    expect(result.current.workspaces.length).toBe(0);
+    expect(result.current.workspaces.length).toBeGreaterThan(0);
+    expect(result.current.activeWorkspaceId).toBeDefined();
   });
 
   test("createBlankRequestInFolder adds a new request to collection and tab list", () => {

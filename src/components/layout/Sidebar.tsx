@@ -226,7 +226,10 @@ export function Sidebar() {
   };
 
   const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const isLocalWorkspace = activeWorkspace?.type === "local";
+  // Offline (not signed in) has no cloud sync, so hide collaboration features
+  // (merge requests, watch/notifications) just like a local-folder workspace.
+  const isLocalWorkspace =
+    activeWorkspace?.type === "local" || userId === "offline";
   const isOwner =
     !activeWorkspace?.ownerId || activeWorkspace.ownerId === userId;
   const isViewer =

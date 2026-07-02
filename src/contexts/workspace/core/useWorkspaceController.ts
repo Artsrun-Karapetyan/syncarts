@@ -39,9 +39,7 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     Workspace[]
   >(
     `syncarts-workspaces-v3-${userId}`,
-    userId === "offline"
-      ? []
-      : createDefaultWorkspaces(userId, localDefaultWorkspaceId),
+    createDefaultWorkspaces(userId, localDefaultWorkspaceId),
   );
   const [activeWorkspaceId, setActiveWorkspaceId, activeWorkspaceHydrated] =
     useLocalStorage<string>(
@@ -121,10 +119,8 @@ export function useWorkspaceController(userId: string): WorkspaceContextState {
     if (!storageHydrated) return;
     if (workspaces.length > 0) return;
 
-    // For offline users, we don't automatically create a cloud workspace.
-    // We let them create a Local Folder workspace explicitly.
-    if (userId === "offline") return;
-
+    // Every user (including offline/not-logged-in) needs at least one workspace,
+    // otherwise import/quick-request has no target and crashes.
     const defaultWorkspace = createDefaultWorkspaces(
       userId,
       localDefaultWorkspaceId,
