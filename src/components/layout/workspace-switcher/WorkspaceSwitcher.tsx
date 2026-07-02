@@ -261,7 +261,9 @@ export function WorkspaceSwitcher({
             ) : null
           }
           compact={mode === "topbar"}
-          style={mode === "topbar" ? { width: 180 } : undefined}
+          style={
+            mode === "topbar" ? { minWidth: 200, maxWidth: 260 } : undefined
+          }
         />
       </div>
       <GitBranchSelector mode={mode} />
