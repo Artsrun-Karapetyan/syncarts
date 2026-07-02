@@ -1,5 +1,5 @@
 import { getVersion } from "@tauri-apps/api/app";
-import { CheckCircle2, GitBranch, Loader2, X } from "lucide-react";
+import { CheckCircle2, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useAppUpdateContext } from "@/components/update/AppUpdateContext";
@@ -87,22 +87,16 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           <X size={16} />
         </button>
 
-        <div
+        <img
+          src="/logo.png"
+          alt="Syncarts"
           style={{
             width: 56,
             height: 56,
             borderRadius: 14,
-            background:
-              "linear-gradient(180deg, rgba(99, 102, 241, 0.28), rgba(99, 102, 241, 0.12))",
-            border: "2px solid rgba(99, 102, 241, 0.2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             marginBottom: 6,
           }}
-        >
-          <GitBranch size={26} style={{ color: "var(--accent-primary)" }} />
-        </div>
+        />
 
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Syncarts</h2>
         <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
