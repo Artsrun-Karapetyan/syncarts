@@ -1,10 +1,10 @@
 import { Download, X } from "lucide-react";
 import { useState } from "react";
 
-import { useAppUpdate } from "@/components/update/useAppUpdate";
+import { useAppUpdateContext } from "@/components/update/AppUpdateContext";
 
 export function AppUpdateBanner() {
-  const { error, installUpdate, status, update } = useAppUpdate();
+  const { error, installUpdate, status, update } = useAppUpdateContext();
   const [isDismissed, setIsDismissed] = useState(false);
 
   if (!update || isDismissed) return null;

@@ -5,6 +5,7 @@ import { GlobalContextMenu } from "@/components/layout/GlobalContextMenu";
 import { GlobalDropZone } from "@/components/layout/GlobalDropZone";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/topbar/TopBar";
+import { AppUpdateProvider } from "@/components/update/AppUpdateContext";
 import { AppUpdateBanner } from "@/components/update/AppUpdateBanner";
 import { WorkspaceGitProvider } from "@/contexts/workspace/git/WorkspaceGitContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
@@ -22,51 +23,53 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <WorkspaceProvider key={userId} userId={userId}>
       <WorkspaceGitProvider>
-        <GlobalDropZone>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              height: "100vh",
-              width: "100vw",
-              background: "var(--bg-primary)",
-              overflow: "hidden",
-            }}
-          >
-            <TopBar />
-            <PanelGroup
-              direction="horizontal"
-              style={{ flex: 1, minHeight: 0, overflow: "hidden" }}
+        <AppUpdateProvider>
+          <GlobalDropZone>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                height: "100vh",
+                width: "100vw",
+                background: "var(--bg-primary)",
+                overflow: "hidden",
+              }}
             >
-              <Panel
-                defaultSize={22}
-                minSize={20}
-                maxSize={40}
-                style={{ display: "flex", flexDirection: "column" }}
+              <TopBar />
+              <PanelGroup
+                direction="horizontal"
+                style={{ flex: 1, minHeight: 0, overflow: "hidden" }}
               >
-                <Sidebar />
-              </Panel>
-              <PanelResizeHandle className="custom-resize-handle" />
-              <Panel
-                defaultSize={80}
-                style={{ display: "flex", flexDirection: "column" }}
-              >
-                <div
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    height: "100%",
-                    overflow: "hidden",
-                  }}
+                <Panel
+                  defaultSize={22}
+                  minSize={20}
+                  maxSize={40}
+                  style={{ display: "flex", flexDirection: "column" }}
                 >
-                  {children}
-                </div>
-              </Panel>
-            </PanelGroup>
-          </div>
-          <AppUpdateBanner />
-          <GlobalContextMenu />
-        </GlobalDropZone>
+                  <Sidebar />
+                </Panel>
+                <PanelResizeHandle className="custom-resize-handle" />
+                <Panel
+                  defaultSize={80}
+                  style={{ display: "flex", flexDirection: "column" }}
+                >
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      height: "100%",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {children}
+                  </div>
+                </Panel>
+              </PanelGroup>
+            </div>
+            <AppUpdateBanner />
+            <GlobalContextMenu />
+          </GlobalDropZone>
+        </AppUpdateProvider>
       </WorkspaceGitProvider>
     </WorkspaceProvider>
   );

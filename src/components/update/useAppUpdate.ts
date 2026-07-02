@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type {
   AppUpdateMetadata,
@@ -12,36 +12,42 @@ export function useAppUpdate() {
   const [update, setUpdate] = useState<AppUpdateMetadata | null>(null);
   const [status, setStatus] = useState<AppUpdateStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
-  useEffect(() => {
+  const checkForUpdate = useCallback(() => {
     if (!isTauriRuntime()) return;
 
-    let isMounted = true;
+    setStatus("checking");
+    setError(null);
+    Promise.all([
+      invoke<AppUpdateMetadata | null>("check_app_update"),
+      new Promise((resolve) => setTimeout(resolve, 600)),
+    ])
+      .then(([nextUpdate]) => {
+        if (!isMountedRef.current) return;
+        setUpdate(nextUpdate);
+        setStatus(nextUpdate ? "available" : "idle");
+      })
+      .catch((error: unknown) => {
+        if (!isMountedRef.current) return;
+        setStatus("idle");
+        if (!isUpdaterConfigError(error)) setError(String(error));
+      });
+  }, []);
 
-    const checkForUpdate = () => {
-      setStatus("checking");
-      invoke<AppUpdateMetadata | null>("check_app_update")
-        .then((nextUpdate) => {
-          if (!isMounted) return;
-          setUpdate(nextUpdate);
-          setStatus(nextUpdate ? "available" : "idle");
-        })
-        .catch((error: unknown) => {
-          if (!isMounted) return;
-          setStatus("idle");
-          if (!isUpdaterConfigError(error)) setError(String(error));
-        });
-    };
+  useEffect(() => {
+    isMountedRef.current = true;
+    if (!isTauriRuntime()) return;
 
     checkForUpdate();
 
     const interval = setInterval(checkForUpdate, 30 * 60 * 1000);
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [checkForUpdate]);
 
   const installUpdate = async () => {
     setError(null);
@@ -55,5 +61,5 @@ export function useAppUpdate() {
     }
   };
 
-  return { error, installUpdate, status, update };
+  return { checkForUpdate, error, installUpdate, status, update };
 }
