@@ -78,6 +78,11 @@ jobs:
             🍏 [Download for Mac (Apple M-Series)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/Syncarts___VERSION___aarch64.dmg)
             🍏 [Download for Mac (Intel)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/Syncarts___VERSION___x64.dmg)
 
+            > **Mac users:** after installing, if macOS says the app is damaged/can't be opened, run this in Terminal:
+            > ```
+            > sudo xattr -cr /Applications/Syncarts.app
+            > ```
+
             🐧 [Download for Linux x64 (.AppImage)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___amd64.AppImage)
             🐧 [Download for Linux x64 (.deb)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___amd64.deb)
             🐧 [Download for Linux ARM64 (.AppImage)](https://github.com/${{ github.repository }}/releases/download/app-v__VERSION__/syncarts___VERSION___aarch64.AppImage)
